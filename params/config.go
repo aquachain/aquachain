@@ -248,6 +248,10 @@ func (c *ChainConfig) IsConstantinople(num *big.Int) bool {
 // GasTable returns the gas table corresponding to the current phase.
 //
 // The returned GasTable's fields shouldn't, under any circumstances, be changed.
+
+// GasTable returns the gas table corresponding to the current phase.
+//
+// The returned GasTable's fields shouldn't, under any circumstances, be changed.
 func (c *ChainConfig) GasTable(num *big.Int) GasTable {
 	if num == nil {
 		return GasTableHomestead
@@ -255,8 +259,12 @@ func (c *ChainConfig) GasTable(num *big.Int) GasTable {
 	switch {
 	case c.IsHF(1, num):
 		return GasTableHF1
+	case c.IsEIP158(num):
+		return GasTableEIP158
+	case c.IsEIP150(num):
+		return GasTableEIP150
 	default:
-		return GasTableHF0
+		return GasTableHomestead
 	}
 }
 
