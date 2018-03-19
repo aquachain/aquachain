@@ -19,25 +19,14 @@ package params
 import (
 	"fmt"
 	"math/big"
-	"strings"
 
 	"github.com/aquanetwork/aquachain/common"
 )
 
 var (
-	MainnetGenesisHash = common.HexToHash("0x2461b9b2e5b57ed037fe99f470511c6dbef8e0ed976b3f3197ae689f5b100a9b") // Mainnet genesis hash to enforce below configs on
+	MainnetGenesisHash = common.HexToHash("0x381c8d2c3e3bc702533ee504d7621d510339cafd830028337a4b532ff27cd505") // Mainnet genesis hash to enforce below configs on
 	TestnetGenesisHash = common.HexToHash("0x41941023680923e0fe4d74a34bdac8141f2540e3ae90623718e47d66d1ca4a2d") // Testnet genesis hash to enforce below configs on
 )
-
-type ForkMap map[int]*big.Int
-
-func (f ForkMap) String() (s string) {
-	println("gotem")
-	for i := 0; i < len(f); i++ {
-		s = fmt.Sprintf("%s %v:%v", s, i, f[i].Int64())
-	}
-	return "hfyo: " + strings.TrimSpace(s)
-}
 
 var (
 	// MainnetChainConfig is the chain parameters to run a node on the main network.
@@ -45,7 +34,7 @@ var (
 		ChainId:        big.NewInt(1),
 		HomesteadBlock: big.NewInt(0),
 		EIP150Block:    big.NewInt(0),
-		HF: map[int]*big.Int{
+		HF: ForkMap{
 			0: big.NewInt(3000),
 			1: big.NewInt(3600), // increase min difficulty to the next multiple of 2048
 			2: big.NewInt(7200), // HF2 diff algo
@@ -59,7 +48,7 @@ var (
 		ChainId:        big.NewInt(3),
 		HomesteadBlock: big.NewInt(0),
 		EIP150Block:    big.NewInt(0),
-		HF: map[int]*big.Int{
+		HF: ForkMap{
 			0: big.NewInt(0),
 			1: big.NewInt(1), // increase min difficulty to the next multiple of 2048
 			2: big.NewInt(2), // HF2 diff algo
@@ -73,7 +62,7 @@ var (
 		ChainId:        big.NewInt(4),
 		HomesteadBlock: big.NewInt(0),
 		EIP150Block:    big.NewInt(0),
-		HF: map[int]*big.Int{
+		HF: ForkMap{
 			0: big.NewInt(3),
 			1: big.NewInt(5), // increase min difficulty to the next multiple of 2048
 		},
@@ -99,7 +88,7 @@ var (
 		ChainId:        big.NewInt(3),
 		HomesteadBlock: big.NewInt(0),
 		EIP150Block:    big.NewInt(0),
-		HF: map[int]*big.Int{
+		HF: ForkMap{
 			0: big.NewInt(0),
 			//1: big.NewInt(1), // increase min difficulty to the next multiple of 2048
 			//2: big.NewInt(2), // HF2 diff algo
@@ -121,7 +110,7 @@ type ChainConfig struct {
 	HomesteadBlock *big.Int `json:"homesteadBlock,omitempty"` // Homestead switch block (nil = no fork, 0 = already homestead)
 
 	// HF Scheduled Maintenance Hardforks
-	HF map[int]*big.Int `json:"hfmap,omitempty"` // map of HF block numbers
+	HF ForkMap `json:"hfmap,omitempty"` // map of HF block numbers
 
 	// et junk to remove
 	DAOForkBlock   *big.Int `json:"daoForkBlock,omitempty"`   // TheDAO hard-fork switch block (nil = no fork)
@@ -264,7 +253,7 @@ func (c *ChainConfig) GasTable(num *big.Int) GasTable {
 	case c.IsHF(1, num):
 		return GasTableHF1
 	default:
-		return GasTableHomestead
+		return GasTableHF0
 	}
 }
 
