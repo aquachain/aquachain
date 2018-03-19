@@ -28,19 +28,22 @@ var (
 	TestnetGenesisHash = common.HexToHash("0x41941023680923e0fe4d74a34bdac8141f2540e3ae90623718e47d66d1ca4a2d") // Testnet genesis hash to enforce below configs on
 )
 
+var MainnetHF = ForkMap{
+	0: big.NewInt(3000),
+	1: big.NewInt(3600),
+	2: big.NewInt(7200),
+	3: big.NewInt(13029),
+}
+
 var (
 	// MainnetChainConfig is the chain parameters to run a node on the main network.
 	MainnetChainConfig = &ChainConfig{
 		ChainId:        big.NewInt(1),
 		HomesteadBlock: big.NewInt(0),
 		EIP150Block:    big.NewInt(0),
-		HF: ForkMap{
-			0: big.NewInt(3000),
-			1: big.NewInt(3600), // increase min difficulty to the next multiple of 2048
-			2: big.NewInt(7200), // HF2 diff algo
-		},
-		Aquahash:    new(AquahashConfig),
-		SupplyLimit: big.NewInt(42000000),
+		HF:             MainnetHF,
+		Aquahash:       new(AquahashConfig),
+		SupplyLimit:    big.NewInt(42000000),
 	}
 
 	// TestnetChainConfig contains the chain parameters to run a node on the Ropsten test network.
@@ -75,14 +78,14 @@ var (
 	//
 	// This configuration is intentionally not using keyed fields to force anyone
 	// adding flags to the config to also have to set these fields.
-	AllAquahashProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, new(AquahashConfig), nil, big.NewInt(42000000)}
+	AllAquahashProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), MainnetHF, nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, new(AquahashConfig), nil, big.NewInt(42000000)}
 
 	// AllCliqueProtocolChanges contains every protocol change (EIPs) introduced
 	// and accepted by the AquaChain core developers into the Clique consensus.
 	//
 	// This configuration is intentionally not using keyed fields to force anyone
 	// adding flags to the config to also have to set these fields.
-	AllCliqueProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, nil, &CliqueConfig{Period: 0, Epoch: 30000}, big.NewInt(42000000)}
+	AllCliqueProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), MainnetHF, nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, nil, &CliqueConfig{Period: 0, Epoch: 30000}, big.NewInt(42000000)}
 
 	TestChainConfig = &ChainConfig{
 		ChainId:        big.NewInt(3),
