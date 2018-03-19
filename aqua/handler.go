@@ -399,7 +399,13 @@ func (pm *ProtocolManager) handleMsg(p *peer) error {
 			return errResp(ErrDecode, "msg %v: %v", msg, err)
 		}
 		p.Log().Warn("Recv headers", "peer", p.ID().String()[:6], "headers", len(headers))
-		if len(headers) > 0 {
+		// Filter out any explicitly requested headers, deliver the rest to the downloader
+		filter := len(headers) == 1
+		if filter {
+			// Irrelevant of the fork checks, send the header to the fetcher just in case
+			headers = pm.fetcher.FilterHeaders(p.id, headers, time.Now())
+		}
+		if len(headers) > 0 || !filter {
 			err := pm.downloader.DeliverHeaders(p.id, headers)
 			if err != nil {
 				log.Debug("Failed to deliver headers", "err", err)
