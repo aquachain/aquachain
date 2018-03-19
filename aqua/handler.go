@@ -392,19 +392,14 @@ func (pm *ProtocolManager) handleMsg(p *peer) error {
 		return p.SendBlockHeaders(headers)
 
 	case msg.Code == BlockHeadersMsg:
+
 		// A batch of headers arrived to one of our previous requests
 		var headers []*types.Header
 		if err := msg.Decode(&headers); err != nil {
 			return errResp(ErrDecode, "msg %v: %v", msg, err)
 		}
-
-		// Filter out any explicitly requested headers, deliver the rest to the downloader
-		filter := len(headers) == 1
-		if filter {
-			// Irrelevant of the fork checks, send the header to the fetcher just in case
-			headers = pm.fetcher.FilterHeaders(p.id, headers, time.Now())
-		}
-		if len(headers) > 0 || !filter {
+		p.Log().Warn("Recv headers", "peer", p.ID().String()[:6], "headers", len(headers))
+		if len(headers) > 0 {
 			err := pm.downloader.DeliverHeaders(p.id, headers)
 			if err != nil {
 				log.Debug("Failed to deliver headers", "err", err)
