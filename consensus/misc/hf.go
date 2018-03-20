@@ -17,18 +17,16 @@
 package misc
 
 import (
-	"math/big"
-
 	"github.com/aquanetwork/aquachain/core/state"
 	"github.com/aquanetwork/aquachain/core/types"
 	"github.com/aquanetwork/aquachain/params"
 )
 
 func VerifyHFHeaderExtraData(config *params.ChainConfig, header *types.Header) error {
-	// Short circuit validation if the node doesn't have any upcoming hf
-	if config.NextHF(big.NewInt(0).Add(big.NewInt(-1), header.Number)) == nil {
-		return nil
-	}
+	// // Short circuit validation if the node doesn't have any upcoming hf
+	// if config.NextHF(big.NewInt(0).Add(big.NewInt(-1), header.Number)) == nil {
+	// 	return nil
+	// }
 	return nil
 }
 

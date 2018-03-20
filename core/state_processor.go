@@ -17,11 +17,8 @@
 package core
 
 import (
-	"math/big"
-
 	"github.com/aquanetwork/aquachain/common"
 	"github.com/aquanetwork/aquachain/consensus"
-	"github.com/aquanetwork/aquachain/consensus/misc"
 	"github.com/aquanetwork/aquachain/core/state"
 	"github.com/aquanetwork/aquachain/core/types"
 	"github.com/aquanetwork/aquachain/core/vm"
@@ -63,10 +60,10 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		allLogs  []*types.Log
 		gp       = new(GasPool).AddGas(block.GasLimit())
 	)
-	// Mutate the the block and state according to any hard-fork specs
-	if nexthf := p.config.NextHF(big.NewInt(0).Add(header.Number, big.NewInt(-1))); nexthf != nil && nexthf.Cmp(header.Number) == 0 {
-		misc.ApplyHardFork(statedb)
-	}
+	// // Mutate the the block and state according to any hard-fork specs
+	// if nexthf := p.config.NextHF(big.NewInt(0).Add(header.Number, big.NewInt(-1))); nexthf != nil && nexthf.Cmp(header.Number) == 0 {
+	// 	misc.ApplyHardFork(statedb)
+	// }
 	// Iterate over and process the individual transactions
 	for i, tx := range block.Transactions() {
 		statedb.Prepare(tx.Hash(), block.Hash(), i)

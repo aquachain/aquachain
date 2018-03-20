@@ -26,7 +26,6 @@ import (
 	"github.com/aquanetwork/aquachain/aquadb"
 	"github.com/aquanetwork/aquachain/common"
 	"github.com/aquanetwork/aquachain/consensus"
-	"github.com/aquanetwork/aquachain/consensus/misc"
 	"github.com/aquanetwork/aquachain/core"
 	"github.com/aquanetwork/aquachain/core/state"
 	"github.com/aquanetwork/aquachain/core/types"
@@ -442,11 +441,8 @@ func (self *worker) commitNewWork() {
 		log.Error("Failed to create mining context", "err", err)
 		return
 	}
-	// Create the current work task and check any fork transitions needed
+
 	work := self.current
-	if nexthf := self.config.NextHF(big.NewInt(0).Add(header.Number, big.NewInt(-1))); nexthf != nil && nexthf.Cmp(header.Number) == 0 {
-		misc.ApplyHardFork(work.state)
-	}
 	pending, err := self.aqua.TxPool().Pending()
 	if err != nil {
 		log.Error("Failed to fetch pending transactions", "err", err)
