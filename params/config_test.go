@@ -26,11 +26,11 @@ import (
 func TestNextHF(t *testing.T) {
 	config := &ChainConfig{
 		// simple hf map with forks at block 0, 21 and 30
-		HF: ForkMap{
-			0: big.NewInt(0),
-			1: big.NewInt(21),
-			2: big.NewInt(30),
-		},
+		// HF: ForkMap{
+		// 	0: big.NewInt(0),
+		// 	1: big.NewInt(21),
+		// 	2: big.NewInt(30),
+		// },
 	}
 
 	type test struct {
@@ -38,18 +38,16 @@ func TestNextHF(t *testing.T) {
 	}
 
 	tests := []test{
-		{input: big.NewInt(10), expected: big.NewInt(21)},
-		{input: big.NewInt(7), expected: big.NewInt(21)},
-		{input: big.NewInt(11), expected: big.NewInt(21)},
-		{input: big.NewInt(0), expected: big.NewInt(21)},
-		{input: big.NewInt(21), expected: big.NewInt(30)},
-		{input: big.NewInt(22), expected: big.NewInt(30)},
-		{input: big.NewInt(23), expected: big.NewInt(30)},
-		{input: big.NewInt(29), expected: big.NewInt(30)},
-		{input: big.NewInt(30), expected: nil},
-		{input: big.NewInt(35), expected: nil},
-		{input: big.NewInt(350), expected: nil},
-		{input: nil, expected: big.NewInt(30)},
+		{input: big.NewInt(0), expected: big.NewInt(3000)},
+		{input: big.NewInt(7), expected: big.NewInt(3000)},
+		{input: big.NewInt(11), expected: big.NewInt(3000)},
+		{input: big.NewInt(3000), expected: big.NewInt(3600)},
+		{input: big.NewInt(3500), expected: big.NewInt(3600)},
+		{input: big.NewInt(3600), expected: big.NewInt(7200)},
+		{input: big.NewInt(7000), expected: big.NewInt(7200)},
+		{input: big.NewInt(7200), expected: big.NewInt(13029)},
+		{input: big.NewInt(7900), expected: big.NewInt(13029)},
+		{input: nil, expected: big.NewInt(3000)},
 	}
 
 	for i, test := range tests {

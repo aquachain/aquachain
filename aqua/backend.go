@@ -116,10 +116,9 @@ func New(ctx *node.ServiceContext, config *Config) (*AquaChain, error) {
 	if _, ok := genesisErr.(*params.ConfigCompatError); genesisErr != nil && !ok {
 		return nil, genesisErr
 	}
-	if config.NetworkId == 1 {
-		chainConfig.HF = params.MainnetChainConfig.HF // use latest HF map
-		log.Info(fmt.Sprintf("Loading %s", params.VersionMeta))
-	}
+
+	log.Info(fmt.Sprintf("Loading %s", params.VersionMeta))
+
 	log.Info("Initialised chain configuration", "config", chainConfig)
 
 	aqua := &AquaChain{
@@ -140,13 +139,13 @@ func New(ctx *node.ServiceContext, config *Config) (*AquaChain, error) {
 
 	log.Info("Initialising AquaChain protocol", "versions", ProtocolVersions, "network", config.NetworkId)
 
-	if !config.SkipBcVersionCheck {
-		bcVersion := core.GetBlockChainVersion(chainDb)
-		if bcVersion != core.BlockChainVersion && bcVersion != 0 {
-			return nil, fmt.Errorf("Blockchain DB version mismatch (%d / %d). Run aquad upgradedb.\n", bcVersion, core.BlockChainVersion)
-		}
-		core.WriteBlockChainVersion(chainDb, core.BlockChainVersion)
+	//if !config.SkipBcVersionCheck {
+	bcVersion := core.GetBlockChainVersion(chainDb)
+	if bcVersion != core.BlockChainVersion && bcVersion != 0 {
+		return nil, fmt.Errorf("Blockchain DB version mismatch (%d / %d). Run aquad upgradedb.\n", bcVersion, core.BlockChainVersion)
 	}
+	core.WriteBlockChainVersion(chainDb, core.BlockChainVersion)
+	//}
 	var (
 		vmConfig    = vm.Config{EnablePreimageRecording: config.EnablePreimageRecording}
 		cacheConfig = &core.CacheConfig{Disabled: config.NoPruning, TrieNodeLimit: config.TrieCache, TrieTimeLimit: config.TrieTimeout}

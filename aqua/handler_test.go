@@ -455,7 +455,7 @@ func TestNextHF(t *testing.T) {
 		evmux  = new(event.TypeMux)
 		pow    = aquahash.NewFaker()
 		db, _  = aquadb.NewMemDatabase()
-		config = &params.ChainConfig{HF: params.ForkMap{0: big.NewInt(0), 1: big.NewInt(23420), 2: big.NewInt(2342340)}}
+		config = &params.ChainConfig{}
 		//gspec         = &core.Genesis{Config: config}
 		blockchain, _ = core.NewBlockChain(db, nil, config, pow, vm.Config{})
 	)
