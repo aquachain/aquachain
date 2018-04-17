@@ -49,7 +49,7 @@ func TestDefaults(t *testing.T) {
 		t.Error("expected time to be non nil")
 	}
 	if cfg.GetHashFn == nil {
-		t.Error("expected time to be non nil")
+		t.Error("expected gethashfn to be non nil")
 	}
 	if cfg.BlockNumber == nil {
 		t.Error("expected block number to be non nil")
