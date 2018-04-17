@@ -47,10 +47,8 @@ func main() {
 		utils.Fatalf("dial err: %v", err)
 	}
 
-	maxProc := runtime.NumCPU()
-	if maxProc > *maxproc {
-		maxProc = *maxproc
-	}
+	maxProc := *maxproc
+
 	for i := 0; i < maxProc; i++ {
 		go miner(fmt.Sprintf("cpu%v", i+1), client)
 	}
@@ -127,7 +125,7 @@ func miner(label string, client *aquaclient.Client) {
 				if err != nil {
 					log.Println("error getting work:", err)
 					<-time.After(time.Second)
-					break
+					continue
 				}
 			}
 		}
