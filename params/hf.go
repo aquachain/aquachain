@@ -38,9 +38,24 @@ type HeaderVersion byte
 
 func (c ChainConfig) GetBlockVersion(height *big.Int) HeaderVersion {
 	if height == nil {
+		panic("done")
 		return 2
 	}
-	if height.Uint64() != 0 && c.IsHF(5, height) {
+
+	var (
+		h = height.Uint64()
+	)
+
+	if h != 0 && c.IsHF(9, height) && h%2 == 0 {
+		return 4
+	}
+	if h != 0 && c.IsHF(9, height) {
+		return 3
+	}
+	if h != 0 && c.IsHF(8, height) {
+		return 3
+	}
+	if h != 0 && c.IsHF(5, height) {
 		return 2
 	}
 	return 1

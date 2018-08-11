@@ -325,58 +325,96 @@ func (aquahash *Aquahash) CalcDifficulty(chain consensus.ChainReader, time uint6
 // the difficulty that a new block should have when created at time
 // given the parent block's time and difficulty.
 func CalcDifficulty(config *params.ChainConfig, time uint64, parent *types.Header) *big.Int {
-	next := new(big.Int).Add(parent.Number, big1)
+	if config.ChainId == nil {
+		panic("calc difficulty: no chainID set")
+	}
 
-	if config.ChainId != nil && config.ChainId.Cmp(params.TestnetChainConfig.ChainId) == 0 {
-		return calcDifficultyHF6Testnet(time, parent)
-	}
-	if config.ChainId != nil && config.ChainId.Cmp(params.Testnet2ChainConfig.ChainId) == 0 {
-		return calcDifficultyHF6Testnet(time, parent)
-	}
+	var (
+		next    = new(big.Int).Add(parent.Number, big1)
+		chainID = config.ChainId.Uint64()
+		mainnet = config.ChainId.Cmp(params.MainnetChainConfig.ChainId) == 0 // bool
+	)
 
 	switch {
+
+	// mainnet difficulty adjustment
+	// if a hardfork is not listed here it means there was no difficulty algorithm adjustments in that hf
+	//
+	// hardfork 9
+	case (config.GetHF(9) != nil && next.Cmp(config.GetHF(9)) == 0):
+		diff := new(big.Int).Sub(parent.Difficulty, new(big.Int).Div(parent.Difficulty, params.JumpDifficultyHF9)) // reset diff since pow is much different
+		log.Info("Activating Hardfork", "HF", 9, "BlockNumber", config.GetHF(9), "Difficulty", diff)
+		if mainnet {
+			return diff
+		} else {
+			return params.MinimumDifficultyHF5Testnet
+		}
+
+	case config.IsHF(9, next):
+		log.Debug("HF9 Difficulty", "number", next)
+		return calcDifficultyHF6(time, parent, 9, chainID)
+
+	// hardfork 8
+	case (config.GetHF(8) != nil && next.Cmp(config.GetHF(8)) == 0):
+		diff := new(big.Int).Sub(parent.Difficulty, new(big.Int).Div(parent.Difficulty, params.JumpDifficultyHF8)) // reset diff since pow is much different
+		log.Info("Activating Hardfork", "HF", 8, "BlockNumber", config.GetHF(8), "Difficulty", diff)
+		if mainnet {
+			return diff
+		} else {
+			return params.MinimumDifficultyHF5Testnet
+		}
+
+	case config.IsHF(8, next):
+		log.Debug("HF8 Difficulty", "number", next)
+		return calcDifficultyHF6(time, parent, 8, chainID)
 
 	// hardfork 6
 	case (config.GetHF(6) != nil && next.Cmp(config.GetHF(6)) == 0):
 		log.Info("Activating Hardfork", "HF", 6, "BlockNumber", config.GetHF(6))
-		return calcDifficultyHF6(time, parent)
+		return calcDifficultyHF6(time, parent, 6, chainID)
 	case config.IsHF(6, next):
-		return calcDifficultyHF6(time, parent)
+		log.Debug("HF6 Difficulty", "number", next)
+		return calcDifficultyHF6(time, parent, 6, chainID)
 
 	// hardfork 5
 	case (config.GetHF(5) != nil && next.Cmp(config.GetHF(5)) == 0):
 		log.Info("Activating Hardfork", "HF", 5, "BlockNumber", config.GetHF(5))
-		return params.MinimumDifficultyHF5 // reset diff since pow is much different
+		if mainnet {
+			return params.MinimumDifficultyHF5 // reset diff since pow is much different
+		} else {
+			return params.MinimumDifficultyHF5Testnet
+		}
 	case config.IsHF(5, next):
-		return calcDifficultyHF5(time, parent)
+		return calcDifficultyHF6(time, parent, 5, chainID)
 
 	// hardfork 3
 	case (config.GetHF(3) != nil && next.Cmp(config.GetHF(3)) == 0):
 		log.Info("Activating Hardfork", "HF", 3, "BlockNumber", config.GetHF(3))
-		return calcDifficultyHF3(time, parent)
+		return calcDifficultyHF6(time, parent, 3, chainID)
 	case config.IsHF(3, next):
-		return calcDifficultyHF3(time, parent)
+		return calcDifficultyHF6(time, parent, 3, chainID)
 
 	// hardfork 2
 	case (config.GetHF(2) != nil && next.Cmp(config.GetHF(2)) == 0):
 		log.Info("Activating Hardfork", "HF", 2, "BlockNumber", config.GetHF(2))
-		return calcDifficultyHF2(time, parent)
+		return calcDifficultyHF6(time, parent, 2, chainID)
 	case config.IsHF(2, next):
-		return calcDifficultyHF2(time, parent)
+		return calcDifficultyHF6(time, parent, 2, chainID)
 
 	// hardfork 1
 	case (config.GetHF(1) != nil && next.Cmp(config.GetHF(1)) == 0):
 		log.Info("Activating Hardfork", "HF", 1, "BlockNumber", config.GetHF(1))
-		return calcDifficultyHF1(time, parent)
+		return calcDifficultyHF1(time, parent, chainID)
 
 	case config.IsHF(1, next):
-		return calcDifficultyHF1(time, parent)
+		return calcDifficultyHF1(time, parent, chainID)
 
-	// genesis mining
+	// genesis to HF1
 	case config.IsHomestead(next):
-		return calcDifficultyHomestead(time, parent)
+		return calcDifficultyHomestead(time, parent, chainID)
 	default:
-		return calcDifficultyHomestead(time, parent)
+		panic("unknown block type: " + next.String())
+		return calcDifficultyHomestead(time, parent, chainID)
 	}
 }
 
@@ -413,20 +451,35 @@ func (aquahash *Aquahash) VerifySeal(chain consensus.ChainReader, header *types.
 		size = 32 * 1024
 	}
 	var (
-		digest []byte
-		result []byte
+		digest     []byte
+		result     []byte
+		multiplier = big.NewInt(1)
 	)
 	switch header.Version {
 	default: // types.H_UNSET: // 0
 		panic("header version not set")
 	case types.H_KECCAK256: // 1
 		digest, result = hashimotoLight(size, cache.cache, header.HashNoNonce().Bytes(), header.Nonce.Uint64())
-	case types.H_ARGON2ID: // 2
+	case types.H_ARGON2ID_A: // 2
 		seed := make([]byte, 40)
 		copy(seed, header.HashNoNonce().Bytes())
 		binary.LittleEndian.PutUint64(seed[32:], header.Nonce.Uint64())
-		result = crypto.Argon2id(seed)
+		result = crypto.Argon2idA(seed)
 		digest = make([]byte, common.HashLength)
+	case types.H_ARGON2ID_B: // 3
+		seed := make([]byte, 40)
+		copy(seed, header.HashNoNonce().Bytes())
+		binary.LittleEndian.PutUint64(seed[32:], header.Nonce.Uint64())
+		result = crypto.Argon2idB(seed)
+		digest = make([]byte, common.HashLength)
+		multiplier.SetInt64(2)
+	case types.H_ARGON2ID_C: // 4
+		seed := make([]byte, 40)
+		copy(seed, header.HashNoNonce().Bytes())
+		binary.LittleEndian.PutUint64(seed[32:], header.Nonce.Uint64())
+		result = crypto.Argon2idC(seed)
+		digest = make([]byte, common.HashLength)
+		multiplier.SetInt64(2)
 	}
 	// Caches are unmapped in a finalizer. Ensure that the cache stays live
 	// until after the call to hashimotoLight so it's not unmapped while being used.
@@ -437,7 +490,7 @@ func (aquahash *Aquahash) VerifySeal(chain consensus.ChainReader, header *types.
 		return errInvalidMixDigest
 	}
 	target := new(big.Int).Div(maxUint256, header.Difficulty)
-	if new(big.Int).SetBytes(result).Cmp(target) > 0 {
+	if new(big.Int).Mul(new(big.Int).SetBytes(result), multiplier).Cmp(target) > 0 {
 		return errInvalidPoW
 	}
 	return nil
@@ -458,7 +511,9 @@ func (aquahash *Aquahash) Prepare(chain consensus.ChainReader, header *types.Hea
 // setting the final state and assembling the block.
 func (aquahash *Aquahash) Finalize(chain consensus.ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
 	// Accumulate any block and uncle rewards and commit the final state root
-	header.SetVersion(byte(chain.Config().GetBlockVersion(header.Number)))
+	if header.Version == 0 {
+		header.Version = chain.Config().GetBlockVersion(header.Number)
+	}
 	for i := range uncles {
 		uncles[i].Version = header.Version // uncles must have same version
 	}

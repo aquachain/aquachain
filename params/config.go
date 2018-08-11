@@ -38,6 +38,8 @@ var (
 		5: big.NewInt(22800), // HF5 argonated (argon2id)
 		6: big.NewInt(36000), // HF6 divisor increase
 		7: big.NewInt(36050), // eip 155, 158
+		8: big.NewInt(64000), // increase argon2id memory params
+		9: big.NewInt(72000), // increase argon2id memory params
 	}
 
 	// Testnet now is HF6, avoiding the block #3 (HF3) difficulty bomb
@@ -50,6 +52,8 @@ var (
 		5: big.NewInt(5),  // HF5
 		6: big.NewInt(6),  // noop in testnet
 		7: big.NewInt(25), // eip 155, 158
+		8: big.NewInt(80), // increase argon2id memory params
+		9: big.NewInt(90), // increase argon2id memory params
 	}
 
 	Testnet2HF = ForkMap{
@@ -57,6 +61,8 @@ var (
 		5: big.NewInt(0),
 		6: big.NewInt(0),
 		7: big.NewInt(0),
+		8: big.NewInt(8),
+		9: big.NewInt(9),
 	}
 )
 var (
@@ -74,7 +80,7 @@ var (
 
 	// TestnetChainConfig contains the chain parameters to run a node on the Aquachain test network.
 	TestnetChainConfig = &ChainConfig{
-		ChainId:        big.NewInt(3),
+		ChainId:        big.NewInt(61616161),
 		HomesteadBlock: big.NewInt(0),
 		EIP150Block:    big.NewInt(0),
 		EIP155Block:    TestnetHF[7],
