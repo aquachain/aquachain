@@ -369,7 +369,7 @@ func (self *worker) makeCurrent(parent *types.Block, header *types.Header) error
 	// when 08 is processed ancestors contain 07 (quick block)
 	for _, ancestor := range self.chain.GetBlocksFromHash(parent.Hash(), 7) {
 		for _, uncle := range ancestor.Uncles() {
-			work.family.Add(uncle.SetVersion(byte(self.config.GetBlockVersion(uncle.Number))))
+			work.family.Add(uncle.Hash())
 		}
 		work.family.Add(ancestor.Hash())
 		work.ancestors.Add(ancestor.Hash())
@@ -468,9 +468,7 @@ func (self *worker) commitNewWork() {
 		if len(uncles) == 1 {
 			break
 		}
-		unclehead := uncle.Header()
-		unclehead.Version = self.chain.Config().GetBlockVersion(unclehead.Number)
-		if err := self.commitUncle(work, unclehead); err != nil {
+		if err := self.commitUncle(work, uncle.Header()); err != nil {
 			log.Error("Bad uncle found and will be removed", "hash", hash, "err", err)
 			log.Trace(fmt.Sprint(uncle))
 
@@ -481,6 +479,7 @@ func (self *worker) commitNewWork() {
 		// 	log.Trace("Empty uncle found and will be removed", "hash", hash)
 		// 	log.Trace(fmt.Sprint(uncle))
 		// 	badUncles = append(badUncles, hash)
+		//	continue
 		// }
 
 		log.Debug("Committing new uncle to block", "hash", hash)

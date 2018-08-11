@@ -336,6 +336,13 @@ func CalcDifficulty(config *params.ChainConfig, time uint64, parent *types.Heade
 
 	switch {
 
+	// hardfork 8
+	case (config.GetHF(8) != nil && next.Cmp(config.GetHF(8)) == 0):
+		log.Info("Activating Hardfork", "HF", 8, "BlockNumber", config.GetHF(8))
+		return calcDifficultyHF8(time, parent)
+	case config.IsHF(8, next):
+		return calcDifficultyHF6(time, parent)
+
 	// hardfork 6
 	case (config.GetHF(6) != nil && next.Cmp(config.GetHF(6)) == 0):
 		log.Info("Activating Hardfork", "HF", 6, "BlockNumber", config.GetHF(6))
@@ -421,11 +428,17 @@ func (aquahash *Aquahash) VerifySeal(chain consensus.ChainReader, header *types.
 		panic("header version not set")
 	case types.H_KECCAK256: // 1
 		digest, result = hashimotoLight(size, cache.cache, header.HashNoNonce().Bytes(), header.Nonce.Uint64())
-	case types.H_ARGON2ID: // 2
+	case types.H_ARGON2ID_A: // 2
 		seed := make([]byte, 40)
 		copy(seed, header.HashNoNonce().Bytes())
 		binary.LittleEndian.PutUint64(seed[32:], header.Nonce.Uint64())
-		result = crypto.Argon2id(seed)
+		result = crypto.Argon2idA(seed)
+		digest = make([]byte, common.HashLength)
+	case types.H_ARGON2ID_B: // 2
+		seed := make([]byte, 40)
+		copy(seed, header.HashNoNonce().Bytes())
+		binary.LittleEndian.PutUint64(seed[32:], header.Nonce.Uint64())
+		result = crypto.Argon2idB(seed)
 		digest = make([]byte, common.HashLength)
 	}
 	// Caches are unmapped in a finalizer. Ensure that the cache stays live

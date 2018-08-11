@@ -40,6 +40,9 @@ func (c ChainConfig) GetBlockVersion(height *big.Int) HeaderVersion {
 	if height == nil {
 		return 2
 	}
+	if height.Uint64() != 0 && c.IsHF(8, height) {
+		return 3
+	}
 	if height.Uint64() != 0 && c.IsHF(5, height) {
 		return 2
 	}

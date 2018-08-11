@@ -146,11 +146,11 @@ search:
 			switch header.Version {
 			case 1:
 				digest, result = hashimotoFull(dataset.dataset, hash, nonce)
-			case 2:
+			case 2, 3:
 				seed := make([]byte, 40)
 				copy(seed, hash)
 				binary.LittleEndian.PutUint64(seed[32:], nonce)
-				result = crypto.Argon2id(seed)
+				result = crypto.VersionHash(byte(header.Version), seed)
 				digest = make([]byte, common.HashLength)
 			default:
 				common.Report("Mining incorrect version")

@@ -107,7 +107,8 @@ type HeaderVersion = params.HeaderVersion // byte
 const (
 	H_UNSET HeaderVersion = iota
 	H_KECCAK256
-	H_ARGON2ID
+	H_ARGON2ID_A
+	H_ARGON2ID_B
 )
 
 func (h *Header) SetVersion(version byte) common.Hash {
@@ -126,8 +127,10 @@ func (h *Header) Hash() common.Hash {
 	switch h.Version {
 	case H_KECCAK256:
 		return rlpHash(h)
-	case H_ARGON2ID:
-		return rlpHashArgon2id(h)
+	case H_ARGON2ID_A:
+		return rlpHashArgon2idA(h)
+	case H_ARGON2ID_B:
+		return rlpHashArgon2idB(h)
 	default:
 		common.Report(fmt.Sprintf("Hash algorithm not set, please report this error to developers. Number: %v, Version: %v", h.Number, h.Version))
 		panic("hash algorithm not set")
@@ -165,10 +168,17 @@ func rlpHash(x interface{}) (h common.Hash) {
 	hw.Sum(h[:0])
 	return h
 }
-func rlpHashArgon2id(x interface{}) (h common.Hash) {
+
+func rlpHashArgon2idA(x interface{}) (h common.Hash) {
 	buf := &bytes.Buffer{}
 	rlp.Encode(buf, x)
-	return common.BytesToHash(crypto.Argon2id(buf.Bytes()))
+	return common.BytesToHash(crypto.Argon2idA(buf.Bytes()))
+}
+
+func rlpHashArgon2idB(x interface{}) (h common.Hash) {
+	buf := &bytes.Buffer{}
+	rlp.Encode(buf, x)
+	return common.BytesToHash(crypto.Argon2idB(buf.Bytes()))
 }
 
 // Body is a simple (mutable, non-safe) data container for storing and moving
