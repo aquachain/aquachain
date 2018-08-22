@@ -1066,7 +1066,7 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 	for i, block := range chain {
 		headers[i] = block.Header()
 		if headers[i].Version == 0 {
-			log.Warn("header version not set", "number", headers[i].Number)
+			log.Error("header version not set", "number", headers[i].Number)
 			return 0, nil, nil, fmt.Errorf("invalid chain: header %s version not set", headers[i].Number)
 		}
 		seals[i] = true
@@ -1341,10 +1341,10 @@ func (bc *BlockChain) reorg(oldBlock, newBlock *types.Block) error {
 	// Ensure the user sees large reorgs
 	if len(oldChain) > 0 && len(newChain) > 0 {
 		logFn := log.Debug
-		if len(oldChain) > 63 {
+		if len(oldChain) > 5 {
 			logFn = log.Warn
 		}
-		logFn("Chain split detected", "number", commonBlock.Number(), "hash", commonBlock.Hash(),
+		logFn("Chain reorg", "number", commonBlock.Number(), "hash", commonBlock.Hash(),
 			"drop", len(oldChain), "dropfrom", oldChain[0].Hash(), "add", len(newChain), "addfrom", newChain[0].Hash())
 	} else {
 		log.Error("Impossible reorg, please file an issue", "oldnum", oldBlock.Number(), "oldhash", oldBlock.Hash(), "newnum", newBlock.Number(), "newhash", newBlock.Hash())

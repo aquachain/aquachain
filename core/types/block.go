@@ -114,7 +114,7 @@ const (
 
 func (h *Header) SetVersion(version byte) common.Hash {
 	if version == 0 {
-		panic("what zero")
+		panic("block version = zero")
 	}
 	h.Version = HeaderVersion(version)
 	return h.Hash()
@@ -138,7 +138,7 @@ func (h *Header) Hash() common.Hash {
 	case H_ARGON2ID_C:
 		return rlpHashArgon2idC(h)
 	default:
-		common.Report(fmt.Sprintf("Hash algorithm not set, please report this error to developers. Number: %v, Version: %v", h.Number, h.Version))
+		common.Report(fmt.Sprintf("Hash algorithm unknown, please report this error to developers. Number: %v, Version: %v", h.Number, h.Version))
 		panic("hash algorithm not set")
 	}
 }
