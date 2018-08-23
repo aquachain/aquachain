@@ -24,7 +24,7 @@ import (
 	"gitlab.com/aquachain/aquachain/rpc"
 )
 
-const version = "aquaminer version 0.4x (https://gitlab.com/aquachain/aquachain)"
+const version = "aquaminer version 0.9x (https://gitlab.com/aquachain/aquachain)"
 
 var (
 	digest       = common.BytesToHash(make([]byte, common.HashLength))
