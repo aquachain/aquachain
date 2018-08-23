@@ -91,7 +91,7 @@ func main() {
 
 	if !*benching {
 		tgunner := &tgun.Client{
-			UserAgent: "Aquadiver v0.4x",
+			UserAgent: "Aquadiver v0.9x",
 			Proxy:     *proxypath,
 		}
 		httpClient, err := tgunner.HTTPClient()
@@ -155,13 +155,13 @@ func refreshWork(ctx context.Context, client *aquaclient.Client, benchmarking bo
 		return common.Hash{}, benchdiff, 0, fmt.Errorf("getwork err: %v\ncheck address, pool url, and/or local rpc", err)
 	}
 	target := new(big.Int).SetBytes(common.HexToHash(work[2]).Bytes())
+	headerVersion := new(big.Int).SetBytes(common.HexToHash(work[1]).Bytes()).Uint64()
 	if *debug {
-		fmt.Println(work, "diff:", target)
+		fmt.Println(work, "diff:", target, "version:", headerVersion)
 	}
 
-	headerVersion := new(big.Int).SetBytes(common.HexToHash(work[1]).Bytes()).Uint64()
 	// set header version manually for before hf8
-	if headerVersion == 0 {
+	if headerVersion == 0 || headerVersion > 4 {
 		headerVersion = 2
 	}
 	return common.HexToHash(work[0]), target, headerVersion, nil
