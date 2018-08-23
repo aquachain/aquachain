@@ -128,7 +128,7 @@ func main() {
 			continue // dont send already known work
 		}
 		cachework = work
-		log.Printf("Begin new work:\n  HashNoNonce: %s\n  Difficulty %v\n", work.Hex(), big2diff(target))
+		log.Printf("Begin new work: %s (difficulty: %v) algo %v\n", work.Hex(), big2diff(target), algo)
 		for i := range workers {
 			workers[i].newwork <- workload{work, target, algo, err}
 		}
@@ -228,16 +228,16 @@ func miner(label string, client *aquaclient.Client, offline bool, getworkchan <-
 		result := common.BytesToHash(crypto.VersionHash(byte(algo), seed))
 		// check difficulty of result
 		if diff := new(big.Int).SetBytes(result.Bytes()); diff.Cmp(target) <= 0 {
-			log.Printf("found nonce: %v (diff: %v)", nonce, diff)
 			blknonce := types.EncodeNonce(nonce)
 			if offline {
 				continue
 			}
 			// submit the nonce, with the original job
 			if client.SubmitWork(ctx, blknonce, workHash, digest) {
-				log.Print("\n\n######\n\nGood Nonce!\n\n#####\n\n")
+				log.Println("good nonce:", nonce)
 			} else {
 				// there was an error when we send the work. lets get a totally
+				log.Println("nonce not accepted", nonce)
 				// random nonce, instead of incrementing more
 				mrand.Seed(int64(nonce))
 				nonce = mrand.Uint64()
