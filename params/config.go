@@ -39,16 +39,16 @@ var (
 		6: big.NewInt(36000), // HF6 divisor increase
 		7: big.NewInt(36050), // eip 155, 158
 		8: big.NewInt(64000), // increase argon2id memory params
-		9: big.NewInt(72000), // increase argon2id memory params
+		9: big.NewInt(72000), // increase argon2id memory params alternate
 	}
 
 	// Testnet now is HF6, avoiding the block #3 (HF3) difficulty bomb
 	TestnetHF = ForkMap{
-		0: big.NewInt(0),  //  hf0 had no changes
-		1: big.NewInt(1),  // increase min difficulty to the next multiple of 2048
-		2: big.NewInt(2),  // use simple difficulty algo (240 seconds)
-		3: big.NewInt(3),  // increase min difficulty for anticipation of gpu mining
-		4: big.NewInt(4),  // HF4
+		//0: big.NewInt(0),  //  hf0 had no changes
+		//1: big.NewInt(1),  // increase min difficulty to the next multiple of 2048
+		//2: big.NewInt(2),  // use simple difficulty algo (240 seconds)
+		//3: big.NewInt(3),  // increase min difficulty for anticipation of gpu mining
+		//4: big.NewInt(4),  // HF4
 		5: big.NewInt(5),  // HF5
 		6: big.NewInt(6),  // noop in testnet
 		7: big.NewInt(25), // eip 155, 158
@@ -57,12 +57,13 @@ var (
 	}
 
 	Testnet2HF = ForkMap{
-		4: big.NewInt(0),
-		5: big.NewInt(0),
-		6: big.NewInt(0),
-		7: big.NewInt(0),
-		8: big.NewInt(8),
-		9: big.NewInt(9),
+		// 0, 1, 2, 3 were difficulty algo changes
+		// 4: big.NewInt(0), irrelevant in testnet
+		5: big.NewInt(0), // argon2id 1,1,1
+		6: big.NewInt(0), // divisor increase
+		7: big.NewInt(0), // eip 155, 158
+		8: big.NewInt(8), // argon2id 1,256,1
+		9: big.NewInt(9), // argon2id 1,512,1 alternate
 	}
 )
 var (
@@ -188,15 +189,19 @@ func (c *ChainConfig) GetHF(hf int) *big.Int {
 }
 
 // NextHF returns the next scheduled hard fork block number
-func (c *ChainConfig) NextHF(cur *big.Int) *big.Int {
-	if cur != nil {
-		for _, height := range c.HF {
-			if cur.Cmp(height) < 0 {
-				return height
+func (c *ChainConfig) NextHF(cur *big.Int) (hf int, atblock *big.Int) {
+	if cur == nil {
+		return 0, nil
+	}
+	for i := len(AquachainHF); i >= 0; i-- {
+		if c.HF[i] != nil && cur.Cmp(c.HF[i]) < 0 {
+			if c.HF[i-1] != nil && cur.Cmp(c.HF[i-1]) < 0 {
+				continue
 			}
+			return i, c.HF[i]
 		}
 	}
-	return nil
+	return 0, nil
 
 }
 

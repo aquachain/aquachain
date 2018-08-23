@@ -1030,9 +1030,11 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 	for i := 1; i < len(chain); i++ {
 		if chain[i-1].Version() == 0 {
 			chain[i-1].SetVersion(bc.Config().GetBlockVersion(chain[i-1].Number()))
+			log.Trace("setting header version", "version", chain[i-1].Version(), "number", chain[i-1].Number())
 		}
 		if chain[i].Version() == 0 {
 			chain[i].SetVersion(bc.Config().GetBlockVersion(chain[i].Number()))
+			log.Trace("setting header version", "version", chain[i].Version(), "number", chain[i].Number())
 		}
 		if chain[i].NumberU64() != chain[i-1].NumberU64()+1 || chain[i].ParentHash() != chain[i-1].Hash() {
 			// Chain broke ancestry, log a messge (programming error) and skip insertion
@@ -1081,6 +1083,12 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 			log.Debug("Premature abort during blocks processing")
 			break
 		}
+
+		if block.Version() == 0 {
+			panic("bad block.")
+		}
+
+		log.Info("block", "number", block.Number(), "version", block.Version())
 		// If the header is a banned one, straight out abort
 		if BadHashes[block.Hash()] {
 			bc.reportBlock(block, nil, ErrBlacklistedHash)
@@ -1090,6 +1098,9 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 		bstart := time.Now()
 
 		err := <-results
+		if err != nil {
+			log.Error("error", "err", err, "block", block.Number(), "version", block.Version())
+		}
 		if err == nil {
 			block.Hash()
 			err = bc.Validator().ValidateBody(block)
@@ -1189,7 +1200,7 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 		}
 		switch status {
 		case CanonStatTy:
-			log.Debug("Inserted new block", "number", block.Number(), "hash", block.Hash(), "uncles", len(block.Uncles()),
+			log.Debug("Inserted new block", "number", block.Number(), "version", block.Version(), "hash", block.Hash(), "uncles", len(block.Uncles()),
 				"txs", len(block.Transactions()), "gas", block.GasUsed(), "elapsed", common.PrettyDuration(time.Since(bstart)))
 
 			coalescedLogs = append(coalescedLogs, logs...)
@@ -1458,6 +1469,9 @@ Hash: 0x%x
 Error: %v
 ##############################
 `, bc.chainConfig, block.Number(), block.Hash(), receiptString, err))
+	if bc.chainConfig.ChainId.Cmp(params.MainnetChainConfig.ChainId) != 0 {
+		//	panic("bad block on import")
+	}
 }
 
 // InsertHeaderChain attempts to insert the given header chain in to the local

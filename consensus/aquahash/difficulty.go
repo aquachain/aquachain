@@ -16,6 +16,7 @@ var (
 	big10         = big.NewInt(10)
 	big240        = big.NewInt(240)
 	bigMinus99    = big.NewInt(-99)
+	big10000      = big.NewInt(10000)
 )
 
 // calcDifficultyHomestead is the difficulty adjustment algorithm. It returns
@@ -92,39 +93,52 @@ func calcDifficultyHF1(time uint64, parent *types.Header, chainID uint64) *big.I
 // the difficulty that a new block should have when created at time given the
 // parent block's time and difficulty. The calculation uses modified Homestead rules.
 // It is flawed, target 10 seconds
-func calcDifficultyX(time uint64, parent *types.Header, hf int, chainID uint64) *big.Int {
-	bigTime := new(big.Int).SetUint64(time)
+func calcDifficultyGrandparent(time uint64, parent, grandparent *types.Header, hf int, chainID uint64) *big.Int {
+	bigGrandparentTime := new(big.Int).Set(grandparent.Time)
 	bigParentTime := new(big.Int).Set(parent.Time)
-
+	if bigParentTime.Cmp(bigGrandparentTime) <= 0 {
+		panic("invalid code")
+	}
 	// holds intermediate values to make the algo easier to read & audit
 	x := new(big.Int)
 	y := new(big.Int)
 
-	// 1 - (block_timestamp - parent_timestamp) // 10
-	x.Sub(bigTime, bigParentTime)
+	divisor := params.DifficultyBoundDivisorHF5
+
+	// 1 - (block_timestamp - parent_timestamp) // 240
+	x.Sub(bigParentTime, bigGrandparentTime)
 	x.Div(x, big240)
 	x.Sub(big1, x)
 
-	// max(1 - (block_timestamp - parent_timestamp) // 10, -99)
+	// max(1 - (block_timestamp - parent_timestamp) // 240, -99)
 	if x.Cmp(bigMinus99) < 0 {
 		x.Set(bigMinus99)
 	}
+
+	if grandparent.Difficulty.Cmp(big10000) < 0 {
+		divisor = params.DifficultyBoundDivisorHF5
+	} else {
+		divisor = params.DifficultyBoundDivisorHF8
+	}
 	// (parent_diff + parent_diff // 2048 * max(1 - (block_timestamp - parent_timestamp) // 10, -99))
-	y.Div(parent.Difficulty, params.DifficultyBoundDivisor)
+	y.Div(grandparent.Difficulty, divisor)
 	x.Mul(y, x)
-	x.Add(parent.Difficulty, x)
+	x.Add(grandparent.Difficulty, x)
 
 	// minimum difficulty can ever be (before exponential factor)
 	if chainID == params.MainnetChainConfig.ChainId.Uint64() {
-		x = math.BigMax(x, params.MinimumDifficultyHF1)
+		x = math.BigMax(x, params.MinimumDifficultyHF5)
 	}
 	return x
 }
 func calcDifficultyHF6(time uint64, parent *types.Header, hf int, chainID uint64) *big.Int {
-	return calcDifficultyHFX(time, parent, hf, chainID)
+	return calcDifficultyHFX(time, nil, parent, hf, chainID)
 }
 
-func calcDifficultyHFX(time uint64, parent *types.Header, hf int, chainID uint64) *big.Int {
+func calcDifficultyHF10(time uint64, grandparent, parent *types.Header, hf int, chainID uint64) *big.Int {
+	return calcDifficultyGrandparent(time, grandparent, parent, hf, chainID)
+}
+func calcDifficultyHFX(time uint64, grandparent, parent *types.Header, hf int, chainID uint64) *big.Int {
 	var (
 		diff          = new(big.Int)
 		adjust        *big.Int
@@ -137,9 +151,9 @@ func calcDifficultyHFX(time uint64, parent *types.Header, hf int, chainID uint64
 
 	switch hf {
 	case 10:
-		return calcDifficultyX(time, parent, hf, chainID)
+		panic("hf 10 not implemented")
 	case 9:
-		adjust = new(big.Int).Div(parent.Difficulty, params.DifficultyBoundDivisorHF9)
+		return calcDifficultyGrandparent(time, grandparent, parent, hf, chainID)
 	case 8:
 		adjust = new(big.Int).Div(parent.Difficulty, params.DifficultyBoundDivisorHF8)
 	case 6, 7:

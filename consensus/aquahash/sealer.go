@@ -49,6 +49,7 @@ func (aquahash *Aquahash) Seal(chain consensus.ChainReader, block *types.Block, 
 	}
 	// If we're running a shared PoW, delegate sealing to it
 	if aquahash.shared != nil {
+		log.Debug("delegating work", "block", block.Number(), "version", block.Version())
 		return aquahash.shared.Seal(chain, block, stop)
 	}
 	// Create a runner and the multiple search threads it directs
@@ -153,7 +154,7 @@ search:
 				result = crypto.VersionHash(byte(header.Version), seed)
 				digest = make([]byte, common.HashLength)
 			default:
-				common.Report("Mining incorrect version")
+				logger.Error("Mining incorrect version", "block", number, "version", version)
 				break search
 			}
 
