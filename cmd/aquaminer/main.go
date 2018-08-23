@@ -212,7 +212,7 @@ func miner(label string, client *aquaclient.Client, offline bool, getworkchan <-
 		fps++
 		select {
 		case <-second:
-			log.Print("(", label, ")", fps/(*refresh).Seconds(), "H/s (algo #%v)\n")
+			log.Printf("( %s %2.8fH/s (algo #%v)", label, fps/(*refresh).Seconds(), algo)
 			fps = 0
 		default:
 		}
