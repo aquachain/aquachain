@@ -154,10 +154,11 @@ func refreshWork(ctx context.Context, client *aquaclient.Client, benchmarking bo
 	if err != nil {
 		return common.Hash{}, benchdiff, 0, fmt.Errorf("getwork err: %v\ncheck address, pool url, and/or local rpc", err)
 	}
-	if *debug {
-		fmt.Println(work)
-	}
 	target := new(big.Int).SetBytes(common.HexToHash(work[2]).Bytes())
+	if *debug {
+		fmt.Println(work, "diff:", target)
+	}
+
 	headerVersion := new(big.Int).SetBytes(common.HexToHash(work[1]).Bytes()).Uint64()
 	// set header version manually for before hf8
 	if headerVersion == 0 {
@@ -212,7 +213,7 @@ func miner(label string, client *aquaclient.Client, offline bool, getworkchan <-
 		fps++
 		select {
 		case <-second:
-			log.Printf("( %s %2.8fH/s (algo #%v)", label, fps/(*refresh).Seconds(), algo)
+			log.Printf("( %s %2.0fH/s (algo #%v)", label, fps/(*refresh).Seconds(), algo)
 			fps = 0
 		default:
 		}
@@ -224,11 +225,10 @@ func miner(label string, client *aquaclient.Client, offline bool, getworkchan <-
 		seed := make([]byte, 40)
 		copy(seed, workHash.Bytes())
 		binary.LittleEndian.PutUint64(seed[32:], nonce)
-		result := crypto.VersionHash(byte(algo), seed)
-
+		result := common.BytesToHash(crypto.VersionHash(byte(algo), seed))
 		// check difficulty of result
-		if new(big.Int).SetBytes(result).Cmp(target) <= 0 {
-			log.Print("valid nonce found (", nonce, ")\n")
+		if diff := new(big.Int).SetBytes(result.Bytes()); diff.Cmp(target) <= 0 {
+			log.Printf("found nonce: %v (diff: %v)", nonce, diff)
 			blknonce := types.EncodeNonce(nonce)
 			if offline {
 				continue

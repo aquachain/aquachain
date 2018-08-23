@@ -128,8 +128,11 @@ func calcDifficultyGrandparent(time uint64, parent, grandparent *types.Header, h
 	// minimum difficulty can ever be (before exponential factor)
 	if chainID == params.MainnetChainConfig.ChainId.Uint64() {
 		x = math.BigMax(x, params.MinimumDifficultyHF5)
+	} else {
+		x = math.BigMax(x, params.MinimumDifficultyHF5Testnet)
 	}
 	return x
+
 }
 func calcDifficultyHF6(time uint64, parent *types.Header, hf int, chainID uint64) *big.Int {
 	return calcDifficultyHFX(time, nil, parent, hf, chainID)
@@ -148,7 +151,6 @@ func calcDifficultyHFX(time uint64, grandparent, parent *types.Header, hf int, c
 		min           = params.MinimumDifficultyHF5
 		mainnet       = params.MainnetChainConfig.ChainId.Uint64() == chainID // bool
 	)
-
 	switch hf {
 	case 10:
 		panic("hf 10 not implemented")
@@ -180,6 +182,10 @@ func calcDifficultyHFX(time uint64, grandparent, parent *types.Header, hf int, c
 	bigTime.SetUint64(time)
 	bigParentTime.Set(parent.Time)
 
+	if !mainnet {
+		min = params.MinimumDifficultyHF5Testnet
+	}
+
 	// calculate difficulty
 	if bigTime.Sub(bigTime, bigParentTime).Cmp(limit) < 0 {
 		diff.Add(parent.Difficulty, adjust)
@@ -187,7 +193,7 @@ func calcDifficultyHFX(time uint64, grandparent, parent *types.Header, hf int, c
 		diff.Sub(parent.Difficulty, adjust)
 	}
 
-	if mainnet && diff.Cmp(min) < 0 {
+	if diff.Cmp(min) < 0 {
 		diff.Set(min)
 	}
 

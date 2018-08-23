@@ -162,7 +162,8 @@ func (a *RemoteAgent) SubmitWork(nonce types.BlockNonce, mixDigest, hash common.
 	result.Nonce = nonce
 	result.MixDigest = mixDigest
 	if result.Version == 0 {
-		log.Info("Not real work", "version", result.Version)
+		log.Warn("Not real work", "version", result.Version)
+		return false
 	}
 	if err := a.engine.VerifySeal(a.chain, result); err != nil {
 		log.Warn("Invalid proof-of-work submitted", "hash", hash, "err", err)
