@@ -174,7 +174,7 @@ func (aquahash *Aquahash) verifyHeaderWorker(chain consensus.ChainReader, header
 		if parent == nil && headers[0].Number.Uint64() > 0 {
 			return consensus.ErrUnknownAncestor
 		} else if parent == nil && headers[0].Number.Uint64() == 0 { // genesis has no parent
-			//		return aquahash.verifyHeader(chain, headers[index], parent, grandparent, false, seals[index])
+			// do nothing here
 		} else {
 			grandparent = chain.GetHeader(parent.ParentHash, parent.Number.Uint64()-1)
 			if grandparent == nil && headers[index].Number.Uint64() > 3 {
@@ -320,8 +320,13 @@ func (aquahash *Aquahash) verifyHeader(chain consensus.ChainReader, header, pare
 			return consensus.ErrFutureBlock
 		}
 	}
+
 	if parent == nil && header.Number.Cmp(big0) != 0 {
-		return fmt.Errorf("invalid block: has no parent")
+		parent = chain.GetHeader(header.ParentHash, header.Number.Uint64()-1)
+		if parent == nil {
+			log.Error("nil parent?", "header", header)
+			return fmt.Errorf("invalid block: has no parent")
+		}
 	}
 	if parent != nil && header.Time.Cmp(parent.Time) <= 0 {
 		return errZeroBlockTime
