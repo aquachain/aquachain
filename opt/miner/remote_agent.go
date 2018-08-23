@@ -115,6 +115,9 @@ func (a *RemoteAgent) GetWork() ([3]string, error) {
 	if a.currentWork != nil {
 		block := a.currentWork.Block
 		version := block.Version()
+		if version == 0 {
+			panic("remote getwork not set")
+		}
 		res[0] = block.HashNoNonce().Hex()
 		switch {
 		case version < 2:
@@ -122,10 +125,11 @@ func (a *RemoteAgent) GetWork() ([3]string, error) {
 			res[1] = common.BytesToHash(seedHash).Hex()
 		case version == 2:
 			res[1] = common.Hash{}.Hex()
-		case version == 3:
+		case version > 2:
 			res[1] = common.BytesToHash([]byte{byte(version)}).Hex()
 		default:
-			panic("not implemented")
+			log.Error("header", "version", version)
+			panic("remote version not implemented")
 		}
 		// Calculate the "target" to be returned to the external miner
 		n := big.NewInt(1)
