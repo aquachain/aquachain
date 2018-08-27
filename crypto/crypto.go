@@ -50,6 +50,8 @@ const (
 // Argon2id calculates and returns the Argon2id hash of the input data.
 func VersionHash(v byte, data ...[]byte) []byte {
 	switch v {
+	case 1:
+		return Keccak256(data...)
 	case 2:
 		return argon2idA(data...)
 	case 3:
@@ -93,7 +95,7 @@ func argon2idB(data ...[]byte) []byte {
 	for i := range data {
 		buf.Write(data[i])
 	}
-	return argon2.IDKey(buf.Bytes(), nil, argonTime, 1024, argonThreads, common.HashLength)
+	return argon2.IDKey(buf.Bytes(), nil, argonTime, 1024*256, argonThreads, common.HashLength)
 }
 
 // Argon2id calculates and returns the Argon2id hash of the input data.
@@ -103,7 +105,7 @@ func argon2idC(data ...[]byte) []byte {
 	for i := range data {
 		buf.Write(data[i])
 	}
-	return argon2.IDKey(buf.Bytes(), nil, argonTime, 1024*2, argonThreads, common.HashLength)
+	return argon2.IDKey(buf.Bytes(), nil, argonTime, 1024*512, argonThreads, common.HashLength)
 }
 
 // Argon2id calculates and returns the Argon2id hash of the input data.
