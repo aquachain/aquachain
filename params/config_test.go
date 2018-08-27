@@ -88,12 +88,12 @@ func TestNextHF(t *testing.T) {
 	}
 	for i, config := range []*ChainConfig{MainnetChainConfig} {
 		for _, v := range []tc{
-			tc{big.NewInt(0), 0, config.HF[0]},
-			tc{big.NewInt(1), 0, config.HF[0]},
-			tc{big.NewInt(3001), 1, config.HF[1]},
-			tc{big.NewInt(3600), 2, config.HF[2]},
-			tc{big.NewInt(64000), 9, config.HF[9]},
-			tc{big.NewInt(84000000), 0, nil},
+			{big.NewInt(0), 0, config.HF[0]},
+			{big.NewInt(1), 0, config.HF[0]},
+			{big.NewInt(3001), 1, config.HF[1]},
+			{big.NewInt(3600), 2, config.HF[2]},
+			{big.NewInt(64000), 9, config.HF[9]},
+			{big.NewInt(84000000), 0, nil},
 		} {
 			gothf, got := config.NextHF(v.number)
 			if got == nil {
