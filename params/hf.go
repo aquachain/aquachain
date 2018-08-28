@@ -46,15 +46,15 @@ func (c ChainConfig) GetBlockVersion(height *big.Int) HeaderVersion {
 	)
 
 	if h != 0 && c.IsHF(9, height) && h%2 == 0 {
-		return 4 // argon2id, 1, 512, 1
+		return 4 // argon2id, 1, 512m, 1
 	}
 
 	if h != 0 && c.IsHF(9, height) {
-		return 3 // argon2id, 1, 256, 1
+		return 3 // argon2id, 1, 256m, 1
 	}
 
 	if h != 0 && c.IsHF(8, height) {
-		return 3 // argon2id, 1, 256, 1
+		return 3 // argon2id, 1, 256m, 1
 	}
 
 	if h != 0 && c.IsHF(5, height) { // argon2id, 1, 1, 1

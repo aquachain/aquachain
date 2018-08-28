@@ -53,7 +53,7 @@ var (
 		6: big.NewInt(6),  // noop in testnet
 		7: big.NewInt(25), // eip 155, 158
 		8: big.NewInt(80), // increase argon2id memory params
-		9: big.NewInt(90), // increase argon2id memory params
+//		9: big.NewInt(90), // increase argon2id memory params
 	}
 
 	Testnet2HF = ForkMap{
