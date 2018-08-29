@@ -191,3 +191,6 @@ race:
 
 install:
 	install $(GOBIN)/aquachain /usr/local/bin/
+
+update-vendor:
+	govendor update -v +vendor

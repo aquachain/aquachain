@@ -397,10 +397,6 @@ func CalcDifficultyHF8(chain consensus.ChainReader, time uint64, parent *types.H
 	case (config.GetHF(9) != nil && next.Cmp(config.GetHF(9)) == 0):
 		diff := new(big.Int).Sub(parent.Difficulty, new(big.Int).Div(parent.Difficulty, params.JumpDifficultyHF9)) // reset diff since pow is much different
 		log.Info("Activating Hardfork", "HF", 9, "BlockNumber", config.GetHF(9), "Difficulty", diff)
-		if grandparent == nil {
-			panic("HF9 Activated, nil grandparent")
-		}
-		log.Debug("HF9 Difficulty Jump", "number", next, "version", config.GetBlockVersion(next), "parentDiff", parent.Difficulty, "gparentDiff", grandparent.Difficulty)
 		if mainnet {
 			return diff
 		} else {
@@ -414,7 +410,6 @@ func CalcDifficultyHF8(chain consensus.ChainReader, time uint64, parent *types.H
 	// hardfork 8
 	case (config.GetHF(8) != nil && next.Cmp(config.GetHF(8)) == 0):
 		diff := new(big.Int).Sub(parent.Difficulty, new(big.Int).Div(parent.Difficulty, params.JumpDifficultyHF8)) // reset diff since pow is much different
-		log.Debug("HF8 Difficulty", "number", next, "version", config.GetBlockVersion(next))
 		log.Info("Activating Hardfork", "HF", 8, "BlockNumber", config.GetHF(8), "Difficulty", diff)
 		if mainnet {
 			return diff

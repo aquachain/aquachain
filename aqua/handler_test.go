@@ -17,6 +17,7 @@
 package aqua
 
 import (
+	"fmt"
 	"math"
 	"math/big"
 	"math/rand"
@@ -197,6 +198,7 @@ func testGetBlockHeaders(t *testing.T, protocol int) {
 	}
 	// Run each of the tests and verify the results against the chain
 	for i, tt := range tests {
+		fmt.Println("running test", i, tt)
 		// Collect the headers to expect in the response
 		headers := []*types.Header{}
 		for _, hash := range tt.expect {
