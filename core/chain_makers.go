@@ -225,7 +225,7 @@ func makeHeader(chain consensus.ChainReader, parent *types.Block, state *state.S
 	if parent.Time() == nil {
 		time = big.NewInt(240)
 	} else {
-		time = new(big.Int).Add(parent.Time(), big.NewInt(240)) // block time is fixed at 10 seconds
+		time = new(big.Int).Add(parent.Time(), big.NewInt(240)) // block time is fixed at 240 seconds
 	}
 	gparent := chain.GetHeader(parent.ParentHash(), parent.Number().Uint64()-1)
 	num := new(big.Int).Add(parent.Number(), common.Big1)

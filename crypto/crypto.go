@@ -50,6 +50,8 @@ const (
 // Argon2id calculates and returns the Argon2id hash of the input data.
 func VersionHash(v byte, data ...[]byte) []byte {
 	switch v {
+	//	case 0:
+	//		return Keccak256(data...)
 	case 1:
 		return Keccak256(data...)
 	case 2:
