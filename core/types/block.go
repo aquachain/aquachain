@@ -271,6 +271,9 @@ func NewBlockWithHeader(header *Header) *Block {
 // CopyHeader creates a deep copy of a block header to prevent side effects from
 // modifying a header variable.
 func CopyHeader(h *Header) *Header {
+	if h == nil {
+		return nil
+	}
 	cpy := *h
 	if cpy.Time = new(big.Int); h.Time != nil {
 		cpy.Time.Set(h.Time)

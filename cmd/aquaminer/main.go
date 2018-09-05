@@ -238,6 +238,7 @@ func miner(label string, client *aquaclient.Client, offline bool, getworkchan <-
 			} else {
 				// there was an error when we send the work. lets get a totally
 				log.Println("nonce not accepted", nonce)
+				<-time.After(time.Millisecond * 500)
 				// random nonce, instead of incrementing more
 				mrand.Seed(int64(nonce))
 				nonce = mrand.Uint64()

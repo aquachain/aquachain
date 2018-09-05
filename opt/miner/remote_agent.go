@@ -131,6 +131,47 @@ func (a *RemoteAgent) GetWork() ([3]string, error) {
 	return res, errors.New("No work available yet, don't panic.")
 }
 
+// SubmitBlock tries to inject a pow solution into the remote agent, returning
+// whether the solution was accepted or not (not can be both a bad pow as well as
+// any other error, like no work pending).
+func (a *RemoteAgent) SubmitBlock(block *types.Block) bool {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.currentWork != nil {
+		if block == nil {
+			log.Warn("nil block")
+			return false
+		}
+		if block.Header() == nil {
+			log.Warn("nil block header")
+			return false
+		}
+		if wanted := new(big.Int).Add(a.chain.CurrentHeader().Number, common.Big1); block.Number().Uint64() != wanted.Uint64() {
+			log.Warn("Block submitted out of order", "number", block.Number(), "wanted", wanted)
+			return false
+		}
+		// Make sure the Engine solutions is indeed valid
+		result := block.Header()
+		result.Version = a.chain.Config().GetBlockVersion(result.Number)
+		if result.Version == 0 {
+			log.Warn("Not real work", "version", result.Version)
+			return false
+		}
+		if err := a.engine.VerifyHeader(a.chain, result, true); err != nil {
+			log.Warn("Invalid proof-of-work submitted", "hash", result.Hash(), "number", result.Number, "err", err)
+			return false
+		}
+		// Solutions seems to be valid, return to the miner and notify acceptance
+		a.returnCh <- &Result{nil, block}
+		return true
+
+	}
+	log.Warn("no work yet")
+	return false
+}
+
+// loop monitors mining events on the work and quit channels, updating the internal
+// state of the remote miner until a termination is requested.
 // SubmitWork tries to inject a pow solution into the remote agent, returning
 // whether the solution was accepted or not (not can be both a bad pow as well as
 // any other error, like no work pending).
@@ -186,7 +227,7 @@ func (a *RemoteAgent) loop(workCh chan *Work, quitCh chan struct{}) {
 			// cleanup
 			a.mu.Lock()
 			for hash, work := range a.work {
-				if time.Since(work.createdAt) > 7*(12*time.Second) {
+				if time.Since(work.createdAt) > 3*(240*time.Second) {
 					delete(a.work, hash)
 				}
 			}

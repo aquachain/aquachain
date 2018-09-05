@@ -487,6 +487,11 @@ func (ec *Client) SubmitWork(ctx context.Context, nonce types.BlockNonce, soluti
 	return ec.c.CallContext(ctx, &ok, "aqua_submitWork", nonce, solution, digest) == nil && ok
 }
 
+func (ec *Client) SubmitBlock(ctx context.Context, encodedBlock []byte) bool {
+	var ok bool
+	return ec.c.CallContext(ctx, &ok, "aqua_submitBlock", encodedBlock) == nil && ok
+}
+
 func toCallArg(msg aquachain.CallMsg) interface{} {
 	arg := map[string]interface{}{
 		"from": msg.From,
