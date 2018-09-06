@@ -1,0 +1,50 @@
+image: aquachain/xgo:latest
+
+stages:
+        - test
+        - build
+
+variables:
+  GIT_STRATEGY: none
+  PROJECT_PATH: gitlab.com/aquachain/aquachain
+  NAME: aquachain
+
+lint:
+  stage: test
+  before_script:
+   - go version
+   - export GOPATH=$(go env GOPATH)
+   - export GO_PROJECT_DIR="$GOPATH/src/$PROJECT_PATH"
+   - mkdir -p $GO_PROJECT_DIR
+   - time git clone $CI_REPOSITORY_URL $GO_PROJECT_DIR
+   - cd $GO_PROJECT_DIR
+   - git checkout $CI_COMMIT_REF_NAME
+   - printf 'pwd: ' && pwd
+
+  script:
+        - echo "running linter"
+        - printf 'pwd: ' && pwd
+        - sudo modprobe fuse
+        - sudo chmod ugo+rw /dev/fuse
+        - sudo chown root:$USER /etc/fuse.conf
+        - go run build/ci.go lint
+
+test:
+  stage: test
+  before_script:
+   - go version
+   - export GOPATH=$(go env GOPATH)
+   - export GO_PROJECT_DIR="$GOPATH/src/$PROJECT_PATH"
+   - time git clone $CI_REPOSITORY_URL $GO_PROJECT_DIR
+   - cd $GO_PROJECT_DIR
+   - git checkout $CI_COMMIT_REF_NAME
+  script:
+        - sudo modprobe fuse
+        - sudo chmod ugo+rw /dev/fuse
+        - sudo chown root:$USER /etc/fuse.conf
+        - go run build/ci.go install
+        - go run build/ci.go test -coverage
+
+build:
+        script:
+                make aquachain-static aquachain-windows aquachain-darwin-amd64
