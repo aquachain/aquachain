@@ -76,24 +76,24 @@ func Argon2idA(data ...[]byte) []byte {
 	return argon2.IDKey(buf.Bytes(), nil, argonTime, 1, argonThreads, common.HashLength)
 }
 
-// Argon2id calculates and returns the Argon2id hash of the input data, using 256mb mem
+// Argon2id calculates and returns the Argon2id hash of the input data, using 16kb mem
 func Argon2idB(data ...[]byte) []byte {
 	//fmt.Printf(".")
 	buf := &bytes.Buffer{}
 	for i := range data {
 		buf.Write(data[i])
 	}
-	return argon2.IDKey(buf.Bytes(), nil, argonTime, 1024*256, argonThreads, common.HashLength)
+	return argon2.IDKey(buf.Bytes(), nil, argonTime, 16, argonThreads, common.HashLength)
 }
 
-// Argon2id calculates and returns the Argon2id hash of the input data, using 512mb mem
+// Argon2id calculates and returns the Argon2id hash of the input data, using 32kb
 func Argon2idC(data ...[]byte) []byte {
 	//fmt.Printf(".")
 	buf := &bytes.Buffer{}
 	for i := range data {
 		buf.Write(data[i])
 	}
-	return argon2.IDKey(buf.Bytes(), nil, argonTime, 1024*512, argonThreads, common.HashLength)
+	return argon2.IDKey(buf.Bytes(), nil, argonTime, 32, argonThreads, common.HashLength)
 }
 
 // Argon2id calculates and returns the Argon2id hash of the input data.
