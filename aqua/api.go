@@ -94,6 +94,10 @@ func (api *PublicMinerAPI) SubmitWork(nonce types.BlockNonce, solution, digest c
 // accepted. Note, this is not an indication if the provided work was valid!
 func (api *PublicMinerAPI) SubmitBlock(encodedBlock []byte) bool {
 	var block types.Block
+	if encodedBlock == nil {
+		log.Warn("submitblock rlp got nil")
+		return false
+	}
 	if err := rlp.DecodeBytes(encodedBlock, &block); err != nil {
 		log.Warn("submitblock rlp decode error", "err", err)
 		return false
@@ -101,6 +105,15 @@ func (api *PublicMinerAPI) SubmitBlock(encodedBlock []byte) bool {
 	block.SetVersion(api.e.chainConfig.GetBlockVersion(block.Number()))
 	log.Debug("RPC client submitted block:", "block", block.Header())
 	return api.agent.SubmitBlock(&block)
+}
+
+func (api *PublicMinerAPI) GetBlockTemplate() ([]byte, error) {
+	if !api.e.IsMining() {
+		if err := api.e.StartMining(false); err != nil {
+			return nil, err
+		}
+	}
+	return api.agent.GetBlockTemplate()
 }
 
 // GetWork returns a work package for external miner. The work package consists of 3 strings

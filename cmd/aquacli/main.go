@@ -10,6 +10,7 @@ import (
 
 	"gitlab.com/aquachain/aquachain/cmd/utils"
 	"gitlab.com/aquachain/aquachain/common"
+	"gitlab.com/aquachain/aquachain/consensus/lightvalid"
 	"gitlab.com/aquachain/aquachain/core/types"
 	"gitlab.com/aquachain/aquachain/internal/debug"
 	"gitlab.com/aquachain/aquachain/opt/aquaclient"
@@ -21,7 +22,7 @@ import (
 
 var (
 	big1   = big.NewInt(1)
-	Config = params.Testnet2ChainConfig
+	Config = params.TestnetChainConfig
 )
 
 var gitCommit = ""
@@ -32,10 +33,10 @@ var (
 
 func init() {
 	app.Name = "aquacli"
-	app.Action = runit
+	app.Action = loopit
 	app.Flags = append(debug.Flags, []cli.Flag{
 		cli.StringFlag{
-			Value: filepath.Join(utils.DataDirFlag.Value.String(), "testnet2/aquachain.ipc"),
+			Value: filepath.Join(utils.DataDirFlag.Value.String(), "testnet/aquachain.ipc"),
 			Name:  "rpc",
 			Usage: "path or url to rpc",
 		},
@@ -68,6 +69,13 @@ func main() {
 	}
 }
 
+func loopit(ctx *cli.Context) error {
+	for {
+		if err := runit(ctx); err != nil {
+			fmt.Println(err)
+		}
+	}
+}
 func runit(ctx *cli.Context) error {
 	rpcclient, err := getclient(ctx)
 	if err != nil {
@@ -78,34 +86,71 @@ func runit(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	_, _ = aqua.GetWork(context.Background())
-	parent.SetVersion(Config.GetBlockVersion(parent.Number()))
-	/* tstart := time.Now()
-	tstamp := tstart.Unix()
-	num := parent.Number()
-	numnew := num.Add(num, common.Big1)
-	 hdr := &types.Header{
-		ParentHash: parent.Hash(),
-		Number:     numnew,
-		GasLimit:   core.CalcGasLimit(parent),
-		Extra:      []byte("aqua"),
-		Time:       big.NewInt(tstamp),
-		Version:    Config.GetBlockVersion(numnew),
-	} */
-	fmt.Println(parent, header1)
-	block1 := types.NewBlock(header1, nil, nil, nil)
-	encoded, err := rlp.EncodeToBytes(&block1)
-	if err != nil {
-		return err
+	// prime rpc server for submitting work
+	//	_, _ = aqua.GetWork(context.Background())
+
+	var encoded []byte
+	// first block is on the house
+	if parent.Number().Uint64() == 0 {
+		parent.SetVersion(Config.GetBlockVersion(parent.Number()))
+		block1 := types.NewBlock(header1, nil, nil, nil)
+		encoded, err = rlp.EncodeToBytes(&block1)
+		if err != nil {
+			return err
+		}
+	} else {
+		encoded, err = aqua.GetBlockTemplate(context.Background())
+		if err != nil {
+			return err
+		}
+		var bt types.Block
+		if err := rlp.DecodeBytes(encoded, &bt); err != nil {
+			println("submitblock rlp decode error", err.Error())
+			return err
+		}
+		bt.SetVersion(Config.GetBlockVersion(bt.Number()))
+		encoded, err = mine(&bt)
+		if err != nil {
+			return err
+		}
 	}
+	if encoded == nil {
+		return fmt.Errorf("failed to encoded block to rlp")
+	}
+
 	if !aqua.SubmitBlock(context.Background(), encoded) {
 		fmt.Println("failed")
 		return fmt.Errorf("failed")
 	} else {
-		fmt.Println("success", block1)
+		fmt.Println("success")
 	}
 	return nil
 
+}
+
+func mine(block *types.Block) ([]byte, error) {
+	validator := lightvalid.New()
+	_ = validator
+	nonce := uint64(0)
+	resultHeader := block.Header()
+	for {
+		if nonce%1000 == 0 {
+			println(".")
+		}
+		nonce++
+		resultHeader.Nonce = types.EncodeNonce(nonce)
+		block = block.WithSeal(resultHeader)
+		if err := validator.VerifyWithError(block); err != nil {
+			continue
+		}
+		println("encoding block", block.String())
+		b, err := rlp.EncodeToBytes(&block)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Println(b)
+		return b, nil
+	}
 }
 
 func getclient(ctx *cli.Context) (*rpc.Client, error) {
