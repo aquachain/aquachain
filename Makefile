@@ -28,8 +28,9 @@ usb:
 aquachain-static:
 	build/env.sh go run build/ci.go install -static ./cmd/aquachain
 
-aquacli:
-	build/env.sh go run build/ci.go install -static ./cmd/aquacli
+aquastrat:
+	@echo "Building aquastrat, stratum test client"
+	build/env.sh go run build/ci.go install -static ./cmd/aquastrat
 
 aquaminer:
 	build/env.sh go run build/ci.go install ./cmd/aquaminer
