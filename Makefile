@@ -25,7 +25,7 @@ musl:
 usb:
 	build/env.sh go run build/ci.go install -usb ./cmd/aquachain 
 
-aquachain-static:
+static:
 	build/env.sh go run build/ci.go install -static ./cmd/aquachain
 
 aquastrat:
