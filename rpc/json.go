@@ -184,8 +184,12 @@ func parseRequest(incomingMsg json.RawMessage) ([]rpcRequest, bool, Error) {
 	log.Debug("handling rpc request", "method", in.Method, "params", string(in.Payload))
 
 	// try keeping eth compatibility
-	if strings.Contains(in.Method, "eth_") {
+	if strings.HasPrefix(in.Method, "eth_") {
 		in.Method = strings.Replace(in.Method, "eth_", "aqua_", -1)
+	}
+
+	if !strings.Contains(in.Method, "_") {
+		in.Method = "btc_" + in.Method
 	}
 
 	// subscribe are special, they will always use `subscribeMethod` as first param in the payload

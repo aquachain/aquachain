@@ -133,6 +133,10 @@ func GetAPIs(apiBackend Backend) []rpc.API {
 			Version:   "1.0",
 			Service:   NewPublicAccountAPI(apiBackend.AccountManager()),
 			Public:    true,
+		}, { // btcrpc
+			Namespace: "btc",
+			Version:   "1.0",
+			Service:   NewPublicBitcoinAPI(NewPublicBlockChainAPI(apiBackend)), // TODO: fix
 		},
 	}
 }
