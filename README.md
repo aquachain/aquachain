@@ -2,6 +2,8 @@
 
 Latest Source: https://gitlab.com/aquachain/aquachain 
 
+Mirrored: https://github.com/aquachain/aquachain
+
 How to build: https://github.com/aquanetwork/aquachain/wiki/Compiling
 
 ** Found a bug? Need help? see https://gitlab.com/aquachain/aquachain/wikis/bugs **
@@ -35,7 +37,7 @@ List all command line flags using the `-h` flag, or `aquachain help [subcommand]
 
 If you are reading this from the source tree, you can `go build ./cmd/aquachain`
 
-or `make`, or if on MacOS, use `make cgo`
+On windows, double-click make.bat to compile aquachain.exe onto your Desktop.
 
 ** Patches can be submitted at Github or Gitlab or Mailing List **
 
