@@ -10,7 +10,8 @@ DOFIRST != chmod +x build/env.sh
 COMMITHASH != git rev-parse HEAD
 aquachain:
 	@echo "Building default aquachain: ./build/bin/aquachain"
-	GOBIN=${GOBIN} CGO_ENABLED=${CGO_ENABLED} go install -tags 'netgo osusergo' -ldflags '-X main.gitCommit=${COMMITHASH} -s -w' -v ./cmd/aquachain
+	GOBIN=${GOBIN} CGO_ENABLED=${CGO_ENABLED} go install -tags 'netgo osusergo' \
+	      -ldflags '-X main.gitCommit=${COMMITHASH} -X main.buildDate=${shell date -u +%s} -s -w' -v ./cmd/aquachain
 
 cgo: aquachain-cgo
 

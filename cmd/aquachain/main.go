@@ -43,8 +43,8 @@ const (
 )
 
 var (
-	// Git SHA1 commit hash of the release (set via linker flags)
-	gitCommit = ""
+	// Git SHA1 commit hash and timestamp of the release (set via linker flags)
+	gitCommit, buildDate string
 	// The app that holds all commands and flags.
 	app = utils.NewApp(gitCommit, "the aquachain command line interface")
 	// flags that configure the node
@@ -204,6 +204,7 @@ func init() {
 }
 
 func main() {
+	fmt.Println(gitCommit, buildDate)
 	if err := app.Run(os.Args); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

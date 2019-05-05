@@ -22,6 +22,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	"gitlab.com/aquachain/aquachain/aqua"
 	"gitlab.com/aquachain/aquachain/cmd/utils"
@@ -112,6 +113,14 @@ func version(ctx *cli.Context) error {
 	if gitCommit != "" {
 		fmt.Println("Git Commit:", gitCommit)
 	}
+	if buildDate != "" {
+		ts, err := strconv.Atoi(buildDate)
+		if err == nil {
+			fmt.Printf("Build Date: %s UTC\n", time.Unix(int64(ts), 0).UTC().Format(time.ANSIC))
+		} else {
+			fmt.Printf("WARN: tried to get date, but got err: %v\n", err)
+		}
+	}
 	fmt.Println("Architecture:", runtime.GOARCH)
 	fmt.Println("Protocol Versions:", aqua.ProtocolVersions)
 	fmt.Println("Network Id:", aqua.DefaultConfig.NetworkId)
@@ -119,6 +128,7 @@ func version(ctx *cli.Context) error {
 	fmt.Println("Operating System:", runtime.GOOS)
 	fmt.Printf("GOPATH=%s\n", os.Getenv("GOPATH"))
 	fmt.Printf("GOROOT=%s\n", runtime.GOROOT())
+	fmt.Printf("Fork Map: %s\n", params.AquachainHF.String())
 	return nil
 }
 
