@@ -33,7 +33,7 @@ import (
 )
 
 // Client defines typed wrappers for the AquaChain RPC API. Callers will most
-// likely also import the aquachain/rpc package, but this package aims to cover
+// likely also import the aquachain/rpc/rpcclient package, but this package aims to cover
 // the most used methods..
 type Client struct {
 	c *rpc.Client
