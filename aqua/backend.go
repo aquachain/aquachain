@@ -410,14 +410,19 @@ func (s *AquaChain) StopMining()         { s.miner.Stop() }
 func (s *AquaChain) IsMining() bool      { return s.miner.Mining() }
 func (s *AquaChain) Miner() *miner.Miner { return s.miner }
 
-func (s *AquaChain) AccountManager() *accounts.Manager  { return s.accountManager }
-func (s *AquaChain) BlockChain() *core.BlockChain       { return s.blockchain }
-func (s *AquaChain) TxPool() *core.TxPool               { return s.txPool }
-func (s *AquaChain) EventMux() *event.TypeMux           { return s.eventMux }
-func (s *AquaChain) Engine() consensus.Engine           { return s.engine }
-func (s *AquaChain) ChainDb() aquadb.Database           { return s.chainDb }
-func (s *AquaChain) IsListening() bool                  { return true } // Always listening
-func (s *AquaChain) AquaVersion() int                   { return int(s.protocolManager.SubProtocols[0].Version) }
+func (s *AquaChain) AccountManager() *accounts.Manager { return s.accountManager }
+func (s *AquaChain) BlockChain() *core.BlockChain      { return s.blockchain }
+func (s *AquaChain) TxPool() *core.TxPool              { return s.txPool }
+func (s *AquaChain) EventMux() *event.TypeMux          { return s.eventMux }
+func (s *AquaChain) Engine() consensus.Engine          { return s.engine }
+func (s *AquaChain) ChainDb() aquadb.Database          { return s.chainDb }
+func (s *AquaChain) IsListening() bool                 { return true } // Always listening
+func (s *AquaChain) AquaVersion() int {
+	if s.protocolManager != nil {
+		return int(s.protocolManager.SubProtocols[0].Version)
+	}
+	return 0
+}
 func (s *AquaChain) NetVersion() uint64                 { return s.networkId }
 func (s *AquaChain) Downloader() *downloader.Downloader { return s.protocolManager.downloader }
 
