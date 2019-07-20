@@ -170,8 +170,6 @@ Bugs: https://gitlab.com/aquachain/aquachain/wikis/bugs
 
 Aquachain is free open source software and your contributions are welcome.
 
-[![Build Status](https://travis-ci.org/aquanetwork/aquachain.svg?branch=master)](https://travis-ci.org/aquanetwork/aquachain)
-
 ### Some tips and tricks for hacking on Aquachain core:
 
   * Always `gofmt -w -l -s` before commiting. If you forget, adding a simple
