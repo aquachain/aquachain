@@ -39,12 +39,6 @@
 			"revisionTime": "2018-09-27T02:58:44Z"
 		},
 		{
-			"checksumSHA1": "Ad8LPSCP9HctFrmskh+S5HpHXcs=",
-			"path": "github.com/docker/docker/pkg/reexec",
-			"revision": "683738900eec52f86b834234eeef054c4e135031",
-			"revisionTime": "2018-07-19T12:06:07Z"
-		},
-		{
 			"checksumSHA1": "48MqEzgdGgs5+XZbNpCnXMOMlDM=",
 			"path": "github.com/edsrzf/mmap-go",
 			"revision": "0bce6a6887123b67a60366d2c9fe2dfb74289d2e",
@@ -694,5 +688,5 @@
 			"revisionTime": "2017-08-11T01:42:03Z"
 		}
 	],
-	"rootPath": "gitlab.com/aer/aquachain"
+	"rootPath": "gitlab.com/aquachain/aquachain"
 }
