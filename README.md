@@ -4,7 +4,9 @@ Latest Source: https://gitlab.com/aquachain/aquachain
 
 Mirrored: https://github.com/aquachain/aquachain
 
-How to build: https://github.com/aquanetwork/aquachain/wiki/Compiling
+Old: https://github.com/aquanetwork/aquachain
+
+Improve the Wiki! https://github.com/aquanetwork/aquachain/wiki/Compiling
 
 ** Found a bug? Need help? see https://gitlab.com/aquachain/aquachain/wikis/bugs **
 
@@ -17,17 +19,30 @@ Aquachain: peer-to-peer programmable money, distributed code contract platform.
     Target Block Time: 240 second blocks (4 minute)
     Block Reward: 1 AQUA
     Max Supply: 42 million 
-    Explorer: https://aquachain.github.io/explorer/ 
     Algorithm: argon2id (CPU mined)
     ChainID/NetworkID: 61717561
 
+### Known Explorers:
+
+  * https://aquacha.in/explorer/
+  * https://explorer.aqua.signal2noi.se
+  * https://aquachain.github.io/explorer/
+
+### Known GUI Wallets:
+
+  * https://download.mycrypto.com
+  * https://walleth.org
+
 ## GET AQUACHAIN
 
-The `aquachain` command is a portable program that doesn't really need an
-'installer', you can run it from anywhere. When you first start `aquachain` you
-will connect to the peer-to-peer network and start downloading the chain. To
-change the way aquachain runs, for example testnet, or rpc, use command line
-flags. The location of your keys can be printed with: `aquachain account list`
+The `aquachain` command (full node, RPC server, and wallet) is a portable program 
+that doesn't really need an 'installer', you can run it from anywhere. When you 
+first start `aquachain` you will connect to the peer-to-peer network and start 
+downloading the chain. To change the way aquachain runs, for example testnet, 
+or rpc, use command line flags. The location of your keys can be printed with: 
+
+	`aquachain account list`
+
 You should keep backups your keystore files, and regularly check unlocking them.
 If not using keys, for example an RPC server, use the `-nokeys` flag.
 
@@ -35,20 +50,20 @@ List all command line flags using the `-h` flag, or `aquachain help [subcommand]
 
 ## COMPILING
 
-If you are reading this from the source tree, you can `go build ./cmd/aquachain`
+If you are reading this from the source tree, you can simply use `make`.
 
 On windows, double-click make.bat to compile aquachain.exe onto your Desktop.
 
 ** Patches can be submitted at Github or Gitlab or Mailing List **
 
-To [build latest](Documentation/Compiling.md) with go (recommended), simply use
+To [build latest](Documentation/Compiling.md) with go, simply use
 'go get' and look in $GOPATH/bin:
 
 	CGO_ENABLED=0 go get -v -u gitlab.com/aquachain/aquachain/cmd/aquachain
 
 or all tools:
 
-	GOBIN=$PWD go get -v gitlab.com/aquachain/aquachain/cmd/...
+	GOBIN=$PWD CGO_ENABLED=0 go get -v gitlab.com/aquachain/aquachain/cmd/...
 
 To see latest release, check `git log` or:
 
@@ -94,7 +109,8 @@ With no other RPC flags, the `-rpc` flag alone is safe for local usage (from the
 
 Security Note about RPC: Please be aware that hosting a public RPC server
 (0.0.0.0) will allow strangers access to your system. Do not use the
-`-rpcaddr` flag unless you absolutely know what you are doing.
+`-rpcaddr` flag unless you absolutely know what you are doing. Consider using a random RPC port,
+instead of the default 8543.
 
 For hosting public RPC servers, please consider using -nokeys (*new!*) and implementing
 rate limiting on http (and, if using, websockets) , either via reverse proxy such as
@@ -119,6 +135,10 @@ this repository, under the `opt/aquaclient` and `rpc/rpcclient` namespaces.
 See each package's documentation (godoc) for more information on usage.
 
 ## Resources
+
+About - https://telegra.ph/Aquachain-AQUA---Decentralized-Processing-07-20
+
+Mining - https://telegra.ph/Mining-AQUA-05-27
 
 Wiki - https://gitlab.com/aquachain/aquachain/wikis
 
