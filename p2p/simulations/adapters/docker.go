@@ -27,9 +27,9 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/docker/docker/pkg/reexec"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/node"
+	"gitlab.com/aquachain/aquachain/opt/reexec"
 	"gitlab.com/aquachain/aquachain/p2p/discover"
 )
 

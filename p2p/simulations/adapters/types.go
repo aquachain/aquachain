@@ -24,9 +24,9 @@ import (
 	"net"
 	"os"
 
-	"github.com/docker/docker/pkg/reexec"
 	"gitlab.com/aquachain/aquachain/crypto"
 	"gitlab.com/aquachain/aquachain/node"
+	"gitlab.com/aquachain/aquachain/opt/reexec"
 	"gitlab.com/aquachain/aquachain/p2p"
 	"gitlab.com/aquachain/aquachain/p2p/discover"
 	rpc "gitlab.com/aquachain/aquachain/rpc/rpcclient"

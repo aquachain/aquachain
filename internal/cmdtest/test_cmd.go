@@ -31,7 +31,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/docker/docker/pkg/reexec"
+	"gitlab.com/aquachain/aquachain/opt/reexec"
 )
 
 func NewTestCmd(t *testing.T, data interface{}) *TestCmd {
