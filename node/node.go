@@ -26,12 +26,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/prometheus/prometheus/util/flock"
 	"gitlab.com/aquachain/aquachain/aqua/accounts"
 	"gitlab.com/aquachain/aquachain/aqua/event"
 	"gitlab.com/aquachain/aquachain/aquadb"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/internal/debug"
+	"gitlab.com/aquachain/aquachain/internal/flock"
 	"gitlab.com/aquachain/aquachain/p2p"
 	"gitlab.com/aquachain/aquachain/rpc"
 	rpcclient "gitlab.com/aquachain/aquachain/rpc/rpcclient"
