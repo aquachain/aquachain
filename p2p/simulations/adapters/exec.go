@@ -40,7 +40,7 @@ import (
 	"gitlab.com/aquachain/aquachain/p2p"
 	"gitlab.com/aquachain/aquachain/p2p/discover"
 	aquarpc "gitlab.com/aquachain/aquachain/rpc"
-	"gitlab.com/aquachain/aquachain/rpc/rpcclient"
+	rpc "gitlab.com/aquachain/aquachain/rpc/rpcclient"
 	"golang.org/x/net/websocket"
 )
 

@@ -29,7 +29,7 @@ import (
 	"gitlab.com/aquachain/aquachain/common/hexutil"
 	"gitlab.com/aquachain/aquachain/core/types"
 	"gitlab.com/aquachain/aquachain/rlp"
-	"gitlab.com/aquachain/aquachain/rpc/rpcclient"
+	rpc "gitlab.com/aquachain/aquachain/rpc/rpcclient"
 )
 
 // Client defines typed wrappers for the AquaChain RPC API. Callers will most
