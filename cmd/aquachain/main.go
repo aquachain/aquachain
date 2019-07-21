@@ -192,7 +192,7 @@ func init() {
 		// Start system runtime metrics collection
 		go metrics.CollectProcessMetrics(3 * time.Second)
 
-		utils.SetupNetwork(ctx)
+		utils.SetupNetworkGasLimit(ctx)
 		return nil
 	}
 

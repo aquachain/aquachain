@@ -1206,7 +1206,7 @@ func RegisterAquaStatsService(stack *node.Node, url string) {
 }
 
 // SetupNetwork configures the system for either the main net or some test network.
-func SetupNetwork(ctx *cli.Context) {
+func SetupNetworkGasLimit(ctx *cli.Context) {
 	// TODO(fjl): move target gas limit into config
 	params.TargetGasLimit = ctx.GlobalUint64(TargetGasLimitFlag.Name)
 }
