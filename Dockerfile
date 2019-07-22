@@ -3,7 +3,7 @@ FROM golang:1.12-alpine as builder
 
 RUN apk add --no-cache make gcc musl-dev git
 
-ADD . /aquachain
+COPY . /aquachain
 RUN cd /aquachain && make static
 
 # Pull AquaChain into a second stage deploy alpine container
