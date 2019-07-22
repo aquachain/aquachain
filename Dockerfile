@@ -3,6 +3,8 @@ FROM golang:1.12-alpine as builder
 
 RUN apk add --no-cache make gcc musl-dev git
 
+ENV CGO_ENABLED=0
+
 COPY . /aquachain
 RUN cd /aquachain && make static && cd / && \
     mv /aquachain/build/bin/aquachain /usr/local/bin/ && \
