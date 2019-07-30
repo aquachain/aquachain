@@ -256,12 +256,6 @@
 			"revisionTime": "2016-01-10T10:55:54Z"
 		},
 		{
-			"checksumSHA1": "Zq93Rcp2kS8rpX8SUz8r16c9PBo=",
-			"path": "github.com/rjeczalik/notify",
-			"revision": "52ae50d8490436622a8941bd70c3dbe0acdd4bbf",
-			"revisionTime": "2018-06-26T05:11:56Z"
-		},
-		{
 			"checksumSHA1": "WdorbyEJiNbjIOiQzM4TLb/XA7Q=",
 			"path": "github.com/robertkrimen/otto",
 			"revision": "15f95af6e78dcd2030d8195a138bd88d4f403546",
