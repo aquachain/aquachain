@@ -1403,6 +1403,23 @@ func NewPublicDebugAPI(b Backend) *PublicDebugAPI {
 	return &PublicDebugAPI{b: b}
 }
 
+func (api *PublicDebugAPI) HashNoNonce(ctx context.Context, number uint64) (string, error) {
+	blk, err := api.b.BlockByNumber(ctx, rpc.BlockNumber(number))
+	if blk == nil || err != nil {
+		return common.Hash{}.String(), err
+	}
+
+	return blk.HashNoNonce().String(), nil
+}
+
+func (api *PublicDebugAPI) GetMinerHash(ctx context.Context, number uint64) (string, error) {
+	blk, err := api.b.BlockByNumber(ctx, rpc.BlockNumber(number))
+	if blk == nil || err != nil {
+		return common.Hash{}.String(), err
+	}
+	return blk.MinerHash().String(), nil
+}
+
 // GetBlockRlp retrieves the RLP encoded for of a single block.
 func (api *PublicDebugAPI) GetBlockRlp(ctx context.Context, number uint64) (string, error) {
 	block, _ := api.b.BlockByNumber(ctx, rpc.BlockNumber(number))
