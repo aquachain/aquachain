@@ -374,6 +374,15 @@ func (b *Block) HashNoNonce() common.Hash {
 	return b.header.HashNoNonce()
 }
 
+func (b *Block) MinerHash() common.Hash {
+	version := b.header.Version
+	seed := make([]byte, 40)
+	copy(seed, b.header.HashNoNonce().Bytes())
+	nonce := binary.BigEndian.Uint64(b.header.Nonce[:])
+	binary.LittleEndian.PutUint64(seed[32:], nonce)
+	return common.BytesToHash(crypto.VersionHash(byte(version), seed))
+}
+
 // Size returns the true RLP encoded storage size of the block, either by encoding
 // and returning it, or returning a previsouly cached value.
 func (b *Block) Size() common.StorageSize {
