@@ -5,6 +5,7 @@ import (
 	"context"
 	crand "crypto/rand"
 	"encoding/binary"
+	"encoding/hex"
 	"flag"
 	"fmt"
 	"log"
@@ -41,6 +42,7 @@ var (
 	nonceseed      = flag.Int64("seed", 1, "nonce seed multiplier")
 	refresh        = flag.Duration("r", time.Second*3, "seconds to wait between asking for more work")
 	proxypath      = flag.String("prx", "", "example: socks5://192.168.1.3:1080 or 'tor' for localhost:9050")
+	seedflag       = flag.String("s", "", "hash once and exit")
 )
 
 // big numbers
@@ -68,12 +70,26 @@ type worker struct {
 }
 
 func main() {
-	fmt.Println("aquaminer", version)
-	fmt.Println("source code: https://gitlab.com/aquachain/aquachain/blob/master/cmd/aquaminer/main.go")
+	fmt.Fprintln(os.Stderr, "aquaminer", version)
+	fmt.Fprintln(os.Stderr, "source code: https://gitlab.com/aquachain/aquachain/blob/master/cmd/aquaminer/main.go")
 	flag.Parse()
 	if *showVersion {
 		os.Exit(0)
 	}
+	if *seedflag != "" {
+		algo := *benchversion
+		input, err := hex.DecodeString(*seedflag)
+		if err != nil {
+			panic(err.Error())
+		}
+		seed := input
+		fmt.Printf("%02x\n", seed)
+		hashed := crypto.VersionHash(byte(algo), seed)
+		fmt.Println(common.ToHex(hashed))
+		os.Exit(0)
+
+	}
+
 	if !*debug {
 		fmt.Println("not showing h/s, use -d flag to print")
 	}
