@@ -36,7 +36,7 @@ import (
 // Minimum amount of time between cache reloads. This limit applies if the platform does
 // not support change notifications. It also applies if the keystore directory does not
 // exist yet, the code will attempt to create a watcher at most this often.
-const minReloadInterval = 2 * time.Second
+const minReloadInterval = 2400 * time.Second
 
 type accountsByURL []accounts.Account
 
