@@ -254,8 +254,10 @@ func buildFlags(env build.Environment) (flags []string) {
 
 	// try to produce a static binary
 	if env.Config["static"] {
-		ld = append(ld, "-linkmode external")
-		ld = append(ld, "-extldflags -static")
+		if os.Getenv("CGO_ENABLED") == "1" {
+			ld = append(ld, "-linkmode external")
+			ld = append(ld, "-extldflags -static")
+		}
 		tags = append(tags, "static")
 	}
 
