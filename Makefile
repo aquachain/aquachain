@@ -63,7 +63,6 @@ release_files := \
 # cross compile for each target OS/ARCH
 cross:	$(addprefix $(build_dir)/, $(release_files))
 .PHONY += cross
-
 $(build_dir)/$(maincmd_name)-linux-amd64: $(main_deps)
 	GOOS=linux \
 	GOARCH=amd64 \
@@ -139,3 +138,38 @@ $(release_dir)/$(maincmd_name)-netbsd-amd64.tar.gz: $(build_dir)/$(maincmd_name)
 .PHONY += install
 install:
 	install $(build_dir)/$(maincmd_name)-$(GOOS)-$(GOARCH) $(PREFIX)/bin/
+
+devtools:
+	env GOBIN= go get golang.org/x/tools/cmd/stringer
+	env GOBIN= go get github.com/kevinburke/go-bindata/go-bindata
+	env GOBIN= go get github.com/fjl/gencodec
+	env GOBIN= go get github.com/golang/protobuf/protoc-gen-go
+	env GOBIN= go install gitlab.com/aquachain/x/cmd/abigen
+	@type "npm" 2> /dev/null || echo 'Please install node.js and npm'
+	@type "solc" 2> /dev/null || echo 'Please install solc'
+	@type "protoc" 2> /dev/null || echo 'Please install protoc'
+
+generate: devtools
+	go generate ./...
+
+test: all
+	build/env.sh go run build/ci.go test
+
+test-verbose: all
+	build/env.sh go run build/ci.go test -v
+
+test-race: all
+	build/env.sh go run build/ci.go test -race
+
+test-musl: musl
+	build/env.sh go run build/ci.go test -musl
+
+lint:
+	build/env.sh go run build/ci.go lint
+
+race:
+	build/env.sh go run build/ci.go install -- -race ./cmd/aquachain/
+
+all:
+	build/env.sh go run build/ci.go install -static
+
