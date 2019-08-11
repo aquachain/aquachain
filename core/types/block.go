@@ -105,13 +105,14 @@ type headerMarshaling struct {
 type HeaderVersion = params.HeaderVersion // byte
 
 const (
-	H_UNSET HeaderVersion = iota
-	H_KECCAK256
-	H_ARGON2ID
+	H_UNSET     HeaderVersion = iota // 0
+	H_KECCAK256                      // 1
+	H_ARGON2ID                       // 2
 )
 
-func (h *Header) SetVersion(version byte) common.Hash {
-	h.Version = HeaderVersion(version)
+// SetVersion sets h.Version to v and returns h.Hash()
+func (h *Header) SetVersion(v byte) common.Hash {
+	h.Version = HeaderVersion(v)
 	return h.Hash()
 }
 
@@ -120,16 +121,21 @@ func (h *Header) SetVersion(version byte) common.Hash {
 func (h *Header) Hash() common.Hash {
 	if h.Version == H_UNSET {
 		// fatal error to hash a header with no version
-		common.Report(fmt.Sprintf("Hash algorithm not set, please report this error to developers. Number: %v, Version: %v", h.Number, h.Version))
-		panic("hash algorithm not set")
-	}
+		common.Report(fmt.Sprintf("Hash algorithm not set, please report this error to developers of this application.\n\n\n. Number: %v, Version: %v", h.Number, h.Version))
+		warning := "header.String() uses header.Hash(). Before using header.Hash(), please set header.Version. You may use this function:\nfunc (c *ChainConfig) GetBlockVersion(height *big.Int) HeaderVersion\n\n For example: params.MainnetChainConfig.GetBlockVersion(big.NewInt(100000))\n\n\n"
 
+		panic(warning)
+	}
 	return rlpHash(byte(h.Version), h)
 }
 
 // HashNoNonce returns the hash which is used as input for the proof-of-work search.
 func (h *Header) HashNoNonce() common.Hash {
-	return rlpHash(1, []interface{}{
+	v := byte(1)
+	if h.Version == 3 {
+		v = 3
+	}
+	return rlpHash(v, []interface{}{
 		h.ParentHash,
 		h.UncleHash,
 		h.Coinbase,
@@ -346,7 +352,6 @@ func (b *Block) Transaction(hash common.Hash) *Transaction {
 	return nil
 }
 
-//func (b *Block) Version() params.HeaderVersion { return b.header.Version }
 func (b *Block) Number() *big.Int     { return new(big.Int).Set(b.header.Number) }
 func (b *Block) GasLimit() uint64     { return b.header.GasLimit }
 func (b *Block) GasUsed() uint64      { return b.header.GasUsed }
@@ -370,10 +375,12 @@ func (b *Block) Header() *Header { return CopyHeader(b.header) }
 // Body returns the non-header content of the block.
 func (b *Block) Body() *Body { return &Body{b.transactions, b.uncles} }
 
+// HashNoNonce returns the hash of the block header not including the nonce
 func (b *Block) HashNoNonce() common.Hash {
 	return b.header.HashNoNonce()
 }
 
+// MinerHash returns the original work hash that the block was formed with
 func (b *Block) MinerHash() common.Hash {
 	version := b.header.Version
 	seed := make([]byte, 40)
@@ -461,21 +468,32 @@ func (b *Block) SetVersion(version HeaderVersion) common.Hash {
 	return v
 }
 
+// SetVersionConfig sets the header version based on a chain config
+// This is the ideal way of using remotely fetched blocks. (ex: via rpc)
+func (b *Block) SetVersionConfig(cfg *params.ChainConfig) {
+	if cfg == nil {
+		return
+	}
+	b.header.Version = cfg.GetBlockVersion(b.header.Number)
+}
+
 // Retrieve underlying header version
 func (b *Block) Version() (version HeaderVersion) {
 	return b.header.Version
 }
 
+// String will panic if b.header.Version is not set! use b.SetVersionConfig(params.MainnetChainConfig) first.
 func (b *Block) String() string {
 	str := fmt.Sprintf(`Block(#%v): Size: %v {
-MinerHash: %x
+HashNoNonce: %x
+MinerHash:   %x
 %v
 Transactions:
 %v
 Uncles:
 %v
 }
-`, b.Number(), b.Size(), b.header.HashNoNonce(), b.header, b.transactions, b.uncles)
+`, b.Number(), b.Size(), b.header.HashNoNonce(), b.MinerHash(), b.header, b.transactions, b.uncles)
 	return str
 }
 
