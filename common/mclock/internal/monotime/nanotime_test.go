@@ -3,12 +3,10 @@
 // that can be found in the COPYING file.
 
 // Package monotime provides a fast monotonic clock source.
-package monotime_test
+package monotime
 
 import (
 	"testing"
-
-	. "github.com/aristanetworks/goarista/monotime"
 )
 
 func TestNow(t *testing.T) {
@@ -19,6 +17,9 @@ func TestNow(t *testing.T) {
 		// two consecutive calls can return the same value!
 		if t1 > t2 {
 			t.Fatalf("t1=%d should have been less than or equal to t2=%d", t1, t2)
+		}
+		if t1 == t2 {
+			t.Log("warn: t1 == t2")
 		}
 	}
 }
