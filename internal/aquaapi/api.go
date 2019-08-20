@@ -45,7 +45,11 @@ import (
 )
 
 const (
-	defaultGasPrice = 10000000
+	defaultGasPrice = 10000000 // 0.01 gwei
+)
+
+var (
+	ErrKeystoreDisabled = fmt.Errorf("keystore disabled")
 )
 
 // PublicAquaChainAPI provides an API to access AquaChain related information.
@@ -77,7 +81,7 @@ func (s *PublicAquaChainAPI) ProtocolVersion() hexutil.Uint {
 // - pulledStates:  number of state entries processed until now
 // - knownStates:   number of known state entries that still need to be pulled
 func (s *PublicAquaChainAPI) Syncing() (interface{}, error) {
-	progress := s.b.Downloader().Progress()
+	progress := s.b.SyncProgress()
 
 	// Return not syncing if the synchronisation already completed
 	if progress.CurrentBlock >= progress.HighestBlock {
@@ -188,8 +192,9 @@ func NewPublicAccountAPI(am *accounts.Manager) *PublicAccountAPI {
 // Accounts returns the collection of accounts this node manages
 func (s *PublicAccountAPI) Accounts() []common.Address {
 	addresses := make([]common.Address, 0) // return [] instead of nil if empty
-	if s.am == nil {
-		return nil
+
+	if s.am == nil { // -nokeys flag
+		return addresses
 	}
 	for _, wallet := range s.am.Wallets() {
 		for _, account := range wallet.Accounts() {
@@ -220,8 +225,9 @@ func NewPrivateAccountAPI(b Backend, nonceLock *AddrLocker) *PrivateAccountAPI {
 // ListAccounts will return a list of addresses for accounts this node manages.
 func (s *PrivateAccountAPI) ListAccounts() []common.Address {
 	addresses := make([]common.Address, 0) // return [] instead of nil if empty
-	if s.am == nil {
-		return []common.Address{}
+
+	if s.am == nil { // -nokeys flag
+		return addresses
 	}
 	for _, wallet := range s.am.Wallets() {
 		for _, account := range wallet.Accounts() {
@@ -243,8 +249,9 @@ type rawWallet struct {
 // ListWallets will return a list of wallets this node manages.
 func (s *PrivateAccountAPI) ListWallets() []rawWallet {
 	wallets := make([]rawWallet, 0) // return [] instead of nil if empty
-	if s.am == nil {
-		return []rawWallet{}
+
+	if s.am == nil { // -nokeys flag
+		return wallets
 	}
 	for _, wallet := range s.am.Wallets() {
 		status, failure := wallet.Status()
@@ -268,7 +275,7 @@ func (s *PrivateAccountAPI) ListWallets() []rawWallet {
 // Trezor PIN matrix challenge).
 func (s *PrivateAccountAPI) OpenWallet(url string, passphrase *string) error {
 	if s.am == nil {
-		return fmt.Errorf("keystore disabled")
+		return ErrKeystoreDisabled
 	}
 	wallet, err := s.am.Wallet(url)
 	if err != nil {
@@ -285,7 +292,7 @@ func (s *PrivateAccountAPI) OpenWallet(url string, passphrase *string) error {
 // it for later reuse.
 func (s *PrivateAccountAPI) DeriveAccount(url string, path string, pin *bool) (accounts.Account, error) {
 	if s.am == nil {
-		return accounts.Account{}, fmt.Errorf("keystore disabled")
+		return accounts.Account{}, ErrKeystoreDisabled
 	}
 	wallet, err := s.am.Wallet(url)
 	if err != nil {
@@ -304,7 +311,7 @@ func (s *PrivateAccountAPI) DeriveAccount(url string, path string, pin *bool) (a
 // NewAccount will create a new account and returns the address for the new account.
 func (s *PrivateAccountAPI) NewAccount(password string) (common.Address, error) {
 	if s.am == nil {
-		return common.Address{}, fmt.Errorf("keystore disabled")
+		return common.Address{}, ErrKeystoreDisabled
 	}
 	acc, err := fetchKeystore(s.am).NewAccount(password)
 	if err == nil {
@@ -315,6 +322,9 @@ func (s *PrivateAccountAPI) NewAccount(password string) (common.Address, error) 
 
 // fetchKeystore retrives the encrypted keystore from the account manager.
 func fetchKeystore(am *accounts.Manager) *keystore.KeyStore {
+	if am == nil { // -nokeys flag
+		return nil
+	}
 	return am.Backends(keystore.KeyStoreType)[0].(*keystore.KeyStore)
 }
 
@@ -342,13 +352,21 @@ func (s *PrivateAccountAPI) UnlockAccount(addr common.Address, password string, 
 	} else {
 		d = time.Duration(*duration) * time.Second
 	}
-	err := fetchKeystore(s.am).TimedUnlock(accounts.Account{Address: addr}, password, d)
+	ks := fetchKeystore(s.am)
+	if ks == nil { // -nokeys flag
+		return false, ErrKeystoreDisabled
+	}
+	err := ks.TimedUnlock(accounts.Account{Address: addr}, password, d)
 	return err == nil, err
 }
 
 // LockAccount will lock the account associated with the given address when it's unlocked.
 func (s *PrivateAccountAPI) LockAccount(addr common.Address) bool {
-	return fetchKeystore(s.am).Lock(addr) == nil
+	ks := fetchKeystore(s.am)
+	if ks == nil { // -nokeys flag
+		return false
+	}
+	return ks.Lock(addr) == nil
 }
 
 // signTransactions sets defaults and signs the given transaction
@@ -357,6 +375,9 @@ func (s *PrivateAccountAPI) LockAccount(addr common.Address) bool {
 func (s *PrivateAccountAPI) signTransaction(ctx context.Context, args SendTxArgs, passwd string) (*types.Transaction, error) {
 	// Look up the wallet containing the requested signer
 	account := accounts.Account{Address: args.From}
+	if s.am == nil { // -nokeys
+		return nil, ErrKeystoreDisabled
+	}
 	wallet, err := s.am.Find(account)
 	if err != nil {
 		return nil, err
@@ -379,6 +400,9 @@ func (s *PrivateAccountAPI) signTransaction(ctx context.Context, args SendTxArgs
 // tries to sign it with the key associated with args.To. If the given passwd isn't
 // able to decrypt the key it fails.
 func (s *PrivateAccountAPI) SendTransaction(ctx context.Context, args SendTxArgs, passwd string) (common.Hash, error) {
+	if s.am == nil { // -nokeys flag
+		return common.Hash{}, ErrKeystoreDisabled
+	}
 	if args.Nonce == nil {
 		// Hold the addresse's mutex around signing to prevent concurrent assignment of
 		// the same nonce to multiple accounts.
@@ -397,6 +421,9 @@ func (s *PrivateAccountAPI) SendTransaction(ctx context.Context, args SendTxArgs
 // able to decrypt the key it fails. The transaction is returned in RLP-form, not broadcast
 // to other nodes
 func (s *PrivateAccountAPI) SignTransaction(ctx context.Context, args SendTxArgs, passwd string) (*SignTransactionResult, error) {
+	if s.am == nil { // -nokeys flag
+		return nil, ErrKeystoreDisabled
+	}
 	// No need to obtain the noncelock mutex, since we won't be sending this
 	// tx into the transaction pool, but right back to the user
 	if args.Gas == nil {
@@ -422,10 +449,11 @@ func (s *PrivateAccountAPI) SignTransaction(ctx context.Context, args SendTxArgs
 // signHash is a helper function that calculates a hash for the given message that can be
 // safely used to calculate a signature from.
 //
-// The hash is calulcated as
+// The hash is calculated as
 //   keccak256("\x19AquaChain Signed Message:\n"${message length}${message}).
 //
 // This gives context to the signed message and prevents signing of transactions.
+// TODO: changeme
 func signHash(data []byte) []byte {
 	msg := fmt.Sprintf("\x19AquaChain Signed Message:\n%d%s", len(data), data)
 	return crypto.Keccak256([]byte(msg))
@@ -441,6 +469,9 @@ func signHash(data []byte) []byte {
 //
 // https://gitlab.com/aquachain/aquachain/wiki/Management-APIs#personal_sign
 func (s *PrivateAccountAPI) Sign(ctx context.Context, data hexutil.Bytes, addr common.Address, passwd string) (hexutil.Bytes, error) {
+	if s.am == nil { // -nokeys flag
+		return nil, ErrKeystoreDisabled
+	}
 	// Look up the wallet containing the requested signer
 	account := accounts.Account{Address: addr}
 
@@ -536,17 +567,24 @@ func (s *PublicBlockChainAPI) Balance(ctx context.Context, address common.Addres
 // transactions in the block are returned in full detail, otherwise only the transaction hash is returned.
 func (s *PublicBlockChainAPI) GetBlockByNumber(ctx context.Context, blockNr rpc.BlockNumber, fullTx bool) (map[string]interface{}, error) {
 	block, err := s.b.BlockByNumber(ctx, blockNr)
-	if block != nil {
-		response, err := s.rpcOutputBlock(block, true, fullTx)
-		if err == nil && blockNr == rpc.PendingBlockNumber {
-			// Pending blocks need to nil out a few fields
-			for _, field := range []string{"hash", "nonce", "miner"} {
-				response[field] = nil
-			}
-		}
+	if block == nil {
+		return nil, err
+	}
+	if block.Version() == 0 {
+		panic("damn")
+	}
+	block.SetVersionConfig(s.b.ChainConfig())
+	response, err := s.rpcOutputBlock(block, true, fullTx)
+	if err != nil {
 		return response, err
 	}
-	return nil, err
+	if blockNr == rpc.PendingBlockNumber {
+		// Pending blocks need to nil out a few fields
+		for _, field := range []string{"hash", "nonce", "miner"} {
+			response[field] = nil
+		}
+	}
+	return response, err
 }
 
 // GetBlockByHash returns the requested block. When fullTx is true all transactions in the block are returned in full
@@ -824,10 +862,10 @@ func FormatLogs(logs []vm.StructLog) []StructLogRes {
 // returned. When fullTx is true the returned block contains full transaction details, otherwise it will only contain
 // transaction hashes.
 func (s *PublicBlockChainAPI) rpcOutputBlock(b *types.Block, inclTx bool, fullTx bool) (map[string]interface{}, error) {
-	head := b.Header() // copies the header once
-	if head.Version == 0 {
-		head.Version = s.b.ChainConfig().GetBlockVersion(head.Number)
+	if b.Version() == 0 {
+		b.SetVersionConfig(s.b.ChainConfig())
 	}
+	head := b.Header() // copies the header once
 	fields := map[string]interface{}{
 		"number":           (*hexutil.Big)(head.Number),
 		"hash":             b.Hash(),
@@ -1118,6 +1156,9 @@ func (s *PublicTransactionPoolAPI) GetTransactionReceipt(ctx context.Context, ha
 
 // sign is a helper function that signs a transaction with the private key of the given address.
 func (s *PublicTransactionPoolAPI) sign(addr common.Address, tx *types.Transaction) (*types.Transaction, error) {
+	if s.b.AccountManager() == nil { // -nokeys flag
+		return nil, ErrKeystoreDisabled
+	}
 	// Look up the wallet containing the requested signer
 	account := accounts.Account{Address: addr}
 
@@ -1302,6 +1343,9 @@ type SignTransactionResult struct {
 // The node needs to have the private key of the account corresponding with
 // the given from address and it needs to be unlocked.
 func (s *PublicTransactionPoolAPI) SignTransaction(ctx context.Context, args SendTxArgs) (*SignTransactionResult, error) {
+	if s.b.AccountManager() == nil { // -nokeys flag
+		return nil, ErrKeystoreDisabled
+	}
 	if args.Gas == nil {
 		return nil, fmt.Errorf("gas not specified")
 	}
@@ -1403,6 +1447,7 @@ func NewPublicDebugAPI(b Backend) *PublicDebugAPI {
 	return &PublicDebugAPI{b: b}
 }
 
+// HashNoNonce returns the hash of rlp encoded header
 func (api *PublicDebugAPI) HashNoNonce(ctx context.Context, number uint64) (string, error) {
 	blk, err := api.b.BlockByNumber(ctx, rpc.BlockNumber(number))
 	if blk == nil || err != nil {
@@ -1412,6 +1457,7 @@ func (api *PublicDebugAPI) HashNoNonce(ctx context.Context, number uint64) (stri
 	return blk.HashNoNonce().String(), nil
 }
 
+// GetMinerHash returns the proof-of-work output, created by the block miner.
 func (api *PublicDebugAPI) GetMinerHash(ctx context.Context, number uint64) (string, error) {
 	blk, err := api.b.BlockByNumber(ctx, rpc.BlockNumber(number))
 	if blk == nil || err != nil {

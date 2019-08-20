@@ -21,8 +21,8 @@ import (
 	"context"
 	"math/big"
 
+	"gitlab.com/aquachain/aquachain"
 	"gitlab.com/aquachain/aquachain/aqua/accounts"
-	"gitlab.com/aquachain/aquachain/aqua/downloader"
 	"gitlab.com/aquachain/aquachain/aqua/event"
 	"gitlab.com/aquachain/aquachain/aquadb"
 	"gitlab.com/aquachain/aquachain/common"
@@ -38,7 +38,7 @@ import (
 // both full and light clients) with access to necessary functions.
 type Backend interface {
 	// General AquaChain API
-	Downloader() *downloader.Downloader
+	SyncProgress() aquachain.SyncProgress
 	ProtocolVersion() int
 	SuggestPrice(ctx context.Context) (*big.Int, error)
 	ChainDb() aquadb.Database

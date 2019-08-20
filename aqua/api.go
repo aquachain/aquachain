@@ -356,7 +356,7 @@ func (api *PrivateAdminAPI) Supply() (*big.Int, error) {
 	return total, nil
 }
 
-// ExportRealloc exports the current state database into a ready to import json file
+// ExportRealloc exports the current state database into a ready-to-import json file
 func (api *PrivateAdminAPI) ExportRealloc(file string) (bool, error) {
 	// Make sure we can create the file to export into
 	out, err := os.OpenFile(file, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.ModePerm)
@@ -422,12 +422,12 @@ func (api *PrivateAdminAPI) ExportChain(file string) (bool, error) {
 
 func hasAllBlocks(chain *core.BlockChain, bs []*types.Block) bool {
 	getversion := chain.Config().GetBlockVersion
+	log.Debug("iterating blocks", "count", len(bs))
 	for _, b := range bs {
 		if !chain.HasBlock(b.SetVersion(getversion(b.Number())), b.NumberU64()) {
 			return false
 		}
 	}
-
 	return true
 }
 

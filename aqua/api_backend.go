@@ -20,6 +20,7 @@ import (
 	"context"
 	"math/big"
 
+	"gitlab.com/aquachain/aquachain"
 	"gitlab.com/aquachain/aquachain/aqua/accounts"
 	"gitlab.com/aquachain/aquachain/aqua/downloader"
 	"gitlab.com/aquachain/aquachain/aqua/event"
@@ -42,6 +43,9 @@ type AquaApiBackend struct {
 	gpo  *gasprice.Oracle
 }
 
+func (b *AquaApiBackend) SyncProgress() aquachain.SyncProgress {
+	return b.aqua.Downloader().Progress()
+}
 func (b *AquaApiBackend) ChainConfig() *params.ChainConfig {
 	return b.aqua.chainConfig
 }
