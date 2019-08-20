@@ -387,10 +387,6 @@ func (c *Client) Subscribe(ctx context.Context, namespace string, channel interf
 	if chanVal.IsNil() {
 		panic("channel given to Subscribe must not be nil")
 	}
-	if c.isHTTP {
-		return nil, ErrNotificationsUnsupported
-	}
-
 	msg, err := c.newMessage(namespace+subscribeMethodSuffix, args...)
 	if err != nil {
 		return nil, err
