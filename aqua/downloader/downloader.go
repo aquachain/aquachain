@@ -36,7 +36,7 @@ import (
 	"gitlab.com/aquachain/aquachain/params"
 )
 
-var (
+const (
 	MaxHashFetch    = 512 // Amount of hashes to be fetched per retrieval request
 	MaxBlockFetch   = 128 // Amount of blocks to be fetched per retrieval request
 	MaxHeaderFetch  = 192 // Amount of block headers to be fetched per retrieval request
@@ -88,7 +88,7 @@ var (
 	errCancelStateFetch        = errors.New("state data download canceled (requested)")
 	errCancelHeaderProcessing  = errors.New("header processing canceled (requested)")
 	errCancelContentProcessing = errors.New("content processing canceled (requested)")
-	errNoSyncActive            = errors.New("no sync active")
+	errNoSyncActive            = errors.New("no sync active (-offline flag)")
 	errTooOld                  = errors.New("peer doesn't speak recent enough protocol version (need version >= 62)")
 )
 
@@ -324,6 +324,9 @@ func (d *Downloader) UnregisterPeer(id string) error {
 // Synchronise tries to sync up our local block chain with a remote peer, both
 // adding various sanity checks as well as wrapping it with various log entries.
 func (d *Downloader) Synchronise(id string, head common.Hash, td *big.Int, mode SyncMode) error {
+	if mode == OfflineSync {
+		return nil
+	}
 	err := d.synchronise(id, head, td, mode)
 	switch err {
 	case nil:
