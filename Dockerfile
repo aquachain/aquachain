@@ -1,13 +1,13 @@
 # Build AquaChain in a stock Go builder container
 FROM golang:1.12-alpine as builder
 
-RUN apk add --no-cache make gcc musl-dev git
+RUN apk add --no-cache make musl-dev git
 
 ENV CGO_ENABLED=0
 
 COPY . /aquachain
-RUN cd /aquachain && make static && cd / && \
-    mv /aquachain/build/bin/aquachain /usr/local/bin/ && \
+RUN cd /aquachain && make && cd / && \
+    mv /aquachain/bin/aquachain* /usr/local/bin/aquachain && \
     rm -rf /aquachain
 
 # Pull AquaChain into a second stage deploy alpine container
