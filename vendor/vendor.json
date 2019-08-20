@@ -9,12 +9,6 @@
 			"revisionTime": "2018-02-12T02:24:53Z"
 		},
 		{
-			"checksumSHA1": "kto0asmOE+Nuhj7T8cvrvIwq2ak=",
-			"path": "github.com/aristanetworks/goarista/monotime",
-			"revision": "32a4de07828f33fc490e6acfbdc211c4f2143ee7",
-			"revisionTime": "2018-07-18T17:25:41Z"
-		},
-		{
 			"checksumSHA1": "8msTy6M8cODIrfgf9Itely2Tzdk=",
 			"path": "github.com/btcsuite/btcd/btcec",
 			"revision": "2a560b2036bee5e3679ec2133eb6520b2f195213",
