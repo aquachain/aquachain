@@ -20,7 +20,7 @@ package mclock
 import (
 	"time"
 
-	"github.com/aristanetworks/goarista/monotime"
+	"gitlab.com/aquachain/aquachain/common/mclock/internal/monotime"
 )
 
 type AbsTime time.Duration // absolute monotonic time
