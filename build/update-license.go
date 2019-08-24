@@ -47,8 +47,11 @@ var (
 		// boring stuff
 		"vendor/", "tests/testdata/", "build/",
 		// don't relicense vendored sources
+		"internal/flock",
+		"opt/reexec",
+		"common/prque",
+		"common/mclock",
 		"cmd/internal/browser",
-		"consensus/aquahash/xor.go",
 		"crypto/bn256/",
 		"crypto/ecies/",
 		"crypto/secp256k1/curve.go",
@@ -310,12 +313,7 @@ func isGenerated(file string) bool {
 	buf := make([]byte, 2048)
 	n, _ := fd.Read(buf)
 	buf = buf[:n]
-	for _, l := range bytes.Split(buf, []byte("\n")) {
-		if bytes.HasPrefix(l, []byte("// Code generated")) {
-			return true
-		}
-	}
-	return false
+	return bytes.Index(buf, []byte("// Code generated")) != -1
 }
 
 // fileInfo finds the lowest year in which the given file was committed.
