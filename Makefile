@@ -14,7 +14,8 @@ aquachain_cmd=./cmd/aquachain
 version != cat VERSION
 COMMITHASH != git rev-parse --short HEAD
 maincmd_name := aquachain-$(version)-$(COMMITHASH)
-build_dir=bin
+build_dir=$(PWD)/bin
+INSTALL_DIR ?= $(PREFIX)/bin/
 release_dir=rel
 hashfn := sha384sum
 main_deps := $(filter %.go,$(wildcard *.go */*.go */*/*.go */*/*/*.go */*/*/*/*.g))
@@ -92,6 +93,10 @@ $(build_dir)/$(maincmd_name)-freebsd-amd64: $(main_deps)
 	GOARCH=amd64 \
 	CGO_ENABLED=$(CGO_ENABLED) go build $(GO_FLAGS) -tags '$(GO_TAGS)' -o $@ $(aquachain_cmd)
 
+.PHONY += install
+install:
+	install -v $(build_dir)/* $(INSTALL_DIR)/
+
 release: cross hash package
 clean:
 	rm -rf $(build_dir)
@@ -135,9 +140,6 @@ $(release_dir)/$(maincmd_name)-netbsd-amd64.tar.gz: $(build_dir)/$(maincmd_name)
 
 .PHONY += hash
 
-.PHONY += install
-install:
-	install $(build_dir)/$(maincmd_name)-$(GOOS)-$(GOARCH) $(PREFIX)/bin/
 
 devtools:
 	env GOBIN= go get golang.org/x/tools/cmd/stringer
@@ -171,5 +173,5 @@ race:
 	build/env.sh go run build/ci.go install -- -race ./cmd/aquachain/
 
 all:
-	build/env.sh go run build/ci.go install -static
+	GOBIN=$(build_dir) CGO_ENABLED=$(CGO_ENABLED) go install $(GO_FLAGS) -tags '$(GO_TAGS)' ./cmd/...
 
