@@ -28,7 +28,6 @@ import (
 var (
 	EthFrontierBlockReward  = big.NewInt(5e+18) // Block reward in wei for successfully mining a block
 	EthByzantiumBlockReward = big.NewInt(3e+18) // Block reward in wei for successfully mining a block upward from Byzantium
-	ethmaxUncles            = 2                 // Maximum number of uncles allowed in a single block
 	big9                    = big.NewInt(9)
 	big2999999              = big.NewInt(2999999)
 )

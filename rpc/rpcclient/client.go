@@ -53,7 +53,6 @@ const (
 	tcpKeepAliveInterval = 30 * time.Second
 	defaultDialTimeout   = 30 * time.Second // used when dialing if the context has no deadline
 	defaultWriteTimeout  = 30 * time.Second // used for calls if the context has no deadline
-	subscribeTimeout     = 5 * time.Second  // overall timeout aqua_subscribe, rpc_modules calls
 )
 
 const (

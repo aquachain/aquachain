@@ -19,64 +19,18 @@ package rpc
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"sync"
 )
 
 const (
-	jsonrpcVersion           = "2.0"
-	serviceMethodSeparator   = "_"
 	subscribeMethodSuffix    = "_subscribe"
 	unsubscribeMethodSuffix  = "_unsubscribe"
 	notificationMethodSuffix = "_subscription"
 )
 
-type jsonRequest struct {
-	Method  string          `json:"method"`
-	Version string          `json:"jsonrpc"`
-	Id      json.RawMessage `json:"id,omitempty"`
-	Payload json.RawMessage `json:"params,omitempty"`
-}
-
-type jsonSuccessResponse struct {
-	Version string      `json:"jsonrpc"`
-	Id      interface{} `json:"id,omitempty"`
-	Result  interface{} `json:"result"`
-}
-
 type jsonError struct {
 	Code    int         `json:"code"`
 	Message string      `json:"message"`
 	Data    interface{} `json:"data,omitempty"`
-}
-
-type jsonErrResponse struct {
-	Version string      `json:"jsonrpc"`
-	Id      interface{} `json:"id,omitempty"`
-	Error   jsonError   `json:"error"`
-}
-
-type jsonSubscription struct {
-	Subscription string      `json:"subscription"`
-	Result       interface{} `json:"result,omitempty"`
-}
-
-type jsonNotification struct {
-	Version string           `json:"jsonrpc"`
-	Method  string           `json:"method"`
-	Params  jsonSubscription `json:"params"`
-}
-
-// jsonCodec reads and writes JSON-RPC messages to the underlying connection. It
-// also has support for parsing arguments and serializing (result) objects.
-type jsonCodec struct {
-	closer sync.Once                 // close closed channel once
-	closed chan interface{}          // closed on Close
-	decMu  sync.Mutex                // guards d
-	decode func(v interface{}) error // decodes incoming requests
-	encMu  sync.Mutex                // guards e
-	encode func(v interface{}) error // encodes responses
-	rw     io.ReadWriteCloser        // connection
 }
 
 func (err *jsonError) Error() string {

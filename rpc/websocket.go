@@ -149,5 +149,3 @@ func wsHandshakeValidator(allowedOrigins, allowedIP []string, reverseProxy bool)
 
 	return f
 }
-
-var wsPortMap = map[string]string{"ws": "80", "wss": "443"}

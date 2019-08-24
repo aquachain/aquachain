@@ -36,8 +36,6 @@ const (
 	maxHTTPRequestContentLength = 1024 * 128
 )
 
-var nullAddr, _ = net.ResolveTCPAddr("tcp", "127.0.0.1:0")
-
 // httpReadWriteNopCloser wraps a io.Reader and io.Writer with a NOP Close method.
 type httpReadWriteNopCloser struct {
 	io.Reader

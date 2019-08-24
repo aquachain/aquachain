@@ -23,10 +23,6 @@ import (
 	cli "gopkg.in/urfave/cli.v1"
 )
 
-var (
-	minerAddress = common.HexToAddress("0xf38e4687f759d175955dc03289f5cc2fbc3d58c0")
-)
-
 var gitCommit = ""
 
 var (

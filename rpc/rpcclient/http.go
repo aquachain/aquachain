@@ -29,8 +29,7 @@ import (
 )
 
 const (
-	contentType                 = "application/json"
-	maxHTTPRequestContentLength = 1024 * 128
+	contentType = "application/json"
 )
 
 var nullAddr, _ = net.ResolveTCPAddr("tcp", "127.0.0.1:0")
@@ -140,15 +139,4 @@ func (hc *httpConn) doRequest(ctx context.Context, msg interface{}) (io.ReadClos
 		return nil, err
 	}
 	return resp.Body, nil
-}
-
-// httpReadWriteNopCloser wraps a io.Reader and io.Writer with a NOP Close method.
-type httpReadWriteNopCloser struct {
-	io.Reader
-	io.Writer
-}
-
-// Close does nothing and returns always nil
-func (t *httpReadWriteNopCloser) Close() error {
-	return nil
 }

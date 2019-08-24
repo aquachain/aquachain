@@ -17,10 +17,8 @@
 package rpc
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"net"
 	"net/url"
 	"os"
@@ -29,23 +27,6 @@ import (
 
 	"golang.org/x/net/websocket"
 )
-
-// websocketJSONCodec is a custom JSON codec with payload size enforcement and
-// special number parsing.
-var websocketJSONCodec = websocket.Codec{
-	// Marshal is the stock JSON marshaller used by the websocket library too.
-	Marshal: func(v interface{}) ([]byte, byte, error) {
-		msg, err := json.Marshal(v)
-		return msg, websocket.TextFrame, err
-	},
-	// Unmarshal is a specialized unmarshaller to properly convert numbers.
-	Unmarshal: func(msg []byte, payloadType byte, v interface{}) error {
-		dec := json.NewDecoder(bytes.NewReader(msg))
-		dec.UseNumber()
-
-		return dec.Decode(v)
-	},
-}
 
 // DialWebsocket creates a new RPC client that communicates with a JSON-RPC server
 // that is listening on the given endpoint.
