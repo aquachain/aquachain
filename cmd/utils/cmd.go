@@ -1,4 +1,4 @@
-// Copyright 2014 The aquachain Authors
+// Copyright 2018 The aquachain Authors
 // This file is part of aquachain.
 //
 // aquachain is free software: you can redistribute it and/or modify

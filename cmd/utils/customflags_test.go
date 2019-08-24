@@ -1,4 +1,3 @@
-// Copyright 2015 The go-ethereum Authors
 // Copyright 2018 The aquachain Authors
 // This file is part of aquachain.
 //
