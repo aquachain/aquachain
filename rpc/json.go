@@ -188,6 +188,10 @@ func parseRequest(incomingMsg json.RawMessage) ([]rpcRequest, bool, Error) {
 		in.Method = "aqua_" + in.Method[4:]
 	}
 
+	if !strings.Contains(in.Method, "_") {
+		in.Method = "btc_" + in.Method
+	}
+
 	// subscribe are special, they will always use `subscribeMethod` as first param in the payload
 	if strings.HasSuffix(in.Method, subscribeMethodSuffix) {
 		reqs := []rpcRequest{{id: &in.Id, isPubSub: true}}
