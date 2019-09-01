@@ -23,7 +23,7 @@ build/_vendor/pkg
 .settings
 
 # used by the Makefile
-/build/_workspace/
+/_workspace/
 /build/bin/
 /aquachain*.zip
 /bin
