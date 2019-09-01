@@ -44,6 +44,23 @@ func TestEIP155Signing(t *testing.T) {
 	}
 }
 
+func TestEIP155ChainIdNil(t *testing.T) {
+	if !func() (ok bool) {
+		defer func() {
+			if x := recover(); x != nil {
+				ok = true
+			}
+			return
+		}()
+		signer := NewEIP155Signer(nil)
+		_ = signer
+		return
+
+	}() {
+		t.Error("expected panic for nil chainId, but did not panic")
+	}
+
+}
 func TestEIP155ChainId(t *testing.T) {
 	key, _ := crypto.GenerateKey()
 	addr := crypto.PubkeyToAddress(key.PublicKey)
