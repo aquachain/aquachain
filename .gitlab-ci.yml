@@ -1,4 +1,8 @@
-image: golang:1.11.1
+image: golang:latest
+
+lint:
+  script:
+    - make linter
 
 build:
   script:
