@@ -177,7 +177,7 @@ lint:
 	build/env.sh go run build/ci.go lint
 
 linter: bin/golangci-lint
-	./bin/golangci-lint -v run --deadline 10m ./...
+	./bin/golangci-lint -v run --color never --deadline 10m ./...
 
 bin/golangci-lint:
 	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s $(golangci_linter_version)
