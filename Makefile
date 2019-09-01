@@ -18,6 +18,7 @@ build_dir=$(PWD)/bin
 INSTALL_DIR ?= $(PREFIX)/bin/
 release_dir=rel
 hashfn := sha384sum
+golangci_linter_version := v1.17.1
 main_deps := $(filter %.go,$(wildcard *.go */*.go */*/*.go */*/*/*.go */*/*/*/*.g))
 
 # disable cgo by default
@@ -51,6 +52,8 @@ LD_FLAGS := -ldflags '-X main.gitCommit=${COMMITHASH} -X main.buildDate=${shell 
 GO_FLAGS += $(LD_FLAGS)
 
 # build default target, aquachain for host OS/ARCH
+$(build_dir)/aquachain:
+	CGO_ENABLED=$(CGO_ENABLED) go build $(GO_FLAGS) -tags '$(GO_TAGS)' -o $@ $(aquachain_cmd)
 default: $(build_dir)/$(maincmd_name)-$(GOOS)-$(GOARCH)
 .PHONY += default hash
 
@@ -64,6 +67,10 @@ release_files := \
 # cross compile for each target OS/ARCH
 cross:	$(addprefix $(build_dir)/, $(release_files))
 .PHONY += cross
+$(build_dir)/aquachain.exe:
+	GOOS=windows \
+	GOARCH=amd64 \
+	CGO_ENABLED=$(CGO_ENABLED) go build $(GO_FLAGS) -tags '$(GO_TAGS)' -o $@ $(aquachain_cmd)
 $(build_dir)/$(maincmd_name)-linux-amd64: $(main_deps)
 	GOOS=linux \
 	GOARCH=amd64 \
@@ -95,7 +102,7 @@ $(build_dir)/$(maincmd_name)-freebsd-amd64: $(main_deps)
 
 .PHONY += install
 install:
-	install -v $(build_dir)/* $(INSTALL_DIR)/
+	install -v $(build_dir)/aquachain $(INSTALL_DIR)/
 
 release: cross hash package
 clean:
@@ -168,6 +175,12 @@ test-musl: musl
 
 lint:
 	build/env.sh go run build/ci.go lint
+
+linter: bin/golangci-lint
+	./bin/golangci-lint -v run --deadline 10m ./...
+
+bin/golangci-lint:
+	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s $(golangci_linter_version)
 
 race:
 	build/env.sh go run build/ci.go install -- -race ./cmd/aquachain/
