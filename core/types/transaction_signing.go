@@ -110,7 +110,6 @@ type EIP155Signer struct {
 func NewEIP155Signer(chainId *big.Int) EIP155Signer {
 	if chainId == nil {
 		panic("Application Error: you need to pass chainId to NewEIP155Signer, cannot be nil.")
-		chainId = new(big.Int)
 	}
 	return EIP155Signer{
 		chainId:    chainId,
