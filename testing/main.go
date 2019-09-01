@@ -1,3 +1,5 @@
+// +build ignore
+
 // Copyright 2018 The aquachain Authors
 // This file is part of the aquachain library.
 //
