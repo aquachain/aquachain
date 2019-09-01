@@ -8,7 +8,7 @@ if [ ! -f "build/env.sh" ]; then
 fi
 
 # Create fake Go workspace if it doesn't exist yet.
-workspace="/tmp/aqua/_workspace"
+workspace=$PWD/_workspace
 root="$PWD"
 aquasrc="$workspace/src/gitlab.com/aquachain"
 mkdir -p $aquasrc
