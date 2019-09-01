@@ -37,15 +37,15 @@ import (
 )
 
 var (
-	testKey, _  = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
-	testAddress = crypto.PubkeyToAddress(testKey.PublicKey)
+	testKey, _            = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
+	testAddress           = crypto.PubkeyToAddress(testKey.PublicKey)
+	maxForkAncestry       = uint64(100)
+	testfsHeaderContCheck = 500 * time.Millisecond
 )
 
 // Reduce some of the parameters to make the tester faster.
 func init() {
-	MaxForkAncestry = uint64(10000)
 	blockCacheItems = 1024
-	fsHeaderContCheck = 500 * time.Millisecond
 
 	go func() {
 		t1 := time.Now()
@@ -867,7 +867,7 @@ func testBoundedForkedSync(t *testing.T, protocol int, mode SyncMode) {
 	defer tester.terminate()
 
 	// Create a long enough forked chain
-	common, fork := 13, int(MaxForkAncestry+17)
+	common, fork := 13, int(maxForkAncestry+17)
 	hashesA, hashesB, headersA, headersB, blocksA, blocksB, receiptsA, receiptsB := tester.makeChainFork(common+fork, fork, tester.genesis, nil, true)
 
 	tester.newPeer("original", protocol, hashesA, headersA, blocksA, receiptsA)
@@ -900,11 +900,11 @@ func testBoundedHeavyForkedSync(t *testing.T, protocol int, mode SyncMode) {
 	defer tester.terminate()
 
 	// Create a long enough forked chain
-	common, fork := 13, int(MaxForkAncestry+17)
+	common, fork := 13, int(maxForkAncestry+17)
 	hashesA, hashesB, headersA, headersB, blocksA, blocksB, receiptsA, receiptsB := tester.makeChainFork(common+fork, fork, tester.genesis, nil, false)
 
 	tester.newPeer("original", protocol, hashesA, headersA, blocksA, receiptsA)
-	tester.newPeer("heavy-rewriter", protocol, hashesB[MaxForkAncestry-17:], headersB, blocksB, receiptsB) // Root the fork below the ancestor limit
+	tester.newPeer("heavy-rewriter", protocol, hashesB[maxForkAncestry-17:], headersB, blocksB, receiptsB) // Root the fork below the ancestor limit
 
 	// Synchronise with the peer and make sure all blocks were retrieved
 	if err := tester.sync("original", nil, mode); err != nil {
@@ -1310,7 +1310,6 @@ func testBlockHeaderAttackerDropping(t *testing.T, protocol int) {
 		{errPeersUnavailable, true},         // Nobody had the advertised blocks, drop the advertiser
 		{errInvalidAncestor, true},          // Agreed upon ancestor is not acceptable, drop the chain rewriter
 		{errInvalidChain, true},             // Hash chain was detected as invalid, definitely drop
-		{errInvalidBlock, false},            // A bad peer was detected, but not the sync origin
 		{errInvalidBody, false},             // A bad peer was detected, but not the sync origin
 		{errInvalidReceipt, false},          // A bad peer was detected, but not the sync origin
 		{errCancelBlockFetch, false},        // Synchronisation was canceled, origin may be innocent, don't drop
