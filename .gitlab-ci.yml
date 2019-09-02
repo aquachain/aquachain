@@ -1,14 +1,18 @@
-image: golang:latest
+image: golang:1.12.9
 
 lint:
+  before_script:
+    - shopt -s dotglob
+    - GO_FILES=$(find . -iname '*.go' -type f | grep -v /vendor/ | grep -v /build/) # All the .go files, excluding vendor/
+    - make bin/golangci-lint
   script:
-    - make linter
+    - CGO_ENABLED=0 bin/golangci-lint run -j 1 --build-tags static,netgo,osusergo
 
 build:
   script:
     - make all
     - git clone https://gitlab.com/aquachain/bootstraps ../bootstraps
-    - ./build/bin/aquachain import ../bootstraps/latest.dat
+    - ./bin/aquachain import ../bootstraps/latest.dat
 
 test:
   script:

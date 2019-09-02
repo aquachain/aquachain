@@ -4,9 +4,12 @@
 # options for analysis running
 run:
   deadline: 5m
-
   # include test files or not, default is true
   tests: false
+  skip-dirs:
+    - vendor$
+    - build$
+    - testing$
 
 # output configuration options
 output:
@@ -122,8 +125,6 @@ linters-settings:
     # See https://go-critic.github.io/overview#checks-overview
     # To check which checks are enabled run `GL_DEBUG=gocritic golangci-lint run`
     # By default list of stable checks is used.
-    enabled-checks:
-      - rangeValCopy
 
     # Which checks should be disabled; can't be combined with 'enabled-checks'; default is empty
     disabled-checks:
@@ -142,6 +143,7 @@ linters-settings:
 
 linters:
   enable:
+    - gosec
     - megacheck
     - govet
     - deadcode
