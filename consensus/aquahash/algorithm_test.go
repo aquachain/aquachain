@@ -18,6 +18,7 @@ package aquahash
 
 import (
 	"bytes"
+	"encoding/binary"
 	"io/ioutil"
 	"math/big"
 	"os"
@@ -29,6 +30,15 @@ import (
 	"gitlab.com/aquachain/aquachain/common/hexutil"
 	"gitlab.com/aquachain/aquachain/core/types"
 )
+
+// prepare converts an aquahash cache or dataset from a byte stream into the internal
+// int representation. All aquahash methods work with ints to avoid constant byte to
+// int conversions as well as to handle both little and big endian systems.
+func prepare(dest []uint32, src []byte) {
+	for i := 0; i < len(dest); i++ {
+		dest[i] = binary.LittleEndian.Uint32(src[i*4:])
+	}
+}
 
 // Tests that verification caches can be correctly generated.
 func TestCacheGeneration(t *testing.T) {
