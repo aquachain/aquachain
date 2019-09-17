@@ -6,7 +6,8 @@ lint:
     - GO_FILES=$(find . -iname '*.go' -type f | grep -v /vendor/ | grep -v /build/) # All the .go files, excluding vendor/
     - make bin/golangci-lint
   script:
-    - CGO_ENABLED=0 bin/golangci-lint run -j 1 --build-tags static,netgo,osusergo
+    #    - CGO_ENABLED=0 bin/golangci-lint --color never run -j 1 --build-tags static,netgo,osusergo --config .golangci.yml --out-format line-number
+    - make linter
 
 build:
   script:

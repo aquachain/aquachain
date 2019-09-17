@@ -1,6 +1,7 @@
 GOOS ?= $(shell go env GOOS)
 GOARCH ?= $(shell go env GOARCH)
 PREFIX ?= /usr/local
+export GOFILES=$(shell find . -iname '*.go' -type f | grep -v /vendor/ | grep -v /build/)
 define LOGO
                               _           _
   __ _  __ _ _   _  __ _  ___| |__   __ _(_)_ __
@@ -177,7 +178,11 @@ lint:
 	build/env.sh go run build/ci.go lint
 
 linter: bin/golangci-lint
-	./bin/golangci-lint -v run --color never --deadline 10m -c .golangci.yml
+	CGO_ENABLED=0 ./bin/golangci-lint -v run \
+	  --deadline 20m \
+	  --config .golangci.yml \
+	  --build-tags static,netgo,osusergo \
+	  -v
 
 bin/golangci-lint:
 	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s $(golangci_linter_version)
