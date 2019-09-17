@@ -14,7 +14,7 @@ aquachain_cmd=./cmd/aquachain
 version != cat VERSION
 COMMITHASH != git rev-parse --short HEAD
 maincmd_name := aquachain-$(version)-$(COMMITHASH)
-build_dir=$(PWD)/bin
+build_dir := $(PWD)bin
 INSTALL_DIR ?= $(PREFIX)/bin/
 release_dir=rel
 hashfn := sha384sum
@@ -177,7 +177,7 @@ lint:
 	build/env.sh go run build/ci.go lint
 
 linter: bin/golangci-lint
-	./bin/golangci-lint -v run --color never --deadline 10m ./...
+	./bin/golangci-lint -v run --color never --deadline 10m -c .golangci.yml
 
 bin/golangci-lint:
 	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s $(golangci_linter_version)
