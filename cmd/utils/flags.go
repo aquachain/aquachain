@@ -49,7 +49,6 @@ import (
 	whisper "gitlab.com/aquachain/aquachain/opt/whisper/whisperv6"
 	"gitlab.com/aquachain/aquachain/p2p"
 	"gitlab.com/aquachain/aquachain/p2p/discover"
-	"gitlab.com/aquachain/aquachain/p2p/discv5"
 	"gitlab.com/aquachain/aquachain/p2p/nat"
 	"gitlab.com/aquachain/aquachain/p2p/netutil"
 	"gitlab.com/aquachain/aquachain/params"
@@ -460,11 +459,6 @@ var (
 		Usage: "Comma separated enode URLs for P2P v4 discovery bootstrap (light server, full nodes)",
 		Value: "",
 	}
-	BootnodesV5Flag = cli.StringFlag{
-		Name:  "bootnodesv5",
-		Usage: "Comma separated enode URLs for P2P v5 discovery bootstrap (light server, light nodes)",
-		Value: "",
-	}
 	NodeKeyFileFlag = cli.StringFlag{
 		Name:  "nodekey",
 		Usage: "P2P node key file",
@@ -489,10 +483,6 @@ var (
 	NoKeysFlag = cli.BoolFlag{
 		Name:  "nokeys",
 		Usage: "Disables keystore",
-	}
-	DiscoveryV5Flag = cli.BoolFlag{
-		Name:  "v5disc",
-		Usage: "Enables the experimental RLPx V5 (Topic Discovery) mechanism",
 	}
 	NetrestrictFlag = cli.StringFlag{
 		Name:  "netrestrict",
@@ -617,34 +607,6 @@ func setBootstrapNodes(ctx *cli.Context, cfg *p2p.Config) {
 			log.Crit("Bootstrap URL invalid", "enode", url, "err", err)
 		}
 		cfg.BootstrapNodes = append(cfg.BootstrapNodes, node)
-	}
-}
-
-// setBootstrapNodesV5 creates a list of bootstrap nodes from the command line
-// flags, reverting to pre-configured ones if none have been specified.
-func setBootstrapNodesV5(ctx *cli.Context, cfg *p2p.Config) {
-	urls := params.DiscoveryV5Bootnodes
-	switch {
-	case ctx.GlobalIsSet(BootnodesFlag.Name) || ctx.GlobalIsSet(BootnodesV5Flag.Name):
-		if ctx.GlobalIsSet(BootnodesV5Flag.Name) {
-			urls = strings.Split(ctx.GlobalString(BootnodesV5Flag.Name), ",")
-		} else {
-			urls = strings.Split(ctx.GlobalString(BootnodesFlag.Name), ",")
-		}
-	case ctx.GlobalBool(Testnet2Flag.Name):
-		urls = params.Testnet2Bootnodes
-	case cfg.BootstrapNodesV5 != nil:
-		return // already set, don't apply defaults.
-	}
-
-	cfg.BootstrapNodesV5 = make([]*discv5.Node, 0, len(urls))
-	for _, url := range urls {
-		node, err := discv5.ParseNode(url)
-		if err != nil {
-			log.Error("Bootstrap URL invalid", "enode", url, "err", err)
-			continue
-		}
-		cfg.BootstrapNodesV5 = append(cfg.BootstrapNodesV5, node)
 	}
 }
 
@@ -831,7 +793,6 @@ func SetP2PConfig(ctx *cli.Context, cfg *p2p.Config) {
 	setNAT(ctx, cfg)
 	setListenAddress(ctx, cfg)
 	setBootstrapNodes(ctx, cfg)
-	setBootstrapNodesV5(ctx, cfg)
 
 	if ctx.GlobalIsSet(MaxPeersFlag.Name) {
 		cfg.MaxPeers = ctx.GlobalInt(MaxPeersFlag.Name)
@@ -854,10 +815,6 @@ func SetP2PConfig(ctx *cli.Context, cfg *p2p.Config) {
 	if ctx.GlobalBool(Testnet2Flag.Name) {
 		cfg.NoDiscovery = true
 	}
-	if ctx.GlobalIsSet(DiscoveryV5Flag.Name) {
-		cfg.DiscoveryV5 = ctx.GlobalBool(DiscoveryV5Flag.Name)
-	}
-
 	if netrestrict := ctx.GlobalString(NetrestrictFlag.Name); netrestrict != "" {
 		list, err := netutil.ParseNetlist(netrestrict)
 		if err != nil {
@@ -871,7 +828,6 @@ func SetP2PConfig(ctx *cli.Context, cfg *p2p.Config) {
 		cfg.MaxPeers = 0
 		cfg.ListenAddr = ":0"
 		cfg.NoDiscovery = true
-		cfg.DiscoveryV5 = false
 	}
 
 	if ctx.GlobalBool(TestnetFlag.Name) && !ctx.GlobalIsSet(ListenPortFlag.Name) {

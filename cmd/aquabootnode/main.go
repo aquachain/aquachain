@@ -28,7 +28,6 @@ import (
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/crypto"
 	"gitlab.com/aquachain/aquachain/p2p/discover"
-	"gitlab.com/aquachain/aquachain/p2p/discv5"
 	"gitlab.com/aquachain/aquachain/p2p/nat"
 	"gitlab.com/aquachain/aquachain/p2p/netutil"
 )
@@ -118,9 +117,7 @@ func main() {
 	}
 
 	if *runv5 {
-		if _, err := discv5.ListenUDP(nodeKey, conn, realaddr, "", restrictList); err != nil {
-			utils.Fatalf("%v", err)
-		}
+		utils.Fatalf("%s", "discover v5 support dropped")
 	} else {
 		cfg := discover.Config{
 			PrivateKey:   nodeKey,
