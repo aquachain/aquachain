@@ -22,8 +22,9 @@ import (
 )
 
 const (
-	testString  = "brekeccakkeccak koax koax"
-	katFilename = "testdata/keccakKats.json.deflate"
+	testString                 = "brekeccakkeccak koax koax"
+	katFilename                = "testdata/keccakKats.json.deflate"
+	xorImplementationUnaligned = "unaligned"
 )
 
 // Internal-use instances of SHAKE used to test against KATs.
