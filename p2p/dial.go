@@ -359,6 +359,9 @@ func (t *dialTask) String() string {
 }
 
 func (t *discoverTask) Do(srv *Server) {
+	if srv.ntab == nil {
+		return
+	}
 	// newTasks generates a lookup task whenever dynamic dials are
 	// necessary. Lookups need to take some time, otherwise the
 	// event loop spins too fast.
