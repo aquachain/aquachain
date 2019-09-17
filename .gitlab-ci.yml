@@ -11,7 +11,8 @@ lint:
 
 build:
   script:
-    - make all
+    - make all # build all things
+    - make # build default bin/aquachain
     - git clone https://gitlab.com/aquachain/bootstraps ../bootstraps
     - ./bin/aquachain import ../bootstraps/latest.dat
 
