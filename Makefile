@@ -41,11 +41,12 @@ GO_FLAGS += -a
 endif
 
 # use go for "net" and "os/user" packages (cgo by default)
-GO_TAGS := static
+#GO_TAGS := static
+
 ifneq (1,$(CGO_ENABLED))
-GO_TAGS += netgo osusergo
+GO_FLAGS += -tags 'netgo osusergo static'
 else
-GO_FLAGS += -installsuffix static -tags netgo osusergo static
+GO_FLAGS += -installsuffix cgo -tags 'netgo osusergo static'
 LD_FLAGS += -linkmode external -extldflags -static
 endif
 
@@ -53,8 +54,8 @@ LD_FLAGS := -ldflags '-X main.gitCommit=${COMMITHASH} -X main.buildDate=${shell 
 GO_FLAGS += $(LD_FLAGS)
 
 # build default target, aquachain for host OS/ARCH
-$(build_dir)/aquachain:
-	CGO_ENABLED=$(CGO_ENABLED) go build $(GO_FLAGS) -tags '$(GO_TAGS)' -o $@ $(aquachain_cmd)
+$(build_dir)/aquachain: $(GOFILES)
+	CGO_ENABLED=$(CGO_ENABLED) go build $(GO_FLAGS) -o $@ $(aquachain_cmd)
 default: $(build_dir)/$(maincmd_name)-$(GOOS)-$(GOARCH)
 .PHONY += default hash
 
