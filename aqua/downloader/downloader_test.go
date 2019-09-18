@@ -45,6 +45,7 @@ var (
 
 // Reduce some of the parameters to make the tester faster.
 func init() {
+	MaxForkAncestry = maxForkAncestry
 	blockCacheItems = 1024
 
 	go func() {
@@ -1470,6 +1471,8 @@ func testForkedSyncProgress(t *testing.T, protocol int, mode SyncMode) {
 	go func() {
 		defer pending.Done()
 		if err := tester.sync("fork B", nil, mode); err != nil {
+			t.Log(err)
+			t.FailNow()
 			panic(fmt.Sprintf("failed to synchronise blocks: %v", err))
 		}
 	}()
