@@ -126,7 +126,7 @@ func version(ctx *cli.Context) error {
 	fmt.Println("Network Id:", aqua.DefaultConfig.NetworkId)
 	fmt.Println("Go Version:", runtime.Version())
 	fmt.Println("Operating System:", runtime.GOOS)
-	fmt.Printf("CGO_ENABLED=%v\n", runtime.Compiler != "gc")
+	fmt.Printf("CGO_ENABLED=%v\n", CGO)
 	fmt.Printf("GOPATH=%s\n", os.Getenv("GOPATH"))
 	fmt.Printf("GOROOT=%s\n", runtime.GOROOT())
 	fmt.Printf("Fork Map: %s\n", params.AquachainHF.String())
