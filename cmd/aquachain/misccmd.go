@@ -121,6 +121,18 @@ func version(ctx *cli.Context) error {
 			fmt.Printf("WARN: tried to get date, but got err: %v\n", err)
 		}
 	}
+
+	chaincfg := params.MainnetChainConfig
+	if ctx.GlobalBool(utils.TestnetFlag.Name) {
+		chaincfg = params.TestnetChainConfig
+	} else if ctx.GlobalBool(utils.Testnet2Flag.Name) {
+		chaincfg = params.Testnet2ChainConfig
+	} else if ctx.GlobalBool(utils.NetworkEthFlag.Name) {
+		chaincfg = params.EthnetChainConfig
+	} else if ctx.GlobalBool(utils.DeveloperFlag.Name) {
+		chaincfg = params.TestChainConfig
+	}
+
 	fmt.Println("Architecture:", runtime.GOARCH)
 	fmt.Println("Protocol Versions:", aqua.ProtocolVersions)
 	fmt.Println("Network Id:", aqua.DefaultConfig.NetworkId)
@@ -129,7 +141,9 @@ func version(ctx *cli.Context) error {
 	fmt.Printf("CGO_ENABLED=%v\n", CGO)
 	fmt.Printf("GOPATH=%s\n", os.Getenv("GOPATH"))
 	fmt.Printf("GOROOT=%s\n", runtime.GOROOT())
-	fmt.Printf("Fork Map: %s\n", params.AquachainHF.String())
+	fmt.Printf("AQUA Fork Map: %s\n", chaincfg.HF.String())
+	fmt.Printf("Chain Config: %s\n", chaincfg)
+
 	return nil
 }
 
