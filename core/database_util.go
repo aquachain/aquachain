@@ -621,6 +621,20 @@ func GetChainConfig(db DatabaseReader, hash common.Hash) (*params.ChainConfig, e
 		return nil, err
 	}
 
+	switch config.String() {
+	case params.MainnetChainConfig.String():
+		return params.MainnetChainConfig, nil
+	case params.TestnetChainConfig.String():
+		return params.TestnetChainConfig, nil
+	case params.Testnet2ChainConfig.String():
+		return params.Testnet2ChainConfig, nil
+	case params.EthnetChainConfig.String():
+		return params.EthnetChainConfig, nil
+	case params.TestChainConfig.String():
+		return params.TestChainConfig, nil
+	}
+
+	log.Warn("Nonstandard Chain Config", "hash", hash, "cfg", config.String())
 	return &config, nil
 }
 
