@@ -23,7 +23,6 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
-	"sync"
 	"time"
 
 	"gitlab.com/aquachain/aquachain/aqua/accounts/abi/bind"
@@ -77,7 +76,6 @@ type PayProfile struct {
 	publicKey   *ecdsa.PublicKey
 	owner       common.Address
 	chbook      *chequebook.Chequebook
-	lock        sync.RWMutex
 }
 
 //create params with default values
