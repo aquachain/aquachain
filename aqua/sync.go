@@ -133,7 +133,7 @@ func (pm *ProtocolManager) txsyncLoop() {
 // downloading hashes and blocks as well as handling the announcement handler.
 func (pm *ProtocolManager) syncer() {
 	// Start and ensure cleanup of sync mechanisms
-	if pm.downloader == nil {
+	if pm.downloader == nil || pm.peers == nil {
 		return
 	}
 	pm.fetcher.Start()
@@ -171,6 +171,10 @@ func (pm *ProtocolManager) synchronise(peer *peer) {
 	}
 	// Make sure the peer's TD is higher than our own
 	currentBlock := pm.blockchain.CurrentBlock()
+	if currentBlock == nil {
+		log.Error("no current head block")
+		return
+	}
 	td := pm.blockchain.GetTd(currentBlock.Hash(), currentBlock.NumberU64())
 
 	pHead, pTd := peer.Head()
@@ -187,25 +191,21 @@ func (pm *ProtocolManager) synchronise(peer *peer) {
 	if atomic.LoadUint32(&pm.fastSync) == 1 {
 		// Fast sync was explicitly requested, and explicitly granted
 		mode = downloader.FastSync
-	} else if currentBlock.NumberU64() == 0 && pm.blockchain.CurrentFastBlock().NumberU64() > 0 {
-		// The database seems empty as the current block is the genesis. Yet the fast
-		// block is ahead, so fast sync was enabled for this node at a certain point.
-		// The only scenario where this can happen is if the user manually (or via a
-		// bad block) rolled back a fast sync node below the sync point. In this case
-		// however it's safe to reenable fast sync.
-		atomic.StoreUint32(&pm.fastSync, 1)
-		mode = downloader.FastSync
 	}
 
 	if mode == downloader.FastSync {
 		// Make sure the peer's total difficulty we are synchronizing is higher.
-		if pm.blockchain.GetTdByHash(pm.blockchain.CurrentFastBlock().Hash()).Cmp(pTd) >= 0 {
+		if td := pm.blockchain.GetTdByHash(pm.blockchain.CurrentFastBlock().Hash()); td.Cmp(pTd) >= 0 {
+			log.Debug("not syncing to less difficulty chain", "td", td, "pTd", pTd)
 			return
 		}
 	}
 
 	// Run the sync cycle, and disable fast sync if we've went past the pivot block
 	if err := pm.downloader.Synchronise(peer.id, pHead, pTd, mode); err != nil {
+		if err != downloader.ErrBusy {
+			log.Warn("error synchronizing with bad peer", "err", err)
+		}
 		return
 	}
 	if atomic.LoadUint32(&pm.fastSync) == 1 {

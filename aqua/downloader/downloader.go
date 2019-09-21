@@ -68,7 +68,7 @@ var (
 )
 
 var (
-	errBusy                    = errors.New("busy")
+	ErrBusy                    = errors.New("busy")
 	errUnknownPeer             = errors.New("peer is unknown or unhealthy")
 	errBadPeer                 = errors.New("action from evil peer ignored")
 	errStallingPeer            = errors.New("peer is stalling")
@@ -327,7 +327,8 @@ func (d *Downloader) Synchronise(id string, head common.Hash, td *big.Int, mode 
 	err := d.synchronise(id, head, td, mode)
 	switch err {
 	case nil:
-	case errBusy:
+	case ErrBusy:
+		return err
 	case errBadPeer:
 		log.Debug("Synchronisation failed, dropping peer", "peer", id, "err", err)
 		if d.dropPeer == nil {
@@ -364,7 +365,7 @@ func (d *Downloader) synchronise(id string, hash common.Hash, td *big.Int, mode 
 	}
 	// Make sure only one goroutine is ever allowed past this point at once
 	if !atomic.CompareAndSwapInt32(&d.synchronising, 0, 1) {
-		return errBusy
+		return ErrBusy
 	}
 	defer atomic.StoreInt32(&d.synchronising, 0)
 
