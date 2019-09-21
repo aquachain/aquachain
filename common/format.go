@@ -38,3 +38,12 @@ func (d PrettyDuration) String() string {
 	}
 	return label
 }
+
+func FormatTimestamp(seconds uint64) string {
+	date := time.Unix(int64(seconds), 0)
+	return FormatDate(date)
+}
+
+func FormatDate(t time.Time) string {
+	return t.UTC().Format(time.ANSIC)
+}
