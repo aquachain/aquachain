@@ -1029,12 +1029,20 @@ func (bc *BlockChain) InsertChain(chain types.Blocks) (int, error) {
 	return n, err
 }
 
+func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*types.Log, error) {
+	return bc.insertChain2(chain, 1)
+}
+
 // insertChain will execute the actual chain insertion and event aggregation. The
 // only reason this method exists as a separate one is to make locking cleaner
 // with deferred statements.
-func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*types.Log, error) {
+func (bc *BlockChain) insertChain2(chain types.Blocks, try int) (int, []interface{}, []*types.Log, error) {
 	if len(chain) == 0 {
 		return 0, nil, nil, fmt.Errorf("no chain to insert")
+	}
+
+	if try > 3 {
+		return 0, nil, nil, fmt.Errorf("after 3 tries, no good chain")
 	}
 	log.Debug("Inserting chain", "length", len(chain), "startversion", chain[0].Version())
 	// Do a sanity check that the provided chain is actually ordered and linked
@@ -1049,10 +1057,10 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 			// Chain broke ancestry, log a messge (programming error) and skip insertion
 			log.Error("Non contiguous block insert", "number", chain[i].Number(), "hash", chain[i].Hash(),
 				"parent", chain[i].ParentHash(), "prevnumber", chain[i-1].Number(), "prevhash", chain[i-1].Hash())
-
-			return 0, nil, nil, fmt.Errorf("non contiguous insert: item %d is #%d [%x…], item %d is #%d [%x…] (parent [%x…])", i-1, chain[i-1].NumberU64(),
-				chain[i-1].Hash().Bytes()[:4], i, chain[i].NumberU64(), chain[i].Hash().Bytes()[:4], chain[i].ParentHash().Bytes()[:4])
+			chain = chain[:i]
+			return bc.insertChain2(chain, try+1)
 		}
+
 	}
 	// Pre-checks passed, start the full block imports
 	bc.wg.Add(1)
