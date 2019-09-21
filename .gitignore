@@ -15,7 +15,11 @@
 */**/*dapps*
 build/_vendor/pkg
 
-#*
+# data
+/*.dat
+/*.log
+
+_*
 .#*
 *#
 *~
