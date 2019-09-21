@@ -196,9 +196,29 @@ func SetupGenesisBlock(db aquadb.Database, genesis *Genesis) (*params.ChainConfi
 
 	// Check config compatibility and write the config. Compatibility errors
 	// are returned to the caller unless we're already at block zero.
+	// TODO: get this out of here
 	height := GetBlockNumber(db, GetHeadHeaderHash(db))
 	if height == missingNumber {
-		return newcfg, stored, fmt.Errorf("missing block number for head header hash, this happens when using test versions on existing incompatible databases, if you are sure you are running the correct version, try removedb")
+		log.Warn("missing block number for head header hash, trying workaround")
+
+		var emptyhash = common.Hash{}
+		var goodhash, lasthash common.Hash
+
+		// workaround supports up to block 200000
+		for i := uint64(0); i < 200000; i++ {
+			lasthash = GetCanonicalHash(db, i) // fetch block by number (canonical)
+			if lasthash == emptyhash {
+				break
+			}
+			goodhash = lasthash
+		}
+		if goodhash == (common.Hash{}) {
+			return storedcfg, goodhash, errors.New("missing head header hash (workaround failed)")
+		}
+		WriteHeadBlockHash(db, goodhash)
+		WriteHeadHeaderHash(db, goodhash)
+		height = GetBlockNumber(db, GetHeadHeaderHash(db))
+
 	}
 	compatErr := storedcfg.CheckCompatible(newcfg, height)
 	if compatErr != nil && height != 0 && compatErr.RewindTo != 0 {
