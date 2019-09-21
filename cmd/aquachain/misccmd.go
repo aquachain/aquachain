@@ -108,8 +108,7 @@ func makedag(ctx *cli.Context) error {
 }
 
 func version(ctx *cli.Context) error {
-	fmt.Println(strings.Title(clientIdentifier))
-	fmt.Println("Version:", params.Version)
+	fmt.Println(strings.Title(clientIdentifier), params.Version)
 	if gitCommit != "" {
 		fmt.Println("Git Commit:", gitCommit)
 	}
@@ -132,6 +131,9 @@ func version(ctx *cli.Context) error {
 	} else if ctx.GlobalBool(utils.DeveloperFlag.Name) {
 		chaincfg = params.TestChainConfig
 	}
+
+	// set hardfork params for printing
+	utils.SetHardforkParams(ctx, chaincfg)
 
 	fmt.Println("Architecture:", runtime.GOARCH)
 	fmt.Println("Protocol Versions:", aqua.ProtocolVersions)
