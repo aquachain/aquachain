@@ -111,6 +111,7 @@ var (
 		utils.GpoPercentileFlag,
 		utils.ExtraDataFlag,
 		configFileFlag,
+		utils.HF8MainnetFlag,
 	}
 
 	rpcFlags = []cli.Flag{

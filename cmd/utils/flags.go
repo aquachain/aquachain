@@ -521,6 +521,11 @@ var (
 		Usage: "Minimum POW accepted",
 		Value: whisper.DefaultMinimumPoW,
 	}
+	HF8MainnetFlag = cli.Int64Flag{
+		Name:  "hf8",
+		Usage: "Hard fork #8 activation block",
+		Value: -1,
+	}
 )
 
 // MakeDataDir retrieves the currently requested data directory, terminating
@@ -1004,6 +1009,12 @@ func SetShhConfig(ctx *cli.Context, stack *node.Node, cfg *whisper.Config) {
 		cfg.MinimumAcceptedPOW = ctx.GlobalFloat64(WhisperMinPOWFlag.Name)
 	}
 }
+func SetHardforkParams(ctx *cli.Context, chaincfg *params.ChainConfig) {
+	// activate HF8 at block number X (not activated by default)
+	if ctx.GlobalIsSet(HF8MainnetFlag.Name) {
+		chaincfg.HF[8] = big.NewInt(0).SetUint64(uint64(ctx.GlobalUint64(HF8MainnetFlag.Name)))
+	}
+}
 
 // SetAquaConfig applies aqua-related command line flags to the config.
 func SetAquaConfig(ctx *cli.Context, stack *node.Node, cfg *aqua.Config) {
@@ -1011,7 +1022,9 @@ func SetAquaConfig(ctx *cli.Context, stack *node.Node, cfg *aqua.Config) {
 	checkExclusive(ctx, DeveloperFlag, TestnetFlag, Testnet2Flag, NetworkEthFlag)
 	checkExclusive(ctx, FastSyncFlag, SyncModeFlag, OfflineFlag)
 
-	SetChainId(ctx, cfg)
+	chaincfg := SetChainId(ctx, cfg)
+
+	SetHardforkParams(ctx, chaincfg)
 
 	am := stack.AccountManager()
 	if am != nil {
@@ -1093,29 +1106,39 @@ func SetAquaConfig(ctx *cli.Context, stack *node.Node, cfg *aqua.Config) {
 	}
 
 }
-func SetChainId(ctx *cli.Context, cfg *aqua.Config) {
+
+// SetChainId returns the chain config from the command line flags
+func SetChainId(ctx *cli.Context, cfg *aqua.Config) *params.ChainConfig {
 	// Override any default configs for hard coded networks.
+
+	var chaincfg *params.ChainConfig
 	switch {
 	case ctx.GlobalBool(TestnetFlag.Name):
 		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = params.TestnetChainConfig.ChainId.Uint64()
 		}
 		cfg.Genesis = core.DefaultTestnetGenesisBlock()
+		chaincfg = params.TestnetChainConfig
 	case ctx.GlobalBool(Testnet2Flag.Name):
 		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = params.Testnet2ChainConfig.ChainId.Uint64()
 		}
 		cfg.Genesis = core.DefaultTestnet2GenesisBlock()
+		chaincfg = params.Testnet2ChainConfig
 	case ctx.GlobalBool(DeveloperFlag.Name):
 		if !ctx.GlobalIsSet(GasPriceFlag.Name) {
 			cfg.GasPrice = big.NewInt(1)
 			cfg.NetworkId = 1337
 		}
+		chaincfg = params.Testnet2ChainConfig
 	case ctx.GlobalBool(NetworkEthFlag.Name):
 		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = params.EthnetChainConfig.ChainId.Uint64()
 		}
 		cfg.Genesis = core.DefaultEthnetGenesisBlock()
+		chaincfg = params.EthnetChainConfig
+	default:
+		chaincfg = params.MainnetChainConfig
 	}
 	// TODO(fjl): move trie cache generations into config
 	if gen := ctx.GlobalInt(TrieCacheGenFlag.Name); gen > 0 {
@@ -1126,6 +1149,7 @@ func SetChainId(ctx *cli.Context, cfg *aqua.Config) {
 		cfg.NetworkId = ctx.GlobalUint64(NetworkIdFlag.Name)
 	}
 
+	return chaincfg
 }
 
 // RegisterAquaService adds an AquaChain client to the stack.
