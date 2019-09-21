@@ -43,7 +43,7 @@ var (
 		5: big.NewInt(22800), // HF5 (POW) argonated (algo #2) (argon2id)
 		6: big.NewInt(36000), // HF6 (difficulty algo) divisor increase
 		7: big.NewInt(36050), // HF7 (EIP 155, 158)
-		//8: big.NewInt(99999), // HF8 (POW) algo #3 (argon2id)
+		8: nil,               // HF8 (m_cost=16, diff algo, jump diff) // activated with flag
 	}
 
 	// TestnetHF is the map of hard forks (testnet)
