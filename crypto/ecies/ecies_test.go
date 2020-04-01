@@ -45,10 +45,14 @@ import (
 
 var dumpEnc bool
 
-func init() {
+func Init() {
 	flDump := flag.Bool("dump", false, "write encrypted test message to file")
 	flag.Parse()
 	dumpEnc = *flDump
+}
+
+func TestA_Init(t *testing.T) {
+	Init()
 }
 
 // Ensure the KDF generates appropriately sized keys.
