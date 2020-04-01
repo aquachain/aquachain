@@ -184,6 +184,7 @@ func doInstall(cmdline []string) {
 	packages := []string{"./..."}
 	if flag.NArg() > 0 {
 		packages = flag.Args()
+		log.Printf("Packages: %v", packages)
 	}
 	packages, _, _ = build.ExpandPackagesNoVendor(packages)
 
@@ -337,6 +338,7 @@ func doTest(cmdline []string) {
 	fmt.Println(aquachain.Logo)
 	if len(flag.CommandLine.Args()) > 0 {
 		allpkgs = flag.CommandLine.Args()
+		log.Println("Allpkgs:", allpkgs)
 	}
 
 	allpkgs, shortpkg, longpkg = build.ExpandPackagesNoVendor(allpkgs)
@@ -345,7 +347,7 @@ func doTest(cmdline []string) {
 	fmt.Println("Slow tests: ", len(longpkg))
 
 	// Run analysis tools on all packages before the tests.
-	build.MustRun(goTool("vet", allpkgs...))
+	build.MustRun(goTool("vet", append(shortpkg, longpkg...)...))
 
 	gotestShort := goTool("test", buildFlags(env)...)
 	gotestLong := goTool("test", buildFlags(env)...)
