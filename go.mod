@@ -6,14 +6,14 @@ require (
 	github.com/aerth/tgun v0.1.4
 	github.com/alecthomas/gocyclo v0.0.0-20150208221726-aa8f8b160214 // indirect
 	github.com/alexkohler/nakedret v0.0.0-20190321114339-98ae56e4e0f3 // indirect
-	github.com/btcsuite/btcd v0.0.0-20190807005414-4063feeff79a
+	github.com/btcsuite/btcd v0.20.1-beta
 	github.com/cespare/cp v0.1.0
 	github.com/client9/misspell v0.3.4 // indirect
 	github.com/davecgh/go-spew v1.1.1
 	github.com/deckarep/golang-set v1.7.1
 	github.com/edsrzf/mmap-go v1.0.0
 	github.com/fatih/color v1.7.0
-	github.com/go-stack/stack v1.7.0
+	github.com/go-stack/stack v1.8.0
 	github.com/golang/protobuf v1.3.1
 	github.com/golang/snappy v0.0.1
 	github.com/gordonklaus/ineffassign v0.0.0-20190601041439-ed7b1b5ee0f8 // indirect
@@ -45,10 +45,10 @@ require (
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/tsenart/deadcode v0.0.0-20160724212837-210d2dc333e9 // indirect
 	github.com/walle/lll v1.0.1 // indirect
-	golang.org/x/crypto v0.0.0-20190820162420-60c769a6c586
+	golang.org/x/crypto v0.0.0-20200323165209-0ec3e9974c59
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
-	golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a
+	golang.org/x/sys v0.0.0-20200331124033-c3d80250170d
 	golang.org/x/tools v0.0.0-20190822000311-fc82fb2afd64
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce
@@ -60,3 +60,5 @@ require (
 	mvdan.cc/lint v0.0.0-20170908181259-adc824a0674b // indirect
 	mvdan.cc/unparam v0.0.0-20190720180237-d51796306d8f // indirect
 )
+
+go 1.13
