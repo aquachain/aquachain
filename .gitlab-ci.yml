@@ -19,5 +19,6 @@ build:
 
 test:
   script:
+    - go get -v -u -t -d ./...
     - build/env.sh go run build/ci.go test
 
