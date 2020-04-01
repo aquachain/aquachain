@@ -1,4 +1,4 @@
-image: golang:1.12.9
+image: golang:1.14.1
 
 lint:
   allow_failure: true
