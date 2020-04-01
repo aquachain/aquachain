@@ -19,5 +19,6 @@ build:
 
 test:
   script:
-    - make test
+    - CGO_ENABLED=0 go get -v -u -d ./...
+    - build/env.sh go run build/ci.go test
 
