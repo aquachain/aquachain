@@ -163,7 +163,10 @@ devtools:
 generate: devtools
 	go generate ./...
 
-test: all
+goget:
+	GOBIN=$(build_dir) CGO_ENABLED=$(CGO_ENABLED) go get -v -u -d $(GO_FLAGS) ./...
+
+test: goget all
 	build/env.sh go run build/ci.go test
 
 test-verbose: all
