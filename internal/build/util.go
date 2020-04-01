@@ -171,9 +171,12 @@ func ExpandPackagesNoVendor(patterns []string) (all, short, long []string) {
 		}
 	}
 	if !expand {
+		log.Println("not expanding")
 		return patterns, short, long
 	}
 
+
+	log.Println("listing")
 	cmd := GoTool("list", patterns...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -181,6 +184,10 @@ func ExpandPackagesNoVendor(patterns []string) (all, short, long []string) {
 	}
 	for _, line := range strings.Split(string(out), "\n") {
 		if strings.Contains(line, "/vendor/") {
+			continue
+		}
+		if strings.Contains(line, ":") {
+			log.Println("Skipping invalid package (FIXME):", line)
 			continue
 		}
 		line = strings.TrimSpace(line)
