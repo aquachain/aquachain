@@ -37,7 +37,7 @@ import (
 	"gitlab.com/aquachain/aquachain/core/types"
 	"gitlab.com/aquachain/aquachain/opt/console"
 	"gitlab.com/aquachain/aquachain/trie"
-	"gopkg.in/urfave/cli.v1"
+	"github.com/urfave/cli"
 )
 
 var (

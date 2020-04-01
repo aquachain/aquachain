@@ -25,7 +25,7 @@ import (
 	"reflect"
 	"unicode"
 
-	cli "gopkg.in/urfave/cli.v1"
+	cli "github.com/urfave/cli"
 
 	"github.com/naoina/toml"
 	"gitlab.com/aquachain/aquachain/aqua"

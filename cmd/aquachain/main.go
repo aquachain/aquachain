@@ -35,7 +35,7 @@ import (
 	"gitlab.com/aquachain/aquachain/node"
 	"gitlab.com/aquachain/aquachain/opt/aquaclient"
 	"gitlab.com/aquachain/aquachain/opt/console"
-	cli "gopkg.in/urfave/cli.v1"
+	cli "github.com/urfave/cli"
 )
 
 const (

@@ -29,7 +29,7 @@ import (
 	"gitlab.com/aquachain/aquachain/common/log/term"
 	"gitlab.com/aquachain/aquachain/common/metrics"
 	"gitlab.com/aquachain/aquachain/common/metrics/exp"
-	"gopkg.in/urfave/cli.v1"
+	"github.com/urfave/cli"
 )
 
 var (

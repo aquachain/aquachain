@@ -27,7 +27,7 @@ import (
 	"gitlab.com/aquachain/aquachain/opt/console"
 	"gitlab.com/aquachain/aquachain/params"
 	rpc "gitlab.com/aquachain/aquachain/rpc/rpcclient"
-	cli "gopkg.in/urfave/cli.v1"
+	cli "github.com/urfave/cli"
 )
 
 var (

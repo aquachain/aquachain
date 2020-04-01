@@ -30,7 +30,7 @@ import (
 	"gitlab.com/aquachain/aquachain/params"
 
 	"gitlab.com/aquachain/aquachain/cmd/utils"
-	cli "gopkg.in/urfave/cli.v1"
+	cli "github.com/urfave/cli"
 )
 
 var bugCommand = cli.Command{
