@@ -167,19 +167,19 @@ goget:
 	CGO_ENABLED=$(CGO_ENABLED) go get -v -u -d ./...
 
 test: goget all
-	build/env.sh go run build/ci.go test
+	go run build/ci.go test
 
 test-verbose: all
-	build/env.sh go run build/ci.go test -v
+	go run build/ci.go test -v
 
 test-race: all
-	build/env.sh go run build/ci.go test -race
+	go run build/ci.go test -race
 
 test-musl: musl
-	build/env.sh go run build/ci.go test -musl
+	go run build/ci.go test -musl
 
 lint:
-	build/env.sh go run build/ci.go lint
+	go run build/ci.go lint
 
 linter: bin/golangci-lint
 	CGO_ENABLED=0 ./bin/golangci-lint -v run \
@@ -192,7 +192,7 @@ bin/golangci-lint:
 	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s $(golangci_linter_version)
 
 race:
-	build/env.sh go run build/ci.go install -- -race ./cmd/aquachain/
+	go run build/ci.go install -- -race ./cmd/aquachain/
 
 all:
 	GOBIN=$(build_dir) CGO_ENABLED=$(CGO_ENABLED) go install $(GO_FLAGS) -tags '$(GO_TAGS)' ./cmd/...

@@ -19,6 +19,7 @@ build:
 
 test:
   script:
-    - go get -v -u -t -d ./...
-    - build/env.sh go run build/ci.go test
+    - echo $(go env GOPATH)
+    - CGO_ENABLED=0 go get -v -u -d -t ./...
+    - CGO_ENABLED=0 go run build/ci.go test
 
