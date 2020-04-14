@@ -62,3 +62,10 @@ func TestMiner(t *testing.T) {
 		t.FailNow()
 	}
 }
+
+func TestZeros(t *testing.T) {
+
+	seed := make([]byte, 40)
+	result := crypto.VersionHash(2, seed)
+	fmt.Printf("%02x -> %02x\n", seed, result)
+}
