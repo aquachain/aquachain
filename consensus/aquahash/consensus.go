@@ -400,11 +400,7 @@ func (aquahash *Aquahash) VerifySeal(chain consensus.ChainReader, header *types.
 	}
 
 	// Recompute the digest and PoW value and verify against the header
-	cache := aquahash.cache(number)
-	size := datasetSize(number)
-	if aquahash.config.PowMode == ModeTest {
-		size = 32 * 1024
-	}
+
 	var (
 		digest []byte
 		result []byte
@@ -413,7 +409,18 @@ func (aquahash *Aquahash) VerifySeal(chain consensus.ChainReader, header *types.
 	case types.H_UNSET: // 0
 		panic("header version not set")
 	case types.H_KECCAK256: // 1
+		cache := aquahash.cache(number)
+		if cache == nil {
+			return errors.New("invalid startVersion for use with ethash")
+		}
+		size := datasetSize(number)
+		if aquahash.config.PowMode == ModeTest {
+			size = 32 * 1024
+		}
 		digest, result = hashimotoLight(size, cache.cache, header.HashNoNonce().Bytes(), header.Nonce.Uint64())
+		// Caches are unmapped in a finalizer. Ensure that the cache stays live
+		// until after the call to hashimotoLight so it's not unmapped while being used.
+		runtime.KeepAlive(cache)
 	default:
 		seed := make([]byte, 40)
 		copy(seed, header.HashNoNonce().Bytes())
@@ -421,9 +428,6 @@ func (aquahash *Aquahash) VerifySeal(chain consensus.ChainReader, header *types.
 		result = crypto.VersionHash(byte(header.Version), seed)
 		digest = make([]byte, common.HashLength)
 	}
-	// Caches are unmapped in a finalizer. Ensure that the cache stays live
-	// until after the call to hashimotoLight so it's not unmapped while being used.
-	runtime.KeepAlive(cache)
 
 	if !bytes.Equal(header.MixDigest[:], digest) {
 		//fmt.Printf("Invalid Digest (%v):\n%x (!=) %x\n", header.Number.Uint64(), header.MixDigest[:], digest)

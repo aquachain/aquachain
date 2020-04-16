@@ -146,9 +146,9 @@ func memoryMapAndGenerate(path string, size uint64, generator func(buffer []uint
 
 // lru tracks caches or datasets by their last use time, keeping at most N of them.
 type lru struct {
-	what string
-	new  func(epoch uint64) interface{}
-	mu   sync.Mutex
+	what  string
+	newFn func(epoch uint64) interface{}
+	mu    sync.Mutex
 	// Items are kept in a LRU cache, but there is a special case:
 	// We always keep an item for (highest seen epoch) + 1 as the 'future item'.
 	cache      *simplelru.LRU
@@ -158,14 +158,14 @@ type lru struct {
 
 // newlru create a new least-recently-used cache for ither the verification caches
 // or the mining datasets.
-func newlru(what string, maxItems int, new func(epoch uint64) interface{}) *lru {
+func newlru(what string, maxItems int, newFn func(epoch uint64) interface{}) *lru {
 	if maxItems <= 0 {
 		maxItems = 1
 	}
 	cache, _ := simplelru.NewLRU(maxItems, func(key, value interface{}) {
 		log.Trace("Evicted aquahash "+what, "epoch", key)
 	})
-	return &lru{what: what, new: new, cache: cache}
+	return &lru{what: what, newFn: newFn, cache: cache}
 }
 
 // get retrieves or creates an item for the given epoch. The first return value is always
@@ -182,14 +182,14 @@ func (lru *lru) get(epoch uint64) (item, future interface{}) {
 			item = lru.futureItem
 		} else {
 			log.Trace("Requiring new aquahash "+lru.what, "epoch", epoch)
-			item = lru.new(epoch)
+			item = lru.newFn(epoch)
 		}
 		lru.cache.Add(epoch, item)
 	}
 	// Update the 'future item' if epoch is larger than previously seen.
 	if epoch < maxEpoch-1 && lru.future < epoch+1 {
 		log.Trace("Requiring new future aquahash "+lru.what, "epoch", epoch+1)
-		future = lru.new(epoch + 1)
+		future = lru.newFn(epoch + 1)
 		lru.future = epoch + 1
 		lru.futureItem = future
 	}
@@ -289,6 +289,7 @@ func newDataset(epoch uint64) interface{} {
 
 // generate ensures that the dataset content is generated before use.
 func (d *dataset) generate(dir string, limit int, test bool) {
+	logger := log.New("epoch", d.epoch)
 	d.once.Do(func() {
 		csize := cacheSize(d.epoch*epochLength + 1)
 		dsize := datasetSize(d.epoch*epochLength + 1)
@@ -311,7 +312,6 @@ func (d *dataset) generate(dir string, limit int, test bool) {
 			endian = ".be"
 		}
 		path := filepath.Join(dir, fmt.Sprintf("full-R%d-%x%s", algorithmRevision, seed[:8], endian))
-		logger := log.New("epoch", d.epoch)
 
 		// We're about to mmap the file, ensure that the mapping is cleaned up when the
 		// cache becomes unused.
@@ -422,10 +422,10 @@ func New(config Config) *Aquahash {
 			hashrate: metrics.NewMeter(),
 		}
 	}
-	if config.CachesInMem <= 0 {
-		log.Warn("One aquahash cache must always be in memory", "requested", config.CachesInMem)
-		config.CachesInMem = 1
-	}
+	//	if config.CachesInMem <= 0 {
+	//		log.Warn("One aquahash cache must always be in memory", "requested", config.CachesInMem)
+	//		config.CachesInMem = 1
+	//	}
 	if config.CacheDir != "" && config.CachesOnDisk > 0 {
 		log.Info("Disk storage enabled for aquahash caches", "dir", config.CacheDir, "count", config.CachesOnDisk)
 	}
@@ -524,6 +524,9 @@ func (aquahash *Aquahash) cache(block uint64) *cache {
 // by first checking against a list of in-memory datasets, then against DAGs
 // stored on disk, and finally generating one if none can be found.
 func (aquahash *Aquahash) dataset(block uint64) *dataset {
+	if aquahash.config.StartVersion > 1 {
+		return nil
+	}
 	epoch := block / epochLength
 	currentI, futureI := aquahash.datasets.get(epoch)
 	current := currentI.(*dataset)

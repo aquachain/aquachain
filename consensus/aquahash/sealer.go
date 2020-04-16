@@ -39,8 +39,8 @@ func (aquahash *Aquahash) Seal(chain consensus.ChainReader, block *types.Block, 
 	// If we're running a fake PoW, simply return a 0 nonce immediately
 	chaincfg := params.TestChainConfig
 	if chain != nil {
-		log.Trace("[sealer] Using test aquahash engine")
 		chaincfg = chain.Config()
+		log.Trace("[sealer] Using aquahash engine", "chaincfg", chaincfg.String())
 	}
 	if aquahash.config.PowMode == ModeFake || aquahash.config.PowMode == ModeFullFake {
 		log.Trace("[sealer] aquahash engine using fake POW")
@@ -80,7 +80,7 @@ func (aquahash *Aquahash) Seal(chain consensus.ChainReader, block *types.Block, 
 		pend.Add(1)
 		go func(id int, nonce uint64) {
 			defer pend.Done()
-			log.Trace("launching miner")
+			log.Trace("launching miner", "algoVersion", version)
 			aquahash.mine(version, block, id, nonce, abort, found)
 		}(i, uint64(aquahash.rand.Int63()))
 	}
@@ -120,7 +120,7 @@ func (aquahash *Aquahash) mine(version params.HeaderVersion, block *types.Block,
 		common.Report("Mining incorrect version")
 		return
 	}
-	if header.Version < 2 {
+	if header.Version == 1 {
 		dataset = aquahash.dataset(number)
 	}
 
