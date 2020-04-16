@@ -490,6 +490,7 @@ func (m *Matcher) distributor(dist chan *request, session *MatcherSession) {
 			if len(missing) > 0 {
 				queue := requests[result.Bit]
 				for _, section := range missing {
+					section := section
 					index := sort.Search(len(queue), func(i int) bool { return queue[i] >= section })
 					queue = append(queue[:index], append([]uint64{section}, queue[index:]...)...)
 				}

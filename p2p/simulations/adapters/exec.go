@@ -389,12 +389,14 @@ func execP2PNode() {
 	// register the services, collecting them into a map so we can wrap
 	// them in a snapshot service
 	services := make(map[string]node.Service, len(serviceNames))
-	for _, name := range serviceNames {
-		serviceFunc, exists := serviceFuncs[name]
+	for _, svcname := range serviceNames {
+		svcname := svcname
+		serviceFunc, exists := serviceFuncs[svcname]
 		if !exists {
-			log.Crit("unknown node service", "name", name)
+			log.Crit("unknown node service", "name", svcname)
 		}
 		constructor := func(nodeCtx *node.ServiceContext) (node.Service, error) {
+			name := svcname
 			ctx := &ServiceContext{
 				RPCDialer:   &wsRPCDialer{addrs: conf.PeerAddrs},
 				NodeContext: nodeCtx,
@@ -411,7 +413,7 @@ func execP2PNode() {
 			return service, nil
 		}
 		if err := stack.Register(constructor); err != nil {
-			log.Crit("error starting service", "name", name, "err", err)
+			log.Crit("error starting service", "name", svcname, "err", err)
 		}
 	}
 

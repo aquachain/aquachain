@@ -148,6 +148,7 @@ func discover(out chan<- *upnp, target string, matcher func(*goupnp.RootDevice, 
 		if devs[i].Root == nil {
 			continue
 		}
+		i := i
 		devs[i].Root.Device.VisitServices(func(service *goupnp.Service) {
 			if found {
 				return

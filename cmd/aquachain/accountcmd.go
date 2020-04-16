@@ -231,9 +231,9 @@ func ambiguousAddrRecovery(ks *keystore.KeyStore, err *keystore.AmbiguousAddrErr
 	}
 	fmt.Println("Testing your passphrase against all of them...")
 	var match *accounts.Account
-	for _, a := range err.Matches {
-		if err := ks.Unlock(a, auth); err == nil {
-			match = &a
+	for i := range err.Matches {
+		if errr := ks.Unlock(err.Matches[i], auth); errr == nil {
+			match = &err.Matches[i]
 			break
 		}
 	}

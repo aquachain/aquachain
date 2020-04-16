@@ -506,20 +506,24 @@ func (c *Client) dispatch(conn net.Conn) {
 
 		// Read path.
 		case batch := <-c.readResp:
-			for _, msg := range batch {
+			for _, msgv := range batch {
+				msg := msgv
 				switch {
 				case msg.isNotification():
 					log.Trace("", "msg", log.Lazy{Fn: func() string {
+						msg := msg
 						return fmt.Sprint("<-readResp: notification ", msg)
 					}})
 					c.handleNotification(msg)
 				case msg.isResponse():
 					log.Trace("", "msg", log.Lazy{Fn: func() string {
+						msg := msg
 						return fmt.Sprint("<-readResp: response ", msg)
 					}})
 					c.handleResponse(msg)
 				default:
 					log.Debug("", "msg", log.Lazy{Fn: func() string {
+						msg := msg
 						return fmt.Sprint("<-readResp: dropping weird message", msg)
 					}})
 					// TODO: maybe close

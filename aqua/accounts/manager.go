@@ -177,6 +177,7 @@ func (am *Manager) Subscribe(sink chan<- WalletEvent) event.Subscription {
 // The original slice is assumed to be already sorted by URL.
 func merge(slice []Wallet, wallets ...Wallet) []Wallet {
 	for _, wallet := range wallets {
+		wallet := wallet
 		n := sort.Search(len(slice), func(i int) bool { return slice[i].URL().Cmp(wallet.URL()) >= 0 })
 		if n == len(slice) {
 			slice = append(slice, wallet)
@@ -191,6 +192,7 @@ func merge(slice []Wallet, wallets ...Wallet) []Wallet {
 // cache and removes the ones specified.
 func drop(slice []Wallet, wallets ...Wallet) []Wallet {
 	for _, wallet := range wallets {
+		wallet := wallet
 		n := sort.Search(len(slice), func(i int) bool { return slice[i].URL().Cmp(wallet.URL()) >= 0 })
 		if n == len(slice) {
 			// Wallet not found, may happen during startup

@@ -849,10 +849,15 @@ type nodesByDistance struct {
 }
 
 // push adds the given node to the list, keeping the total size below maxElems.
+
+func (h *nodesByDistance) getNodeSearchFn(nodeSha common.Hash) func(i int) bool {
+	return func(num int) bool {
+		e := h.entries[num].sha
+		return distcmp(h.target, e, nodeSha) > 0
+	}
+}
 func (h *nodesByDistance) push(n *Node, maxElems int) {
-	ix := sort.Search(len(h.entries), func(i int) bool {
-		return distcmp(h.target, h.entries[i].sha, n.sha) > 0
-	})
+	ix := sort.Search(len(h.entries), h.getNodeSearchFn(n.sha))
 	if len(h.entries) < maxElems {
 		h.entries = append(h.entries, n)
 	}
