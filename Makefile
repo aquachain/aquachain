@@ -19,7 +19,7 @@ build_dir := $(PWD)/bin
 INSTALL_DIR ?= $(PREFIX)/bin/
 release_dir=rel
 hashfn := sha384sum
-golangci_linter_version := v1.17.1
+golangci_linter_version := v1.24.0
 main_deps := $(filter %.go,$(wildcard *.go */*.go */*/*.go */*/*/*.go */*/*/*/*.g))
 
 # disable cgo by default
