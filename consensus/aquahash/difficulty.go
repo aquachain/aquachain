@@ -120,6 +120,9 @@ func calcDifficultyHFX(config *params.ChainConfig, time uint64, parent, grandpar
 		mainnet       = params.MainnetChainConfig.ChainID.Uint64() == chainID // bool
 		ethnet        = params.EthnetChainConfig.ChainID.Uint64() == chainID  // bool
 	)
+	if config == params.Testnet3ChainConfig {
+		return calcDifficultyGrandparent(time, parent, grandparent, hf, chainID)
+	}
 	if ethnet {
 		return EthCalcDifficulty(config, time, parent)
 	}
@@ -199,6 +202,9 @@ func calcDifficultyHFX(config *params.ChainConfig, time uint64, parent, grandpar
 
 // calcDifficultyGrandparent experimental
 func calcDifficultyGrandparent(time uint64, parent, grandparent *types.Header, hf int, chainID uint64) *big.Int {
+	if grandparent == nil {
+		return new(big.Int).Set(parent.Difficulty)
+	}
 	bigGrandparentTime := new(big.Int).Set(grandparent.Time)
 	bigParentTime := new(big.Int).Set(parent.Time)
 	if bigParentTime.Cmp(bigGrandparentTime) <= 0 {
@@ -237,4 +243,29 @@ func calcDifficultyGrandparent(time uint64, parent, grandparent *types.Header, h
 		x = math.BigMax(x, params.MinimumDifficultyHF5Testnet)
 	}
 	return x
+}
+
+var big100 = big.NewInt(100)
+var big1000 = big.NewInt(1000)
+var big20 = big.NewInt(20)
+
+func calcDifficultyTestnet3(time uint64, parent, grandparent *types.Header) *big.Int {
+	if grandparent == nil {
+		return new(big.Int).Set(parent.Difficulty)
+	}
+	bigTime := new(big.Int).SetUint64(time)
+	bigParentTime := new(big.Int).Set(parent.Time)
+	bigGParentTime := new(big.Int).Set(grandparent.Time)
+	difference := new(big.Int).Sub(bigTime, bigParentTime)
+	gdifference := new(big.Int).Sub(bigGParentTime, bigParentTime)
+	if difference.Cmp(big10) < 0 && gdifference.Cmp(big10) < 0 {
+		return new(big.Int).Add(parent.Difficulty, big1000)
+	}
+	if difference.Cmp(big20) > 0 && gdifference.Cmp(big20) > 0 {
+		return new(big.Int).Sub(parent.Difficulty, big1000)
+	}
+	if difference.Cmp(big100) > 0 && gdifference.Cmp(big100) > 0 {
+		return new(big.Int).Quo(parent.Difficulty, big2)
+	}
+	return new(big.Int).Set(parent.Difficulty)
 }

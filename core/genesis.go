@@ -395,6 +395,7 @@ func DefaultTestnet3GenesisBlock() *Genesis {
 		Timestamp:  1586999629,
 		GasLimit:   42000000,
 		Difficulty: big.NewInt(1024),
+		Alloc:      decodePrealloc(Testnet3AllocData), // from mainnet block 256623
 	}
 }
 
