@@ -240,6 +240,7 @@ func (g *Genesis) configOrDefault(ghash common.Hash) *params.ChainConfig {
 	case ghash == params.EthnetGenesisHash:
 		return params.EthnetChainConfig
 	default:
+		log.Info("unknown genesis hash", "hash", ghash)
 		return params.AllAquahashProtocolChanges
 	}
 }
@@ -341,7 +342,22 @@ func GenesisBlockForTesting(db aquadb.Database, addr common.Address, balance *bi
 	return g.MustCommit(db)
 }
 
-// DefaultGenesisBlock returns the Aquachain main net genesis block.
+func DefaultGenesisByName(name string) *Genesis {
+	switch name {
+	case "aqua":
+		return DefaultGenesisBlock()
+	case "testnet":
+		return DefaultTestnetGenesisBlock()
+	case "testnet2":
+		return DefaultTestnet2GenesisBlock()
+	case "testnet3":
+		return DefaultTestnet3GenesisBlock()
+	default:
+		return nil
+	}
+}
+
+// DefaultGenesisBlock returns the AquaChain main net genesis block.
 func DefaultGenesisBlock() *Genesis {
 	return &Genesis{
 		Config:     params.MainnetChainConfig,
@@ -369,6 +385,16 @@ func DefaultTestnet2GenesisBlock() *Genesis {
 		Timestamp:  1492009146,
 		GasLimit:   4700000,
 		Difficulty: big.NewInt(1),
+	}
+}
+
+// DefaultTestnet3GenesisBlock returns the Testnet2 network genesis block.
+func DefaultTestnet3GenesisBlock() *Genesis {
+	return &Genesis{
+		Config:     params.Testnet3ChainConfig,
+		Timestamp:  1586999629,
+		GasLimit:   42000000,
+		Difficulty: big.NewInt(1024),
 	}
 }
 

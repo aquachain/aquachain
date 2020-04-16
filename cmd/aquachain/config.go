@@ -116,12 +116,14 @@ func makeConfigNode(ctx *cli.Context) (*node.Node, gethConfig) {
 	// Load config file.
 	if file := ctx.GlobalString(configFileFlag.Name); file != "" {
 		if err := loadConfig(file, &cfg); err != nil {
-			utils.Fatalf("%v", err)
+			utils.Fatalf("error loading config file: %v", err)
 		}
 	}
 
 	// Apply flags.
-	utils.SetNodeConfig(ctx, &cfg.Node)
+	if err := utils.SetNodeConfig(ctx, &cfg.Node); err != nil {
+		utils.Fatalf("Fatal: %v", err)
+	}
 	stack, err := node.New(&cfg.Node)
 	if err != nil {
 		utils.Fatalf("Failed to create the protocol stack: %v", err)

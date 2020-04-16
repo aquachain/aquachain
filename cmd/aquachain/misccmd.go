@@ -122,7 +122,10 @@ func version(ctx *cli.Context) error {
 	}
 
 	chaincfg := params.MainnetChainConfig
-	if ctx.GlobalBool(utils.TestnetFlag.Name) {
+	if ctx.GlobalIsSet(utils.ChainFlag.Name) {
+		chaincfg = params.GetChainConfig(ctx.GlobalString(utils.ChainFlag.Name))
+		fmt.Printf("Custom Chain: %s\n", ctx.GlobalString(utils.ChainFlag.Name))
+	} else if ctx.GlobalBool(utils.TestnetFlag.Name) {
 		chaincfg = params.TestnetChainConfig
 	} else if ctx.GlobalBool(utils.Testnet2Flag.Name) {
 		chaincfg = params.Testnet2ChainConfig

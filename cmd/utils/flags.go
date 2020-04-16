@@ -19,6 +19,7 @@ package utils
 
 import (
 	"crypto/ecdsa"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"math/big"
@@ -139,6 +140,11 @@ var (
 		Name:  "networkid",
 		Usage: "Network identifier (integer)",
 		Value: aqua.DefaultConfig.NetworkId,
+	}
+	ChainFlag = cli.StringFlag{
+		Name:  "chain",
+		Usage: "Chain select (aqua, testnet, testnet2, testnet3)",
+		Value: "aqua",
 	}
 	TestnetFlag = cli.BoolFlag{
 		Name:  "testnet",
@@ -537,6 +543,9 @@ var (
 // the a subdirectory of the specified datadir will be used.
 func MakeDataDir(ctx *cli.Context) string {
 	if path := ctx.GlobalString(DataDirFlag.Name); path != "" {
+		if chain := ctx.GlobalString(ChainFlag.Name); chain != "aqua" {
+			return filepath.Join(path, chain)
+		}
 		if ctx.GlobalBool(TestnetFlag.Name) {
 			return filepath.Join(path, "testnet")
 		}
@@ -591,24 +600,36 @@ func setNodeUserIdent(ctx *cli.Context, cfg *node.Config) {
 // setBootstrapNodes creates a list of bootstrap nodes from the command line
 // flags, reverting to pre-configured ones if none have been specified.
 func setBootstrapNodes(ctx *cli.Context, cfg *p2p.Config) {
-	urls := params.MainnetBootnodes
-	switch {
-	case ctx.GlobalIsSet(BootnodesFlag.Name) || ctx.GlobalIsSet(BootnodesV4Flag.Name):
-		if ctx.GlobalIsSet(BootnodesV4Flag.Name) {
-			urls = strings.Split(ctx.GlobalString(BootnodesV4Flag.Name), ",")
-		} else {
-			urls = strings.Split(ctx.GlobalString(BootnodesFlag.Name), ",")
+	var urls []string
+	if ctx.GlobalIsSet(ChainFlag.Name) {
+		chainName := ctx.GlobalString(ChainFlag.Name)
+		switch chainName {
+		default: // no bootnodes
+		case "aqua":
+			urls = params.MainnetBootnodes
+		case "testnet":
+			urls = params.TestnetBootnodes
 		}
-	case ctx.GlobalBool(TestnetFlag.Name):
-		urls = params.TestnetBootnodes
-	case ctx.GlobalBool(Testnet2Flag.Name):
-		urls = params.Testnet2Bootnodes
-	case ctx.GlobalBool(NetworkEthFlag.Name):
-		urls = params.EthnetBootnodes
-	case cfg.BootstrapNodes != nil:
+	} else {
+		urls = params.MainnetBootnodes
+		switch {
+		case ctx.GlobalIsSet(BootnodesFlag.Name) || ctx.GlobalIsSet(BootnodesV4Flag.Name):
+			if ctx.GlobalIsSet(BootnodesV4Flag.Name) {
+				urls = strings.Split(ctx.GlobalString(BootnodesV4Flag.Name), ",")
+			} else {
+				urls = strings.Split(ctx.GlobalString(BootnodesFlag.Name), ",")
+			}
+		case ctx.GlobalBool(TestnetFlag.Name):
+			urls = params.TestnetBootnodes
+		case ctx.GlobalBool(Testnet2Flag.Name):
+			urls = params.Testnet2Bootnodes
+		case ctx.GlobalBool(NetworkEthFlag.Name):
+			urls = params.EthnetBootnodes
+		}
+	}
+	if cfg.BootstrapNodes != nil {
 		return // already set, don't apply defaults.
 	}
-
 	cfg.BootstrapNodes = make([]*discover.Node, 0, len(urls))
 	for _, url := range urls {
 		node, err := discover.ParseNode(url)
@@ -622,7 +643,19 @@ func setBootstrapNodes(ctx *cli.Context, cfg *p2p.Config) {
 // setListenAddress creates a TCP listening address string from set command
 // line flags.
 func setListenAddress(ctx *cli.Context, cfg *p2p.Config) {
-	listenaddr := ":21303"
+	var listenaddr = ""
+	chaincfg := params.GetChainConfig(ctx.GlobalString(ChainFlag.Name))
+	if chaincfg == nil {
+		Fatalf("invalid chain: %v", ctx.GlobalString(ChainFlag.Name))
+	}
+	switch ctx.GlobalString(ChainFlag.Name) {
+	case "aqua":
+		listenaddr = ":21303"
+	case "testnet":
+		listenaddr = ":21304"
+
+	}
+
 	if !ctx.GlobalIsSet(ListenAddrFlag.Name) && ctx.GlobalIsSet(ListenPortFlag.Name) {
 		listenaddr = fmt.Sprintf(":%d", ctx.GlobalInt(ListenPortFlag.Name))
 	}
@@ -839,19 +872,47 @@ func SetP2PConfig(ctx *cli.Context, cfg *p2p.Config) {
 		cfg.NoDiscovery = true
 	}
 
-	if ctx.GlobalBool(TestnetFlag.Name) && !ctx.GlobalIsSet(ListenPortFlag.Name) {
+	switch ctx.GlobalString(ChainFlag.Name) {
+	case "aqua":
+		cfg.ListenAddr = ":21303"
+	case "testnet":
+		cfg.ListenAddr = ":21304"
+	case "testnet2":
+		cfg.MaxPeers = 0
+		cfg.ListenAddr = "127.0.0.1:0"
+		cfg.NoDiscovery = true
+		cfg.Offline = true
+	case "testnet3":
+		cfg.MaxPeers = 0
+		cfg.ListenAddr = "127.0.0.1:0"
+		cfg.NoDiscovery = true
+		cfg.Offline = true
+	}
+	if cfg.ListenAddr == "" && ctx.GlobalBool(TestnetFlag.Name) && !ctx.GlobalIsSet(ListenPortFlag.Name) {
 		cfg.ListenAddr = ":21304"
 	}
-	if ctx.GlobalBool(NetworkEthFlag.Name) && !ctx.GlobalIsSet(ListenPortFlag.Name) {
+	if cfg.ListenAddr == "" && ctx.GlobalBool(NetworkEthFlag.Name) && !ctx.GlobalIsSet(ListenPortFlag.Name) {
 		cfg.ListenAddr = ":30303"
 	}
 
 }
 
 // SetNodeConfig applies node-related command line flags to the config.
-func SetNodeConfig(ctx *cli.Context, cfg *node.Config) {
+func SetNodeConfig(ctx *cli.Context, cfg *node.Config) error {
 
 	switch {
+	case ctx.GlobalIsSet(ChainFlag.Name):
+		chainName := ctx.GlobalString(ChainFlag.Name)
+		chaincfg := params.GetChainConfig(chainName)
+		if chaincfg == nil {
+			return errors.New("invalid config")
+		}
+		if chaincfg == params.MainnetChainConfig {
+			cfg.DataDir = node.DefaultDataDir()
+		} else {
+			cfg.DataDir = filepath.Join(node.DefaultDataDir(), chainName)
+		}
+		cfg.P2P.ChainId = chaincfg.ChainId.Uint64()
 	case ctx.GlobalIsSet(NetworkIdFlag.Name):
 		cfg.P2P.ChainID = ctx.GlobalUint64(NetworkIdFlag.Name)
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), fmt.Sprintf("chainid-%v", cfg.P2P.ChainID))
@@ -901,6 +962,7 @@ func SetNodeConfig(ctx *cli.Context, cfg *node.Config) {
 	if ctx.GlobalIsSet(RPCBehindProxyFlag.Name) {
 		cfg.RPCBehindProxy = ctx.GlobalBool(RPCBehindProxyFlag.Name)
 	}
+	return nil
 }
 
 func setGPO(ctx *cli.Context, cfg *gasprice.Config) {
@@ -1117,6 +1179,11 @@ func SetChainID(ctx *cli.Context, cfg *aqua.Config) *params.ChainConfig {
 
 	var chaincfg *params.ChainConfig
 	switch {
+	case ctx.GlobalIsSet(ChainFlag.Name):
+		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
+			cfg.NetworkId = params.GetChainConfig(ctx.GlobalString(ChainFlag.Name)).ChainId.Uint64()
+		}
+		cfg.Genesis = core.DefaultGenesisByName(ctx.GlobalString(ChainFlag.Name))
 	case ctx.GlobalBool(TestnetFlag.Name):
 		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = params.TestnetChainConfig.ChainID.Uint64()

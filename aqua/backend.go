@@ -263,6 +263,7 @@ func CreateConsensusEngine(ctx *node.ServiceContext, config *aquahash.Config, ch
 		log.Warn("Aquahash used in shared mode")
 		return aquahash.NewShared()
 	default:
+		log.Info("Starting aquahash", "version", startVersion)
 		if startVersion > 1 {
 			engine := aquahash.New(aquahash.Config{StartVersion: startVersion})
 			engine.SetThreads(-1)

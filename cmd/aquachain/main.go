@@ -112,6 +112,7 @@ var (
 		utils.ExtraDataFlag,
 		configFileFlag,
 		utils.HF8MainnetFlag,
+		utils.ChainFlag,
 	}
 
 	rpcFlags = []cli.Flag{

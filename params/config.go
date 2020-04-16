@@ -67,6 +67,15 @@ var (
 		9: big.NewInt(19),
 	}
 
+	// Testnet3HF is the map of hard forks (testnet2 private network
+	Testnet3HF = ForkMap{
+		5: big.NewInt(1),
+		6: big.NewInt(0),
+		7: big.NewInt(0),
+		8: nil,
+		9: nil,
+	}
+
 	// TestHF is the map of hard forks (for testing suite)
 	TestHF = ForkMap{
 		4: big.NewInt(12),
@@ -111,6 +120,17 @@ var (
 		ByzantiumBlock: Testnet2HF[7],
 		Aquahash:       new(AquahashConfig),
 		HF:             Testnet2HF,
+	}
+	// Testnet3ChainConfig contains the chain parameters to run a node on the Testnet2 test network.
+	Testnet3ChainConfig = &ChainConfig{
+		ChainId:        big.NewInt(11110),
+		HomesteadBlock: big.NewInt(0),
+		EIP150Block:    big.NewInt(0),
+		EIP155Block:    Testnet3HF[7],
+		EIP158Block:    Testnet3HF[7],
+		ByzantiumBlock: Testnet3HF[7],
+		Aquahash:       new(AquahashConfig),
+		HF:             Testnet3HF,
 	}
 	EthnetChainConfig = &ChainConfig{
 		ChainID:             big.NewInt(1),
@@ -167,6 +187,21 @@ type ChainConfig struct {
 
 	// HF Scheduled Maintenance Hardforks
 	HF ForkMap `json:"hf,omitempty"`
+}
+
+func GetChainConfig(name string) *ChainConfig {
+	switch name {
+	default:
+		return nil
+	case "aqua":
+		return MainnetChainConfig
+	case "testnet":
+		return TestnetChainConfig
+	case "testnet2":
+		return Testnet2ChainConfig
+	case "testnet3":
+		return Testnet3ChainConfig
+	}
 }
 
 // AquahashConfig is the consensus engine configs for proof-of-work based sealing.
