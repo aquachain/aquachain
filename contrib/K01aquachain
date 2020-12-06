@@ -1,0 +1,5 @@
+#!/bin/sh
+# This file should be live at /etc/rc0.d/K01aquachain
+# It's purpose is to shutdown aquachain properly during reboots.
+# Learn more: https://gitlab.com/aquachain/aquachain
+pkill -e -INT aquachain
