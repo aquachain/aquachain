@@ -17,9 +17,11 @@
 package rpc
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"mime"
 	"net"
 	"net/http"
@@ -56,6 +58,38 @@ func NewHTTPServer(cors []string, vhosts []string, allowIP []string, behindrever
 	handler = newVHostHandler(vhosts, handler)
 	handler = newAllowIPHandler(allowIP, behindreverseproxy, handler)
 	return &http.Server{Handler: handler}
+}
+func NewTLSServer(cors []string, vhosts []string, allowIP []string, behindreverseproxy bool, srv *Server, serverName, tlsCert, tlsKey string) (*http.Server, error) {
+	// Wrap the CORS-handler within a host-handler
+	handler := newCorsHandler(srv, cors)
+	handler = newVHostHandler(vhosts, handler)
+	handler = newAllowIPHandler(allowIP, behindreverseproxy, handler)
+	tc, er := getTLSConfig(serverName, tlsCert, tlsKey)
+	if er != nil {
+		return nil, er
+	}
+	return &http.Server{Handler: handler, TLSConfig: tc}, nil
+
+}
+func getTLSConfig(serverName, certpath, keypath string) (*tls.Config, error) {
+	crt, err := ioutil.ReadFile(certpath)
+	if err != nil {
+		return nil, err
+	}
+
+	key, err := ioutil.ReadFile(keypath)
+	if err != nil {
+		return nil, err
+	}
+
+	cert, err := tls.X509KeyPair(crt, key)
+	if err != nil {
+		return nil, err
+	}
+
+	return &tls.Config{
+		Certificates: []tls.Certificate{cert},
+	}, nil
 }
 
 // ServeHTTP serves JSON-RPC requests over HTTP.

@@ -24,9 +24,9 @@ import (
 
 	"strings"
 
+	"github.com/urfave/cli"
 	"gitlab.com/aquachain/aquachain/cmd/utils"
 	"gitlab.com/aquachain/aquachain/internal/debug"
-	"github.com/urfave/cli"
 )
 
 const logo = `                              _           _
@@ -143,6 +143,10 @@ var AppHelpFlagGroups = []flagGroup{
 			utils.RPCListenAddrFlag,
 			utils.RPCPortFlag,
 			utils.RPCApiFlag,
+			utils.RPCListenTLSAddrFlag,
+			utils.RPCTLSPortFlag,
+			utils.RPCListenTLSCertFlag,
+			utils.RPCListenTLSKeyFlag,
 			utils.WSEnabledFlag,
 			utils.WSListenAddrFlag,
 			utils.WSPortFlag,

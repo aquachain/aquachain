@@ -94,11 +94,17 @@ type Config struct {
 	// HTTPHost is the host interface on which to start the HTTP RPC server. If this
 	// field is empty, no HTTP API endpoint will be started.
 	HTTPHost string `toml:",omitempty"`
+	TLSHost  string `toml:",omitempty"`
 
 	// HTTPPort is the TCP port number on which to start the HTTP RPC server. The
 	// default zero value is/ valid and will pick a port number randomly (useful
 	// for ephemeral nodes).
 	HTTPPort int `toml:",omitempty"`
+	TLSPort  int `toml:",omitempty"`
+
+	// Path to cert/key for https/wss RPC
+	TLSCert string `toml:",omitempty"`
+	TLSKey  string `toml:",omitempty"`
 
 	// HTTPCors is the Cross-Origin Resource Sharing header to send to requesting
 	// clients. Please be aware that CORS is a browser enforced security, it's fully
@@ -209,6 +215,18 @@ func (c *Config) HTTPEndpoint() string {
 		return ""
 	}
 	return fmt.Sprintf("%s:%d", c.HTTPHost, c.HTTPPort)
+}
+
+// TLSEndpoint resolves an HTTPS endpoint based on the configured host interface
+// and port parameters.
+func (c *Config) TLSEndpoint() string {
+	if c.TLSHost == "" && c.HTTPHost == "" {
+		return ""
+	}
+	if c.TLSHost == "" {
+		c.TLSHost = c.HTTPHost
+	}
+	return fmt.Sprintf("%s:%d", c.TLSHost, c.TLSPort)
 }
 
 // DefaultHTTPEndpoint returns the HTTP endpoint used by default.

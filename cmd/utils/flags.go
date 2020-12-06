@@ -28,6 +28,7 @@ import (
 	"strconv"
 	"strings"
 
+	cli "github.com/urfave/cli"
 	"gitlab.com/aquachain/aquachain/aqua"
 	"gitlab.com/aquachain/aquachain/aqua/accounts"
 	"gitlab.com/aquachain/aquachain/aqua/accounts/keystore"
@@ -52,7 +53,6 @@ import (
 	"gitlab.com/aquachain/aquachain/p2p/nat"
 	"gitlab.com/aquachain/aquachain/p2p/netutil"
 	"gitlab.com/aquachain/aquachain/params"
-	cli "github.com/urfave/cli"
 )
 
 var (
@@ -353,10 +353,30 @@ var (
 		Usage: "HTTP-RPC server listening interface",
 		Value: node.DefaultHTTPHost,
 	}
+	RPCListenTLSAddrFlag = cli.StringFlag{
+		Name:  "tlsaddr",
+		Usage: "HTTP-RPC server listening interface (TLS)",
+		Value: node.DefaultHTTPHost,
+	}
+	RPCListenTLSCertFlag = cli.StringFlag{
+		Name:  "tlscert",
+		Usage: "Path to certificate for RPC server (TLS)",
+		Value: node.DefaultHTTPHost,
+	}
+	RPCListenTLSKeyFlag = cli.StringFlag{
+		Name:  "tlskey",
+		Usage: "Path to key for RPC server (TLS)",
+		Value: node.DefaultHTTPHost,
+	}
 	RPCPortFlag = cli.IntFlag{
 		Name:  "rpcport",
 		Usage: "HTTP-RPC server listening port",
 		Value: node.DefaultHTTPPort,
+	}
+	RPCTLSPortFlag = cli.IntFlag{
+		Name:  "tlsport",
+		Usage: "HTTP-RPC server listening port (TLS)",
+		Value: node.DefaultTLSPort,
 	}
 	RPCCORSDomainFlag = cli.StringFlag{
 		Name:  "rpccorsdomain",
@@ -668,8 +688,24 @@ func setHTTP(ctx *cli.Context, cfg *node.Config) {
 		}
 	}
 
+	if ctx.GlobalIsSet(RPCListenTLSAddrFlag.Name) {
+		cfg.TLSHost = ctx.GlobalString(RPCListenTLSAddrFlag.Name)
+	}
+	if ctx.GlobalIsSet(RPCListenTLSCertFlag.Name) {
+		if cfg.TLSHost == "" {
+			cfg.HTTPHost = "127.0.0.1"
+		}
+		cfg.TLSCert = ctx.GlobalString(RPCListenTLSCertFlag.Name)
+	}
+	if ctx.GlobalIsSet(RPCListenTLSKeyFlag.Name) {
+		cfg.TLSKey = ctx.GlobalString(RPCListenTLSKeyFlag.Name)
+	}
+
 	if ctx.GlobalIsSet(RPCPortFlag.Name) {
 		cfg.HTTPPort = ctx.GlobalInt(RPCPortFlag.Name)
+	}
+	if ctx.GlobalIsSet(RPCTLSPortFlag.Name) {
+		cfg.TLSPort = ctx.GlobalInt(RPCTLSPortFlag.Name)
 	}
 	if ctx.GlobalIsSet(RPCCORSDomainFlag.Name) {
 		cfg.HTTPCors = splitAndTrim(ctx.GlobalString(RPCCORSDomainFlag.Name))

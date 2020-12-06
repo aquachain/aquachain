@@ -25,6 +25,7 @@ import (
 	"strings"
 	"time"
 
+	cli "github.com/urfave/cli"
 	"gitlab.com/aquachain/aquachain/aqua"
 	"gitlab.com/aquachain/aquachain/aqua/accounts"
 	"gitlab.com/aquachain/aquachain/aqua/accounts/keystore"
@@ -35,7 +36,6 @@ import (
 	"gitlab.com/aquachain/aquachain/node"
 	"gitlab.com/aquachain/aquachain/opt/aquaclient"
 	"gitlab.com/aquachain/aquachain/opt/console"
-	cli "github.com/urfave/cli"
 )
 
 const (
@@ -130,6 +130,10 @@ var (
 		utils.WSAllowedOriginsFlag,
 		utils.IPCDisabledFlag,
 		utils.IPCPathFlag,
+		utils.RPCListenTLSAddrFlag,
+		utils.RPCTLSPortFlag,
+		utils.RPCListenTLSCertFlag,
+		utils.RPCListenTLSKeyFlag,
 	}
 
 	whisperFlags = []cli.Flag{
