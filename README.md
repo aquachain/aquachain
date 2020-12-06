@@ -6,9 +6,9 @@ Mirrored: https://github.com/aquachain/aquachain
 
 Old: https://github.com/aquanetwork/aquachain
 
-Improve the Wiki! https://github.com/aquanetwork/aquachain/wiki/Compiling
+Improve the Wiki! https://gitlab.com/aquachain/aquachain/-/wikis/Basics
 
-** Found a bug? Need help? see https://gitlab.com/aquachain/aquachain/wikis/bugs **
+** Found a bug **in this software**? Documentation lacking? See https://gitlab.com/aquachain/aquachain/wikis/bugs **
 
 See bottom of this document for more useful links. Your contributions are welcome.
 
@@ -30,8 +30,8 @@ Aquachain: peer-to-peer programmable money, distributed code contract platform.
 
 ### Known GUI Wallets:
 
-  * https://download.mycrypto.com
-  * https://walleth.org
+  * https://download.mycrypto.com (Desktop, creates mnemonic phrases)
+  * https://walleth.org (Android, burner accounts etc)
 
 ## GET AQUACHAIN
 
@@ -39,18 +39,26 @@ The `aquachain` command (full node, RPC server, and wallet) is a portable progra
 that doesn't really need an 'installer', you can run it from anywhere. When you 
 first start `aquachain` you will connect to the peer-to-peer network and start 
 downloading the chain. To change the way aquachain runs, for example testnet, 
-or rpc, use command line flags. The location of your keys can be printed with: 
-
-	`aquachain account list`
+or rpc, use command line flags. (see Usage section)
 
 You should keep backups your keystore files, and regularly check unlocking them.
 If not using keys, for example an RPC server, use the `-nokeys` flag.
 
 List all command line flags using the `-h` flag, or `aquachain help [subcommand]`
 
+GUI Wallets connect to RPC nodes and offer an easy-to-use interface. Hosting your own RPC server helps you stay more secure and has zero downtime.
+
 ## COMPILING
 
-If you are reading this from the source tree, you can simply use `make`.
+Requires [Go](https://golang.org/dl).
+
+### Linux, BSD, Mac OS
+
+If you are reading this from the source tree, you can simply use `make`, or `make all` for all tools.
+
+Programs are built to the ./bin/ directory.
+
+### Windows
 
 On windows, double-click make.bat to compile aquachain.exe onto your Desktop.
 
@@ -73,7 +81,7 @@ To see latest release, check `git log` or:
 
 "Imported new chain segment" means you received new blocks from the network.
 When a single block is imported, the address of the successful miner is printed.
-When you start seeing one every 4 minutes or so, you are fully synchronized.
+When you start seeing one every 4 minutes or so, you know that you are fully synchronized with the network.
 
 ## USAGE
 
@@ -81,7 +89,7 @@ Create account from the command line: `aquachain.exe account new`
 
 List accounts from the command line: `aquachain.exe account list`
 
-Enter AQUA console: `aquachain.exe`
+Enter AQUA javascript console: `aquachain.exe`
 
 Start Daemon (geth default): `aquachain.exe daemon`
 
