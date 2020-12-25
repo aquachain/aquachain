@@ -60,18 +60,13 @@ type Node struct {
 	ipcHandler  *rpc.Server  // IPC RPC request handler to process the API requests
 
 	httpEndpoint  string       // HTTP endpoint (interface + port) to listen at (empty = HTTP disabled)
-	tlsEndpoint   string       // HTTP endpoint (interface + port) to listen at (empty = HTTP disabled)
 	httpWhitelist []string     // HTTP RPC modules to allow through this endpoint
 	httpListener  net.Listener // HTTP RPC listener socket to server API requests
-	tlsListener   net.Listener // HTTP RPC listener socket to server API requests
 	httpHandler   *rpc.Server  // HTTP RPC request handler to process the API requests
-	tlsHandler    *rpc.Server  // HTTP RPC request handler to process the API requests
 
-	wsEndpoint  string       // Websocket endpoint (interface + port) to listen at (empty = websocket disabled)
-	wssEndpoint string       // Websocket endpoint (interface + port) to listen at (empty = websocket disabled)
-	wsListener  net.Listener // Websocket RPC listener socket to server API requests
-	wssListener net.Listener // Websocket RPC listener socket to server API requests
-	wsHandler   *rpc.Server  // Websocket RPC request handler to process the API requests
+	wsEndpoint string       // Websocket endpoint (interface + port) to listen at (empty = websocket disabled)
+	wsListener net.Listener // Websocket RPC listener socket to server API requests
+	wsHandler  *rpc.Server  // Websocket RPC request handler to process the API requests
 
 	stop chan struct{} // Channel to wait for termination notifications
 	lock sync.RWMutex
@@ -121,7 +116,6 @@ func New(conf *Config) (*Node, error) {
 		serviceFuncs:      []ServiceConstructor{},
 		ipcEndpoint:       conf.IPCEndpoint(),
 		httpEndpoint:      conf.HTTPEndpoint(),
-		tlsEndpoint:       conf.TLSEndpoint(),
 		wsEndpoint:        conf.WSEndpoint(),
 		eventmux:          new(event.TypeMux),
 		log:               conf.Logger,
@@ -277,7 +271,7 @@ func (n *Node) startRPC(services map[reflect.Type]Service) error {
 		n.stopInProc()
 		return err
 	}
-	if err := n.startHTTP(n.httpEndpoint, n.tlsEndpoint, n.config.TLSCert, n.config.TLSKey, apis, n.config.HTTPModules, n.config.HTTPCors, n.config.HTTPVirtualHosts, n.config.RPCAllowIP, n.config.RPCBehindProxy); err != nil {
+	if err := n.startHTTP(n.httpEndpoint, apis, n.config.HTTPModules, n.config.HTTPCors, n.config.HTTPVirtualHosts, n.config.RPCAllowIP, n.config.RPCBehindProxy); err != nil {
 		n.stopIPC()
 		n.stopInProc()
 		return err
@@ -379,7 +373,7 @@ func (n *Node) stopIPC() {
 }
 
 // startHTTP initializes and starts the HTTP RPC endpoint.
-func (n *Node) startHTTP(endpoint string, tlsEndpoint string, tlsCert string, tlsKey string, apis []rpc.API, modules []string, cors []string, vhosts []string, allowip []string, behindreverseproxy bool) error {
+func (n *Node) startHTTP(endpoint string, apis []rpc.API, modules []string, cors []string, vhosts []string, allowip []string, behindreverseproxy bool) error {
 	// Short circuit if the HTTP endpoint isn't being exposed
 	if endpoint == "" {
 		return nil
@@ -401,54 +395,22 @@ func (n *Node) startHTTP(endpoint string, tlsEndpoint string, tlsCert string, tl
 	}
 	// All APIs registered, start the HTTP listener
 	var (
-		listener    net.Listener
-		tlsListener net.Listener
-		err         error
+		listener net.Listener
+		err      error
 	)
-	if endpoint != "" {
-		if listener, err = net.Listen("tcp", endpoint); err != nil {
-			return err
-		}
-		if len(allowip) == 0 || allowip[0] == "none" {
-			n.log.Warn("The '-allowip' flag has not been set. Please consider using it to restrict RPC access. HTTP server disabled. To allow any IP, use -allowip='*'")
-		} else {
-			go rpc.NewHTTPServer(cors, vhosts, allowip, behindreverseproxy, handler).Serve(listener)
-			n.log.Info("HTTP endpoint opened", "url", fmt.Sprintf("http://%s", endpoint), "cors", strings.Join(cors, ","), "vhosts", strings.Join(vhosts, ","), "allowip", strings.Join(allowip, ","))
-		}
-		// All listeners booted successfully
-		n.httpEndpoint = endpoint
-		n.httpListener = listener
-		n.httpHandler = handler
+	if listener, err = net.Listen("tcp", endpoint); err != nil {
+		return err
 	}
-
-	if tlsEndpoint != "" && tlsCert != "" && tlsKey != "" {
-
-		if tlsListener, err = net.Listen("tcp", tlsEndpoint); err != nil {
-			return err
-		}
-		if len(allowip) == 0 || allowip[0] == "none" {
-			n.log.Warn("The '-allowip' flag has not been set. Please consider using it to restrict RPC access. HTTP server disabled. To allow any IP, use -allowip='*'")
-		} else {
-			serverName := "localhost"
-			if len(vhosts) == 1 {
-				serverName = vhosts[0]
-			}
-			if str := os.Getenv("SERVERNAME"); str != "" {
-				serverName = str
-			}
-
-			tlsServer, err := rpc.NewTLSServer(cors, vhosts, allowip, behindreverseproxy, handler, serverName, tlsCert, tlsKey)
-			if err != nil {
-				return err
-			}
-			go tlsServer.ServeTLS(tlsListener, "", "")
-			n.log.Info("HTTPS endpoint opened", "url", fmt.Sprintf("https://%s", tlsEndpoint), "cors", strings.Join(cors, ","), "vhosts", strings.Join(vhosts, ","), "allowip", strings.Join(allowip, ","))
-		}
-		// All listeners booted successfully
-		n.tlsEndpoint = tlsEndpoint
-		n.tlsListener = tlsListener
-		n.tlsHandler = handler
+	if len(allowip) == 0 || allowip[0] == "none" {
+		n.log.Warn("The '-allowip' flag has not been set. Please consider using it to restrict RPC access. HTTP server disabled. To allow any IP, use -allowip='*'")
+	} else {
+		go rpc.NewHTTPServer(cors, vhosts, allowip, behindreverseproxy, handler).Serve(listener)
+		n.log.Info("HTTP endpoint opened", "url", fmt.Sprintf("http://%s", endpoint), "cors", strings.Join(cors, ","), "vhosts", strings.Join(vhosts, ","), "allowip", strings.Join(allowip, ","))
 	}
+	// All listeners booted successfully
+	n.httpEndpoint = endpoint
+	n.httpListener = listener
+	n.httpHandler = handler
 
 	return nil
 }
