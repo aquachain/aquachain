@@ -28,6 +28,7 @@ import (
 	"strconv"
 	"strings"
 
+	cli "github.com/urfave/cli"
 	"gitlab.com/aquachain/aquachain/aqua"
 	"gitlab.com/aquachain/aquachain/aqua/accounts"
 	"gitlab.com/aquachain/aquachain/aqua/accounts/keystore"
@@ -52,7 +53,6 @@ import (
 	"gitlab.com/aquachain/aquachain/p2p/nat"
 	"gitlab.com/aquachain/aquachain/p2p/netutil"
 	"gitlab.com/aquachain/aquachain/params"
-	cli "github.com/urfave/cli"
 )
 
 var (
@@ -116,6 +116,10 @@ var (
 	VanityFlag = cli.StringFlag{
 		Name:  "vanity",
 		Usage: "Prefix for generating a vanity address (do not include 0x, start small)",
+	}
+	VanityEndFlag = cli.StringFlag{
+		Name:  "vanityend",
+		Usage: "Suffix for generating a vanity address (start small)",
 	}
 	// General settings
 	DataDirFlag = DirectoryFlag{

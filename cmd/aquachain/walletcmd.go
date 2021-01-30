@@ -25,9 +25,9 @@ import (
 	"strconv"
 	"strings"
 
+	cli "github.com/urfave/cli"
 	"gitlab.com/aquachain/aquachain/cmd/utils"
 	"gitlab.com/aquachain/aquachain/crypto"
-	cli "github.com/urfave/cli"
 )
 
 var (
@@ -44,7 +44,7 @@ will launch browser MAW`,
 	paperCommand = cli.Command{
 		Name:      "paper",
 		Usage:     `Generate paper wallet keypair`,
-		Flags:     []cli.Flag{utils.JsonFlag, utils.VanityFlag},
+		Flags:     []cli.Flag{utils.JsonFlag, utils.VanityFlag, utils.VanityEndFlag},
 		ArgsUsage: "[number of wallets]",
 		Category:  "ACCOUNT COMMANDS",
 		Action:    paper,
@@ -77,6 +77,10 @@ func paper(c *cli.Context) error {
 	}
 	wallets := []paperWallet{}
 	vanity := c.String("vanity")
+	vanityend := c.String("vanityend")
+	if strings.HasPrefix(vanity, "0x") {
+		vanity = strings.TrimPrefix(vanity, "0x")
+	}
 	for i := 0; i < count; i++ {
 		var wallet paperWallet
 		for {
@@ -90,11 +94,11 @@ func paper(c *cli.Context) error {
 				Private: hex.EncodeToString(crypto.FromECDSA(key)),
 				Public:  "0x" + hex.EncodeToString(addr[:]),
 			}
-			if vanity == "" {
+			if vanity == "" && vanityend == "" {
 				break
 			}
 			pubkey := hex.EncodeToString(addr[:])
-			if strings.HasPrefix(pubkey, vanity) {
+			if strings.HasPrefix(pubkey, vanity) && strings.HasSuffix(pubkey, vanityend) {
 				break
 			}
 		}
