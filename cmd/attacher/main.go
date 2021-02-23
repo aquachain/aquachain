@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with aquachain. If not, see <http://www.gnu.org/licenses/>.
 
-// aquachain is the official command-line client for AquaChain.
+// aquachain is the official command-line client for Aquachain.
 package main
 
 import (
@@ -39,7 +39,7 @@ var (
 )
 
 func init() {
-	// Initialize the CLI app and start AquaChain
+	// Initialize the CLI app and start Aquachain
 	//app.Action = app.Usage // default command is 'console'
 
 	app.HideVersion = true // we have a command to print the version

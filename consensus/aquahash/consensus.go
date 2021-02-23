@@ -71,7 +71,7 @@ func (aquahash *Aquahash) Author(header *types.Header) (common.Address, error) {
 }
 
 // VerifyHeader checks whether a header conforms to the consensus rules of the
-// stock AquaChain aquahash engine.
+// stock Aquachain aquahash engine.
 func (aquahash *Aquahash) VerifyHeader(chain consensus.ChainReader, header *types.Header, seal bool) error {
 	// If we're running a full engine faking, accept any input as valid
 	if aquahash.config.PowMode == ModeFullFake {
@@ -199,7 +199,7 @@ func (aquahash *Aquahash) verifyHeaderWorker(chain consensus.ChainReader, header
 }
 
 // VerifyUncles verifies that the given block's uncles conform to the consensus
-// rules of the stock AquaChain aquahash engine.
+// rules of the stock Aquachain aquahash engine.
 func (aquahash *Aquahash) VerifyUncles(chain consensus.ChainReader, block *types.Block) error {
 	// If we're running a full engine faking, accept any input as valid
 	if aquahash.config.PowMode == ModeFullFake {
@@ -294,7 +294,7 @@ func (aquahash *Aquahash) VerifyUncles(chain consensus.ChainReader, block *types
 }
 
 // verifyHeader checks whether a header conforms to the consensus rules of the
-// stock AquaChain aquahash engine.
+// stock Aquachain aquahash engine.
 // See YP section 4.3.4. "Block Header Validity"
 func (aquahash *Aquahash) verifyHeader(chain consensus.ChainReader, header, parent, grandparent *types.Header, uncle bool, seal bool) error {
 	// Ensure that the header's extra-data section is of a reasonable size

@@ -261,7 +261,7 @@ func (c *Config) name() string {
 }
 
 // These resources are resolved differently for "aquachain" instances.
-var isOldAquaChainResource = map[string]bool{
+var isOldAquachainResource = map[string]bool{
 	"chaindata":          true,
 	"nodes":              true,
 	"nodekey":            true,
@@ -279,7 +279,7 @@ func (c *Config) resolvePath(path string) string {
 	}
 	// Backwards-compatibility: ensure that data directory files created
 	// by aquachain 1.4 are used if they exist.
-	if c.name() == "aquachain" && isOldAquaChainResource[path] {
+	if c.name() == "aquachain" && isOldAquachainResource[path] {
 		oldpath := ""
 		if c.Name == "aquachain" {
 			oldpath = filepath.Join(c.DataDir, path)

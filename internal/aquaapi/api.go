@@ -52,24 +52,24 @@ var (
 	ErrKeystoreDisabled = fmt.Errorf("keystore disabled")
 )
 
-// PublicAquaChainAPI provides an API to access AquaChain related information.
+// PublicAquachainAPI provides an API to access Aquachain related information.
 // It offers only methods that operate on public data that is freely available to anyone.
-type PublicAquaChainAPI struct {
+type PublicAquachainAPI struct {
 	b Backend
 }
 
-// NewPublicAquaChainAPI creates a new AquaChain protocol API.
-func NewPublicAquaChainAPI(b Backend) *PublicAquaChainAPI {
-	return &PublicAquaChainAPI{b}
+// NewPublicAquachainAPI creates a new Aquachain protocol API.
+func NewPublicAquachainAPI(b Backend) *PublicAquachainAPI {
+	return &PublicAquachainAPI{b}
 }
 
 // GasPrice returns a suggestion for a gas price.
-func (s *PublicAquaChainAPI) GasPrice(ctx context.Context) (*big.Int, error) {
+func (s *PublicAquachainAPI) GasPrice(ctx context.Context) (*big.Int, error) {
 	return s.b.SuggestPrice(ctx)
 }
 
-// ProtocolVersion returns the current AquaChain protocol version this node supports
-func (s *PublicAquaChainAPI) ProtocolVersion() hexutil.Uint {
+// ProtocolVersion returns the current Aquachain protocol version this node supports
+func (s *PublicAquachainAPI) ProtocolVersion() hexutil.Uint {
 	return hexutil.Uint(s.b.ProtocolVersion())
 }
 
@@ -80,7 +80,7 @@ func (s *PublicAquaChainAPI) ProtocolVersion() hexutil.Uint {
 // - highestBlock:  block number of the highest block header this node has received from peers
 // - pulledStates:  number of state entries processed until now
 // - knownStates:   number of known state entries that still need to be pulled
-func (s *PublicAquaChainAPI) Syncing() (interface{}, error) {
+func (s *PublicAquachainAPI) Syncing() (interface{}, error) {
 	progress := s.b.SyncProgress()
 
 	// Return not syncing if the synchronisation already completed
@@ -450,17 +450,17 @@ func (s *PrivateAccountAPI) SignTransaction(ctx context.Context, args SendTxArgs
 // safely used to calculate a signature from.
 //
 // The hash is calculated as
-//   keccak256("\x19AquaChain Signed Message:\n"${message length}${message}).
+//   keccak256("\x19Aquachain Signed Message:\n"${message length}${message}).
 //
 // This gives context to the signed message and prevents signing of transactions.
 // TODO: changeme
 func signHash(data []byte) []byte {
-	msg := fmt.Sprintf("\x19AquaChain Signed Message:\n%d%s", len(data), data)
+	msg := fmt.Sprintf("\x19Aquachain Signed Message:\n%d%s", len(data), data)
 	return crypto.Keccak256([]byte(msg))
 }
 
-// Sign calculates an AquaChain ECDSA signature for:
-// keccack256("\x19AquaChain Signed Message:\n" + len(message) + message))
+// Sign calculates an Aquachain ECDSA signature for:
+// keccack256("\x19Aquachain Signed Message:\n" + len(message) + message))
 //
 // Note, the produced signature conforms to the secp256k1 curve R, S and V values,
 // where the V value will be 27 or 28 for legacy reasons.
@@ -491,7 +491,7 @@ func (s *PrivateAccountAPI) Sign(ctx context.Context, data hexutil.Bytes, addr c
 // EcRecover returns the address for the account that was used to create the signature.
 // Note, this function is compatible with aqua_sign and personal_sign. As such it recovers
 // the address of:
-// hash = keccak256("\x19AquaChain Signed Message:\n"${message length}${message})
+// hash = keccak256("\x19Aquachain Signed Message:\n"${message length}${message})
 // addr = ecrecover(hash, signature)
 //
 // Note, the signature must conform to the secp256k1 curve R, S and V values, where
@@ -503,7 +503,7 @@ func (s *PrivateAccountAPI) EcRecover(ctx context.Context, data, sig hexutil.Byt
 		return common.Address{}, fmt.Errorf("signature must be 65 bytes long")
 	}
 	if sig[64] != 27 && sig[64] != 28 {
-		return common.Address{}, fmt.Errorf("invalid AquaChain signature (V is not 27 or 28)")
+		return common.Address{}, fmt.Errorf("invalid Aquachain signature (V is not 27 or 28)")
 	}
 	sig[64] -= 27 // Transform yellow paper V from 27/28 to 0/1
 
@@ -522,13 +522,13 @@ func (s *PrivateAccountAPI) SignAndSendTransaction(ctx context.Context, args Sen
 	return s.SendTransaction(ctx, args, passwd)
 }
 
-// PublicBlockChainAPI provides an API to access the AquaChain blockchain.
+// PublicBlockChainAPI provides an API to access the Aquachain blockchain.
 // It offers only methods that operate on public data that is freely available to anyone.
 type PublicBlockChainAPI struct {
 	b Backend
 }
 
-// NewPublicBlockChainAPI creates a new AquaChain blockchain API.
+// NewPublicBlockChainAPI creates a new Aquachain blockchain API.
 func NewPublicBlockChainAPI(b Backend) *PublicBlockChainAPI {
 	return &PublicBlockChainAPI{b}
 }
@@ -1309,7 +1309,7 @@ func (s *PublicTransactionPoolAPI) SendRawTransaction(ctx context.Context, encod
 }
 
 // Sign calculates an ECDSA signature for:
-// keccack256("\x19AquaChain Signed Message:\n" + len(message) + message).
+// keccack256("\x19Aquachain Signed Message:\n" + len(message) + message).
 //
 // Note, the produced signature conforms to the secp256k1 curve R, S and V values,
 // where the V value will be 27 or 28 for legacy reasons.
@@ -1435,14 +1435,14 @@ func (s *PublicTransactionPoolAPI) Resend(ctx context.Context, sendArgs SendTxAr
 	return common.Hash{}, fmt.Errorf("Transaction %#x not found", matchTx.Hash())
 }
 
-// PublicDebugAPI is the collection of AquaChain APIs exposed over the public
+// PublicDebugAPI is the collection of Aquachain APIs exposed over the public
 // debugging endpoint.
 type PublicDebugAPI struct {
 	b Backend
 }
 
 // NewPublicDebugAPI creates a new API definition for the public debug methods
-// of the AquaChain service.
+// of the Aquachain service.
 func NewPublicDebugAPI(b Backend) *PublicDebugAPI {
 	return &PublicDebugAPI{b: b}
 }
@@ -1498,14 +1498,14 @@ func (api *PublicDebugAPI) SeedHash(ctx context.Context, number uint64) (string,
 	return fmt.Sprintf("0x%x", aquahash.SeedHash(number, version)), nil
 }
 
-// PrivateDebugAPI is the collection of AquaChain APIs exposed over the private
+// PrivateDebugAPI is the collection of Aquachain APIs exposed over the private
 // debugging endpoint.
 type PrivateDebugAPI struct {
 	b Backend
 }
 
 // NewPrivateDebugAPI creates a new API definition for the private debug methods
-// of the AquaChain service.
+// of the Aquachain service.
 func NewPrivateDebugAPI(b Backend) *PrivateDebugAPI {
 	return &PrivateDebugAPI{b: b}
 }

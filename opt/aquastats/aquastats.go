@@ -65,11 +65,11 @@ type blockChain interface {
 	SubscribeChainHeadEvent(ch chan<- core.ChainHeadEvent) event.Subscription
 }
 
-// Service implements an AquaChain netstats reporting daemon that pushes local
+// Service implements an Aquachain netstats reporting daemon that pushes local
 // chain statistics up to a monitoring server.
 type Service struct {
 	server *p2p.Server      // Peer-to-peer server to retrieve networking infos
-	aqua   *aqua.AquaChain  // Full AquaChain service if monitoring a full node
+	aqua   *aqua.Aquachain  // Full Aquachain service if monitoring a full node
 	engine consensus.Engine // Consensus engine to retrieve variadic block fields
 
 	node string // Name of the node to display on the monitoring page
@@ -81,7 +81,7 @@ type Service struct {
 }
 
 // New returns a monitoring service ready for stats reporting.
-func New(url string, ethServ *aqua.AquaChain) (*Service, error) {
+func New(url string, ethServ *aqua.Aquachain) (*Service, error) {
 	// Parse the netstats connection url
 	re := regexp.MustCompile("([^:@]*)(:([^@]*))?@(.+)")
 	parts := re.FindStringSubmatch(url)

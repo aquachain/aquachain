@@ -66,7 +66,7 @@ func newTrezorDriver(logger log.Logger) driver {
 }
 
 // Status implements accounts.Wallet, always whether the Trezor is opened, closed
-// or whether the AquaChain app was not started on it.
+// or whether the Aquachain app was not started on it.
 func (w *trezorDriver) Status() (string, error) {
 	if w.failure != nil {
 		return fmt.Sprintf("Failed: %v", w.failure), w.failure
@@ -147,7 +147,7 @@ func (w *trezorDriver) Heartbeat() error {
 }
 
 // Derive implements usbwallet.driver, sending a derivation request to the Trezor
-// and returning the AquaChain address located on that derivation path.
+// and returning the Aquachain address located on that derivation path.
 func (w *trezorDriver) Derive(path accounts.DerivationPath) (common.Address, error) {
 	return w.trezorDerive(path)
 }
@@ -162,10 +162,10 @@ func (w *trezorDriver) SignTx(path accounts.DerivationPath, tx *types.Transactio
 }
 
 // trezorDerive sends a derivation request to the Trezor device and returns the
-// AquaChain address located on that path.
+// Aquachain address located on that path.
 func (w *trezorDriver) trezorDerive(derivationPath []uint32) (common.Address, error) {
-	address := new(trezor.AquaChainAddress)
-	if _, err := w.trezorExchange(&trezor.AquaChainGetAddress{AddressN: derivationPath}, address); err != nil {
+	address := new(trezor.AquachainAddress)
+	if _, err := w.trezorExchange(&trezor.AquachainGetAddress{AddressN: derivationPath}, address); err != nil {
 		return common.Address{}, err
 	}
 	return common.BytesToAddress(address.GetAddress()), nil
@@ -178,7 +178,7 @@ func (w *trezorDriver) trezorSign(derivationPath []uint32, tx *types.Transaction
 	data := tx.Data()
 	length := uint32(len(data))
 
-	request := &trezor.AquaChainSignTx{
+	request := &trezor.AquachainSignTx{
 		AddressN:   derivationPath,
 		Nonce:      new(big.Int).SetUint64(tx.Nonce()).Bytes(),
 		GasPrice:   tx.GasPrice().Bytes(),
@@ -199,7 +199,7 @@ func (w *trezorDriver) trezorSign(derivationPath []uint32, tx *types.Transaction
 		request.ChainId = &id
 	}
 	// Send the initiation message and stream content until a signature is returned
-	response := new(trezor.AquaChainTxRequest)
+	response := new(trezor.AquachainTxRequest)
 	if _, err := w.trezorExchange(request, response); err != nil {
 		return common.Address{}, nil, err
 	}
@@ -207,11 +207,11 @@ func (w *trezorDriver) trezorSign(derivationPath []uint32, tx *types.Transaction
 		chunk := data[:*response.DataLength]
 		data = data[*response.DataLength:]
 
-		if _, err := w.trezorExchange(&trezor.AquaChainTxAck{DataChunk: chunk}, response); err != nil {
+		if _, err := w.trezorExchange(&trezor.AquachainTxAck{DataChunk: chunk}, response); err != nil {
 			return common.Address{}, nil, err
 		}
 	}
-	// Extract the AquaChain signature and do a sanity validation
+	// Extract the Aquachain signature and do a sanity validation
 	if len(response.GetSignatureR()) == 0 || len(response.GetSignatureS()) == 0 {
 		return common.Address{}, nil, errors.New("reply lacks signature")
 	} else if response.GetSignatureV() == 0 && int(chainID.Int64()) < 2147483630 {

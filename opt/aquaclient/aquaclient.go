@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the aquachain library. If not, see <http://www.gnu.org/licenses/>.
 
-// Package aquaclient provides a client for the AquaChain RPC API.
+// Package aquaclient provides a client for the Aquachain RPC API.
 package aquaclient
 
 import (
@@ -32,7 +32,7 @@ import (
 	rpc "gitlab.com/aquachain/aquachain/rpc/rpcclient"
 )
 
-// Client defines typed wrappers for the AquaChain RPC API. Callers will most
+// Client defines typed wrappers for the Aquachain RPC API. Callers will most
 // likely also import the aquachain/rpc/rpcclient package, but this package aims to cover
 // the most used methods..
 type Client struct {

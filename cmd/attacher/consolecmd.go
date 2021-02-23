@@ -47,7 +47,7 @@ var (
 		Flags:     append([]cli.Flag{utils.DataDirFlag, socksFlag}, consoleFlags...),
 		Category:  "CONSOLE COMMANDS",
 		Description: `
-The AquaChain console is an interactive shell for the JavaScript runtime environment
+The Aquachain console is an interactive shell for the JavaScript runtime environment
 which exposes a node admin interface as well as the Ðapp JavaScript API.
 See https://gitlab.com/aquachain/aquachain/wiki/JavaScript-Console.
 This command allows to open a console on a running aquachain node.`,

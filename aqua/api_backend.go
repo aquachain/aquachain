@@ -39,7 +39,7 @@ import (
 
 // AquaApiBackend implements aquaapi.Backend for full nodes
 type AquaApiBackend struct {
-	aqua *AquaChain
+	aqua *Aquachain
 	gpo  *gasprice.Oracle
 }
 

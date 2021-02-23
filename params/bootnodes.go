@@ -17,7 +17,7 @@
 package params
 
 // MainnetBootnodes are the enode URLs of the P2P bootstrap nodes running on
-// the main AquaChain network.
+// the main Aquachain network.
 var MainnetBootnodes = []string{
 	"enode://ef5a7f89789f9150e282c4a37d317596c1f29e0b51748269472395c45790784d585b253089ef87e579408de88961f1e43f15d5dbc271d612b676f1961792814f@168.235.107.40:21000",  // new c.onical.org (2020/12/05)
 	"enode://7f636b8198a41abb10c1a571992335b8cb760d6ef973efc5f3ff613dda7acbe9e6d6b27254e076ef7b684ac7ea09a27bd05a37844cd8ad242199593bdd8cec21@107.161.24.142:21000",  // aquachain-1

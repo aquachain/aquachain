@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the aquachain library. If not, see <http://www.gnu.org/licenses/>.
 
-// Package state provides a caching layer atop the AquaChain state trie.
+// Package state provides a caching layer atop the Aquachain state trie.
 package state
 
 import (

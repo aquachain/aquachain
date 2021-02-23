@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with aquachain. If not, see <http://www.gnu.org/licenses/>.
 
-// aquachain is the official command-line client for AquaChain.
+// aquachain is the official command-line client for Aquachain.
 package main
 
 import (
@@ -140,7 +140,7 @@ var (
 )
 
 func init() {
-	// Initialize the CLI app and start AquaChain
+	// Initialize the CLI app and start Aquachain
 	app.Action = localConsole // default command is 'console'
 
 	app.HideVersion = true // we have a command to print the version
@@ -285,7 +285,7 @@ func startNode(ctx *cli.Context, stack *node.Node) {
 	}
 	// Start auxiliary services if enabled
 	if ctx.GlobalBool(utils.MiningEnabledFlag.Name) || ctx.GlobalBool(utils.DeveloperFlag.Name) {
-		var aquachain *aqua.AquaChain
+		var aquachain *aqua.Aquachain
 		if err := stack.Service(&aquachain); err != nil {
 			utils.Fatalf("Aquachain service not running: %v", err)
 		}

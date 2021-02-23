@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with aquachain. If not, see <http://www.gnu.org/licenses/>.
 
-// bootnode runs a bootstrap node for the AquaChain Discovery Protocol.
+// bootnode runs a bootstrap node for the Aquachain Discovery Protocol.
 package main
 
 import (

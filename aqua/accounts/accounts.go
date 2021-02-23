@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the aquachain library. If not, see <http://www.gnu.org/licenses/>.
 
-// Package accounts implements high level AquaChain account management.
+// Package accounts implements high level Aquachain account management.
 package accounts
 
 import (
@@ -26,10 +26,10 @@ import (
 	"gitlab.com/aquachain/aquachain/core/types"
 )
 
-// Account represents an AquaChain account located at a specific location defined
+// Account represents an Aquachain account located at a specific location defined
 // by the optional URL field.
 type Account struct {
-	Address common.Address `json:"address"` // AquaChain account address derived from the key
+	Address common.Address `json:"address"` // Aquachain account address derived from the key
 	URL     URL            `json:"url"`     // Optional resource locator within a backend
 }
 

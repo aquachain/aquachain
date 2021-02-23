@@ -32,7 +32,7 @@ import (
 	"gitlab.com/aquachain/aquachain/core"
 )
 
-// DefaultConfig contains default settings for use on the AquaChain main net.
+// DefaultConfig contains default settings for use on the Aquachain main net.
 var DefaultConfig = Config{
 	SyncMode: downloader.FullSync,
 	Aquahash: aquahash.Config{
@@ -73,7 +73,7 @@ func init() {
 
 type Config struct {
 	// The genesis block, which is inserted if the database is empty.
-	// If nil, the AquaChain main net block is used.
+	// If nil, the Aquachain main net block is used.
 	Genesis *core.Genesis `toml:",omitempty"`
 
 	// Protocol options

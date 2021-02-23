@@ -448,7 +448,7 @@ func NewTester() *Aquahash {
 }
 
 // NewFaker creates a aquahash consensus engine with a fake PoW scheme that accepts
-// all blocks' seal as valid, though they still have to conform to the AquaChain
+// all blocks' seal as valid, though they still have to conform to the Aquachain
 // consensus rules.
 func NewFaker() *Aquahash {
 	return &Aquahash{
@@ -460,7 +460,7 @@ func NewFaker() *Aquahash {
 
 // NewFakeFailer creates a aquahash consensus engine with a fake PoW scheme that
 // accepts all blocks as valid apart from the single one specified, though they
-// still have to conform to the AquaChain consensus rules.
+// still have to conform to the Aquachain consensus rules.
 func NewFakeFailer(fail uint64) *Aquahash {
 	return &Aquahash{
 		config: Config{
@@ -472,7 +472,7 @@ func NewFakeFailer(fail uint64) *Aquahash {
 
 // NewFakeDelayer creates a aquahash consensus engine with a fake PoW scheme that
 // accepts all blocks as valid, but delays verifications by some time, though
-// they still have to conform to the AquaChain consensus rules.
+// they still have to conform to the Aquachain consensus rules.
 func NewFakeDelayer(delay time.Duration) *Aquahash {
 	return &Aquahash{
 		config: Config{

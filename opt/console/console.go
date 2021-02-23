@@ -101,7 +101,7 @@ const logo = `                              _           _
 type Config struct {
 	DataDir  string       // Data directory to store the console history at
 	DocRoot  string       // Filesystem path from where to load JavaScript files from
-	Client   *rpc.Client  // RPC client to execute AquaChain requests through
+	Client   *rpc.Client  // RPC client to execute Aquachain requests through
 	Prompt   string       // Input prompt prefix string (defaults to DefaultPrompt)
 	Prompter UserPrompter // Input prompter to allow interactive user feedback (defaults to TerminalPrompter)
 	Printer  io.Writer    // Output writer to serialize any display strings to (defaults to os.Stdout)
@@ -112,7 +112,7 @@ type Config struct {
 // JavaScript console attached to a running node via an external or in-process RPC
 // client.
 type Console struct {
-	client   *rpc.Client  // RPC client to execute AquaChain requests through
+	client   *rpc.Client  // RPC client to execute Aquachain requests through
 	jsre     *jsre.JSRE   // JavaScript runtime environment running the interpreter
 	prompt   string       // Input prompt prefix string
 	prompter UserPrompter // Input prompter to allow interactive user feedback
@@ -317,7 +317,7 @@ func (c *Console) AutoCompleteInput(line string, pos int) (string, []string, str
 	return line[:start], c.jsre.CompleteKeywords(line[start:pos]), line[pos:]
 }
 
-// Welcome show summary of current AquaChain instance and some metadata about the
+// Welcome show summary of current Aquachain instance and some metadata about the
 // console's available modules.
 func (c *Console) Welcome() {
 	// friendly balance
@@ -346,8 +346,8 @@ function balance() {
 };
 	`)
 
-	// Print some generic AquaChain metadata
-	fmt.Fprintf(c.printer, "\nWelcome to the AquaChain JavaScript console!\n")
+	// Print some generic Aquachain metadata
+	fmt.Fprintf(c.printer, "\nWelcome to the Aquachain JavaScript console!\n")
 	fmt.Fprintf(c.printer, logo)
 
 	c.jsre.Run(`

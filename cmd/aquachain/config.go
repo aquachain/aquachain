@@ -164,7 +164,7 @@ func makeFullNode(ctx *cli.Context) *node.Node {
 		utils.RegisterShhService(stack, &cfg.Shh)
 	}
 
-	// Add the AquaChain Stats daemon if requested.
+	// Add the Aquachain Stats daemon if requested.
 	if cfg.Aquastats.URL != "" {
 		utils.RegisterAquaStatsService(stack, cfg.Aquastats.URL)
 	}

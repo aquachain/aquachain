@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the aquachain library. If not, see <http://www.gnu.org/licenses/>.
 
-// Package tests implements execution of AquaChain JSON tests.
+// Package tests implements execution of Aquachain JSON tests.
 package tests
 
 import (

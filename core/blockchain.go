@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the aquachain library. If not, see <http://www.gnu.org/licenses/>.
 
-// Package core implements the AquaChain consensus protocol.
+// Package core implements the Aquachain consensus protocol.
 package core
 
 import (
@@ -131,7 +131,7 @@ type BlockChain struct {
 }
 
 // NewBlockChain returns a fully initialised block chain using information
-// available in the database. It initialises the default AquaChain Validator and
+// available in the database. It initialises the default Aquachain Validator and
 // Processor.
 func NewBlockChain(db aquadb.Database, cacheConfig *CacheConfig, chainConfig *params.ChainConfig, engine consensus.Engine, vmConfig vm.Config) (*BlockChain, error) {
 	if cacheConfig == nil {

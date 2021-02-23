@@ -91,7 +91,7 @@ type ProtocolManager struct {
 	wg sync.WaitGroup
 }
 
-// NewProtocolManager returns a new aquachain sub protocol manager. The AquaChain sub protocol manages peers capable
+// NewProtocolManager returns a new aquachain sub protocol manager. The Aquachain sub protocol manages peers capable
 // with the aquachain network.
 func NewProtocolManager(config *params.ChainConfig, mode downloader.SyncMode, networkId uint64, mux *event.TypeMux, txpool txPool, engine consensus.Engine, blockchain *core.BlockChain, chaindb aquadb.Database) (*ProtocolManager, error) {
 	// Create the protocol manager with the base fields
@@ -186,9 +186,9 @@ func (pm *ProtocolManager) removePeer(id string) {
 	if peer == nil {
 		return
 	}
-	log.Debug("Removing AquaChain peer", "peer", id)
+	log.Debug("Removing Aquachain peer", "peer", id)
 
-	// Unregister the peer from the downloader and AquaChain peer set
+	// Unregister the peer from the downloader and Aquachain peer set
 	pm.downloader.UnregisterPeer(id)
 	if err := pm.peers.Unregister(id); err != nil {
 		log.Error("Peer removal failed", "peer", id, "err", err)
@@ -217,7 +217,7 @@ func (pm *ProtocolManager) Start(maxPeers int) {
 }
 
 func (pm *ProtocolManager) Stop() {
-	log.Info("Stopping AquaChain protocol")
+	log.Info("Stopping Aquachain protocol")
 
 	pm.txSub.Unsubscribe()         // quits txBroadcastLoop
 	pm.minedBlockSub.Unsubscribe() // quits blockBroadcastLoop
@@ -238,7 +238,7 @@ func (pm *ProtocolManager) Stop() {
 	// Wait for all peer handler goroutines and the loops to come down.
 	pm.wg.Wait()
 
-	log.Info("AquaChain protocol stopped")
+	log.Info("Aquachain protocol stopped")
 }
 
 func (pm *ProtocolManager) newPeer(pv int, p *p2p.Peer, rw p2p.MsgReadWriter) *peer {
@@ -251,9 +251,9 @@ func (pm *ProtocolManager) handle(p *peer) error {
 	if pm.peers.Len() >= pm.maxPeers {
 		return p2p.DiscTooManyPeers
 	}
-	p.Log().Trace("AquaChain peer connected", "name", p.Name())
+	p.Log().Trace("Aquachain peer connected", "name", p.Name())
 
-	// Execute the AquaChain handshake
+	// Execute the Aquachain handshake
 	var (
 		genesis = pm.blockchain.Genesis()
 		head    = pm.blockchain.CurrentHeader()
@@ -262,7 +262,7 @@ func (pm *ProtocolManager) handle(p *peer) error {
 		td      = pm.blockchain.GetTd(hash, number)
 	)
 	if err := p.Handshake(pm.networkId, td, hash, genesis.Hash()); err != nil {
-		p.Log().Trace("AquaChain handshake failed", "err", err)
+		p.Log().Trace("Aquachain handshake failed", "err", err)
 		return err
 	}
 	if rw, ok := p.rw.(*meteredMsgReadWriter); ok {
@@ -270,7 +270,7 @@ func (pm *ProtocolManager) handle(p *peer) error {
 	}
 	// Register the peer locally
 	if err := pm.peers.Register(p); err != nil {
-		p.Log().Error("AquaChain peer registration failed", "err", err)
+		p.Log().Error("Aquachain peer registration failed", "err", err)
 		return err
 	}
 	defer pm.removePeer(p.id)
@@ -279,7 +279,7 @@ func (pm *ProtocolManager) handle(p *peer) error {
 	if err := pm.downloader.RegisterPeer(p.id, p.version, p); err != nil {
 		return err
 	}
-	p.Log().Debug("AquaChain peer registered", "name", p.Name())
+	p.Log().Debug("Aquachain peer registered", "name", p.Name())
 	// Propagate existing transactions. new transactions appearing
 	// after this will be sent via broadcasts.
 	pm.syncTransactions(p)
@@ -287,7 +287,7 @@ func (pm *ProtocolManager) handle(p *peer) error {
 	// main loop. handle incoming messages.
 	for {
 		if err := pm.handleMsg(p); err != nil {
-			p.Log().Debug("AquaChain message handling failed", "err", err)
+			p.Log().Debug("Aquachain message handling failed", "err", err)
 			return err
 		}
 	}
@@ -694,10 +694,10 @@ func (self *ProtocolManager) txBroadcastLoop() {
 	}
 }
 
-// NodeInfo represents a short summary of the AquaChain sub-protocol metadata
+// NodeInfo represents a short summary of the Aquachain sub-protocol metadata
 // known about the host peer.
 type NodeInfo struct {
-	Network    uint64              `json:"network"`    // AquaChain network ID
+	Network    uint64              `json:"network"`    // Aquachain network ID
 	Difficulty *big.Int            `json:"difficulty"` // Total difficulty of the host's blockchain
 	Genesis    common.Hash         `json:"genesis"`    // SHA3 hash of the host's genesis block
 	Config     *params.ChainConfig `json:"config"`     // Chain configuration for the fork rules

@@ -59,7 +59,7 @@ type Database interface {
 	TrieDB() *trie.Database
 }
 
-// Trie is a AquaChain Merkle Trie.
+// Trie is a Aquachain Merkle Trie.
 type Trie interface {
 	TryGet(key []byte) ([]byte, error)
 	TryUpdate(key, value []byte) error

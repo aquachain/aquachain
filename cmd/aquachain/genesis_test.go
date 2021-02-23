@@ -83,7 +83,7 @@ var customGenesisTests = []struct {
 	},
 }
 
-// Tests that initializing AquaChain with a custom genesis block and chain definitions
+// Tests that initializing Aquachain with a custom genesis block and chain definitions
 // work properly.
 func TestCustomGenesis(t *testing.T) {
 	for i, tt := range customGenesisTests {
@@ -96,10 +96,10 @@ func TestCustomGenesis(t *testing.T) {
 		if err := ioutil.WriteFile(json, []byte(tt.genesis), 0600); err != nil {
 			t.Fatalf("test %d: failed to write genesis file: %v", i, err)
 		}
-		runAquaChain(t, "--datadir", datadir, "init", json).WaitExit()
+		runAquachain(t, "--datadir", datadir, "init", json).WaitExit()
 
 		// Query the custom genesis block
-		aquachain := runAquaChain(t,
+		aquachain := runAquachain(t,
 			"--datadir", datadir, "--maxpeers", "0", "--port", "0",
 			"--nodiscover", "--nat", "none", "--ipcdisable",
 			"--exec", tt.query, "console")

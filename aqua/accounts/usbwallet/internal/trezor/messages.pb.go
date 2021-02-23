@@ -70,17 +70,17 @@ const (
 	MessageType_MessageType_SignIdentity              MessageType = 53
 	MessageType_MessageType_SignedIdentity            MessageType = 54
 	MessageType_MessageType_GetFeatures               MessageType = 55
-	MessageType_MessageType_AquaChainGetAddress       MessageType = 56
-	MessageType_MessageType_AquaChainAddress          MessageType = 57
-	MessageType_MessageType_AquaChainSignTx           MessageType = 58
-	MessageType_MessageType_AquaChainTxRequest        MessageType = 59
-	MessageType_MessageType_AquaChainTxAck            MessageType = 60
+	MessageType_MessageType_AquachainGetAddress       MessageType = 56
+	MessageType_MessageType_AquachainAddress          MessageType = 57
+	MessageType_MessageType_AquachainSignTx           MessageType = 58
+	MessageType_MessageType_AquachainTxRequest        MessageType = 59
+	MessageType_MessageType_AquachainTxAck            MessageType = 60
 	MessageType_MessageType_GetECDHSessionKey         MessageType = 61
 	MessageType_MessageType_ECDHSessionKey            MessageType = 62
 	MessageType_MessageType_SetU2FCounter             MessageType = 63
-	MessageType_MessageType_AquaChainSignMessage      MessageType = 64
-	MessageType_MessageType_AquaChainVerifyMessage    MessageType = 65
-	MessageType_MessageType_AquaChainMessageSignature MessageType = 66
+	MessageType_MessageType_AquachainSignMessage      MessageType = 64
+	MessageType_MessageType_AquachainVerifyMessage    MessageType = 65
+	MessageType_MessageType_AquachainMessageSignature MessageType = 66
 	MessageType_MessageType_DebugLinkDecision         MessageType = 100
 	MessageType_MessageType_DebugLinkGetState         MessageType = 101
 	MessageType_MessageType_DebugLinkState            MessageType = 102
@@ -146,17 +146,17 @@ var MessageType_name = map[int32]string{
 	53:  "MessageType_SignIdentity",
 	54:  "MessageType_SignedIdentity",
 	55:  "MessageType_GetFeatures",
-	56:  "MessageType_AquaChainGetAddress",
-	57:  "MessageType_AquaChainAddress",
-	58:  "MessageType_AquaChainSignTx",
-	59:  "MessageType_AquaChainTxRequest",
-	60:  "MessageType_AquaChainTxAck",
+	56:  "MessageType_AquachainGetAddress",
+	57:  "MessageType_AquachainAddress",
+	58:  "MessageType_AquachainSignTx",
+	59:  "MessageType_AquachainTxRequest",
+	60:  "MessageType_AquachainTxAck",
 	61:  "MessageType_GetECDHSessionKey",
 	62:  "MessageType_ECDHSessionKey",
 	63:  "MessageType_SetU2FCounter",
-	64:  "MessageType_AquaChainSignMessage",
-	65:  "MessageType_AquaChainVerifyMessage",
-	66:  "MessageType_AquaChainMessageSignature",
+	64:  "MessageType_AquachainSignMessage",
+	65:  "MessageType_AquachainVerifyMessage",
+	66:  "MessageType_AquachainMessageSignature",
 	100: "MessageType_DebugLinkDecision",
 	101: "MessageType_DebugLinkGetState",
 	102: "MessageType_DebugLinkState",
@@ -221,17 +221,17 @@ var MessageType_value = map[string]int32{
 	"MessageType_SignIdentity":              53,
 	"MessageType_SignedIdentity":            54,
 	"MessageType_GetFeatures":               55,
-	"MessageType_AquaChainGetAddress":       56,
-	"MessageType_AquaChainAddress":          57,
-	"MessageType_AquaChainSignTx":           58,
-	"MessageType_AquaChainTxRequest":        59,
-	"MessageType_AquaChainTxAck":            60,
+	"MessageType_AquachainGetAddress":       56,
+	"MessageType_AquachainAddress":          57,
+	"MessageType_AquachainSignTx":           58,
+	"MessageType_AquachainTxRequest":        59,
+	"MessageType_AquachainTxAck":            60,
 	"MessageType_GetECDHSessionKey":         61,
 	"MessageType_ECDHSessionKey":            62,
 	"MessageType_SetU2FCounter":             63,
-	"MessageType_AquaChainSignMessage":      64,
-	"MessageType_AquaChainVerifyMessage":    65,
-	"MessageType_AquaChainMessageSignature": 66,
+	"MessageType_AquachainSignMessage":      64,
+	"MessageType_AquachainVerifyMessage":    65,
+	"MessageType_AquachainMessageSignature": 66,
 	"MessageType_DebugLinkDecision":         100,
 	"MessageType_DebugLinkGetState":         101,
 	"MessageType_DebugLinkState":            102,
@@ -954,29 +954,29 @@ func (m *GetAddress) GetScriptType() InputScriptType {
 }
 
 // *
-// Request: Ask device for AquaChain address corresponding to address_n path
+// Request: Ask device for Aquachain address corresponding to address_n path
 // @next PassphraseRequest
-// @next AquaChainAddress
+// @next AquachainAddress
 // @next Failure
-type AquaChainGetAddress struct {
+type AquachainGetAddress struct {
 	AddressN         []uint32 `protobuf:"varint,1,rep,name=address_n,json=addressN" json:"address_n,omitempty"`
 	ShowDisplay      *bool    `protobuf:"varint,2,opt,name=show_display,json=showDisplay" json:"show_display,omitempty"`
 	XXX_unrecognized []byte   `json:"-"`
 }
 
-func (m *AquaChainGetAddress) Reset()                    { *m = AquaChainGetAddress{} }
-func (m *AquaChainGetAddress) String() string            { return proto.CompactTextString(m) }
-func (*AquaChainGetAddress) ProtoMessage()               {}
-func (*AquaChainGetAddress) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{22} }
+func (m *AquachainGetAddress) Reset()                    { *m = AquachainGetAddress{} }
+func (m *AquachainGetAddress) String() string            { return proto.CompactTextString(m) }
+func (*AquachainGetAddress) ProtoMessage()               {}
+func (*AquachainGetAddress) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{22} }
 
-func (m *AquaChainGetAddress) GetAddressN() []uint32 {
+func (m *AquachainGetAddress) GetAddressN() []uint32 {
 	if m != nil {
 		return m.AddressN
 	}
 	return nil
 }
 
-func (m *AquaChainGetAddress) GetShowDisplay() bool {
+func (m *AquachainGetAddress) GetShowDisplay() bool {
 	if m != nil && m.ShowDisplay != nil {
 		return *m.ShowDisplay
 	}
@@ -1004,19 +1004,19 @@ func (m *Address) GetAddress() string {
 }
 
 // *
-// Response: Contains an AquaChain address derived from device private seed
-// @prev AquaChainGetAddress
-type AquaChainAddress struct {
+// Response: Contains an Aquachain address derived from device private seed
+// @prev AquachainGetAddress
+type AquachainAddress struct {
 	Address          []byte `protobuf:"bytes,1,req,name=address" json:"address,omitempty"`
 	XXX_unrecognized []byte `json:"-"`
 }
 
-func (m *AquaChainAddress) Reset()                    { *m = AquaChainAddress{} }
-func (m *AquaChainAddress) String() string            { return proto.CompactTextString(m) }
-func (*AquaChainAddress) ProtoMessage()               {}
-func (*AquaChainAddress) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{24} }
+func (m *AquachainAddress) Reset()                    { *m = AquachainAddress{} }
+func (m *AquachainAddress) String() string            { return proto.CompactTextString(m) }
+func (*AquachainAddress) ProtoMessage()               {}
+func (*AquachainAddress) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{24} }
 
-func (m *AquaChainAddress) GetAddress() []byte {
+func (m *AquachainAddress) GetAddress() []byte {
 	if m != nil {
 		return m.Address
 	}
@@ -2006,9 +2006,9 @@ func (m *TxAck) GetTx() *TransactionType {
 // Note: the first at most 1024 bytes of data MUST be transmitted as part of this message.
 // @next PassphraseRequest
 // @next PinMatrixRequest
-// @next AquaChainTxRequest
+// @next AquachainTxRequest
 // @next Failure
-type AquaChainSignTx struct {
+type AquachainSignTx struct {
 	AddressN         []uint32 `protobuf:"varint,1,rep,name=address_n,json=addressN" json:"address_n,omitempty"`
 	Nonce            []byte   `protobuf:"bytes,2,opt,name=nonce" json:"nonce,omitempty"`
 	GasPrice         []byte   `protobuf:"bytes,3,opt,name=gas_price,json=gasPrice" json:"gas_price,omitempty"`
@@ -2021,68 +2021,68 @@ type AquaChainSignTx struct {
 	XXX_unrecognized []byte   `json:"-"`
 }
 
-func (m *AquaChainSignTx) Reset()                    { *m = AquaChainSignTx{} }
-func (m *AquaChainSignTx) String() string            { return proto.CompactTextString(m) }
-func (*AquaChainSignTx) ProtoMessage()               {}
-func (*AquaChainSignTx) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{49} }
+func (m *AquachainSignTx) Reset()                    { *m = AquachainSignTx{} }
+func (m *AquachainSignTx) String() string            { return proto.CompactTextString(m) }
+func (*AquachainSignTx) ProtoMessage()               {}
+func (*AquachainSignTx) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{49} }
 
-func (m *AquaChainSignTx) GetAddressN() []uint32 {
+func (m *AquachainSignTx) GetAddressN() []uint32 {
 	if m != nil {
 		return m.AddressN
 	}
 	return nil
 }
 
-func (m *AquaChainSignTx) GetNonce() []byte {
+func (m *AquachainSignTx) GetNonce() []byte {
 	if m != nil {
 		return m.Nonce
 	}
 	return nil
 }
 
-func (m *AquaChainSignTx) GetGasPrice() []byte {
+func (m *AquachainSignTx) GetGasPrice() []byte {
 	if m != nil {
 		return m.GasPrice
 	}
 	return nil
 }
 
-func (m *AquaChainSignTx) GetGasLimit() []byte {
+func (m *AquachainSignTx) GetGasLimit() []byte {
 	if m != nil {
 		return m.GasLimit
 	}
 	return nil
 }
 
-func (m *AquaChainSignTx) GetTo() []byte {
+func (m *AquachainSignTx) GetTo() []byte {
 	if m != nil {
 		return m.To
 	}
 	return nil
 }
 
-func (m *AquaChainSignTx) GetValue() []byte {
+func (m *AquachainSignTx) GetValue() []byte {
 	if m != nil {
 		return m.Value
 	}
 	return nil
 }
 
-func (m *AquaChainSignTx) GetDataInitialChunk() []byte {
+func (m *AquachainSignTx) GetDataInitialChunk() []byte {
 	if m != nil {
 		return m.DataInitialChunk
 	}
 	return nil
 }
 
-func (m *AquaChainSignTx) GetDataLength() uint32 {
+func (m *AquachainSignTx) GetDataLength() uint32 {
 	if m != nil && m.DataLength != nil {
 		return *m.DataLength
 	}
 	return 0
 }
 
-func (m *AquaChainSignTx) GetChainId() uint32 {
+func (m *AquachainSignTx) GetChainId() uint32 {
 	if m != nil && m.ChainId != nil {
 		return *m.ChainId
 	}
@@ -2093,9 +2093,9 @@ func (m *AquaChainSignTx) GetChainId() uint32 {
 // Response: Device asks for more data from transaction payload, or returns the signature.
 // If data_length is set, device awaits that many more bytes of payload.
 // Otherwise, the signature_* fields contain the computed transaction signature. All three fields will be present.
-// @prev AquaChainSignTx
-// @next AquaChainTxAck
-type AquaChainTxRequest struct {
+// @prev AquachainSignTx
+// @next AquachainTxAck
+type AquachainTxRequest struct {
 	DataLength       *uint32 `protobuf:"varint,1,opt,name=data_length,json=dataLength" json:"data_length,omitempty"`
 	SignatureV       *uint32 `protobuf:"varint,2,opt,name=signature_v,json=signatureV" json:"signature_v,omitempty"`
 	SignatureR       []byte  `protobuf:"bytes,3,opt,name=signature_r,json=signatureR" json:"signature_r,omitempty"`
@@ -2103,33 +2103,33 @@ type AquaChainTxRequest struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *AquaChainTxRequest) Reset()                    { *m = AquaChainTxRequest{} }
-func (m *AquaChainTxRequest) String() string            { return proto.CompactTextString(m) }
-func (*AquaChainTxRequest) ProtoMessage()               {}
-func (*AquaChainTxRequest) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{50} }
+func (m *AquachainTxRequest) Reset()                    { *m = AquachainTxRequest{} }
+func (m *AquachainTxRequest) String() string            { return proto.CompactTextString(m) }
+func (*AquachainTxRequest) ProtoMessage()               {}
+func (*AquachainTxRequest) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{50} }
 
-func (m *AquaChainTxRequest) GetDataLength() uint32 {
+func (m *AquachainTxRequest) GetDataLength() uint32 {
 	if m != nil && m.DataLength != nil {
 		return *m.DataLength
 	}
 	return 0
 }
 
-func (m *AquaChainTxRequest) GetSignatureV() uint32 {
+func (m *AquachainTxRequest) GetSignatureV() uint32 {
 	if m != nil && m.SignatureV != nil {
 		return *m.SignatureV
 	}
 	return 0
 }
 
-func (m *AquaChainTxRequest) GetSignatureR() []byte {
+func (m *AquachainTxRequest) GetSignatureR() []byte {
 	if m != nil {
 		return m.SignatureR
 	}
 	return nil
 }
 
-func (m *AquaChainTxRequest) GetSignatureS() []byte {
+func (m *AquachainTxRequest) GetSignatureS() []byte {
 	if m != nil {
 		return m.SignatureS
 	}
@@ -2138,19 +2138,19 @@ func (m *AquaChainTxRequest) GetSignatureS() []byte {
 
 // *
 // Request: Transaction payload data.
-// @prev AquaChainTxRequest
-// @next AquaChainTxRequest
-type AquaChainTxAck struct {
+// @prev AquachainTxRequest
+// @next AquachainTxRequest
+type AquachainTxAck struct {
 	DataChunk        []byte `protobuf:"bytes,1,opt,name=data_chunk,json=dataChunk" json:"data_chunk,omitempty"`
 	XXX_unrecognized []byte `json:"-"`
 }
 
-func (m *AquaChainTxAck) Reset()                    { *m = AquaChainTxAck{} }
-func (m *AquaChainTxAck) String() string            { return proto.CompactTextString(m) }
-func (*AquaChainTxAck) ProtoMessage()               {}
-func (*AquaChainTxAck) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{51} }
+func (m *AquachainTxAck) Reset()                    { *m = AquachainTxAck{} }
+func (m *AquachainTxAck) String() string            { return proto.CompactTextString(m) }
+func (*AquachainTxAck) ProtoMessage()               {}
+func (*AquachainTxAck) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{51} }
 
-func (m *AquaChainTxAck) GetDataChunk() []byte {
+func (m *AquachainTxAck) GetDataChunk() []byte {
 	if m != nil {
 		return m.DataChunk
 	}
@@ -2159,27 +2159,27 @@ func (m *AquaChainTxAck) GetDataChunk() []byte {
 
 // *
 // Request: Ask device to sign message
-// @next AquaChainMessageSignature
+// @next AquachainMessageSignature
 // @next Failure
-type AquaChainSignMessage struct {
+type AquachainSignMessage struct {
 	AddressN         []uint32 `protobuf:"varint,1,rep,name=address_n,json=addressN" json:"address_n,omitempty"`
 	Message          []byte   `protobuf:"bytes,2,req,name=message" json:"message,omitempty"`
 	XXX_unrecognized []byte   `json:"-"`
 }
 
-func (m *AquaChainSignMessage) Reset()                    { *m = AquaChainSignMessage{} }
-func (m *AquaChainSignMessage) String() string            { return proto.CompactTextString(m) }
-func (*AquaChainSignMessage) ProtoMessage()               {}
-func (*AquaChainSignMessage) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{52} }
+func (m *AquachainSignMessage) Reset()                    { *m = AquachainSignMessage{} }
+func (m *AquachainSignMessage) String() string            { return proto.CompactTextString(m) }
+func (*AquachainSignMessage) ProtoMessage()               {}
+func (*AquachainSignMessage) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{52} }
 
-func (m *AquaChainSignMessage) GetAddressN() []uint32 {
+func (m *AquachainSignMessage) GetAddressN() []uint32 {
 	if m != nil {
 		return m.AddressN
 	}
 	return nil
 }
 
-func (m *AquaChainSignMessage) GetMessage() []byte {
+func (m *AquachainSignMessage) GetMessage() []byte {
 	if m != nil {
 		return m.Message
 	}
@@ -2190,33 +2190,33 @@ func (m *AquaChainSignMessage) GetMessage() []byte {
 // Request: Ask device to verify message
 // @next Success
 // @next Failure
-type AquaChainVerifyMessage struct {
+type AquachainVerifyMessage struct {
 	Address          []byte `protobuf:"bytes,1,opt,name=address" json:"address,omitempty"`
 	Signature        []byte `protobuf:"bytes,2,opt,name=signature" json:"signature,omitempty"`
 	Message          []byte `protobuf:"bytes,3,opt,name=message" json:"message,omitempty"`
 	XXX_unrecognized []byte `json:"-"`
 }
 
-func (m *AquaChainVerifyMessage) Reset()                    { *m = AquaChainVerifyMessage{} }
-func (m *AquaChainVerifyMessage) String() string            { return proto.CompactTextString(m) }
-func (*AquaChainVerifyMessage) ProtoMessage()               {}
-func (*AquaChainVerifyMessage) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{53} }
+func (m *AquachainVerifyMessage) Reset()                    { *m = AquachainVerifyMessage{} }
+func (m *AquachainVerifyMessage) String() string            { return proto.CompactTextString(m) }
+func (*AquachainVerifyMessage) ProtoMessage()               {}
+func (*AquachainVerifyMessage) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{53} }
 
-func (m *AquaChainVerifyMessage) GetAddress() []byte {
+func (m *AquachainVerifyMessage) GetAddress() []byte {
 	if m != nil {
 		return m.Address
 	}
 	return nil
 }
 
-func (m *AquaChainVerifyMessage) GetSignature() []byte {
+func (m *AquachainVerifyMessage) GetSignature() []byte {
 	if m != nil {
 		return m.Signature
 	}
 	return nil
 }
 
-func (m *AquaChainVerifyMessage) GetMessage() []byte {
+func (m *AquachainVerifyMessage) GetMessage() []byte {
 	if m != nil {
 		return m.Message
 	}
@@ -2225,26 +2225,26 @@ func (m *AquaChainVerifyMessage) GetMessage() []byte {
 
 // *
 // Response: Signed message
-// @prev AquaChainSignMessage
-type AquaChainMessageSignature struct {
+// @prev AquachainSignMessage
+type AquachainMessageSignature struct {
 	Address          []byte `protobuf:"bytes,1,opt,name=address" json:"address,omitempty"`
 	Signature        []byte `protobuf:"bytes,2,opt,name=signature" json:"signature,omitempty"`
 	XXX_unrecognized []byte `json:"-"`
 }
 
-func (m *AquaChainMessageSignature) Reset()                    { *m = AquaChainMessageSignature{} }
-func (m *AquaChainMessageSignature) String() string            { return proto.CompactTextString(m) }
-func (*AquaChainMessageSignature) ProtoMessage()               {}
-func (*AquaChainMessageSignature) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{54} }
+func (m *AquachainMessageSignature) Reset()                    { *m = AquachainMessageSignature{} }
+func (m *AquachainMessageSignature) String() string            { return proto.CompactTextString(m) }
+func (*AquachainMessageSignature) ProtoMessage()               {}
+func (*AquachainMessageSignature) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{54} }
 
-func (m *AquaChainMessageSignature) GetAddress() []byte {
+func (m *AquachainMessageSignature) GetAddress() []byte {
 	if m != nil {
 		return m.Address
 	}
 	return nil
 }
 
-func (m *AquaChainMessageSignature) GetSignature() []byte {
+func (m *AquachainMessageSignature) GetSignature() []byte {
 	if m != nil {
 		return m.Signature
 	}
@@ -2806,9 +2806,9 @@ func init() {
 	proto.RegisterType((*GetPublicKey)(nil), "GetPublicKey")
 	proto.RegisterType((*PublicKey)(nil), "PublicKey")
 	proto.RegisterType((*GetAddress)(nil), "GetAddress")
-	proto.RegisterType((*AquaChainGetAddress)(nil), "AquaChainGetAddress")
+	proto.RegisterType((*AquachainGetAddress)(nil), "AquachainGetAddress")
 	proto.RegisterType((*Address)(nil), "Address")
-	proto.RegisterType((*AquaChainAddress)(nil), "AquaChainAddress")
+	proto.RegisterType((*AquachainAddress)(nil), "AquachainAddress")
 	proto.RegisterType((*WipeDevice)(nil), "WipeDevice")
 	proto.RegisterType((*LoadDevice)(nil), "LoadDevice")
 	proto.RegisterType((*ResetDevice)(nil), "ResetDevice")
@@ -2833,12 +2833,12 @@ func init() {
 	proto.RegisterType((*SimpleSignTx)(nil), "SimpleSignTx")
 	proto.RegisterType((*TxRequest)(nil), "TxRequest")
 	proto.RegisterType((*TxAck)(nil), "TxAck")
-	proto.RegisterType((*AquaChainSignTx)(nil), "AquaChainSignTx")
-	proto.RegisterType((*AquaChainTxRequest)(nil), "AquaChainTxRequest")
-	proto.RegisterType((*AquaChainTxAck)(nil), "AquaChainTxAck")
-	proto.RegisterType((*AquaChainSignMessage)(nil), "AquaChainSignMessage")
-	proto.RegisterType((*AquaChainVerifyMessage)(nil), "AquaChainVerifyMessage")
-	proto.RegisterType((*AquaChainMessageSignature)(nil), "AquaChainMessageSignature")
+	proto.RegisterType((*AquachainSignTx)(nil), "AquachainSignTx")
+	proto.RegisterType((*AquachainTxRequest)(nil), "AquachainTxRequest")
+	proto.RegisterType((*AquachainTxAck)(nil), "AquachainTxAck")
+	proto.RegisterType((*AquachainSignMessage)(nil), "AquachainSignMessage")
+	proto.RegisterType((*AquachainVerifyMessage)(nil), "AquachainVerifyMessage")
+	proto.RegisterType((*AquachainMessageSignature)(nil), "AquachainMessageSignature")
 	proto.RegisterType((*SignIdentity)(nil), "SignIdentity")
 	proto.RegisterType((*SignedIdentity)(nil), "SignedIdentity")
 	proto.RegisterType((*GetECDHSessionKey)(nil), "GetECDHSessionKey")

@@ -42,9 +42,9 @@ It has these top-level messages:
 	GetPublicKey
 	PublicKey
 	GetAddress
-	AquaChainGetAddress
+	AquachainGetAddress
 	Address
-	AquaChainAddress
+	AquachainAddress
 	WipeDevice
 	LoadDevice
 	ResetDevice
@@ -69,12 +69,12 @@ It has these top-level messages:
 	SimpleSignTx
 	TxRequest
 	TxAck
-	AquaChainSignTx
-	AquaChainTxRequest
-	AquaChainTxAck
-	AquaChainSignMessage
-	AquaChainVerifyMessage
-	AquaChainMessageSignature
+	AquachainSignTx
+	AquachainTxRequest
+	AquachainTxAck
+	AquachainSignMessage
+	AquachainVerifyMessage
+	AquachainMessageSignature
 	SignIdentity
 	SignedIdentity
 	GetECDHSessionKey

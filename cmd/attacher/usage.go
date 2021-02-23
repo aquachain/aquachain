@@ -73,7 +73,7 @@ type flagGroup struct {
 // AppHelpFlagGroups is the application flags, grouped by functionality.
 var AppHelpFlagGroups = []flagGroup{
 	{
-		Name: "AquaChain",
+		Name: "Aquachain",
 		Flags: []cli.Flag{
 			utils.NetworkIdFlag,
 			utils.IdentityFlag,

@@ -720,7 +720,7 @@ func setIPC(ctx *cli.Context, cfg *node.Config) {
 }
 
 // makeDatabaseHandles raises out the number of allowed file handles per process
-// for AquaChain and returns half of the allowance to assign to the database.
+// for Aquachain and returns half of the allowance to assign to the database.
 func makeDatabaseHandles() int {
 	limit, err := fdlimit.Current()
 	if err != nil {
@@ -1156,13 +1156,13 @@ func SetChainId(ctx *cli.Context, cfg *aqua.Config) *params.ChainConfig {
 	return chaincfg
 }
 
-// RegisterAquaService adds an AquaChain client to the stack.
+// RegisterAquaService adds an Aquachain client to the stack.
 func RegisterAquaService(stack *node.Node, cfg *aqua.Config) {
 	err := stack.Register(func(ctx *node.ServiceContext) (node.Service, error) {
 		return aqua.New(ctx, cfg)
 	})
 	if err != nil {
-		Fatalf("Failed to register the AquaChain service: %v", err)
+		Fatalf("Failed to register the Aquachain service: %v", err)
 	}
 }
 
@@ -1175,17 +1175,17 @@ func RegisterShhService(stack *node.Node, cfg *whisper.Config) {
 	}
 }
 
-// RegisterAquaStatsService configures the AquaChain Stats daemon and adds it to
+// RegisterAquaStatsService configures the Aquachain Stats daemon and adds it to
 // th egiven node.
 func RegisterAquaStatsService(stack *node.Node, url string) {
 	if err := stack.Register(func(ctx *node.ServiceContext) (node.Service, error) {
 		// Retrieve both aqua and les services
-		var ethServ *aqua.AquaChain
+		var ethServ *aqua.Aquachain
 		ctx.Service(&ethServ)
 
 		return aquastats.New(url, ethServ)
 	}); err != nil {
-		Fatalf("Failed to register the AquaChain Stats service: %v", err)
+		Fatalf("Failed to register the Aquachain Stats service: %v", err)
 	}
 }
 

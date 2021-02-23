@@ -42,51 +42,51 @@ import (
 type PublicTestingAPI struct {
 	cfg   *params.ChainConfig
 	agent *miner.RemoteAgent
-	e     *AquaChain
+	e     *Aquachain
 }
 
-// NewPublicAquaChainAPI creates a new AquaChain protocol API for full nodes.
-func NewPublicTestingAPI(cfg *params.ChainConfig, e *AquaChain) *PublicTestingAPI {
+// NewPublicAquachainAPI creates a new Aquachain protocol API for full nodes.
+func NewPublicTestingAPI(cfg *params.ChainConfig, e *Aquachain) *PublicTestingAPI {
 	agent := miner.NewRemoteAgent(e.BlockChain(), e.Engine())
 	e.Miner().Register(agent)
 	return &PublicTestingAPI{cfg, agent, e}
 }
 
-// PublicAquaChainAPI provides an API to access AquaChain full node-related
+// PublicAquachainAPI provides an API to access Aquachain full node-related
 // information.
-type PublicAquaChainAPI struct {
-	e *AquaChain
+type PublicAquachainAPI struct {
+	e *Aquachain
 }
 
-// NewPublicAquaChainAPI creates a new AquaChain protocol API for full nodes.
-func NewPublicAquaChainAPI(e *AquaChain) *PublicAquaChainAPI {
-	return &PublicAquaChainAPI{e}
+// NewPublicAquachainAPI creates a new Aquachain protocol API for full nodes.
+func NewPublicAquachainAPI(e *Aquachain) *PublicAquachainAPI {
+	return &PublicAquachainAPI{e}
 }
 
 // Aquabase is the address that mining rewards will be send to
-func (api *PublicAquaChainAPI) Aquabase() (common.Address, error) {
+func (api *PublicAquachainAPI) Aquabase() (common.Address, error) {
 	return api.e.Aquabase()
 }
 
 // Coinbase is the address that mining rewards will be send to (alias for Aquabase)
-func (api *PublicAquaChainAPI) Coinbase() (common.Address, error) {
+func (api *PublicAquachainAPI) Coinbase() (common.Address, error) {
 	return api.Aquabase()
 }
 
 // Hashrate returns the POW hashrate
-func (api *PublicAquaChainAPI) Hashrate() hexutil.Uint64 {
+func (api *PublicAquachainAPI) Hashrate() hexutil.Uint64 {
 	return hexutil.Uint64(api.e.Miner().HashRate())
 }
 
 // PublicMinerAPI provides an API to control the miner.
 // It offers only methods that operate on data that pose no security risk when it is publicly accessible.
 type PublicMinerAPI struct {
-	e     *AquaChain
+	e     *Aquachain
 	agent *miner.RemoteAgent
 }
 
 // NewPublicMinerAPI create a new PublicMinerAPI instance.
-func NewPublicMinerAPI(e *AquaChain) *PublicMinerAPI {
+func NewPublicMinerAPI(e *Aquachain) *PublicMinerAPI {
 	agent := miner.NewRemoteAgent(e.BlockChain(), e.Engine())
 	e.Miner().Register(agent)
 
@@ -163,11 +163,11 @@ func (api *PublicMinerAPI) SubmitHashrate(hashrate hexutil.Uint64, id common.Has
 // PrivateMinerAPI provides private RPC methods to control the miner.
 // These methods can be abused by external users and must be considered insecure for use by untrusted users.
 type PrivateMinerAPI struct {
-	e *AquaChain
+	e *Aquachain
 }
 
 // NewPrivateMinerAPI create a new RPC service which controls the miner of this node.
-func NewPrivateMinerAPI(e *AquaChain) *PrivateMinerAPI {
+func NewPrivateMinerAPI(e *Aquachain) *PrivateMinerAPI {
 	return &PrivateMinerAPI{e: e}
 }
 
@@ -243,15 +243,15 @@ func (api *PrivateMinerAPI) GetHashrate() uint64 {
 	return uint64(api.e.miner.HashRate())
 }
 
-// PrivateAdminAPI is the collection of AquaChain full node-related APIs
+// PrivateAdminAPI is the collection of Aquachain full node-related APIs
 // exposed over the private admin endpoint.
 type PrivateAdminAPI struct {
-	aqua *AquaChain
+	aqua *Aquachain
 }
 
 // NewPrivateAdminAPI creates a new API definition for the full node private
-// admin methods of the AquaChain service.
-func NewPrivateAdminAPI(aqua *AquaChain) *PrivateAdminAPI {
+// admin methods of the Aquachain service.
+func NewPrivateAdminAPI(aqua *Aquachain) *PrivateAdminAPI {
 	return &PrivateAdminAPI{aqua: aqua}
 }
 
@@ -480,15 +480,15 @@ func (api *PrivateAdminAPI) ImportChain(file string) (bool, error) {
 	return true, nil
 }
 
-// PublicDebugAPI is the collection of AquaChain full node APIs exposed
+// PublicDebugAPI is the collection of Aquachain full node APIs exposed
 // over the public debugging endpoint.
 type PublicDebugAPI struct {
-	aqua *AquaChain
+	aqua *Aquachain
 }
 
 // NewPublicDebugAPI creates a new API definition for the full node-
-// related public debug methods of the AquaChain service.
-func NewPublicDebugAPI(aqua *AquaChain) *PublicDebugAPI {
+// related public debug methods of the Aquachain service.
+func NewPublicDebugAPI(aqua *Aquachain) *PublicDebugAPI {
 	return &PublicDebugAPI{aqua: aqua}
 }
 
@@ -517,16 +517,16 @@ func (api *PublicDebugAPI) DumpBlock(blockNr rpc.BlockNumber) (state.Dump, error
 	return stateDb.RawDump(), nil
 }
 
-// PrivateDebugAPI is the collection of AquaChain full node APIs exposed over
+// PrivateDebugAPI is the collection of Aquachain full node APIs exposed over
 // the private debugging endpoint.
 type PrivateDebugAPI struct {
 	config *params.ChainConfig
-	aqua   *AquaChain
+	aqua   *Aquachain
 }
 
 // NewPrivateDebugAPI creates a new API definition for the full node-related
-// private debug methods of the AquaChain service.
-func NewPrivateDebugAPI(config *params.ChainConfig, aqua *AquaChain) *PrivateDebugAPI {
+// private debug methods of the Aquachain service.
+func NewPrivateDebugAPI(config *params.ChainConfig, aqua *Aquachain) *PrivateDebugAPI {
 	return &PrivateDebugAPI{config: config, aqua: aqua}
 }
 

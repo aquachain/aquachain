@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the aquachain library. If not, see <http://www.gnu.org/licenses/>.
 
-// Package aqua implements the AquaChain protocol.
+// Package aqua implements the Aquachain protocol.
 package aqua
 
 import (
@@ -48,8 +48,8 @@ import (
 	"gitlab.com/aquachain/aquachain/rpc"
 )
 
-// AquaChain implements the AquaChain full node service.
-type AquaChain struct {
+// Aquachain implements the Aquachain full node service.
+type Aquachain struct {
 	config      *Config
 	chainConfig *params.ChainConfig
 
@@ -84,9 +84,9 @@ type AquaChain struct {
 	lock sync.RWMutex // Protects the variadic fields (e.g. gas price and aquabase)
 }
 
-// New creates a new AquaChain object (including the
-// initialisation of the common AquaChain object)
-func New(ctx *node.ServiceContext, config *Config) (*AquaChain, error) {
+// New creates a new Aquachain object (including the
+// initialisation of the common Aquachain object)
+func New(ctx *node.ServiceContext, config *Config) (*Aquachain, error) {
 	if !config.SyncMode.IsValid() {
 		return nil, fmt.Errorf("invalid sync mode %d", config.SyncMode)
 	}
@@ -101,7 +101,7 @@ func New(ctx *node.ServiceContext, config *Config) (*AquaChain, error) {
 	}
 	log.Info("Initialised chain configuration", "HF-Ready", chainConfig.HF, "config", chainConfig)
 
-	aqua := &AquaChain{
+	aqua := &Aquachain{
 		config:         config,
 		chainDb:        chainDb,
 		chainConfig:    chainConfig,
@@ -123,7 +123,7 @@ func New(ctx *node.ServiceContext, config *Config) (*AquaChain, error) {
 		ProtocolLengths = []uint64{17, 8}
 	}
 
-	log.Info("Initialising AquaChain protocol", "versions", ProtocolVersions, "network", config.NetworkId)
+	log.Info("Initialising Aquachain protocol", "versions", ProtocolVersions, "network", config.NetworkId)
 
 	//if !config.SkipBcVersionCheck {
 	bcVersion := core.GetBlockChainVersion(chainDb)
@@ -237,7 +237,7 @@ func CreateDB(ctx *node.ServiceContext, config *Config, name string) (aquadb.Dat
 	return db, nil
 }
 
-// CreateConsensusEngine creates the required type of consensus engine instance for an AquaChain service
+// CreateConsensusEngine creates the required type of consensus engine instance for an Aquachain service
 func CreateConsensusEngine(ctx *node.ServiceContext, config *aquahash.Config, chainConfig *params.ChainConfig, db aquadb.Database) consensus.Engine {
 	startVersion := func() byte {
 		big0 := big.NewInt(0)
@@ -284,7 +284,7 @@ func CreateConsensusEngine(ctx *node.ServiceContext, config *aquahash.Config, ch
 
 // APIs returns the collection of RPC services the aquachain package offers.
 // NOTE, some of these services probably need to be moved to somewhere else.
-func (s *AquaChain) APIs() []rpc.API {
+func (s *Aquachain) APIs() []rpc.API {
 	apis := aquaapi.GetAPIs(s.ApiBackend)
 
 	// Append any APIs exposed explicitly by the consensus engine
@@ -303,7 +303,7 @@ func (s *AquaChain) APIs() []rpc.API {
 		{
 			Namespace: "aqua",
 			Version:   "1.0",
-			Service:   NewPublicAquaChainAPI(s),
+			Service:   NewPublicAquachainAPI(s),
 			Public:    true,
 		}, {
 			Namespace: "aqua",
@@ -346,11 +346,11 @@ func (s *AquaChain) APIs() []rpc.API {
 	}...)
 }
 
-func (s *AquaChain) ResetWithGenesisBlock(gb *types.Block) {
+func (s *Aquachain) ResetWithGenesisBlock(gb *types.Block) {
 	s.blockchain.ResetWithGenesisBlock(gb)
 }
 
-func (s *AquaChain) Aquabase() (eb common.Address, err error) {
+func (s *Aquachain) Aquabase() (eb common.Address, err error) {
 	s.lock.RLock()
 	aquabase := s.aquabase
 	s.lock.RUnlock()
@@ -378,7 +378,7 @@ func (s *AquaChain) Aquabase() (eb common.Address, err error) {
 }
 
 // set in js console via admin interface or wrapper from cli flags
-func (self *AquaChain) SetAquabase(aquabase common.Address) {
+func (self *Aquachain) SetAquabase(aquabase common.Address) {
 	self.lock.Lock()
 	self.aquabase = aquabase
 	self.lock.Unlock()
@@ -386,7 +386,7 @@ func (self *AquaChain) SetAquabase(aquabase common.Address) {
 	self.miner.SetAquabase(aquabase)
 }
 
-func (s *AquaChain) StartMining(local bool) error {
+func (s *Aquachain) StartMining(local bool) error {
 	eb, err := s.Aquabase()
 	if err != nil {
 		log.Error("Cannot start mining without aquabase", "err", err)
@@ -406,29 +406,29 @@ func (s *AquaChain) StartMining(local bool) error {
 	return nil
 }
 
-func (s *AquaChain) StopMining()         { s.miner.Stop() }
-func (s *AquaChain) IsMining() bool      { return s.miner.Mining() }
-func (s *AquaChain) Miner() *miner.Miner { return s.miner }
+func (s *Aquachain) StopMining()         { s.miner.Stop() }
+func (s *Aquachain) IsMining() bool      { return s.miner.Mining() }
+func (s *Aquachain) Miner() *miner.Miner { return s.miner }
 
-func (s *AquaChain) AccountManager() *accounts.Manager { return s.accountManager }
-func (s *AquaChain) BlockChain() *core.BlockChain      { return s.blockchain }
-func (s *AquaChain) TxPool() *core.TxPool              { return s.txPool }
-func (s *AquaChain) EventMux() *event.TypeMux          { return s.eventMux }
-func (s *AquaChain) Engine() consensus.Engine          { return s.engine }
-func (s *AquaChain) ChainDb() aquadb.Database          { return s.chainDb }
-func (s *AquaChain) IsListening() bool                 { return true } // Always listening
-func (s *AquaChain) AquaVersion() int {
+func (s *Aquachain) AccountManager() *accounts.Manager { return s.accountManager }
+func (s *Aquachain) BlockChain() *core.BlockChain      { return s.blockchain }
+func (s *Aquachain) TxPool() *core.TxPool              { return s.txPool }
+func (s *Aquachain) EventMux() *event.TypeMux          { return s.eventMux }
+func (s *Aquachain) Engine() consensus.Engine          { return s.engine }
+func (s *Aquachain) ChainDb() aquadb.Database          { return s.chainDb }
+func (s *Aquachain) IsListening() bool                 { return true } // Always listening
+func (s *Aquachain) AquaVersion() int {
 	if s.protocolManager != nil {
 		return int(s.protocolManager.SubProtocols[0].Version)
 	}
 	return 0
 }
-func (s *AquaChain) NetVersion() uint64                 { return s.networkId }
-func (s *AquaChain) Downloader() *downloader.Downloader { return s.protocolManager.downloader }
+func (s *Aquachain) NetVersion() uint64                 { return s.networkId }
+func (s *Aquachain) Downloader() *downloader.Downloader { return s.protocolManager.downloader }
 
 // Protocols implements node.Service, returning all the currently configured
 // network protocols to start.
-func (s *AquaChain) Protocols() []p2p.Protocol {
+func (s *Aquachain) Protocols() []p2p.Protocol {
 	if s.protocolManager == nil {
 		return nil
 	}
@@ -436,8 +436,8 @@ func (s *AquaChain) Protocols() []p2p.Protocol {
 }
 
 // Start implements node.Service, starting all internal goroutines needed by the
-// AquaChain protocol implementation.
-func (s *AquaChain) Start(srvr *p2p.Server) error {
+// Aquachain protocol implementation.
+func (s *Aquachain) Start(srvr *p2p.Server) error {
 	// Start the bloom bits servicing goroutines
 	s.startBloomHandlers()
 
@@ -454,8 +454,8 @@ func (s *AquaChain) Start(srvr *p2p.Server) error {
 }
 
 // Stop implements node.Service, terminating all internal goroutines used by the
-// AquaChain protocol.
-func (s *AquaChain) Stop() error {
+// Aquachain protocol.
+func (s *Aquachain) Stop() error {
 	if s.stopDbUpgrade != nil {
 		s.stopDbUpgrade()
 	}

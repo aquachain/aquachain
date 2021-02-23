@@ -341,7 +341,7 @@ func GenesisBlockForTesting(db aquadb.Database, addr common.Address, balance *bi
 	return g.MustCommit(db)
 }
 
-// DefaultGenesisBlock returns the AquaChain main net genesis block.
+// DefaultGenesisBlock returns the Aquachain main net genesis block.
 func DefaultGenesisBlock() *Genesis {
 	return &Genesis{
 		Config:     params.MainnetChainConfig,

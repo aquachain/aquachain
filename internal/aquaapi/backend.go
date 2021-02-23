@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the aquachain library. If not, see <http://www.gnu.org/licenses/>.
 
-// Package aquaapi implements the general AquaChain API functions.
+// Package aquaapi implements the general Aquachain API functions.
 package aquaapi
 
 import (
@@ -37,7 +37,7 @@ import (
 // Backend interface provides the common API services (that are provided by
 // both full and light clients) with access to necessary functions.
 type Backend interface {
-	// General AquaChain API
+	// General Aquachain API
 	SyncProgress() aquachain.SyncProgress
 	ProtocolVersion() int
 	SuggestPrice(ctx context.Context) (*big.Int, error)
@@ -77,7 +77,7 @@ func GetAPIs(apiBackend Backend) []rpc.API {
 		{
 			Namespace: "aqua",
 			Version:   "1.0",
-			Service:   NewPublicAquaChainAPI(apiBackend),
+			Service:   NewPublicAquachainAPI(apiBackend),
 			Public:    true,
 		}, {
 			Namespace: "aqua",
@@ -116,7 +116,7 @@ func GetAPIs(apiBackend Backend) []rpc.API {
 		}, { // eth alias
 			Namespace: "eth",
 			Version:   "1.0",
-			Service:   NewPublicAquaChainAPI(apiBackend),
+			Service:   NewPublicAquachainAPI(apiBackend),
 			Public:    true,
 		}, {
 			Namespace: "eth",

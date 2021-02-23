@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the aquachain library. If not, see <http://www.gnu.org/licenses/>.
 
-// Package bind generates AquaChain contract Go bindings.
+// Package bind generates Aquachain contract Go bindings.
 //
 // Detailed usage document and tutorial available on the aquachain Wiki page:
-// https://gitlab.com/aquachain/aquachain/wiki/Native-DApps:-Go-bindings-to-AquaChain-contracts
+// https://gitlab.com/aquachain/aquachain/wiki/Native-DApps:-Go-bindings-to-Aquachain-contracts
 package bind
 
 import (

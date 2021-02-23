@@ -128,7 +128,7 @@ var (
 	}
 
 	// AllAquahashProtocolChanges contains every protocol change (EIPs) introduced
-	// and accepted by the AquaChain core developers into the Aquahash consensus.
+	// and accepted by the Aquachain core developers into the Aquahash consensus.
 	//
 	// This configuration is intentionally not using keyed fields to force anyone
 	// adding flags to the config to also have to set these fields.

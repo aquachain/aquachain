@@ -93,11 +93,11 @@ var (
 	debExecutables = []debExecutable{
 		{
 			Name:        "aqua-bootnode",
-			Description: "AquaChain bootnode (discovery-only)",
+			Description: "Aquachain bootnode (discovery-only)",
 		},
 		{
 			Name:        "aqua-vm",
-			Description: "Developer utility version of the AVM (AquaChain Virtual Machine) that is capable of running bytecode snippets within a configurable environment and execution mode",
+			Description: "Developer utility version of the AVM (Aquachain Virtual Machine) that is capable of running bytecode snippets within a configurable environment and execution mode",
 		},
 		{
 			Name:        "aqua-rlpdump",
@@ -105,7 +105,7 @@ var (
 		},
 		{
 			Name:        "aquachain",
-			Description: "AquaChain Full Node and Command Line Wallet",
+			Description: "Aquachain Full Node and Command Line Wallet",
 		},
 	}
 
@@ -580,7 +580,7 @@ type debExecutable struct {
 func newDebMetadata(distro, author string, env build.Environment, t time.Time) debMetadata {
 	if author == "" {
 		// No signing key, use default author.
-		author = "AquaChain Builds <none@example.org>"
+		author = "Aquachain Builds <none@example.org>"
 	}
 	return debMetadata{
 		Env:         env,
@@ -712,7 +712,7 @@ func doWindowsInstaller(cmdline []string) {
 	// first section contains the aquachain binary, second section holds the dev tools.
 	templateData := map[string]interface{}{
 		"License":   "COPYING",
-		"AquaChain": aquaTool,
+		"Aquachain": aquaTool,
 		"DevTools":  devTools,
 	}
 	build.Render("build/nsis.aquachain.nsi", filepath.Join(*workdir, "aquachain.nsi"), 0644, nil)
