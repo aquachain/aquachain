@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/syndtr/goleveldb/leveldb/util"
+	"github.com/urfave/cli"
 	"gitlab.com/aquachain/aquachain/aqua/downloader"
 	"gitlab.com/aquachain/aquachain/aqua/event"
 	"gitlab.com/aquachain/aquachain/aquadb"
@@ -37,7 +38,6 @@ import (
 	"gitlab.com/aquachain/aquachain/core/types"
 	"gitlab.com/aquachain/aquachain/opt/console"
 	"gitlab.com/aquachain/aquachain/trie"
-	"github.com/urfave/cli"
 )
 
 var (

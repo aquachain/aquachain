@@ -24,11 +24,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/urfave/cli"
 	"gitlab.com/aquachain/aquachain/aqua"
 	"gitlab.com/aquachain/aquachain/cmd/utils"
 	"gitlab.com/aquachain/aquachain/consensus/aquahash"
 	"gitlab.com/aquachain/aquachain/params"
-	"github.com/urfave/cli"
 )
 
 var (

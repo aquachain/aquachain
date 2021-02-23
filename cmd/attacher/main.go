@@ -22,9 +22,9 @@ import (
 	"os"
 	"sort"
 
+	cli "github.com/urfave/cli"
 	"gitlab.com/aquachain/aquachain/cmd/utils"
 	"gitlab.com/aquachain/aquachain/opt/console"
-	cli "github.com/urfave/cli"
 )
 
 const (

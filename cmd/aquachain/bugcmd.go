@@ -29,8 +29,8 @@ import (
 	"gitlab.com/aquachain/aquachain/cmd/internal/browser"
 	"gitlab.com/aquachain/aquachain/params"
 
-	"gitlab.com/aquachain/aquachain/cmd/utils"
 	cli "github.com/urfave/cli"
+	"gitlab.com/aquachain/aquachain/cmd/utils"
 )
 
 var bugCommand = cli.Command{

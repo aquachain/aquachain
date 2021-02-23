@@ -27,8 +27,8 @@ import (
 	"path"
 	"strings"
 
-	"gitlab.com/aquachain/aquachain/common/math"
 	"github.com/urfave/cli"
+	"gitlab.com/aquachain/aquachain/common/math"
 )
 
 // Custom type which is registered in the flags library which cli uses for

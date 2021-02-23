@@ -19,13 +19,13 @@ package main
 import (
 	"fmt"
 
+	cli "github.com/urfave/cli"
 	"gitlab.com/aquachain/aquachain/aqua/accounts"
 	"gitlab.com/aquachain/aquachain/aqua/accounts/keystore"
 	"gitlab.com/aquachain/aquachain/cmd/utils"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/crypto"
 	"gitlab.com/aquachain/aquachain/opt/console"
-	cli "github.com/urfave/cli"
 )
 
 var (

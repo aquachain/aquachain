@@ -24,9 +24,9 @@ import (
 
 	"strings"
 
+	"github.com/urfave/cli"
 	"gitlab.com/aquachain/aquachain/cmd/utils"
 	"gitlab.com/aquachain/aquachain/internal/debug"
-	"github.com/urfave/cli"
 )
 
 const logo = `                              _           _

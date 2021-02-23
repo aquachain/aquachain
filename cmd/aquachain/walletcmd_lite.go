@@ -25,9 +25,9 @@ import (
 	"strconv"
 	"strings"
 
+	cli "github.com/urfave/cli"
 	"gitlab.com/aquachain/aquachain/cmd/utils"
 	"gitlab.com/aquachain/aquachain/crypto"
-	cli "github.com/urfave/cli"
 )
 
 var (

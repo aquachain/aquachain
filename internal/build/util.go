@@ -175,7 +175,6 @@ func ExpandPackagesNoVendor(patterns []string) (all, short, long []string) {
 		return patterns, short, long
 	}
 
-
 	log.Println("listing")
 	cmd := GoTool("list", patterns...)
 	out, err := cmd.Output()

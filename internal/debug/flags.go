@@ -25,11 +25,11 @@ import (
 	"runtime"
 
 	colorable "github.com/mattn/go-colorable"
+	"github.com/urfave/cli"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/common/log/term"
 	"gitlab.com/aquachain/aquachain/common/metrics"
 	"gitlab.com/aquachain/aquachain/common/metrics/exp"
-	"github.com/urfave/cli"
 )
 
 var (
