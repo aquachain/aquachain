@@ -92,7 +92,7 @@ func newTester(t *testing.T, confOverride func(*aqua.Config)) *tester {
 	}
 
 	// Create a networkless protocol stack and start an Aquachain service within
-	stack, err := node.New(&node.Config{DataDir: workspace, UseLightweightKDF: true, Name: testInstance, P2P: p2p.Config{ChainId: 220}})
+	stack, err := node.New(&node.Config{DataDir: workspace, UseLightweightKDF: true, Name: testInstance, P2P: p2p.Config{ChainID: 220}})
 	if err != nil {
 		t.Fatalf("failed to create node: %v", err)
 	}

@@ -140,7 +140,7 @@ func (n *Node) Start() error {
 	n.lock.Lock()
 	defer n.lock.Unlock()
 
-	if n.config.P2P.ChainId == 0 {
+	if n.config.P2P.ChainID == 0 {
 		return fmt.Errorf("no chain id")
 	}
 	// Short circuit if the node's already running

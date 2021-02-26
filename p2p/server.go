@@ -134,7 +134,7 @@ type Config struct {
 
 	// Offline
 	Offline bool
-	ChainId uint64
+	ChainID uint64
 }
 
 // Server manages all peer connections.
@@ -442,7 +442,7 @@ func (srv *Server) Start() (err error) {
 			NetRestrict:  srv.NetRestrict,
 			Bootnodes:    srv.BootstrapNodes,
 			Unhandled:    unhandled,
-			ChainId:      srv.ChainId,
+			ChainID:      srv.ChainID,
 		}
 		ntab, err := discover.ListenUDP(conn, cfg)
 		if err != nil {
@@ -451,7 +451,7 @@ func (srv *Server) Start() (err error) {
 		srv.ntab = ntab
 	}
 
-	if srv.ChainId == 0 {
+	if srv.ChainID == 0 {
 		return fmt.Errorf("chain id not set")
 	}
 

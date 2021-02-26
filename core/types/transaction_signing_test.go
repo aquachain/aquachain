@@ -44,7 +44,7 @@ func TestEIP155Signing(t *testing.T) {
 	}
 }
 
-func TestEIP155ChainIdNil(t *testing.T) {
+func TestEIP155ChainIDNil(t *testing.T) {
 	if !func() (ok bool) {
 		defer func() {
 			if x := recover(); x != nil {
@@ -61,7 +61,7 @@ func TestEIP155ChainIdNil(t *testing.T) {
 	}
 
 }
-func TestEIP155ChainId(t *testing.T) {
+func TestEIP155ChainID(t *testing.T) {
 	key, _ := crypto.GenerateKey()
 	addr := crypto.PubkeyToAddress(key.PublicKey)
 
@@ -74,8 +74,8 @@ func TestEIP155ChainId(t *testing.T) {
 		t.Fatal("expected tx to be protected")
 	}
 
-	if tx.ChainId().Cmp(signer.chainId) != 0 {
-		t.Error("expected chainId to be", signer.chainId, "got", tx.ChainId())
+	if tx.ChainID().Cmp(signer.chainId) != 0 {
+		t.Error("expected chainId to be", signer.chainId, "got", tx.ChainID())
 	}
 
 	tx = NewTransaction(0, addr, new(big.Int), 0, new(big.Int), nil)
@@ -88,8 +88,8 @@ func TestEIP155ChainId(t *testing.T) {
 		t.Error("didn't expect tx to be protected")
 	}
 
-	if tx.ChainId().Sign() != 0 {
-		t.Error("expected chain id to be 0 got", tx.ChainId())
+	if tx.ChainID().Sign() != 0 {
+		t.Error("expected chain id to be 0 got", tx.ChainID())
 	}
 }
 
@@ -132,7 +132,7 @@ func TestEIP155SigningVitalik(t *testing.T) {
 	}
 }
 
-func TestChainId(t *testing.T) {
+func TestChainID(t *testing.T) {
 	key, _ := defaultTestKey()
 
 	tx := NewTransaction(0, common.Address{}, new(big.Int), 0, new(big.Int), nil)
@@ -144,8 +144,8 @@ func TestChainId(t *testing.T) {
 	}
 
 	_, err = Sender(NewEIP155Signer(big.NewInt(2)), tx)
-	if err != ErrInvalidChainId {
-		t.Error("expected error:", ErrInvalidChainId)
+	if err != ErrInvalidChainID {
+		t.Error("expected error:", ErrInvalidChainID)
 	}
 
 	_, err = Sender(NewEIP155Signer(big.NewInt(1)), tx)
