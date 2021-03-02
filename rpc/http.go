@@ -17,9 +17,11 @@
 package rpc
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"mime"
 	"net"
 	"net/http"
@@ -52,7 +54,7 @@ func (t *httpReadWriteNopCloser) Close() error {
 // Deprecated: Server implements http.Handler
 func NewHTTPServer(cors []string, vhosts []string, allowIP []string, behindreverseproxy bool, srv *Server) *http.Server {
 	// Check IPs, hostname, then CORS (in that order)
-	handler := newAllowIPHandler(allowIP, behindreverseproxy, newVHostHandler(vhosts, newCorsHandler(srv, cors)))
+	handler := newAllowIPHandler(allowIP, behindreverseproxy, newVHostHandler(vhosts, newCorsHandler(newLoggedHandler(srv), cors)))
 	return &http.Server{Handler: handler}
 }
 
@@ -62,11 +64,13 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet && r.ContentLength == 0 && r.URL.RawQuery == "" {
 		return
 	}
-	uip := getIP(r, srv.reverseproxy)
-	log.Debug("handling http request", "from", uip, "path", r.URL.Path, "ua", r.UserAgent(), "http", r.Method, "host", r.Host, "size", r.ContentLength)
 	if code, err := validateRequest(r); err != nil {
+		uip := getIP(r, srv.reverseproxy)
 		log.Debug("invalid request", "from", uip, "size", r.ContentLength)
-		http.Error(w, err.Error(), code)
+		enc := json.NewEncoder(w)
+		enc.SetIndent(" ", " ")
+		w.WriteHeader(code)
+		enc.Encode(map[string]string{"error": err.Error()})
 		return
 	}
 	// All checks passed, create a codec that reads direct from the request body
@@ -98,10 +102,43 @@ func validateRequest(r *http.Request) (int, error) {
 	return 0, nil
 }
 
-func newCorsHandler(srv *Server, allowedOrigins []string) http.Handler {
+func newLoggedHandler(srv *Server) http.Handler {
+	return loggedHandler{srv, srv.reverseproxy}
+}
+
+func (l loggedHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	reqid := fmt.Sprintf("%02X", rand.Uint32())
+	lrw := &lrwriter{ResponseWriter: w, statusCode: http.StatusOK}
+	logfn := log.Debug
+	uip := getIP(r, l.reverseproxy)
+	logfn("<<< http-rpc: "+reqid, "from", uip, "path", r.URL.Path, "ua", r.UserAgent(), "method", r.Method, "host", r.Host, "size", r.ContentLength)
+
+	l.h.ServeHTTP(lrw, r)
+	if lrw.statusCode != 200 {
+		logfn = log.Warn
+	}
+	logfn(">>> http-rpc: "+reqid, "code", lrw.statusCode, "status", http.StatusText(lrw.statusCode))
+}
+
+// override WriteHeader, just saving response code
+func (lrw *lrwriter) WriteHeader(code int) {
+	lrw.statusCode = code
+	lrw.ResponseWriter.WriteHeader(code)
+}
+
+type loggedHandler struct {
+	h            http.Handler
+	reverseproxy bool
+}
+type lrwriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func newCorsHandler(h http.Handler, allowedOrigins []string) http.Handler {
 	// disable CORS support if user has not specified a custom CORS configuration
 	if len(allowedOrigins) == 0 {
-		return srv
+		return h
 	}
 	c := cors.New(cors.Options{
 		AllowedOrigins: allowedOrigins,
@@ -109,7 +146,7 @@ func newCorsHandler(srv *Server, allowedOrigins []string) http.Handler {
 		MaxAge:         600,
 		AllowedHeaders: []string{"*"},
 	})
-	return c.Handler(srv)
+	return c.Handler(h)
 }
 
 // virtualHostHandler is a handler which validates the Host-header of incoming requests.
