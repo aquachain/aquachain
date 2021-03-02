@@ -51,10 +51,8 @@ func (t *httpReadWriteNopCloser) Close() error {
 //
 // Deprecated: Server implements http.Handler
 func NewHTTPServer(cors []string, vhosts []string, allowIP []string, behindreverseproxy bool, srv *Server) *http.Server {
-	// Wrap the CORS-handler within a host-handler
-	handler := newCorsHandler(srv, cors)
-	handler = newVHostHandler(vhosts, handler)
-	handler = newAllowIPHandler(allowIP, behindreverseproxy, handler)
+	// Check IPs, hostname, then CORS (in that order)
+	handler := newAllowIPHandler(allowIP, behindreverseproxy, newVHostHandler(vhosts, newCorsHandler(srv, cors)))
 	return &http.Server{Handler: handler}
 }
 
@@ -201,12 +199,12 @@ func getIP(r *http.Request, reverseproxy bool) net.IP {
 // ServeHTTP serves JSON-RPC requests over HTTP, implements http.Handler
 func (h *allowIPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ip := getIP(r, h.reverseproxy)
-	log.Trace("checking vs allow IPs", "ip", ip)
+	log.Trace("allowip: checking vs allow IPs", "ip", ip)
 	if h.allowedIPs.Contains(ip) {
 		h.next.ServeHTTP(w, r)
 		return
 	}
-	log.Warn("allowip flag prevents http rpc connection", "OffendingIP", ip)
+	log.Warn("allowip: blocking http rpc connection", "OffendingIP", ip, "User-Agent", r.UserAgent())
 	http.Error(w, "", http.StatusForbidden)
 }
 
