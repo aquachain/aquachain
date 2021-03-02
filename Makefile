@@ -66,7 +66,9 @@ release_files := \
 	$(maincmd_name)-windows-amd64.exe \
 	$(maincmd_name)-freebsd-amd64 \
 	$(maincmd_name)-openbsd-amd64 \
-	$(maincmd_name)-netbsd-amd64
+	$(maincmd_name)-netbsd-amd64 \
+	$(maincmd_name)-osx-amd64
+
 # cross compile for each target OS/ARCH
 cross:	$(addprefix $(build_dir)/, $(release_files))
 .PHONY += cross
