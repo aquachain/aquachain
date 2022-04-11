@@ -82,7 +82,7 @@ func (api *PublicAquachainAPI) Hashrate() hexutil.Uint64 {
 func (api *PublicAquachainAPI) ChainId() hexutil.Uint64 {
 	chainID := new(big.Int)
 	if config := api.e.chainConfig; config.IsEIP155(api.e.blockchain.CurrentBlock().Number()) {
-		chainID = config.ChainID
+		chainID = config.ChainId
 	}
 	return (hexutil.Uint64)(chainID.Uint64())
 }
