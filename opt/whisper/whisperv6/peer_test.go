@@ -221,7 +221,7 @@ func initialize(t *testing.T) {
 				BootstrapNodes: peers,
 				StaticNodes:    peers,
 				TrustedNodes:   peers,
-				ChainID:        110,
+				ChainId:        110,
 			},
 		}
 

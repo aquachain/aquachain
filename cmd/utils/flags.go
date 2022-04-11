@@ -827,7 +827,7 @@ func MakePasswordList(ctx *cli.Context) []string {
 
 func SetP2PConfig(ctx *cli.Context, cfg *p2p.Config) {
 	// cant be zero
-	if cfg.ChainID == 0 {
+	if cfg.ChainId == 0 {
 		panic("P2P config has no chain ID")
 	}
 
@@ -914,23 +914,23 @@ func SetNodeConfig(ctx *cli.Context, cfg *node.Config) error {
 		}
 		cfg.P2P.ChainId = chaincfg.ChainId.Uint64()
 	case ctx.GlobalIsSet(NetworkIdFlag.Name):
-		cfg.P2P.ChainID = ctx.GlobalUint64(NetworkIdFlag.Name)
-		cfg.DataDir = filepath.Join(node.DefaultDataDir(), fmt.Sprintf("chainid-%v", cfg.P2P.ChainID))
+		cfg.P2P.ChainId = ctx.GlobalUint64(NetworkIdFlag.Name)
+		cfg.DataDir = filepath.Join(node.DefaultDataDir(), fmt.Sprintf("chainid-%v", cfg.P2P.ChainId))
 	case ctx.GlobalBool(DeveloperFlag.Name):
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "develop")
-		cfg.P2P.ChainID = 1337
+		cfg.P2P.ChainId = 1337
 	case ctx.GlobalBool(TestnetFlag.Name):
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "testnet")
-		cfg.P2P.ChainID = params.TestnetChainConfig.ChainID.Uint64()
+		cfg.P2P.ChainId = params.TestnetChainConfig.ChainId.Uint64()
 	case ctx.GlobalBool(Testnet2Flag.Name):
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "testnet2")
-		cfg.P2P.ChainID = params.Testnet2ChainConfig.ChainID.Uint64()
+		cfg.P2P.ChainId = params.Testnet2ChainConfig.ChainId.Uint64()
 	case ctx.GlobalBool(NetworkEthFlag.Name):
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "ethereum")
-		cfg.P2P.ChainID = params.EthnetChainConfig.ChainID.Uint64()
+		cfg.P2P.ChainId = params.EthnetChainConfig.ChainId.Uint64()
 	default:
 		// mainnet
-		cfg.P2P.ChainID = params.MainnetChainConfig.ChainID.Uint64()
+		cfg.P2P.ChainId = params.MainnetChainConfig.ChainId.Uint64()
 		cfg.DataDir = node.DefaultDataDir()
 	}
 
@@ -1088,7 +1088,7 @@ func SetAquaConfig(ctx *cli.Context, stack *node.Node, cfg *aqua.Config) {
 	checkExclusive(ctx, DeveloperFlag, TestnetFlag, Testnet2Flag, NetworkEthFlag)
 	checkExclusive(ctx, FastSyncFlag, SyncModeFlag, OfflineFlag)
 
-	chaincfg := SetChainID(ctx, cfg)
+	chaincfg := SetChainId(ctx, cfg)
 
 	SetHardforkParams(ctx, chaincfg)
 
@@ -1173,8 +1173,8 @@ func SetAquaConfig(ctx *cli.Context, stack *node.Node, cfg *aqua.Config) {
 
 }
 
-// SetChainID returns the chain config from the command line flags
-func SetChainID(ctx *cli.Context, cfg *aqua.Config) *params.ChainConfig {
+// SetChainId returns the chain config from the command line flags
+func SetChainId(ctx *cli.Context, cfg *aqua.Config) *params.ChainConfig {
 	// Override any default configs for hard coded networks.
 
 	var chaincfg *params.ChainConfig
@@ -1186,13 +1186,13 @@ func SetChainID(ctx *cli.Context, cfg *aqua.Config) *params.ChainConfig {
 		cfg.Genesis = core.DefaultGenesisByName(ctx.GlobalString(ChainFlag.Name))
 	case ctx.GlobalBool(TestnetFlag.Name):
 		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
-			cfg.NetworkId = params.TestnetChainConfig.ChainID.Uint64()
+			cfg.NetworkId = params.TestnetChainConfig.ChainId.Uint64()
 		}
 		cfg.Genesis = core.DefaultTestnetGenesisBlock()
 		chaincfg = params.TestnetChainConfig
 	case ctx.GlobalBool(Testnet2Flag.Name):
 		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
-			cfg.NetworkId = params.Testnet2ChainConfig.ChainID.Uint64()
+			cfg.NetworkId = params.Testnet2ChainConfig.ChainId.Uint64()
 		}
 		cfg.Genesis = core.DefaultTestnet2GenesisBlock()
 		chaincfg = params.Testnet2ChainConfig
@@ -1204,7 +1204,7 @@ func SetChainID(ctx *cli.Context, cfg *aqua.Config) *params.ChainConfig {
 		chaincfg = params.Testnet2ChainConfig
 	case ctx.GlobalBool(NetworkEthFlag.Name):
 		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
-			cfg.NetworkId = params.EthnetChainConfig.ChainID.Uint64()
+			cfg.NetworkId = params.EthnetChainConfig.ChainId.Uint64()
 		}
 		cfg.Genesis = core.DefaultEthnetGenesisBlock()
 		chaincfg = params.EthnetChainConfig

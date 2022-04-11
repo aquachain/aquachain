@@ -372,7 +372,7 @@ func (w *worker) makeCurrent(parent *types.Block, header *types.Header) error {
 
 	work := &Work{
 		config:    w.config,
-		signer:    types.NewEIP155Signer(w.config.ChainID),
+		signer:    types.NewEIP155Signer(w.config.ChainId),
 		state:     state,
 		ancestors: set.NewSet(),
 		family:    set.NewSet(),

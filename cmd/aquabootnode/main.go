@@ -123,7 +123,7 @@ func main() {
 			PrivateKey:   nodeKey,
 			AnnounceAddr: realaddr,
 			NetRestrict:  restrictList,
-			ChainID:      *chainid,
+			ChainId:      *chainid,
 		}
 		if _, err := discover.ListenUDP(conn, cfg); err != nil {
 			utils.Fatalf("%v", err)

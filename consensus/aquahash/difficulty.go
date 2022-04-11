@@ -66,7 +66,7 @@ func calcDifficultyStarting(time uint64, parent *types.Header, chainID uint64) *
 	x.Add(parent.Difficulty, x)
 
 	// testnet no minimum
-	if chainID == params.MainnetChainConfig.ChainID.Uint64() {
+	if chainID == params.MainnetChainConfig.ChainId.Uint64() {
 		x = math.BigMax(x, params.MinimumDifficultyGenesis)
 	}
 	return x
@@ -99,7 +99,7 @@ func calcDifficultyHF1(time uint64, parent *types.Header, chainID uint64) *big.I
 	x.Add(parent.Difficulty, x)
 
 	// minimum difficulty can ever be (before exponential factor)
-	if chainID == params.MainnetChainConfig.ChainID.Uint64() {
+	if chainID == params.MainnetChainConfig.ChainId.Uint64() {
 		x = math.BigMax(x, params.MinimumDifficultyHF1)
 	}
 	return x
@@ -110,15 +110,15 @@ func calcDifficultyHFX(config *params.ChainConfig, time uint64, parent, grandpar
 	var (
 		diff          = new(big.Int)
 		next          = new(big.Int).Add(parent.Number, big1)
-		chainID       = config.ChainID.Uint64()
+		chainID       = config.ChainId.Uint64()
 		hf            = config.UseHF(next)
 		adjust        *big.Int
 		bigTime       = new(big.Int)
 		bigParentTime = new(big.Int)
 		limit         = params.DurationLimitHF6 // target 240 seconds
 		min           = params.MinimumDifficultyHF5
-		mainnet       = params.MainnetChainConfig.ChainID.Uint64() == chainID // bool
-		ethnet        = params.EthnetChainConfig.ChainID.Uint64() == chainID  // bool
+		mainnet       = params.MainnetChainConfig.ChainId.Uint64() == chainID // bool
+		ethnet        = params.EthnetChainConfig.ChainId.Uint64() == chainID  // bool
 	)
 	if config == params.Testnet3ChainConfig {
 		return calcDifficultyGrandparent(time, parent, grandparent, hf, chainID)
@@ -237,7 +237,7 @@ func calcDifficultyGrandparent(time uint64, parent, grandparent *types.Header, h
 	x.Add(grandparent.Difficulty, x)
 
 	// minimum difficulty can ever be (before exponential factor)
-	if chainID == params.MainnetChainConfig.ChainID.Uint64() {
+	if chainID == params.MainnetChainConfig.ChainId.Uint64() {
 		x = math.BigMax(x, params.MinimumDifficultyHF5)
 	} else {
 		x = math.BigMax(x, params.MinimumDifficultyHF5Testnet)

@@ -157,7 +157,7 @@ func initGenesis(ctx *cli.Context) error {
 		utils.Fatalf("invalid genesis file: %v", err)
 	}
 
-	if genesis.Config == nil || genesis.Config.ChainID == nil {
+	if genesis.Config == nil || genesis.Config.ChainId == nil {
 		utils.Fatalf("invalid genesis file: no chainid")
 	}
 

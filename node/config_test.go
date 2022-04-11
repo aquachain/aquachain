@@ -28,7 +28,7 @@ import (
 	"gitlab.com/aquachain/aquachain/p2p"
 )
 
-var testp2p = p2p.Config{ChainID: 10101}
+var testp2p = p2p.Config{ChainId: 10101}
 
 // Tests that datadirs can be successfully created, be them manually configured
 // ones or automatically generated temporary ones.
@@ -112,7 +112,7 @@ func TestNodeKeyPersistency(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to generate one-shot node key: %v", err)
 	}
-	config := &Config{Name: "unit-test", DataDir: dir, P2P: p2p.Config{PrivateKey: key, ChainID: 10101}}
+	config := &Config{Name: "unit-test", DataDir: dir, P2P: p2p.Config{PrivateKey: key, ChainId: 10101}}
 	config.NodeKey()
 	if _, err := os.Stat(filepath.Join(keyfile)); err == nil {
 		t.Fatalf("one-shot node key persisted to data directory")

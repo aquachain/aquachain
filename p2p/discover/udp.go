@@ -235,7 +235,7 @@ type Config struct {
 	NetRestrict  *netutil.Netlist  // network whitelist
 	Bootnodes    []*Node           // list of bootstrap nodes
 	Unhandled    chan<- ReadPacket // unhandled packets are sent on this channel
-	ChainID      uint64
+	ChainId      uint64
 }
 
 // ListenUDP returns a new table that listens for UDP packets on laddr.
@@ -256,9 +256,9 @@ func newUDP(c conn, cfg Config) (*Table, *udp, error) {
 		closing:     make(chan struct{}),
 		gotreply:    make(chan reply),
 		addpending:  make(chan *pending),
-		chainid:     cfg.ChainID,
+		chainid:     cfg.ChainId,
 	}
-	if cfg.ChainID == 0 {
+	if cfg.ChainId == 0 {
 		panic("no chain id set, no udp protocol version")
 	}
 	realaddr := c.LocalAddr().(*net.UDPAddr)

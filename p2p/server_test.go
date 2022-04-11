@@ -72,7 +72,7 @@ func startTestServer(t *testing.T, id discover.NodeID, pf func(*Peer)) *Server {
 		MaxPeers:   10,
 		ListenAddr: "127.0.0.1:0",
 		PrivateKey: newkey(),
-		ChainID:    222,
+		ChainId:    222,
 	}
 	server := &Server{
 		Config:       config,
@@ -331,7 +331,7 @@ func TestServerAtCap(t *testing.T) {
 			MaxPeers:     10,
 			NoDial:       true,
 			TrustedNodes: []*discover.Node{{ID: trustedID}},
-			ChainID:      333,
+			ChainId:      333,
 		},
 	}
 	if err := srv.Start(); err != nil {
@@ -435,7 +435,7 @@ func TestServerSetupConn(t *testing.T) {
 				MaxPeers:   10,
 				NoDial:     true,
 				Protocols:  []Protocol{discard},
-				ChainID:    444,
+				ChainId:    444,
 			},
 			newTransport: func(fd net.Conn) transport { return test.tt },
 			log:          log.New(),
