@@ -30,11 +30,11 @@ import (
 )
 
 const (
-	jsonrpcVersion           = "2.0"
-	serviceMethodSeparator   = "_"
-	subscribeMethodSuffix    = "_subscribe"
-	unsubscribeMethodSuffix  = "_unsubscribe"
-	notificationMethodSuffix = "_subscription"
+	JsonrpcVersion           = "2.0"
+	ServiceMethodSeparator   = "_"
+	SubscribeMethodSuffix    = "_subscribe"
+	UnsubscribeMethodSuffix  = "_unsubscribe"
+	NotificationMethodSuffix = "_subscription"
 )
 
 type jsonRequest struct {
@@ -55,6 +55,7 @@ type jsonError struct {
 	Message string      `json:"message"`
 	Data    interface{} `json:"data,omitempty"`
 }
+type JsonError = jsonError
 
 type jsonErrResponse struct {
 	Version string      `json:"jsonrpc"`
@@ -193,7 +194,7 @@ func parseRequest(incomingMsg json.RawMessage) ([]rpcRequest, bool, Error) {
 	}
 
 	// subscribe are special, they will always use `subscribeMethod` as first param in the payload
-	if strings.HasSuffix(in.Method, subscribeMethodSuffix) {
+	if strings.HasSuffix(in.Method, SubscribeMethodSuffix) {
 		reqs := []rpcRequest{{id: &in.Id, isPubSub: true}}
 		if len(in.Payload) > 0 {
 			// first param must be subscription name
@@ -203,19 +204,19 @@ func parseRequest(incomingMsg json.RawMessage) ([]rpcRequest, bool, Error) {
 				return nil, false, &invalidRequestError{"Unable to parse subscription request"}
 			}
 
-			reqs[0].service, reqs[0].method = strings.TrimSuffix(in.Method, subscribeMethodSuffix), subscribeMethod[0]
+			reqs[0].service, reqs[0].method = strings.TrimSuffix(in.Method, SubscribeMethodSuffix), subscribeMethod[0]
 			reqs[0].params = in.Payload
 			return reqs, false, nil
 		}
 		return nil, false, &invalidRequestError{"Unable to parse subscription request"}
 	}
 
-	if strings.HasSuffix(in.Method, unsubscribeMethodSuffix) {
+	if strings.HasSuffix(in.Method, UnsubscribeMethodSuffix) {
 		return []rpcRequest{{id: &in.Id, isPubSub: true,
 			method: in.Method, params: in.Payload}}, false, nil
 	}
 
-	elems := strings.Split(in.Method, serviceMethodSeparator)
+	elems := strings.Split(in.Method, ServiceMethodSeparator)
 	if len(elems) != 2 {
 		return nil, false, &methodNotFoundError{in.Method, ""}
 	}
@@ -245,7 +246,7 @@ func parseBatchRequest(incomingMsg json.RawMessage) ([]rpcRequest, bool, Error) 
 		id := &in[i].Id
 
 		// subscribe are special, they will always use `subscriptionMethod` as first param in the payload
-		if strings.HasSuffix(r.Method, subscribeMethodSuffix) {
+		if strings.HasSuffix(r.Method, SubscribeMethodSuffix) {
 			requests[i] = rpcRequest{id: id, isPubSub: true}
 			if len(r.Payload) > 0 {
 				// first param must be subscription name
@@ -255,7 +256,7 @@ func parseBatchRequest(incomingMsg json.RawMessage) ([]rpcRequest, bool, Error) 
 					return nil, false, &invalidRequestError{"Unable to parse subscription request"}
 				}
 
-				requests[i].service, requests[i].method = strings.TrimSuffix(r.Method, subscribeMethodSuffix), subscribeMethod[0]
+				requests[i].service, requests[i].method = strings.TrimSuffix(r.Method, SubscribeMethodSuffix), subscribeMethod[0]
 				requests[i].params = r.Payload
 				continue
 			}
@@ -263,7 +264,7 @@ func parseBatchRequest(incomingMsg json.RawMessage) ([]rpcRequest, bool, Error) 
 			return nil, true, &invalidRequestError{"Unable to parse (un)subscribe request arguments"}
 		}
 
-		if strings.HasSuffix(r.Method, unsubscribeMethodSuffix) {
+		if strings.HasSuffix(r.Method, UnsubscribeMethodSuffix) {
 			requests[i] = rpcRequest{id: id, isPubSub: true, method: r.Method, params: r.Payload}
 			continue
 		}
@@ -273,7 +274,7 @@ func parseBatchRequest(incomingMsg json.RawMessage) ([]rpcRequest, bool, Error) 
 		} else {
 			requests[i] = rpcRequest{id: id, params: r.Payload}
 		}
-		if elem := strings.Split(r.Method, serviceMethodSeparator); len(elem) == 2 {
+		if elem := strings.Split(r.Method, ServiceMethodSeparator); len(elem) == 2 {
 			requests[i].service, requests[i].method = elem[0], elem[1]
 		} else {
 			requests[i].err = &methodNotFoundError{r.Method, ""}
@@ -334,31 +335,31 @@ func parsePositionalArguments(rawArgs json.RawMessage, types []reflect.Type) ([]
 // CreateResponse will create a JSON-RPC success response with the given id and reply as result.
 func (c *jsonCodec) CreateResponse(id interface{}, reply interface{}) interface{} {
 	if isHexNum(reflect.TypeOf(reply)) {
-		return &jsonSuccessResponse{Version: jsonrpcVersion, Id: id, Result: fmt.Sprintf(`%#x`, reply)}
+		return &jsonSuccessResponse{Version: JsonrpcVersion, Id: id, Result: fmt.Sprintf(`%#x`, reply)}
 	}
-	return &jsonSuccessResponse{Version: jsonrpcVersion, Id: id, Result: reply}
+	return &jsonSuccessResponse{Version: JsonrpcVersion, Id: id, Result: reply}
 }
 
 // CreateErrorResponse will create a JSON-RPC error response with the given id and error.
 func (c *jsonCodec) CreateErrorResponse(id interface{}, err Error) interface{} {
-	return &jsonErrResponse{Version: jsonrpcVersion, Id: id, Error: jsonError{Code: err.ErrorCode(), Message: err.Error()}}
+	return &jsonErrResponse{Version: JsonrpcVersion, Id: id, Error: jsonError{Code: err.ErrorCode(), Message: err.Error()}}
 }
 
 // CreateErrorResponseWithInfo will create a JSON-RPC error response with the given id and error.
 // info is optional and contains additional information about the error. When an empty string is passed it is ignored.
 func (c *jsonCodec) CreateErrorResponseWithInfo(id interface{}, err Error, info interface{}) interface{} {
-	return &jsonErrResponse{Version: jsonrpcVersion, Id: id,
+	return &jsonErrResponse{Version: JsonrpcVersion, Id: id,
 		Error: jsonError{Code: err.ErrorCode(), Message: err.Error(), Data: info}}
 }
 
 // CreateNotification will create a JSON-RPC notification with the given subscription id and event as params.
 func (c *jsonCodec) CreateNotification(subid, namespace string, event interface{}) interface{} {
 	if isHexNum(reflect.TypeOf(event)) {
-		return &jsonNotification{Version: jsonrpcVersion, Method: namespace + notificationMethodSuffix,
+		return &jsonNotification{Version: JsonrpcVersion, Method: namespace + NotificationMethodSuffix,
 			Params: jsonSubscription{Subscription: subid, Result: fmt.Sprintf(`%#x`, event)}}
 	}
 
-	return &jsonNotification{Version: jsonrpcVersion, Method: namespace + notificationMethodSuffix,
+	return &jsonNotification{Version: JsonrpcVersion, Method: namespace + NotificationMethodSuffix,
 		Params: jsonSubscription{Subscription: subid, Result: event}}
 }
 

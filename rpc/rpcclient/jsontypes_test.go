@@ -20,11 +20,13 @@ import (
 	"encoding/json"
 	"io"
 	"sync"
+
+	"gitlab.com/aquachain/aquachain/rpc"
 )
 
 const (
-	jsonrpcVersion         = "2.0"
-	serviceMethodSeparator = "_"
+	JsonrpcVersion         = "2.0"
+	ServiceMethodSeparator = "_"
 )
 
 type testError interface{}
@@ -43,9 +45,9 @@ type jsonSuccessResponse struct {
 }
 
 type jsonErrResponse struct {
-	Version string      `json:"jsonrpc"`
-	Id      interface{} `json:"id,omitempty"`
-	Error   jsonError   `json:"error"`
+	Version string        `json:"jsonrpc"`
+	Id      interface{}   `json:"id,omitempty"`
+	Error   rpc.JsonError `json:"error"`
 }
 
 type jsonSubscription struct {

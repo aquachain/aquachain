@@ -18,31 +18,7 @@ package rpc
 
 import (
 	"encoding/json"
-	"fmt"
 )
-
-const (
-	subscribeMethodSuffix    = "_subscribe"
-	unsubscribeMethodSuffix  = "_unsubscribe"
-	notificationMethodSuffix = "_subscription"
-)
-
-type jsonError struct {
-	Code    int         `json:"code"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data,omitempty"`
-}
-
-func (err *jsonError) Error() string {
-	if err.Message == "" {
-		return fmt.Sprintf("json-rpc error %d", err.Code)
-	}
-	return err.Message
-}
-
-func (err *jsonError) ErrorCode() int {
-	return err.Code
-}
 
 // isBatch returns true when the first non-whitespace characters is '['
 func isBatch(msg json.RawMessage) bool {

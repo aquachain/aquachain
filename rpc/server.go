@@ -293,7 +293,7 @@ func (s *Server) handle(ctx context.Context, codec ServerCodec, req *serverReque
 	// regular RPC call, prepare arguments
 	if len(req.args) != len(req.callb.argTypes) {
 		rpcErr := &invalidParamsError{fmt.Sprintf("%s%s%s expects %d parameters, got %d",
-			req.svcname, serviceMethodSeparator, req.callb.method.Name,
+			req.svcname, ServiceMethodSeparator, req.callb.method.Name,
 			len(req.callb.argTypes), len(req.args))}
 		return codec.CreateErrorResponse(&req.id, rpcErr), nil
 	}
@@ -391,7 +391,7 @@ func (s *Server) readRequest(codec ServerCodec) ([]*serverRequest, bool, Error) 
 			continue
 		}
 
-		if r.isPubSub && strings.HasSuffix(r.method, unsubscribeMethodSuffix) {
+		if r.isPubSub && strings.HasSuffix(r.method, UnsubscribeMethodSuffix) {
 			requests[i] = &serverRequest{id: r.id, isUnsubscribe: true}
 			argTypes := []reflect.Type{reflect.TypeOf("")} // expect subscription id as first arg
 			if args, err := codec.ParseRequestArguments(argTypes, r.params); err == nil {

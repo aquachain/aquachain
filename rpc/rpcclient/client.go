@@ -33,6 +33,7 @@ import (
 	"time"
 
 	"gitlab.com/aquachain/aquachain/common/log"
+	"gitlab.com/aquachain/aquachain/rpc"
 )
 
 var (
@@ -89,7 +90,7 @@ type jsonrpcMessage struct {
 	ID      json.RawMessage `json:"id,omitempty"`
 	Method  string          `json:"method,omitempty"`
 	Params  json.RawMessage `json:"params,omitempty"`
-	Error   *jsonError      `json:"error,omitempty"`
+	Error   *rpc.JsonError  `json:"error,omitempty"`
 	Result  json.RawMessage `json:"result,omitempty"`
 }
 
@@ -386,7 +387,7 @@ func (c *Client) Subscribe(ctx context.Context, namespace string, channel interf
 	if chanVal.IsNil() {
 		panic("channel given to Subscribe must not be nil")
 	}
-	msg, err := c.newMessage(namespace+subscribeMethodSuffix, args...)
+	msg, err := c.newMessage(namespace+rpc.SubscribeMethodSuffix, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -593,7 +594,7 @@ func (c *Client) closeRequestOps(err error) {
 }
 
 func (c *Client) handleNotification(msg *jsonrpcMessage) {
-	if !strings.HasSuffix(msg.Method, notificationMethodSuffix) {
+	if !strings.HasSuffix(msg.Method, rpc.NotificationMethodSuffix) {
 		log.Debug(fmt.Sprint("dropping non-subscription message: ", msg))
 		return
 	}
@@ -794,5 +795,5 @@ func (sub *ClientSubscription) unmarshal(result json.RawMessage) (interface{}, e
 
 func (sub *ClientSubscription) requestUnsubscribe() error {
 	var result interface{}
-	return sub.client.Call(&result, sub.namespace+unsubscribeMethodSuffix, sub.subid)
+	return sub.client.Call(&result, sub.namespace+rpc.UnsubscribeMethodSuffix, sub.subid)
 }
