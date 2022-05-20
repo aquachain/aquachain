@@ -88,6 +88,18 @@ For non-interactive use the passphrase can be specified with the --password flag
 Note, this is meant to be used for testing only, it is a bad idea to save your
 password to file or expose in any other way.
 `,
+			}, {
+				Name:   "generatePhrase",
+				Usage:  "Create a new mnemonic account",
+				Action: utils.MigrateFlags(accountGenerateMnemonic),
+				Flags: []cli.Flag{
+					utils.DataDirFlag,
+					utils.KeyStoreDirFlag,
+					utils.PasswordFileFlag,
+				},
+				Description: `
+    This only prints! Does not store key.
+`,
 			},
 			{
 				Name:      "update",
