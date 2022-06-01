@@ -1,18 +1,17 @@
 #### **First Boot**
 
-To get started, build (see [Compiling](Compiling)) or download the latest release **only from** https://github.com/aquanetwork/aquachain/releases
+To get started, build (see [Compiling](Compiling)) or download the latest release **only from** https://github.com/aquachain/aquachain/releases
 
 Unzip the archive, and double click the `aquachain.exe` application to open the javascript console.
 
-When you open the program, you immediately start finding nodes and synchronizing with the network. It should take under 5 minutes to sync the entire chain at this time. 
-
+When you open the program, you immediately start finding nodes and synchronizing with the network. It should take under 5 minutes to sync the entire chain at this time.
 
 ## Startup Options
 
 Some times you might need to start aquachain with a certain command, or flags:
 
-
 ### Example command arguments
+
 ```
 aquachain.exe account new # create new account
 aquachain.exe -h # show help
@@ -25,34 +24,30 @@ aquachain.exe paper -vanity 123 10 ## generates ten addresses beginning with 0x1
 ```
 
 ### Disabling P2P
-To disable p2p, use `-nodiscover` and `-maxpeers 0` flags
 
+To disable p2p, use `-nodiscover` and `-maxpeers 0` flags
 
 ## Aquachain Console
 
 You know if you are in the aquachain console if you see the **AQUA>** prompt. It is a javascript console, with (tab) auto-complete and (up/down) command history.
 
-
-  * Load a local script with the `loadScript('filename')` function.
-  * List accounts with `aqua.accounts`
-  * Check all balances with `balance()`
-
-
+- Load a local script with the `loadScript('filename')` function.
+- List accounts with `aqua.accounts`
+- Check all balances with `balance()`
 
 ### **Wallet**
 
-To store your aqua, you need an account. 
+To store your aqua, you need an account.
 
 One can be generated in three ways:
 
-* `aquachain.exe account new`
-* [aquapaper.exe](https://github.com/aquanetwork/aquachain/releases/tag/paper-0.0) paper wallet generator (now built-in! use `aquachain.exe paper`)
-* inside the experimental [webwallet](https://github.com/aquanetwork/aquachain/releases/tag/paper-0.0) browser app (now built-in! use `aquachain.exe wallet`) and connect to your local instance
+- `aquachain.exe account new`
+- [aquapaper.exe](https://github.com/aquachain/aquachain/releases/tag/paper-0.0) paper wallet generator (now built-in! use `aquachain.exe paper`)
+- inside the experimental [webwallet](https://github.com/aquachain/aquachain/releases/tag/paper-0.0) browser app (now built-in! use `aquachain.exe wallet`) and connect to your local instance
 
 ### Send a transaction
 
 Start a transaction by typing `send` and press enter (type `n` or `ctrl+c` to cancel)
-
 
 ### Most important commands
 
@@ -69,6 +64,7 @@ Before sending coins, you must unlock the account:
 `personal.unlockAccount(aqua.accounts[0])`
 
 This command will send 2 AQUA from "account 0" (first account created) to the typed account below:
+
 ```
 aqua.sendTransaction({from: aqua.accounts[0], to: '0x3317e8405e75551ec7eeeb3508650e7b349665ff', value:web3.toWei(2,"aqua")});
 ```
@@ -87,7 +83,7 @@ var tx = {from: aqua.accounts[0], to: destination, gasPrice: web3.toWei(20, "gwe
 aqua.sendTransaction(tx);
 ```
 
-### Useful Console Commands 
+### Useful Console Commands
 
 (Save time! Press tab twice to auto-complete everything.)
 
@@ -110,12 +106,11 @@ miner.stop()
 miner.hashrate
 aqua.getBlock(0)
 aqua.getBlock(“latest”)
-aqua.blockNumber 
+aqua.blockNumber
 web3.aqua.getBlock(BLOCK_NUMBER).hash
 aqua.syncing
 debug.verbosity(6) // highest logging level, 3 is default
 ```
-
 
 ### Import Private Key
 

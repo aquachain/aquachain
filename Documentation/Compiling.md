@@ -12,6 +12,7 @@ If there is a [newer version of go](https://golang.org/dl/), use that instead.
 wget https://dl.google.com/go/go1.11.linux-amd64.tar.gz
 sudo tar xvaf go1.11.linux-amd64.tar.gz -C /usr/local/
 ```
+
 Add go to path (consider adding this to $HOME/.bashrc)
 
 ```
@@ -31,6 +32,7 @@ go version
 wget https://dl.google.com/go/go1.1.darwin-amd64.pkg
 sudo tar xvaf go1.11.darwin-amd64.pkg -C /usr/local/
 ```
+
 Add go to path (consider adding this to $HOME/.bashrc)
 
 ```
@@ -43,8 +45,6 @@ Check go is installed
 which go
 go version
 ```
-
-
 
 ## Installing Aquachain RPC node on openbsd
 
@@ -104,26 +104,30 @@ all              aquachain-nocgo  cross            install          static
 all-musl         aquaminer        devtools         lint             test
 all-static       aquastrat        docker-run       musl             test-musl
 aquachain        clean            generate         race             usb
-   
+
 ```
 
 ## Cross Compilation
 
-This is how releases are made, with Docker and xgo. Here we build only amd64 targets, Windows, Linux, OSX (darwin).
-
+This is how releases can be made, with Docker and xgo. Here we build only amd64 targets, Windows, Linux, OSX (darwin).
 
 ```
-xgo -out aquachain-$VERS --remote https://github.com/aquanetwork/aquachain  --branch master --pkg cmd/aquachain --targets='*/amd64' github.com/aquanetwork/aquachain`
+xgo -out aquachain-$VERS --remote https://gitlab.com/aquachain/aquachain  --branch master --pkg cmd/aquachain --targets='*/amd64' gitlab.com/aquachain/aquachain`
 
 Then zip:
 
 ```
-for i in aquachain-$VERS-*; do zip $i.zip $i; done
+
+for i in aquachain-$VERS-\*; do zip $i.zip $i; done
+
 ```
 
 Then hash:
 
 ```
-sha256sum * | grep -v zip
+
+sha256sum \* | grep -v zip
+
 ```
 
+```

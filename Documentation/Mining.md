@@ -8,9 +8,9 @@ Grab it here: https://bitbucket.org/cryptogone/aquacppminer/downloads
 
 ## Aquachain Miner Resources
 
-  * [Hashrate Distribution](https://explorer.aqua.signal2noi.se/stats/miner_hashrate)
-  * [Network Pool Status](https://aquacha.in/status/miners)
-  * [Mining Calculator](https://docs.google.com/spreadsheets/d/1MIe8YDY8ORBDukZDmlrG6QQx1Fw0wckKZxh4pJUDAxw/edit?usp=sharing)
+- [Hashrate Distribution](https://explorer.aqua.signal2noi.se/stats/miner_hashrate)
+- [Network Pool Status](https://aquacha.in/status/miners)
+- [Mining Calculator](https://docs.google.com/spreadsheets/d/1MIe8YDY8ORBDukZDmlrG6QQx1Fw0wckKZxh4pJUDAxw/edit?usp=sharing)
 
 [Pool Mining](#pool-mining)
 
@@ -22,26 +22,26 @@ Grab it here: https://bitbucket.org/cryptogone/aquacppminer/downloads
 
 Note: linux and osx (darwin) users can just remove the '.exe' from instructions.
 
-Grab [aquachain.exe](https://github.com/aquanetwork/aquachain/releases/)
+Grab [aquachain.exe](https://github.com/aquachain/aquachain/releases/)
 
 Unzip, and optionally rename from aquachain-1.7.0-windows-amd64.exe to aquachain.exe
 
 `aquachain.exe account new` (console wallet)
 
-or 
+or
 
 `aquachain.exe paper` (not password encrypted)
 
 Make sure to set a good password. Don't forget it. Be your own bank.
 
-When using `aquachain.exe account new`, (or from within the AQUA console: `personal.newAccount()`), your wallet private key is encrypted with a pass phrase and saved in your "keystore" directory. 
+When using `aquachain.exe account new`, (or from within the AQUA console: `personal.newAccount()`), your wallet private key is encrypted with a pass phrase and saved in your "keystore" directory.
 
 Your public address is printed after creating an account. If using `account new` you will see something like:
 
 ```
 Your new account is locked with a password. Please give a password. Do not forget this password.
-Passphrase: 
-Repeat passphrase: 
+Passphrase:
+Repeat passphrase:
 Address: {1a7a0c0fd8d138f132b6a2ce22a715abebc16742}
 ```
 
@@ -61,7 +61,7 @@ Replace `pool.aquachain-foundation.org:8888` with the chosen pool and port confi
 
 Pool mining with aquaminer command (now outdated, use for testing):
 
-See https://github.com/aquanetwork/aquachain/issues/27
+See https://github.com/aquachain/aquachain/issues/27
 
 `./aquaminer.exe -r 1s -F http://pool.aquachain-foundation.org:8888/<address>/<worker>`
 
@@ -75,21 +75,20 @@ Here replace `<address>` with your wallet address and `<worker>` with any custom
 
 These are the currently known pools, add to this list if one is discovered!
 
-  * http://pool.aquachain-foundation.org
-  * https://aquacha.in
-  * https://aqua.signal2noi.se/
-  * https://aquapool.rplant.xyz
-
+- http://pool.aquachain-foundation.org
+- https://aquacha.in
+- https://aqua.signal2noi.se/
+- https://aquapool.rplant.xyz
 
 ## Solo mining:
 
-* **Don't solo mine unless you are running a pool, or have lots of rigs.**
+- **Don't solo mine unless you are running a pool, or have lots of rigs.**
 
-* **Dont keep your keys on your RPC server**
+- **Dont keep your keys on your RPC server**
 
-* **Consider `-keystore dummykeys -aquabase 0x1234567abcdef12345600000` to mine to a specific address without having the key available.** 
+- **Consider `-keystore dummykeys -aquabase 0x1234567abcdef12345600000` to mine to a specific address without having the key available.**
 
-Be sure to **wait and sync before mining**.  It doesn't take long.
+Be sure to **wait and sync before mining**. It doesn't take long.
 
 To reduce orphan blocks, also be sure to **have peers** and check a block explorer to see the current block number and hash.
 
