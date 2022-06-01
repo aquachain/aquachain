@@ -41,7 +41,7 @@ var bugCommand = cli.Command{
 	Category:  "MISCELLANEOUS COMMANDS",
 }
 
-const issueUrl = "https://github.com/aquanetwork/aquachain/issues/new"
+const issueUrl = "https://github.com/aquachain/aquachain/issues/new"
 
 // reportBug reports a bug by opening a new URL to the aquachain GH issue
 // tracker and setting default values as the issue body.
@@ -49,7 +49,7 @@ func reportBug(ctx *cli.Context) error {
 	// execute template and write contents to buff
 	var buff bytes.Buffer
 
-	fmt.Fprintln(&buff, header)
+	fmt.Fprintf(&buff, "%s", header)
 	fmt.Fprintln(&buff, "Version:", params.Version)
 	fmt.Fprintln(&buff, "Go Version:", runtime.Version())
 	fmt.Fprintln(&buff, "OS:", runtime.GOOS)
