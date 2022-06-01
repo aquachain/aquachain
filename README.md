@@ -1,6 +1,6 @@
 # Aquachain
 
-Latest Source: https://gitlab.com/aquachain/aquachain 
+Latest Source: https://gitlab.com/aquachain/aquachain
 
 Mirrored: https://github.com/aquachain/aquachain
 
@@ -18,27 +18,27 @@ Aquachain: peer-to-peer programmable money, distributed code contract platform.
 
     Target Block Time: 240 second blocks (4 minute)
     Block Reward: 1 AQUA
-    Max Supply: 42 million 
+    Max Supply: 42 million
     Algorithm: argon2id (CPU mined)
     ChainID/NetworkID: 61717561
 
 ### Known Explorers:
 
-  * https://aquacha.in/explorer/
-  * https://explorer.aqua.signal2noi.se
-  * https://aquachain.github.io/explorer/
+- https://aquacha.in/explorer/
+- https://explorer.aqua.signal2noi.se
+- https://aquachain.github.io/explorer/
 
 ### Known GUI Wallets:
 
-  * https://download.mycrypto.com (Desktop, creates mnemonic phrases)
-  * https://walleth.org (Android, burner accounts etc)
+- https://download.mycrypto.com (Desktop, creates mnemonic phrases)
+- https://walleth.org (Android, burner accounts etc)
 
 ## GET AQUACHAIN
 
-The `aquachain` command (full node, RPC server, and wallet) is a portable program 
-that doesn't really need an 'installer', you can run it from anywhere. When you 
-first start `aquachain` you will connect to the peer-to-peer network and start 
-downloading the chain. To change the way aquachain runs, for example testnet, 
+The `aquachain` command (full node, RPC server, and wallet) is a portable program
+that doesn't really need an 'installer', you can run it from anywhere. When you
+first start `aquachain` you will connect to the peer-to-peer network and start
+downloading the chain. To change the way aquachain runs, for example testnet,
 or rpc, use command line flags. (see Usage section)
 
 You should keep backups your keystore files, and regularly check unlocking them.
@@ -67,15 +67,15 @@ On windows, double-click make.bat to compile aquachain.exe onto your Desktop.
 To [build latest](Documentation/Compiling.md) with go, simply use
 'go get' and look in $GOPATH/bin:
 
-	CGO_ENABLED=0 go get -v -u gitlab.com/aquachain/aquachain/cmd/aquachain
+    CGO_ENABLED=0 go get -v -u gitlab.com/aquachain/aquachain/cmd/aquachain
 
 or all tools:
 
-	GOBIN=$PWD CGO_ENABLED=0 go get -v gitlab.com/aquachain/aquachain/cmd/...
+    GOBIN=$PWD CGO_ENABLED=0 go get -v gitlab.com/aquachain/aquachain/cmd/...
 
 To see latest release, check `git log` or:
 
-  * [Releases](https://github.com/aquanetwork/aquachain/releases/latest)
+- [Releases](https://github.com/aquachain/aquachain/releases/latest)
 
 ## SYNCHRONIZING
 
@@ -93,7 +93,7 @@ Enter AQUA javascript console: `aquachain.exe`
 
 Start Daemon (geth default): `aquachain.exe daemon`
 
-See more commands: [Wiki](https://github.com/aquanetwork/aquachain/wiki/Basics)
+See more commands: [Wiki](https://github.com/aquachain/aquachain/wiki/Basics)
 
 Type `help` at the `AQUA>` prompt for common AQUA console commands.
 
@@ -105,13 +105,12 @@ See "RPC" section in ./Documentation folder and online at:
 https://gitlab.com/aquachain/aquachain/wikis/RPC
 
 Start HTTP JSON/RPC server for local (127.0.0.1) connections only:
-	
-	aquachain -rpc
+aquachain -rpc
 
 Start HTTP JSON/RPC server for remote connections, listening on 192.168.1.5:8543,
 able to be accessed only by 192.168.1.6:
 
-	aquachain -rpc -rpchost 192.168.1.5 -allowip 192.168.1.6/32
+    aquachain -rpc -rpchost 192.168.1.5 -allowip 192.168.1.6/32
 
 With no other RPC flags, the `-rpc` flag alone is safe for local usage (from the same machine).
 
@@ -120,26 +119,26 @@ Security Note about RPC: Please be aware that hosting a public RPC server
 `-rpcaddr` flag unless you absolutely know what you are doing. Consider using a random RPC port,
 instead of the default 8543.
 
-For hosting public RPC servers, please consider using -nokeys (*new!*) and implementing
+For hosting public RPC servers, please consider using -nokeys (_new!_) and implementing
 rate limiting on http (and, if using, websockets) , either via reverse proxy such as
 caddyserver or nginx, or firewall.
 
 Recent builds of aquachain include support for the `-allowip` flag. It is by default,
 set to 127.0.0.1, which doesn't allow any LAN or WAN addresses access to your RPC methods.
 
-To add IPs, use  `aquachain -rpc -rpchost 192.168.1.4 -allowip 192.168.1.5/32,192.168.2.30/32`
+To add IPs, use `aquachain -rpc -rpchost 192.168.1.4 -allowip 192.168.1.5/32,192.168.2.30/32`
 
 The CIDR networks are comma separated, no spaces. (the `/32` after an IP means 'one IP')
 
 #### RPC Clients
 
 The JSON/RPC server is able to be used with "Web3" libraries for languages such
-as **Python** or **Javascript**. 
+as **Python** or **Javascript**.
 
 For compatibility with existing tools, all calls to `eth_` methods are translated to `aqua_`, behind-the-scenes.
 
 **Go** packages for creating applications that use Aquachain can be found in
-this repository, under the `opt/aquaclient` and `rpc/rpcclient` namespaces. 
+this repository, under the `opt/aquaclient` and `rpc/rpcclient` namespaces.
 See each package's documentation (godoc) for more information on usage.
 
 ## Resources
@@ -180,9 +179,9 @@ Aquachain is free open source software and your contributions are welcome.
 
 ### Some tips and tricks for hacking on Aquachain core:
 
-  * Always `gofmt -w -l -s` before commiting. If you forget, adding a simple
-    'gofmt -w -l -s' commit works.
-  * Before making a merge request, try `make test` to run all tests. If any
-    tests pass, the PR can not be merged into the master branch.
-  * Rebase: Don't `git pull` to update your branch. instead, from your branch, type `git rebase -i master` and resolve any conflicts (do this often and there wont be any!)
-  * Prefix commit message with package name, such as "core: fix blockchain"
+- Always `gofmt -w -l -s` before commiting. If you forget, adding a simple
+  'gofmt -w -l -s' commit works.
+- Before making a merge request, try `make test` to run all tests. If any
+  tests pass, the PR can not be merged into the master branch.
+- Rebase: Don't `git pull` to update your branch. instead, from your branch, type `git rebase -i master` and resolve any conflicts (do this often and there wont be any!)
+- Prefix commit message with package name, such as "core: fix blockchain"
