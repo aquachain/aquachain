@@ -2,6 +2,8 @@ GOCMD ?= go # the go program
 GOOS ?= $(shell ${GOCMD} env GOOS)
 GOARCH ?= $(shell ${GOCMD} env GOARCH)
 PREFIX ?= /usr/local
+GOPATH ?= $(shell go env GOPATH)
+export GOPATH
 define LOGO
                               _           _
   __ _  __ _ _   _  __ _  ___| |__   __ _(_)_ __
@@ -168,7 +170,7 @@ generate: devtools
 	${GOCMD} generate ./...
 
 goget:
-	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} get -v -u -d ./...
+	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} get -v -t -d ./...
 
 test: goget all
 	${GOCMD} run build/ci.go test
