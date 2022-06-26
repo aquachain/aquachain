@@ -55,7 +55,7 @@ func MustRunCommand(cmd string, args ...string) {
 // variable should be set to.
 func GOPATH() string {
 	if os.Getenv("GOPATH") == "" {
-		log.Fatal("GOPATH is not set")
+		return "unset"
 	}
 	return os.Getenv("GOPATH")
 }
