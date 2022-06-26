@@ -63,7 +63,7 @@ func NewClient(c *rpc.Client) *Client {
 // Note that loading full blocks requires two requests. Use HeaderByHash
 // if you don't need all transactions or uncle headers.
 func (c *Client) BlockByHash(ctx context.Context, hash common.Hash) (*types.Block, error) {
-	return c.getBlock(ctx, "aqua_getBlockByHash", hash, true)
+	return c.getBlock(ctx, "eth_getBlockByHash", hash, true)
 }
 
 // BlockByNumber returns a block from the current canonical chain. If number is nil, the
@@ -72,12 +72,12 @@ func (c *Client) BlockByHash(ctx context.Context, hash common.Hash) (*types.Bloc
 // Note that loading full blocks requires two requests. Use HeaderByNumber
 // if you don't need all transactions or uncle headers.
 func (c *Client) BlockByNumber(ctx context.Context, number *big.Int) (*types.Block, error) {
-	return c.getBlock(ctx, "aqua_getBlockByNumber", toBlockNumArg(number), true)
+	return c.getBlock(ctx, "eth_getBlockByNumber", toBlockNumArg(number), true)
 }
 
 // LatestBlock is a convenience function, calling BlockByNumber(ctx, nil)
 func (c *Client) LatestBlock(ctx context.Context) *types.Block {
-	b, _ := c.getBlock(ctx, "aqua_getBlockByNumber", toBlockNumArg(nil), true)
+	b, _ := c.getBlock(ctx, "eth_getBlockByNumber", toBlockNumArg(nil), true)
 	return b
 }
 
@@ -124,7 +124,7 @@ func (c *Client) getBlock(ctx context.Context, method string, args ...interface{
 		reqs := make([]rpc.BatchElem, len(body.UncleHashes))
 		for i := range reqs {
 			reqs[i] = rpc.BatchElem{
-				Method: "aqua_getUncleByBlockHashAndIndex",
+				Method: "eth_getUncleByBlockHashAndIndex",
 				Args:   []interface{}{body.Hash, hexutil.EncodeUint64(uint64(i))},
 				Result: &uncles[i],
 			}
@@ -153,7 +153,7 @@ func (c *Client) getBlock(ctx context.Context, method string, args ...interface{
 // HeaderByHash returns the block header with the given hash.
 func (c *Client) HeaderByHash(ctx context.Context, hash common.Hash) (*types.Header, error) {
 	var head *types.Header
-	err := c.c.CallContext(ctx, &head, "aqua_getBlockByHash", hash, false)
+	err := c.c.CallContext(ctx, &head, "eth_getBlockByHash", hash, false)
 	if err == nil && head == nil {
 		err = aquachain.NotFound
 	}
@@ -164,7 +164,7 @@ func (c *Client) HeaderByHash(ctx context.Context, hash common.Hash) (*types.Hea
 // nil, the latest known header is returned.
 func (c *Client) HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error) {
 	var head *types.Header
-	err := c.c.CallContext(ctx, &head, "aqua_getBlockByNumber", toBlockNumArg(number), false)
+	err := c.c.CallContext(ctx, &head, "eth_getBlockByNumber", toBlockNumArg(number), false)
 	if err == nil && head == nil {
 		err = aquachain.NotFound
 	}
@@ -192,7 +192,7 @@ func (tx *rpcTransaction) UnmarshalJSON(msg []byte) error {
 // TransactionByHash returns the transaction with the given hash.
 func (c *Client) TransactionByHash(ctx context.Context, hash common.Hash) (tx *types.Transaction, isPending bool, err error) {
 	var json *rpcTransaction
-	err = c.c.CallContext(ctx, &json, "aqua_getTransactionByHash", hash)
+	err = c.c.CallContext(ctx, &json, "eth_getTransactionByHash", hash)
 	if err != nil {
 		return nil, false, err
 	} else if json == nil {
@@ -220,7 +220,7 @@ func (c *Client) TransactionSender(ctx context.Context, tx *types.Transaction, b
 		Hash common.Hash
 		From common.Address
 	}
-	if err = c.c.CallContext(ctx, &meta, "aqua_getTransactionByBlockHashAndIndex", block, hexutil.Uint64(index)); err != nil {
+	if err = c.c.CallContext(ctx, &meta, "eth_getTransactionByBlockHashAndIndex", block, hexutil.Uint64(index)); err != nil {
 		return common.Address{}, err
 	}
 	if meta.Hash == (common.Hash{}) || meta.Hash != tx.Hash() {
@@ -232,14 +232,14 @@ func (c *Client) TransactionSender(ctx context.Context, tx *types.Transaction, b
 // TransactionCount returns the total number of transactions in the given block.
 func (c *Client) TransactionCount(ctx context.Context, blockHash common.Hash) (uint, error) {
 	var num hexutil.Uint
-	err := c.c.CallContext(ctx, &num, "aqua_getBlockTransactionCountByHash", blockHash)
+	err := c.c.CallContext(ctx, &num, "eth_getBlockTransactionCountByHash", blockHash)
 	return uint(num), err
 }
 
 // TransactionInBlock returns a single transaction at index in the given block.
 func (c *Client) TransactionInBlock(ctx context.Context, blockHash common.Hash, index uint) (*types.Transaction, error) {
 	var json *rpcTransaction
-	err := c.c.CallContext(ctx, &json, "aqua_getTransactionByBlockHashAndIndex", blockHash, hexutil.Uint64(index))
+	err := c.c.CallContext(ctx, &json, "eth_getTransactionByBlockHashAndIndex", blockHash, hexutil.Uint64(index))
 	if err == nil {
 		if json == nil {
 			return nil, aquachain.NotFound
@@ -255,7 +255,7 @@ func (c *Client) TransactionInBlock(ctx context.Context, blockHash common.Hash, 
 // Note that the receipt is not available for pending transactions.
 func (c *Client) TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error) {
 	var r *types.Receipt
-	err := c.c.CallContext(ctx, &r, "aqua_getTransactionReceipt", txHash)
+	err := c.c.CallContext(ctx, &r, "eth_getTransactionReceipt", txHash)
 	if err == nil {
 		if r == nil {
 			return nil, aquachain.NotFound
@@ -283,7 +283,7 @@ type rpcProgress struct {
 // no sync currently running, it returns nil.
 func (c *Client) SyncProgress(ctx context.Context) (*aquachain.SyncProgress, error) {
 	var raw json.RawMessage
-	if err := c.c.CallContext(ctx, &raw, "aqua_syncing"); err != nil {
+	if err := c.c.CallContext(ctx, &raw, "eth_syncing"); err != nil {
 		return nil, err
 	}
 	// Handle the possible response types
@@ -329,7 +329,7 @@ func (c *Client) NetworkID(ctx context.Context) (*big.Int, error) {
 // The block number can be nil, in which case the balance is taken from the latest known block.
 func (c *Client) BalanceAt(ctx context.Context, account common.Address, blockNumber *big.Int) (*big.Int, error) {
 	var result hexutil.Big
-	err := c.c.CallContext(ctx, &result, "aqua_getBalance", account, toBlockNumArg(blockNumber))
+	err := c.c.CallContext(ctx, &result, "eth_getBalance", account, toBlockNumArg(blockNumber))
 	return (*big.Int)(&result), err
 }
 
@@ -342,7 +342,7 @@ func (c *Client) Balance(ctx context.Context, account common.Address) (*big.Int,
 // The block number can be nil, in which case the value is taken from the latest known block.
 func (c *Client) StorageAt(ctx context.Context, account common.Address, key common.Hash, blockNumber *big.Int) ([]byte, error) {
 	var result hexutil.Bytes
-	err := c.c.CallContext(ctx, &result, "aqua_getStorageAt", account, key, toBlockNumArg(blockNumber))
+	err := c.c.CallContext(ctx, &result, "eth_getStorageAt", account, key, toBlockNumArg(blockNumber))
 	return result, err
 }
 
@@ -350,7 +350,7 @@ func (c *Client) StorageAt(ctx context.Context, account common.Address, key comm
 // The block number can be nil, in which case the code is taken from the latest known block.
 func (c *Client) CodeAt(ctx context.Context, account common.Address, blockNumber *big.Int) ([]byte, error) {
 	var result hexutil.Bytes
-	err := c.c.CallContext(ctx, &result, "aqua_getCode", account, toBlockNumArg(blockNumber))
+	err := c.c.CallContext(ctx, &result, "eth_getCode", account, toBlockNumArg(blockNumber))
 	return result, err
 }
 
@@ -358,7 +358,7 @@ func (c *Client) CodeAt(ctx context.Context, account common.Address, blockNumber
 // The block number can be nil, in which case the nonce is taken from the latest known block.
 func (c *Client) NonceAt(ctx context.Context, account common.Address, blockNumber *big.Int) (uint64, error) {
 	var result hexutil.Uint64
-	err := c.c.CallContext(ctx, &result, "aqua_getTransactionCount", account, toBlockNumArg(blockNumber))
+	err := c.c.CallContext(ctx, &result, "eth_getTransactionCount", account, toBlockNumArg(blockNumber))
 	return uint64(result), err
 }
 
@@ -367,7 +367,7 @@ func (c *Client) NonceAt(ctx context.Context, account common.Address, blockNumbe
 // FilterLogs executes a filter query.
 func (c *Client) FilterLogs(ctx context.Context, q aquachain.FilterQuery) ([]types.Log, error) {
 	var result []types.Log
-	err := c.c.CallContext(ctx, &result, "aqua_getLogs", toFilterArg(q))
+	err := c.c.CallContext(ctx, &result, "eth_getLogs", toFilterArg(q))
 	return result, err
 }
 
@@ -394,21 +394,21 @@ func toFilterArg(q aquachain.FilterQuery) interface{} {
 // PendingBalance returns the wei balance of the given account in the pending state.
 func (c *Client) PendingBalance(ctx context.Context, account common.Address) (*big.Int, error) {
 	var result hexutil.Big
-	err := c.c.CallContext(ctx, &result, "aqua_getBalance", account, "pending")
+	err := c.c.CallContext(ctx, &result, "eth_getBalance", account, "pending")
 	return (*big.Int)(&result), err
 }
 
 // PendingStorageAt returns the value of key in the contract storage of the given account in the pending state.
 func (c *Client) PendingStorage(ctx context.Context, account common.Address, key common.Hash) ([]byte, error) {
 	var result hexutil.Bytes
-	err := c.c.CallContext(ctx, &result, "aqua_getStorageAt", account, key, "pending")
+	err := c.c.CallContext(ctx, &result, "eth_getStorageAt", account, key, "pending")
 	return result, err
 }
 
 // PendingCodeAt returns the contract code of the given account in the pending state.
 func (c *Client) PendingCode(ctx context.Context, account common.Address) ([]byte, error) {
 	var result hexutil.Bytes
-	err := c.c.CallContext(ctx, &result, "aqua_getCode", account, "pending")
+	err := c.c.CallContext(ctx, &result, "eth_getCode", account, "pending")
 	return result, err
 }
 
@@ -416,14 +416,14 @@ func (c *Client) PendingCode(ctx context.Context, account common.Address) ([]byt
 // This is the nonce that should be used for the next transaction.
 func (c *Client) PendingNonce(ctx context.Context, account common.Address) (uint64, error) {
 	var result hexutil.Uint64
-	err := c.c.CallContext(ctx, &result, "aqua_getTransactionCount", account, "pending")
+	err := c.c.CallContext(ctx, &result, "eth_getTransactionCount", account, "pending")
 	return uint64(result), err
 }
 
 // PendingTransactionCount returns the total number of transactions in the pending state.
 func (c *Client) PendingTransactionCount(ctx context.Context) (uint, error) {
 	var num hexutil.Uint
-	err := c.c.CallContext(ctx, &num, "aqua_getBlockTransactionCountByNumber", "pending")
+	err := c.c.CallContext(ctx, &num, "eth_getBlockTransactionCountByNumber", "pending")
 	return uint(num), err
 }
 
@@ -437,7 +437,7 @@ func (c *Client) PendingTransactionCount(ctx context.Context) (uint, error) {
 // blocks might not be available.
 func (c *Client) CallContract(ctx context.Context, msg aquachain.CallMsg, blockNumber *big.Int) ([]byte, error) {
 	var hex hexutil.Bytes
-	err := c.c.CallContext(ctx, &hex, "aqua_call", toCallArg(msg), toBlockNumArg(blockNumber))
+	err := c.c.CallContext(ctx, &hex, "eth_call", toCallArg(msg), toBlockNumArg(blockNumber))
 	if err != nil {
 		return nil, err
 	}
@@ -448,7 +448,7 @@ func (c *Client) CallContract(ctx context.Context, msg aquachain.CallMsg, blockN
 // The state seen by the contract call is the pending state.
 func (c *Client) PendingCallContract(ctx context.Context, msg aquachain.CallMsg) ([]byte, error) {
 	var hex hexutil.Bytes
-	err := c.c.CallContext(ctx, &hex, "aqua_call", toCallArg(msg), "pending")
+	err := c.c.CallContext(ctx, &hex, "eth_call", toCallArg(msg), "pending")
 	if err != nil {
 		return nil, err
 	}
@@ -459,7 +459,7 @@ func (c *Client) PendingCallContract(ctx context.Context, msg aquachain.CallMsg)
 // execution of a transaction.
 func (c *Client) SuggestGasPrice(ctx context.Context) (*big.Int, error) {
 	var hex hexutil.Big
-	if err := c.c.CallContext(ctx, &hex, "aqua_gasPrice"); err != nil {
+	if err := c.c.CallContext(ctx, &hex, "eth_gasPrice"); err != nil {
 		return nil, err
 	}
 	return (*big.Int)(&hex), nil
@@ -471,7 +471,7 @@ func (c *Client) SuggestGasPrice(ctx context.Context) (*big.Int, error) {
 // but it should provide a basis for setting a reasonable default.
 func (c *Client) EstimateGas(ctx context.Context, msg aquachain.CallMsg) (uint64, error) {
 	var hex hexutil.Uint64
-	err := c.c.CallContext(ctx, &hex, "aqua_estimateGas", toCallArg(msg))
+	err := c.c.CallContext(ctx, &hex, "eth_estimateGas", toCallArg(msg))
 	if err != nil {
 		return 0, err
 	}
@@ -487,7 +487,7 @@ func (c *Client) SendTransaction(ctx context.Context, tx *types.Transaction) err
 	if err != nil {
 		return err
 	}
-	return c.c.CallContext(ctx, nil, "aqua_sendRawTransaction", common.ToHex(data))
+	return c.c.CallContext(ctx, nil, "eth_sendRawTransaction", common.ToHex(data))
 }
 
 // GetBlockTemplate (-rpcapi testing) returns rlp-encoded pending block,
@@ -508,14 +508,14 @@ func (c *Client) SubmitBlock(ctx context.Context, encoded []byte) bool {
 // GetWork returns mining work package (hash, auxhash, difficulty)
 func (c *Client) GetWork(ctx context.Context) ([3]string, error) {
 	var work [3]string
-	err := c.c.CallContext(ctx, &work, "aqua_getWork")
+	err := c.c.CallContext(ctx, &work, "eth_getWork")
 	return work, err
 }
 
 // SubmitWork submits a completed work package (nonce, solution, hash)
 func (c *Client) SubmitWork(ctx context.Context, nonce types.BlockNonce, solution, digest common.Hash) bool {
 	var ok bool
-	return c.c.CallContext(ctx, &ok, "aqua_submitWork", nonce, solution, digest) == nil && ok
+	return c.c.CallContext(ctx, &ok, "eth_submitWork", nonce, solution, digest) == nil && ok
 }
 
 func toCallArg(msg aquachain.CallMsg) interface{} {
