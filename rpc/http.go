@@ -56,7 +56,7 @@ func (t *httpReadWriteNopCloser) Close() error {
 func NewHTTPServer(cors []string, vhosts []string, allowIP []string, behindreverseproxy bool, srv *Server) *http.Server {
 	// Check IPs, hostname, then CORS (in that order)
 	handler := newAllowIPHandler(allowIP, behindreverseproxy, newVHostHandler(vhosts, newCorsHandler(newLoggedHandler(srv), cors)))
-	return &http.Server{Handler: handler, ReadTimeout: 2 * time.Second, WriteTimeout: 2 * time.Second}
+	return &http.Server{Handler: handler, ReadTimeout: 2 * time.Second, WriteTimeout: 2 * time.Second, IdleTimeout: time.Second * 30}
 }
 
 // ServeHTTP serves JSON-RPC requests over HTTP.
