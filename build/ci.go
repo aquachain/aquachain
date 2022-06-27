@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the aquachain library. If not, see <http://www.gnu.org/licenses/>.
 
+//go:build none
 // +build none
 
 package main
@@ -347,7 +348,7 @@ func doTest(cmdline []string) {
 	fmt.Println("Slow tests: ", len(longpkg))
 
 	// Run analysis tools on all packages before the tests.
-	build.MustRun(goTool("vet", append(shortpkg, longpkg...)...))
+	build.ShouldRun(goTool("vet", append(shortpkg, longpkg...)...), "GO VET")
 
 	gotestShort := goTool("test", buildFlags(env)...)
 	gotestLong := goTool("test", buildFlags(env)...)
