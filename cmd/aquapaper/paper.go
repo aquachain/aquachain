@@ -46,14 +46,14 @@ type paperWallet struct {
 
 func main() {
 	flag.Usage = func() {
-		fmt.Println(`                                    _           _
+		fmt.Printf(`                                    _           _
         __ _  __ _ _   _  __ _  ___| |__   __ _(_)_ __
        / _ '|/ _' | | | |/ _' |/ __| '_ \ / _' | | '_ \
       | (_| | (_| | |_| | (_| | (__| | | | (_| | | | | |
        \__,_|\__, |\__,_|\__,_|\___|_| |_|\__,_|_|_| |_|
-                |_|` + " https://gitlab.com/aquachain/aquachain\n\n")
+                |_|` + " https://gitlab.com/aquachain/aquachain\n\n\n")
 
-		fmt.Println(usage)
+		fmt.Printf("%s\n", usage)
 	}
 	log.SetPrefix("")
 	log.SetFlags(0)
@@ -61,12 +61,12 @@ func main() {
 	flag.Parse()
 	n := flag.Args()
 	if len(n) != 1 {
-		fmt.Println("expecting zero or one argument\n", usage)
+		fmt.Printf("expecting zero or one argument\n%s\n", usage)
 		os.Exit(111)
 	}
 	count, err := strconv.Atoi(n[0])
 	if err != nil {
-		fmt.Println("expecting digits", usage)
+		fmt.Printf("expecting digits\n%s\n", usage)
 		os.Exit(111)
 	}
 	wallets := []paperWallet{}
