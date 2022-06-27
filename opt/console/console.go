@@ -435,7 +435,7 @@ func (c *Console) Interactive() {
 				continue
 			}
 			if !ok || (indents <= 0 && help.MatchString(line)) {
-				fmt.Fprintln(c.printer, helpText)
+				fmt.Fprintf(c.printer, "%s", helpText)
 				continue
 			}
 
