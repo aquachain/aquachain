@@ -47,6 +47,19 @@ func MustRun(cmd *exec.Cmd) {
 	}
 }
 
+// ShouldRun executes the given command and doesnt exit the host process for
+// any error.
+func ShouldRun(cmd *exec.Cmd, msg string) {
+	fmt.Println(">>>", strings.Join(cmd.Args, " "))
+	if !*DryRunFlag {
+		cmd.Stderr = os.Stderr
+		cmd.Stdout = os.Stdout
+		if err := cmd.Run(); err != nil {
+			log.Printf("[WARN %s] %v", msg, err)
+		}
+	}
+}
+
 func MustRunCommand(cmd string, args ...string) {
 	MustRun(exec.Command(cmd, args...))
 }
