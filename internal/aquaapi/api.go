@@ -1448,7 +1448,7 @@ func NewPublicDebugAPI(b Backend) *PublicDebugAPI {
 }
 
 // HashNoNonce returns the hash of rlp encoded header
-func (api *PublicDebugAPI) HashNoNonce(ctx context.Context, number uint64) (string, error) {
+func (api *PublicBlockChainAPI) HashNoNonce(ctx context.Context, number uint64) (string, error) {
 	blk, err := api.b.BlockByNumber(ctx, rpc.BlockNumber(number))
 	if blk == nil || err != nil {
 		return common.Hash{}.String(), err
@@ -1458,12 +1458,22 @@ func (api *PublicDebugAPI) HashNoNonce(ctx context.Context, number uint64) (stri
 }
 
 // GetMinerHash returns the proof-of-work output, created by the block miner.
-func (api *PublicDebugAPI) GetMinerHash(ctx context.Context, number uint64) (string, error) {
+func (api *PublicBlockChainAPI) GetMinerHash(ctx context.Context, number uint64) (string, error) {
 	blk, err := api.b.BlockByNumber(ctx, rpc.BlockNumber(number))
 	if blk == nil || err != nil {
 		return common.Hash{}.String(), err
 	}
 	return blk.MinerHash().String(), nil
+}
+
+// SeedHash retrieves the seed hash of a block.
+func (api *PublicBlockChainAPI) SeedHash(ctx context.Context, number uint64) (string, error) {
+	block, _ := api.b.BlockByNumber(ctx, rpc.BlockNumber(number))
+	if block == nil {
+		return "", fmt.Errorf("block #%d not found", number)
+	}
+	version := byte(block.Version())
+	return fmt.Sprintf("0x%x", aquahash.SeedHash(number, version)), nil
 }
 
 // GetBlockRlp retrieves the RLP encoded for of a single block.
@@ -1486,16 +1496,6 @@ func (api *PublicDebugAPI) PrintBlock(ctx context.Context, number uint64) (strin
 		return "", fmt.Errorf("block #%d not found", number)
 	}
 	return block.String(), nil
-}
-
-// SeedHash retrieves the seed hash of a block.
-func (api *PublicDebugAPI) SeedHash(ctx context.Context, number uint64) (string, error) {
-	block, _ := api.b.BlockByNumber(ctx, rpc.BlockNumber(number))
-	if block == nil {
-		return "", fmt.Errorf("block #%d not found", number)
-	}
-	version := byte(block.Version())
-	return fmt.Sprintf("0x%x", aquahash.SeedHash(number, version)), nil
 }
 
 // PrivateDebugAPI is the collection of Aquachain APIs exposed over the private
