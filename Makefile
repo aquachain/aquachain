@@ -62,6 +62,8 @@ $(build_dir)/aquachain: $(GOFILES)
 	CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build $(GO_FLAGS) -o $@ $(aquachain_cmd)
 default: $(build_dir)/$(maincmd_name)-$(GOOS)-$(GOARCH)
 .PHONY += default hash
+echoflags:
+	@echo "CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build $(GO_FLAGS) -o $@ $(aquachain_cmd)"
 
 release_files := \
 	$(maincmd_name)-linux-amd64 \
