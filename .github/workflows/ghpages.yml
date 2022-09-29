@@ -26,4 +26,5 @@ jobs:
 
     - name: Tests
       run: |
-        go test -race -count 3 -v ./... 2>&1
+        bash testing/test-short-only.bash
+        #go test -race -count 3 -v ./... 2>&1
