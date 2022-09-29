@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -416,14 +417,17 @@ func (c *Client) newMessage(method string, paramsIn ...interface{}) (*jsonrpcMes
 	return &jsonrpcMessage{Version: "2.0", ID: c.nextID(), Method: method, Params: params}, nil
 }
 
+var isdebug = os.Getenv("DEBUG_RPC") != ""
+
 // send registers op with the dispatch loop, then sends msg on the connection.
 // if sending fails, op is deregistered.
 func (c *Client) send(ctx context.Context, op *requestOp, msg interface{}) error {
 	select {
 	case c.requestOp <- op:
-		log.Trace("", "msg", log.Lazy{Fn: func() string {
-			return fmt.Sprint("sending ", msg)
-		}})
+		if isdebug {
+			fmt.Println(">>>sending", msg)
+		}
+
 		err := c.write(ctx, msg)
 		c.sendDone <- err
 		return err

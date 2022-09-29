@@ -47,8 +47,8 @@ var (
 
 // Timeouts
 const (
-	respTimeout = 500 * time.Millisecond
-	expiration  = 20 * time.Second
+	respTimeout = 2000 * time.Millisecond
+	sendTimeout = 2 * time.Second
 
 	ntpFailureThreshold = 32               // Continuous timeouts after which to check NTP
 	ntpWarningCooldown  = 10 * time.Minute // Minimum amount of time to pass before repeating NTP warning
@@ -298,7 +298,7 @@ func (t *udp) ping(toid NodeID, toaddr *net.UDPAddr) error {
 		Version:    Version,
 		From:       t.ourEndpoint,
 		To:         makeEndpoint(toaddr, 0), // TODO: maybe use known TCP port from DB
-		Expiration: uint64(time.Now().Add(expiration).Unix()),
+		Expiration: uint64(time.Now().Add(sendTimeout).Unix()),
 	}
 	var packetPing byte = aquapingPacket
 	var pend byte = aquapongPacket
@@ -352,7 +352,7 @@ func (t *udp) findnode(toid NodeID, toaddr *net.UDPAddr, target NodeID) ([]*Node
 	})
 	t.send(toaddr, findnodePacket, &findnode{
 		Target:     target,
-		Expiration: uint64(time.Now().Add(expiration).Unix()),
+		Expiration: uint64(time.Now().Add(sendTimeout).Unix()),
 	})
 	err := <-errc
 	return nodes, err
@@ -640,7 +640,7 @@ func (req *ping) handle(t *udp, from *net.UDPAddr, fromID NodeID, mac []byte) er
 	t.send(from, pongPacket, &pong{
 		To:         makeEndpoint(from, req.From.TCP),
 		ReplyTok:   mac,
-		Expiration: uint64(time.Now().Add(expiration).Unix()),
+		Expiration: uint64(time.Now().Add(sendTimeout).Unix()),
 	})
 
 	if !t.handleReply(fromID, pingPacket, req) {
@@ -687,7 +687,7 @@ func (req *findnode) handle(t *udp, from *net.UDPAddr, fromID NodeID, mac []byte
 	closest := t.closest(target, bucketSize).entries
 	t.mutex.Unlock()
 
-	p := neighbors{Expiration: uint64(time.Now().Add(expiration).Unix())}
+	p := neighbors{Expiration: uint64(time.Now().Add(sendTimeout).Unix())}
 	var sent bool
 	// Send neighbors in chunks with at most maxNeighbors per packet
 	// to stay below the 1280 byte limit.

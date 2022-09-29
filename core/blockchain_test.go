@@ -19,7 +19,6 @@ package core
 import (
 	"math/big"
 	"math/rand"
-	"sync"
 	"testing"
 	"time"
 
@@ -1004,41 +1003,62 @@ func TestCanonicalBlockRetrieval(t *testing.T) {
 	}
 	defer blockchain.Stop()
 
-	chain, _ := GenerateChain(blockchain.chainConfig, blockchain.genesisBlock, aquahash.NewFaker(), blockchain.db, 10, func(i int, gen *BlockGen) {})
+	numBlocks := 15 // shortl after hf5 pow switch
+	chain, _ := GenerateChain(blockchain.chainConfig, blockchain.genesisBlock, aquahash.NewFaker(), blockchain.db, numBlocks, func(i int, gen *BlockGen) {})
 
-	var pend sync.WaitGroup
-	pend.Add(len(chain))
+	// var pend sync.WaitGroup
+	// pend.Add(len(chain))
 
-	for i := range chain {
-		go func(block *types.Block) {
-			defer pend.Done()
+	t.Logf("iterating %d blocks", len(chain))
+	for i, block := range chain {
+		// go func(t *testing.T, block *types.Block) {
+		// defer pend.Done()
 
-			// try to retrieve a block by its canonical hash and see if the block data can be retrieved.
-			for {
-				ch := GetCanonicalHash(blockchain.db, block.NumberU64())
-				if ch == (common.Hash{}) {
-					continue // busy wait for canonical hash to be written
-				}
-				if ch != block.Hash() {
-					t.Fatalf("unknown canonical hash, want %s, got %s", block.Hash().Hex(), ch.Hex())
-				}
-				fb := GetBlockNoVersion(blockchain.db, ch, block.NumberU64())
-				if fb == nil {
-					t.Fatalf("unable to retrieve block %d for canonical hash: %s", block.NumberU64(), ch.Hex())
-				}
-
-				if fb.SetVersion(blockchain.Config().GetBlockVersion(fb.Number())) != block.Hash() {
-					t.Fatalf("invalid block hash for block %d, want %s, got %s", block.NumberU64(), block.Hash().Hex(), fb.Hash().Hex())
-				}
-				return
-			}
-		}(chain[i])
-
+		// try to retrieve a block by its canonical hash and see if the block data can be retrieved.
 		if _, err := blockchain.InsertChain(types.Blocks{chain[i]}); err != nil {
 			t.Fatalf("failed to insert block %d: %v", i, err)
 		}
+		ch := GetCanonicalHash(blockchain.db, block.NumberU64())
+		if ch == (common.Hash{}) {
+			t.Fatalf("no canonical hash for block %d", i)
+		}
+
+		if ch != block.Hash() {
+			t.Fatalf("unknown canonical hash, want %s, got %s", block.Hash().Hex(), ch.Hex())
+		}
+		fb := GetBlockNoVersion(blockchain.db, ch, block.NumberU64())
+		if fb == nil {
+			t.Fatalf("unable to retrieve block %d for canonical hash: %s", block.NumberU64(), ch.Hex())
+		}
+		var parent *types.Block
+		if i != 0 {
+			parent = GetBlockNoVersion(blockchain.db, fb.ParentHash(), block.NumberU64()-1)
+			if fb == nil {
+				t.Fatalf("unable to retrieve block %d for canonical hash: %s", block.NumberU64(), ch.Hex())
+			}
+			parent.SetVersion(blockchain.Config().GetBlockVersion(parent.Number()))
+			if parent.Hash().Hex() != fb.ParentHash().Hex() {
+				t.Fatalf("parent hash != canonical parent hash")
+			}
+		}
+
+		if fb.SetVersion(blockchain.Config().GetBlockVersion(fb.Number())) != block.Hash() {
+			t.Fatalf("invalid block hash for block %d, want %s, got %s", block.NumberU64(), block.Hash().Hex(), fb.Hash().Hex())
+		}
+
+		t.Logf("block %d: hash=%s version=%d", i, ch.Hex()[:10], fb.Version())
+		if i != 0 {
+			t.Logf(" >parentblock %d: hash=%s version=%d", i-1, parent.Hash().Hex()[:10], parent.Version())
+
+		}
+		if _, err := blockchain.InsertChain(types.Blocks{chain[i]}); err != nil {
+			t.Fatalf("failed to insert block %d: %v", i, err)
+		}
+
+		// }(t, chain[i])
+
 	}
-	pend.Wait()
+	// pend.Wait()
 }
 
 func TestEIP155Transition(t *testing.T) {

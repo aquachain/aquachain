@@ -18,7 +18,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"runtime"
 	"strconv"
 	"strings"
@@ -144,8 +143,7 @@ func version(ctx *cli.Context) error {
 	fmt.Println("Go Version:", runtime.Version())
 	fmt.Println("Operating System:", runtime.GOOS)
 	fmt.Printf("CGO_ENABLED=%v\n", CGO)
-	fmt.Printf("GOPATH=%s\n", os.Getenv("GOPATH"))
-	fmt.Printf("GOROOT=%s\n", runtime.GOROOT())
+	fmt.Printf("Build Tags: %s\n", params.BuildTags())
 	fmt.Printf("AQUA Fork Map: %s\n", chaincfg.HF.String())
 	fmt.Printf("Chain Config: %s\n", chaincfg)
 

@@ -3,6 +3,8 @@ GOOS ?= $(shell ${GOCMD} env GOOS)
 GOARCH ?= $(shell ${GOCMD} env GOARCH)
 PREFIX ?= /usr/local
 GOPATH ?= $(shell go env GOPATH)
+GOTAGS ?= netgo osusergo static
+
 export GOPATH
 define LOGO
                               _           _
@@ -16,14 +18,20 @@ $(info $(LOGO))
 aquachain_cmd=./cmd/aquachain
 version != cat VERSION
 COMMITHASH != git rev-parse --short HEAD
-maincmd_name := aquachain-$(version)-$(COMMITHASH)
+winextension :=
+ifeq (windows,$(GOOS))
+winextension = .exe
+endif
+maincmd_name := aquachain-$(version)-$(COMMITHASH)$(winextension)
 PWD != pwd
-build_dir := $(PWD)/bin
+build_dir ?= ./bin
+default_target=$(build_dir)/aquachain$(winextension)
 INSTALL_DIR ?= $(PREFIX)/bin
-release_dir=rel
+release_dir=release
 hashfn := sha384sum
 golangci_linter_version := v1.24.0
 main_deps := $(filter %.go,$(wildcard *.go */*.go */*/*.go */*/*/*.go */*/*/*/*.g))
+cgo=$(CGO_ENABLED)
 
 # disable cgo by default
 CGO_ENABLED ?= 0
@@ -38,30 +46,105 @@ ifeq (1,$(verbose))
 GO_FLAGS += -v 
 endif
 
-# if release=1, rebuild all sources
-ifeq (1,$(release))
-GO_FLAGS += -a
+ifeq (all,$(cmds))
+aquachain_cmd=./cmd/...
 endif
+
+
 
 # use ${GOCMD} for "net" and "os/user" packages (cgo by default)
 #GO_TAGS := static
 
-ifneq (1,$(CGO_ENABLED))
-GO_FLAGS += -tags 'netgo osusergo static'
+TAGS64 := $(shell printf "$(GOTAGS) $(tags)"|base64 -w 0)
+ifneq (1,$(cgo))
+#GO_FLAGS += -tags 'netgo osusergo static $(GO_TAGS)'
 else
-GO_FLAGS += -installsuffix cgo -tags 'netgo osusergo static'
+GO_FLAGS += -installsuffix cgo
 LD_FLAGS += -linkmode external -extldflags -static
 endif
 
-LD_FLAGS := -ldflags '-X main.gitCommit=${COMMITHASH} -X main.buildDate=${shell date -u +%s} -s -w' -v
-GO_FLAGS += $(LD_FLAGS)
+LD_FLAGS := -X main.gitCommit=${COMMITHASH} -X main.buildDate=${shell date -u +%s} -s -w 
+LD_FLAGS += -X gitlab.com/aquachain/aquachain/params.buildTags=${TAGS64}
+# if release=1, rebuild all sources
+codename=dev
+ifeq (1,$(release))
+GO_FLAGS += -a
+codename=release
+endif
+LD_FLAGS += -X gitlab.com/aquachain/aquachain/params.VersionMeta=${codename}
+GO_FLAGS += -ldflags '$(LD_FLAGS)'
 
-# build default target, aquachain for host OS/ARCH
 export GOFILES=$(shell find . -iname '*.go' -type f | grep -v /vendor/ | grep -v /build/)
-$(build_dir)/aquachain: $(GOFILES)
-	CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build $(GO_FLAGS) -o $@ $(aquachain_cmd)
-default: $(build_dir)/$(maincmd_name)-$(GOOS)-$(GOARCH)
+# build default target, aquachain for host OS/ARCH
+#bin/aquachain:
+$(default_target): $(GOFILES)
+	CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build -tags '$(GOTAGS) $(tags)' $(GO_FLAGS) -o $@ $(aquachain_cmd)
+	@echo compiled: $(default_target)
+	@sha256sum $(default_target) 2>/dev/null || true
+	@file $(default_target) 2>/dev/null || true
+default: $(build_dir)/$(maincmd_name)-$(GOOS)-$(GOARCH)$(winextension)
+bootnode: bin/aquabootnode
+bin/aquabootnode: $(GOFILES)
+	CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build -tags '$(GOTAGS) $(tags)' $(GO_FLAGS) -o bin/aquabootnode ./cmd/aquabootnode
+
 .PHONY += default hash
+echoflags:
+	@echo "CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build $(GO_FLAGS) -o $@ $(aquachain_cmd)"
+
+.PHONY += install
+install:
+	install -v $(build_dir)/aquachain $(INSTALL_DIR)/
+
+all:
+	mkdir -p $(build_dir)
+	cd $(build_dir) && \
+		CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build -o . $(GO_FLAGS) ../cmd/...
+
+cross:
+	mkdir -p $(build_dir)
+	cd $(build_dir) && mkdir -p linux freebsd osx windows
+	cd $(build_dir)/linux && GOOS=linux \
+		CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build -o . $(GO_FLAGS) ../.${aquachain_cmd}
+	cd $(build_dir)/freebsd && GOOS=freebsd \
+		CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build -o . $(GO_FLAGS) ../.${aquachain_cmd}
+	cd $(build_dir)/osx && GOOS=darwin \
+		CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build -o . $(GO_FLAGS) ../.${aquachain_cmd}
+	cd $(build_dir)/windows && GOOS=windows \
+		CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build -o . $(GO_FLAGS) ../.${aquachain_cmd}
+
+
+help:
+	@echo
+	@echo default target is: "$(default_target)"
+	@echo 'make install' target is: "$(INSTALL_DIR)/"
+	@echo using go flags: "$(GO_FLAGS)"
+	@echo
+	@echo to compile quickly, run \'make\' and then \'$(default_target) help\'
+	@echo to install system-wide, run something like \'sudo make install\'
+	@echo
+	@echo "to cross-compile, try 'make cross' or 'make GOOS=windows'"
+	@echo "to add things left out by default, use tags: 'make cgo=1'"
+	@echo
+	@echo "cross-compile release: 'make clean cross release=1'"
+	@echo "cross-compile all tools: 'make clean cross release=1 cmds=all'"
+	@echo "compile with cgo and usb support: make cgo=1 tags=usb'"
+	@echo
+	@echo note: this help response is dynamic and reacts to environmental variables.
+
+test:
+	CGO_ENABLED=0 bash testing/test-short-only.bash $(args)
+race:
+	CGO_ENABLED=1 bash testing/test-short-only.bash -race
+
+
+
+
+release: cross package hash
+clean:
+	rm -rf $(build_dir)
+hash: release/SHA384.txt
+release/SHA384.txt:
+	$(hashfn) release/*.tar.gz release/*.zip >> $@
 
 release_files := \
 	$(maincmd_name)-linux-amd64 \
@@ -73,53 +156,43 @@ release_files := \
 	$(maincmd_name)-osx-amd64
 
 # cross compile for each target OS/ARCH
-cross:	$(addprefix $(build_dir)/, $(release_files))
+crossold:	$(addprefix $(build_dir)/, $(release_files))
 .PHONY += cross
-$(build_dir)/aquachain.exe:
-	GOOS=windows \
-	GOARCH=amd64 \
-	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -tags '$(GO_TAGS)' -o $@ $(aquachain_cmd)
+#$(build_dir)/aquachain.exe:
+#	GOOS=windows \
+#	GOARCH=amd64 \
+#	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -o $@ $(aquachain_cmd)
 $(build_dir)/$(maincmd_name)-linux-amd64: $(main_deps)
 	GOOS=linux \
 	GOARCH=amd64 \
-	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -tags '$(GO_TAGS)' -o $@ $(aquachain_cmd)
+	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -o $@ $(aquachain_cmd)
 $(build_dir)/$(maincmd_name)-linux-arm: $(main_deps)
 	GOOS=linux \
 	GOARCH=arm \
-	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -tags '$(GO_TAGS)' -o $@ $(aquachain_cmd)
+	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -o $@ $(aquachain_cmd)
 $(build_dir)/$(maincmd_name)-windows-amd64.exe: $(main_deps)
 	GOOS=windows \
 	GOARCH=amd64 \
-	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -tags '$(GO_TAGS)' -o $@ $(aquachain_cmd)
+	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -o $@ $(aquachain_cmd)
 $(build_dir)/$(maincmd_name)-osx-amd64: $(main_deps)
 	GOOS=darwin \
 	GOARCH=amd64 \
-	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -tags '$(GO_TAGS)' -o $@ $(aquachain_cmd)
+	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -o $@ $(aquachain_cmd)
 $(build_dir)/$(maincmd_name)-openbsd-amd64: $(main_deps)
 	GOOS=openbsd \
 	GOARCH=amd64 \
-	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -tags '$(GO_TAGS)' -o $@ $(aquachain_cmd)
+	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -o $@ $(aquachain_cmd)
 $(build_dir)/$(maincmd_name)-netbsd-amd64: $(main_deps)
 	GOOS=netbsd \
 	GOARCH=amd64 \
-	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -tags '$(GO_TAGS)' -o $@ $(aquachain_cmd)
+	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -o $@ $(aquachain_cmd)
 $(build_dir)/$(maincmd_name)-freebsd-amd64: $(main_deps)
 	GOOS=freebsd \
 	GOARCH=amd64 \
-	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -tags '$(GO_TAGS)' -o $@ $(aquachain_cmd)
+	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -o $@ $(aquachain_cmd)
 
-.PHONY += install
-install:
-	install -v $(build_dir)/aquachain $(INSTALL_DIR)/
 
-release: cross hash package
-clean:
-	rm -rf $(build_dir)
-hash: bin/hashes.txt
-bin/hashes.txt: $(wildcard $(build_dir)/aqua*)
-	$(hashfn) $^ > $@
-.PHONY += bin/hashes.txt
-package: $(addprefix bin/,$(release_files)) bin/hashes.txt \
+package: $(addprefix bin/,$(release_files)) \
 	$(release_dir)/$(maincmd_name)-windows-amd64.zip \
 	$(release_dir)/$(maincmd_name)-osx-amd64.zip \
 	$(release_dir)/$(maincmd_name)-linux-amd64.tar.gz \
@@ -130,28 +203,42 @@ package: $(addprefix bin/,$(release_files)) bin/hashes.txt \
 
 
 
-releasetexts := README.md COPYING AUTHORS bin/hashes.txt
+releasetexts := README.md COPYING AUTHORS
 $(release_dir)/$(maincmd_name)-windows-amd64.zip: $(build_dir)/$(maincmd_name)-windows-amd64.exe
 	mkdir -p $(release_dir)
-	zip $@ $(releasetexts) $^
+	mkdir -p tmp/${maincmd_name}-windows-${version}
+	cp -t tmp/${maincmd_name}-windows-${version}/ $^ ${releasetexts}
+	cd tmp && zip -r ../$@ ${maincmd_name}-windows-${version}
 $(release_dir)/$(maincmd_name)-osx-amd64.zip: $(build_dir)/$(maincmd_name)-osx-amd64
 	mkdir -p $(release_dir)
-	zip $@ $(releasetexts) $^
+	mkdir -p tmp/${maincmd_name}-osx-${version}
+	cp -t tmp/${maincmd_name}-osx-${version}/ $^ ${releasetexts}
+	cd tmp && zip -r ../$@ ${maincmd_name}-osx-${version}
 $(release_dir)/$(maincmd_name)-linux-amd64.tar.gz: $(build_dir)/$(maincmd_name)-linux-amd64
 	mkdir -p $(release_dir)
-	tar czvf $@ $(releasetexts) $^
+	mkdir -p tmp/${maincmd_name}-linux-${version}
+	cp -t tmp/${maincmd_name}-linux-${version}/ $^ ${releasetexts}
+	cd tmp && zip -r ../$@ ${maincmd_name}-linux-${version}
 $(release_dir)/$(maincmd_name)-linux-arm.tar.gz: $(build_dir)/$(maincmd_name)-linux-arm
 	mkdir -p $(release_dir)
-	tar czvf $@ $(releasetexts) $^
+	mkdir -p tmp/${maincmd_name}-linux-arm-${version}
+	cp -t tmp/${maincmd_name}-linux-arm-${version}/ $^ ${releasetexts}
+	cd tmp && zip -r ../$@ ${maincmd_name}-linux-arm-${version}
 $(release_dir)/$(maincmd_name)-freebsd-amd64.tar.gz: $(build_dir)/$(maincmd_name)-freebsd-amd64
 	mkdir -p $(release_dir)
-	tar czvf $@ $(releasetexts) $^
+	mkdir -p tmp/${maincmd_name}-freebsd-${version}
+	cp -t tmp/${maincmd_name}-freebsd-${version}/ $^ ${releasetexts}
+	cd tmp && zip -r ../$@ ${maincmd_name}-freebsd-${version}
 $(release_dir)/$(maincmd_name)-openbsd-amd64.tar.gz: $(build_dir)/$(maincmd_name)-openbsd-amd64
 	mkdir -p $(release_dir)
-	tar czvf $@ $(releasetexts) $^
+	mkdir -p tmp/${maincmd_name}-openbsd-${version}
+	cp -t tmp/${maincmd_name}-openbsd-${version}/ $^ ${releasetexts}
+	cd tmp && zip -r ../$@ ${maincmd_name}-openbsd-${version}
 $(release_dir)/$(maincmd_name)-netbsd-amd64.tar.gz: $(build_dir)/$(maincmd_name)-netbsd-amd64
 	mkdir -p $(release_dir)
-	tar czvf $@ $(releasetexts) $^
+	mkdir -p tmp/${maincmd_name}-netbsd-${version}
+	cp -t tmp/${maincmd_name}-netbsd-${version}/ $^ ${releasetexts}
+	cd tmp && zip -r ../$@ ${maincmd_name}-netbsd-${version}
 
 .PHONY += hash
 
@@ -172,21 +259,6 @@ generate: devtools
 goget:
 	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} get -v -t -d ./...
 
-test: goget all
-	${GOCMD} run build/ci.go test
-
-test-verbose: all
-	${GOCMD} run build/ci.go test -v
-
-test-race: all
-	${GOCMD} run build/ci.go test -race
-
-test-musl: musl
-	${GOCMD} run build/ci.go test -musl
-
-lint:
-	${GOCMD} run build/ci.go lint
-
 linter: bin/golangci-lint
 	CGO_ENABLED=0 ./bin/golangci-lint -v run \
 	  --deadline 20m \
@@ -196,10 +268,3 @@ linter: bin/golangci-lint
 
 bin/golangci-lint:
 	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s $(golangci_linter_version)
-
-race:
-	${GOCMD} run build/ci.go install -- -race ./cmd/aquachain/
-
-all:
-	GOBIN=$(build_dir) CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} install $(GO_FLAGS) -tags '$(GO_TAGS)' ./cmd/...
-

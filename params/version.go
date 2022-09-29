@@ -17,14 +17,18 @@
 package params
 
 import (
+	"encoding/base64"
 	"fmt"
 )
 
 const (
-	VersionMajor = 1         // Major version component of the current release
-	VersionMinor = 7         // Minor version component of the current release
-	VersionPatch = 12        // Patch version component of the current release
-	VersionMeta  = "release" // Version metadata to append to the version string
+	VersionMajor = 1  // Major version component of the current release
+	VersionMinor = 7  // Minor version component of the current release
+	VersionPatch = 15 // Patch version component of the current release
+)
+
+var (
+	VersionMeta = "dev" // Version metadata to append to the version string
 )
 
 // Version holds the textual version string.
@@ -42,4 +46,15 @@ func VersionWithCommit(gitCommit string) string {
 		vsn += "-" + gitCommit[:6]
 	}
 	return vsn
+}
+
+// set with -X linker flag
+var Buildtags string
+
+func BuildTags() string {
+	b, err := base64.StdEncoding.DecodeString(Buildtags)
+	if err != nil {
+		panic(err)
+	}
+	return string(b)
 }

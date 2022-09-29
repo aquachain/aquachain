@@ -1,0 +1,2 @@
+type zip 2>/dev/null || (apt update && apt install -y zip)
+make release release=1

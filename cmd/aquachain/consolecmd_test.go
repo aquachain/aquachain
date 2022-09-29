@@ -31,20 +31,20 @@ import (
 )
 
 const (
-	ipcAPIs  = "admin:1.0 debug:1.0 aqua:1.0 miner:1.0 net:1.0 personal:1.0 rpc:1.0 shh:1.0 txpool:1.0 web3:1.0"
-	httpAPIs = "aqua:1.0 net:1.0 rpc:1.0 web3:1.0"
+	ipcAPIs      = "admin:1.0 debug:1.0 aqua:1.0 miner:1.0 net:1.0 personal:1.0 rpc:1.0 shh:1.0 txpool:1.0 web3:1.0"
+	httpAPIs     = "aqua:1.0 net:1.0 rpc:1.0 web3:1.0"
+	testCoinbase = "0x000000000000000000000000000000000000dEaD"
 )
 
 // Tests that a node embedded within a console can be started up properly and
 // then terminated by closing the input stream.
 func TestConsoleWelcome(t *testing.T) {
 	t.Skip()
-	coinbase := "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
 
 	// Start a aquachain console, make sure it's cleaned up and terminate the console
 	aquachain := runAquachain(t,
 		"--port", "0", "--maxpeers", "0", "--nodiscover", "--nat", "none",
-		"--aquabase", coinbase, "--shh",
+		"--aquabase", testCoinbase, "--shh",
 		"console")
 
 	// Gather all the infos the welcome message needs to contain
@@ -74,7 +74,6 @@ at block: 0 ({{niltime}})
 func TestIPCAttachWelcome(t *testing.T) {
 	t.Skip()
 	// Configure the instance for IPC attachement
-	coinbase := "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
 	var ipc string
 	if runtime.GOOS == "windows" {
 		ipc = `\\.\pipe\aquachain` + strconv.Itoa(trulyRandInt(100000, 999999))
@@ -87,7 +86,7 @@ func TestIPCAttachWelcome(t *testing.T) {
 	// list of ipc modules and shh is included there.
 	aquachain := runAquachain(t,
 		"--port", "0", "--maxpeers", "0", "--nodiscover", "--nat", "none",
-		"--aquabase", coinbase, "--shh", "--ipcpath", ipc)
+		"--aquabase", testCoinbase, "--shh", "--ipcpath", ipc)
 
 	time.Sleep(2 * time.Second) // Simple way to wait for the RPC endpoint to open
 	testAttachWelcome(t, aquachain, "ipc:"+ipc, ipcAPIs)
@@ -98,11 +97,10 @@ func TestIPCAttachWelcome(t *testing.T) {
 
 func TestHTTPAttachWelcome(t *testing.T) {
 	t.Skip()
-	coinbase := "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
 	port := strconv.Itoa(trulyRandInt(1024, 65536)) // Yeah, sometimes this will fail, sorry :P
 	aquachain := runAquachain(t,
 		"--port", "0", "--maxpeers", "0", "--nodiscover", "--nat", "none",
-		"--aquabase", coinbase, "--rpc", "--rpcport", port)
+		"--aquabase", testCoinbase, "--rpc", "--rpcport", port)
 
 	time.Sleep(2 * time.Second) // Simple way to wait for the RPC endpoint to open
 	testAttachWelcome(t, aquachain, "http://localhost:"+port, httpAPIs)
@@ -113,12 +111,11 @@ func TestHTTPAttachWelcome(t *testing.T) {
 
 func TestWSAttachWelcome(t *testing.T) {
 	t.Skip()
-	coinbase := "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
 	port := strconv.Itoa(trulyRandInt(1024, 65536)) // Yeah, sometimes this will fail, sorry :P
 
 	aquachain := runAquachain(t,
 		"--port", "0", "--maxpeers", "0", "--nodiscover", "--nat", "none",
-		"--aquabase", coinbase, "--ws", "--wsport", port)
+		"--aquabase", testCoinbase, "--ws", "--wsport", port)
 
 	time.Sleep(2 * time.Second) // Simple way to wait for the RPC endpoint to open
 	testAttachWelcome(t, aquachain, "ws://localhost:"+port, httpAPIs)

@@ -16,6 +16,7 @@
 
 // Package usbwallet implements support for USB hardware wallets.
 
+//go:build usb
 // +build usb
 
 package usbwallet

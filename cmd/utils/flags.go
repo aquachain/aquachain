@@ -48,7 +48,6 @@ import (
 	"gitlab.com/aquachain/aquachain/crypto"
 	"gitlab.com/aquachain/aquachain/node"
 	"gitlab.com/aquachain/aquachain/opt/aquastats"
-	whisper "gitlab.com/aquachain/aquachain/opt/whisper/whisperv6"
 	"gitlab.com/aquachain/aquachain/p2p"
 	"gitlab.com/aquachain/aquachain/p2p/discover"
 	"gitlab.com/aquachain/aquachain/p2p/nat"
@@ -517,20 +516,6 @@ var (
 		Usage: "Suggested gas price is the given percentile of a set of recent transaction gas prices",
 		Value: aqua.DefaultConfig.GPO.Percentile,
 	}
-	WhisperEnabledFlag = cli.BoolFlag{
-		Name:  "shh",
-		Usage: "Enable Whisper",
-	}
-	WhisperMaxMessageSizeFlag = cli.IntFlag{
-		Name:  "shh.maxmessagesize",
-		Usage: "Max message size accepted",
-		Value: int(whisper.DefaultMaxMessageSize),
-	}
-	WhisperMinPOWFlag = cli.Float64Flag{
-		Name:  "shh.pow",
-		Usage: "Minimum POW accepted",
-		Value: whisper.DefaultMinimumPoW,
-	}
 	HF8MainnetFlag = cli.Int64Flag{
 		Name:  "hf8",
 		Usage: "Hard fork #8 activation block",
@@ -653,7 +638,8 @@ func setListenAddress(ctx *cli.Context, cfg *p2p.Config) {
 		listenaddr = ":21303"
 	case "testnet":
 		listenaddr = ":21304"
-
+	case "testnet2":
+		listenaddr = ":21305"
 	}
 
 	if !ctx.GlobalIsSet(ListenAddrFlag.Name) && ctx.GlobalIsSet(ListenPortFlag.Name) {
@@ -836,6 +822,7 @@ func SetP2PConfig(ctx *cli.Context, cfg *p2p.Config) {
 	setListenAddress(ctx, cfg)
 	setBootstrapNodes(ctx, cfg)
 
+	log.Info("Listen Address:", "addr", cfg.ListenAddr)
 	if ctx.GlobalIsSet(MaxPeersFlag.Name) {
 		cfg.MaxPeers = ctx.GlobalInt(MaxPeersFlag.Name)
 	}
@@ -1066,15 +1053,6 @@ func checkExclusive(ctx *cli.Context, args ...interface{}) {
 	}
 }
 
-// SetShhConfig applies shh-related command line flags to the config.
-func SetShhConfig(ctx *cli.Context, stack *node.Node, cfg *whisper.Config) {
-	if ctx.GlobalIsSet(WhisperMaxMessageSizeFlag.Name) {
-		cfg.MaxMessageSize = uint32(ctx.GlobalUint(WhisperMaxMessageSizeFlag.Name))
-	}
-	if ctx.GlobalIsSet(WhisperMinPOWFlag.Name) {
-		cfg.MinimumAcceptedPOW = ctx.GlobalFloat64(WhisperMinPOWFlag.Name)
-	}
-}
 func SetHardforkParams(ctx *cli.Context, chaincfg *params.ChainConfig) {
 	// activate HF8 at block number X (not activated by default)
 	if ctx.GlobalIsSet(HF8MainnetFlag.Name) {
@@ -1230,15 +1208,6 @@ func RegisterAquaService(stack *node.Node, cfg *aqua.Config) {
 	})
 	if err != nil {
 		Fatalf("Failed to register the Aquachain service: %v", err)
-	}
-}
-
-// RegisterShhService configures Whisper and adds it to the given node.
-func RegisterShhService(stack *node.Node, cfg *whisper.Config) {
-	if err := stack.Register(func(n *node.ServiceContext) (node.Service, error) {
-		return whisper.New(cfg), nil
-	}); err != nil {
-		Fatalf("Failed to register the Whisper service: %v", err)
 	}
 }
 

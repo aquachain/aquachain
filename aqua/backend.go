@@ -18,6 +18,7 @@
 package aqua
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"runtime"
@@ -171,18 +172,35 @@ func New(ctx *node.ServiceContext, config *Config) (*Aquachain, error) {
 
 func makeExtraData(extra []byte) []byte {
 	// create default extradata
-	defaultExtra, _ := rlp.EncodeToBytes([]interface{}{
+
+	thing := []interface{}{
 		uint(params.VersionMajor<<16 | params.VersionMinor<<8 | params.VersionPatch),
-		"aquachain",
+		"aqua",
 		runtime.GOOS,
-		runtime.Version(), // go version
-	})
+		common.ShortGoVersion(),
+	}
+	defaultExtra, _ := rlp.EncodeToBytes(thing)
 	if len(extra) == 0 {
 		extra = defaultExtra
+	} else if len(extra) > 1 {
+		if extra[0] == '0' && extra[1] == 'x' {
+			b, err := hex.DecodeString(string(extra[2:]))
+			if err != nil {
+				log.Warn("Ignoring custom extradata", "error", err)
+				extra = defaultExtra
+			} else if len(b) > 32 {
+				log.Warn("Ignoring too-big extradata", "len", len(b))
+				extra = defaultExtra
+			} else {
+				extra = b
+			}
+		}
 	}
+
 	if uint64(len(extra)) > params.MaximumExtraDataSize {
+		log.Warn("Extra invalid:", "extra", thing[1], "name", thing[2], "version", thing[3])
 		extra = extra[:params.MaximumExtraDataSize-1]
-		log.Warn("Miner extra data exceed limit, truncating!", "extra", hexutil.Bytes(extra), "limit", params.MaximumExtraDataSize)
+		log.Warn("Miner extra data exceed limit, truncating!", "extra", hexutil.Bytes(extra).String(), "limit", params.MaximumExtraDataSize)
 	}
 	return extra
 }
@@ -210,7 +228,7 @@ func DecodeExtraData(extra []byte) (version [3]uint8, osname string, extradata [
 	// check "aquachain"
 	if aq, ok := v[1].([]byte); !ok {
 		return version, osname, extra, nil
-	} else if string(aq) != "aquachain" {
+	} else if string(aq) != "aquachain" && string(aq) != "aqua" {
 		return version, osname, extra, nil
 	}
 

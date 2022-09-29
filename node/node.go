@@ -295,7 +295,7 @@ func (n *Node) startInProc(apis []rpc.API) error {
 		if err := handler.RegisterName(api.Namespace, api.Service); err != nil {
 			return err
 		}
-		n.log.Debug("InProc registered", "service", api.Service, "namespace", api.Namespace)
+		n.log.Debug("InProc registered", "service", fmt.Sprintf("%T ( %s_ )", api.Service, api.Namespace))
 	}
 	n.inprocHandler = handler
 	return nil
@@ -321,7 +321,7 @@ func (n *Node) startIPC(apis []rpc.API) error {
 		if err := handler.RegisterName(api.Namespace, api.Service); err != nil {
 			return err
 		}
-		n.log.Debug("IPC registered", "service", api.Service, "namespace", api.Namespace)
+		n.log.Debug("IPC registered", "service", fmt.Sprintf("%T ( %s_ )", api.Service, api.Namespace))
 	}
 	// All APIs registered, start the IPC listener
 	var (
@@ -390,7 +390,7 @@ func (n *Node) startHTTP(endpoint string, apis []rpc.API, modules []string, cors
 			if err := handler.RegisterName(api.Namespace, api.Service); err != nil {
 				return err
 			}
-			n.log.Debug("HTTP registered", "service", api.Service, "namespace", api.Namespace)
+			n.log.Debug("HTTP registered", "service", fmt.Sprintf("%T ( %s_ )", api.Service, api.Namespace))
 		}
 	}
 	// All APIs registered, start the HTTP listener
@@ -447,7 +447,7 @@ func (n *Node) startWS(endpoint string, apis []rpc.API, modules []string, wsOrig
 			if err := handler.RegisterName(api.Namespace, api.Service); err != nil {
 				return err
 			}
-			n.log.Debug("WebSocket registered", "service", api.Service, "namespace", api.Namespace)
+			n.log.Debug("WebSocket registered", "service", fmt.Sprintf("%T ( %s_ )", api.Service, api.Namespace))
 		}
 	}
 	// All APIs registered, start the HTTP listener

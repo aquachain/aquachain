@@ -1,0 +1,42 @@
+
+name: Handle Release
+on:
+  push:
+    tags:
+    - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+  # on:
+  #  push:
+  #    branches:
+  #      - master
+  #  release:
+  #    types: [created]
+jobs:
+  generate:
+    name: Create release-artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@master
+      - name: Generate
+        uses: skx/github-action-build@master
+        with:
+          builder: .github/release
+      - name: Publish release
+        id: release
+        uses: ncipollo/release-action@v1.11.1
+        with:
+          allowUpdates: true
+          artifactErrorsFailBuild: false
+          artifacts: |
+            release/*.*
+          artifactContentType: "raw"
+          #discussionCategory: "Release"
+          draft: false
+          generateReleaseNotes: true
+          prerelease: false
+          replacesArtifacts: true
+          omitDraftDuringUpdate: false
+      - name: Dump Release Outputs
+        env:
+          RELEASE_OUTPUT: ${{ toJson(steps.release.outputs) }}
+        run: echo "$RELEASE_OUTPUT"
