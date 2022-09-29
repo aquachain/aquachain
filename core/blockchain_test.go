@@ -1020,7 +1020,7 @@ func TestCanonicalBlockRetrieval(t *testing.T) {
 		}
 		ch := GetCanonicalHash(blockchain.db, block.NumberU64())
 		if ch == (common.Hash{}) {
-			t.Fatalf("no canonical hash for block %d".i)
+			t.Fatalf("no canonical hash for block %d", i)
 		}
 
 		if ch != block.Hash() {
