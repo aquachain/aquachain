@@ -174,21 +174,6 @@ generate: devtools
 goget:
 	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} get -v -t -d ./...
 
-test: goget all
-	${GOCMD} run build/ci.go test
-
-test-verbose: all
-	${GOCMD} run build/ci.go test -v
-
-test-race: all
-	${GOCMD} run build/ci.go test -race
-
-test-musl: musl
-	${GOCMD} run build/ci.go test -musl
-
-lint:
-	${GOCMD} run build/ci.go lint
-
 linter: bin/golangci-lint
 	CGO_ENABLED=0 ./bin/golangci-lint -v run \
 	  --deadline 20m \
@@ -199,9 +184,8 @@ linter: bin/golangci-lint
 bin/golangci-lint:
 	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s $(golangci_linter_version)
 
-race:
-	${GOCMD} run build/ci.go install -- -race ./cmd/aquachain/
-
 all:
 	GOBIN=$(build_dir) CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} install $(GO_FLAGS) -tags '$(GO_TAGS)' ./cmd/...
 
+test:
+	CGO_ENABLED=0 bash testing/test-short-only.bash
