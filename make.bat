@@ -22,4 +22,4 @@ goto end
 set GOBUILDFAIL=1
 if x%GOBUILDEXIT%==x1 exit %GOBUILDFAIL%
 :end
-echo "Successfully Built 'aquachain.exe"
+echo "Successfully Built 'aquachain.exe on your desktop"
