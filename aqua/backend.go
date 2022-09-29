@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"math/big"
 	"runtime"
-	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -170,24 +169,7 @@ func New(ctx *node.ServiceContext, config *Config) (*Aquachain, error) {
 
 	return aqua, nil
 }
-func shorten(s string, n int) string {
-	l := len(s)
-	if l < n {
-		return s
-	}
-	return s[:n]
-}
 
-func shortGoVersion() string {
-	runtimeVersion := runtime.Version()
-	// example output: devel go1.20-cc1b20e8ad Sat Sep 17 02:56:51 2022 +0000
-	if strings.Contains(runtimeVersion, "devel ") {
-		runtimeVersion = strings.TrimPrefix(runtimeVersion, "devel ")
-
-		runtimeVersion = strings.Replace(runtimeVersion, "go", "godev", -1)
-	}
-	return shorten(strings.Split(runtimeVersion, "-")[0], 10) // go version
-}
 func makeExtraData(extra []byte) []byte {
 	// create default extradata
 
@@ -195,7 +177,7 @@ func makeExtraData(extra []byte) []byte {
 		uint(params.VersionMajor<<16 | params.VersionMinor<<8 | params.VersionPatch),
 		"aqua",
 		runtime.GOOS,
-		shortGoVersion(),
+		common.ShortGoVersion(),
 	}
 	defaultExtra, _ := rlp.EncodeToBytes(thing)
 	if len(extra) == 0 {

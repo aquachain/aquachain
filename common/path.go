@@ -21,13 +21,33 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 )
+
+func shorten(s string, n int) string {
+	l := len(s)
+	if l < n {
+		return s
+	}
+	return s[:n]
+}
+
+func ShortGoVersion() string {
+	runtimeVersion := runtime.Version()
+	// example output: devel go1.20-cc1b20e8ad Sat Sep 17 02:56:51 2022 +0000
+	if strings.Contains(runtimeVersion, "devel ") {
+		runtimeVersion = strings.TrimPrefix(runtimeVersion, "devel ")
+
+		runtimeVersion = strings.Replace(runtimeVersion, "go", "godev", -1)
+	}
+	return shorten(strings.Split(runtimeVersion, "-")[0], 10) // go version
+}
 
 // MakeName creates a node name that follows the aquachain convention
 // for such names. It adds the operation system name and Go runtime version
 // the name.
 func MakeName(name, version string) string {
-	return fmt.Sprintf("%s/v%s/%s/%s", name, version, runtime.GOOS, runtime.Version())
+	return fmt.Sprintf("%s/v%s/%s/%s", name, version, runtime.GOOS, ShortGoVersion())
 }
 
 func FileExist(filePath string) bool {
