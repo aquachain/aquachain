@@ -18,49 +18,15 @@
 package web3ext
 
 var Modules = map[string]string{
-	"admin":      Admin_JS,
-	"chequebook": Chequebook_JS,
-	"debug":      Debug_JS,
-	"aqua":       Aqua_JS,
-	"miner":      Miner_JS,
-	"net":        Net_JS,
-	"personal":   Personal_JS,
-	"rpc":        RPC_JS,
-	"shh":        Shh_JS,
-	"swarmfs":    SWARMFS_JS,
-	"txpool":     TxPool_JS,
+	"admin":    Admin_JS,
+	"debug":    Debug_JS,
+	"aqua":     Aqua_JS,
+	"miner":    Miner_JS,
+	"net":      Net_JS,
+	"personal": Personal_JS,
+	"rpc":      RPC_JS,
+	"txpool":   TxPool_JS,
 }
-
-const Chequebook_JS = `
-web3._extend({
-	property: 'chequebook',
-	methods: [
-		new web3._extend.Method({
-			name: 'deposit',
-			call: 'chequebook_deposit',
-			params: 1,
-			inputFormatter: [null]
-		}),
-		new web3._extend.Property({
-			name: 'balance',
-			getter: 'chequebook_balance',
-			outputFormatter: web3._extend.utils.toDecimal
-		}),
-		new web3._extend.Method({
-			name: 'cash',
-			call: 'chequebook_cash',
-			params: 1,
-			inputFormatter: [null]
-		}),
-		new web3._extend.Method({
-			name: 'issue',
-			call: 'chequebook_issue',
-			params: 2,
-			inputFormatter: [null, null]
-		}),
-	]
-});
-`
 
 const Admin_JS = `
 web3._extend({
@@ -168,23 +134,8 @@ web3._extend({
 			params: 1
 		}),
 		new web3._extend.Method({
-			name: 'getMinerHash',
-			call: 'debug_getMinerHash',
-			params: 1
-		}),
-		new web3._extend.Method({
-			name: 'hashNoNonce',
-			call: 'debug_hashNoNonce',
-			params: 1
-		}),
-		new web3._extend.Method({
 			name: 'setHead',
 			call: 'debug_setHead',
-			params: 1
-		}),
-		new web3._extend.Method({
-			name: 'seedHash',
-			call: 'debug_seedHash',
 			params: 1
 		}),
 		new web3._extend.Method({
@@ -371,6 +322,22 @@ web3._extend({
 			params: 0
 		}),
 		new web3._extend.Method({
+			name: 'minerHash',
+			call: 'aqua_getMinerHash',
+			params: 1,
+		}),
+		new web3._extend.Method({
+			name: 'seedHash',
+			call: 'aqua_seedHash',
+			params: 1,
+		}),
+		new web3._extend.Method({
+			name: 'hashNoNonce',
+			call: 'aqua_hashNoNonce',
+			params: 1,
+		}),
+		
+		new web3._extend.Method({
 			name: 'sign',
 			call: 'aqua_sign',
 			params: 2,
@@ -536,51 +503,6 @@ web3._extend({
 	]
 });
 `
-
-const Shh_JS = `
-web3._extend({
-	property: 'shh',
-	methods: [
-	],
-	properties:
-	[
-		new web3._extend.Property({
-			name: 'version',
-			getter: 'shh_version',
-			outputFormatter: web3._extend.utils.toDecimal
-		}),
-		new web3._extend.Property({
-			name: 'info',
-			getter: 'shh_info'
-		}),
-	]
-});
-`
-
-const SWARMFS_JS = `
-web3._extend({
-	property: 'swarmfs',
-	methods:
-	[
-		new web3._extend.Method({
-			name: 'mount',
-			call: 'swarmfs_mount',
-			params: 2
-		}),
-		new web3._extend.Method({
-			name: 'unmount',
-			call: 'swarmfs_unmount',
-			params: 1
-		}),
-		new web3._extend.Method({
-			name: 'listmounts',
-			call: 'swarmfs_listmounts',
-			params: 0
-		}),
-	]
-});
-`
-
 const TxPool_JS = `
 web3._extend({
 	property: 'txpool',
