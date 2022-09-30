@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the aquachain library. If not, see <http://www.gnu.org/licenses/>.
 
+//go:build usb
 // +build usb
 
 package usbwallet
@@ -28,7 +29,12 @@ import (
 	"gitlab.com/aquachain/aquachain/aqua/accounts"
 	"gitlab.com/aquachain/aquachain/aqua/event"
 	"gitlab.com/aquachain/aquachain/common/log"
+	"gitlab.com/aquachain/aquachain/params"
 )
+
+func init() {
+	params.AddBuildTag("usb")
+}
 
 // LedgerScheme is the protocol scheme prefixing account and wallet URLs.
 const LedgerScheme = "ledger"
