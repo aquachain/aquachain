@@ -3,6 +3,8 @@ GOOS ?= $(shell ${GOCMD} env GOOS)
 GOARCH ?= $(shell ${GOCMD} env GOARCH)
 PREFIX ?= /usr/local
 GOPATH ?= $(shell go env GOPATH)
+GOTAGS ?= 'netgo osusergo static $(tags)'
+
 export GOPATH
 define LOGO
                               _           _
@@ -16,14 +18,20 @@ $(info $(LOGO))
 aquachain_cmd=./cmd/aquachain
 version != cat VERSION
 COMMITHASH != git rev-parse --short HEAD
-maincmd_name := aquachain-$(version)-$(COMMITHASH)
+winextension :=
+ifeq (windows,$(GOOS))
+winextension = .exe
+endif
+maincmd_name := aquachain-$(version)-$(COMMITHASH)$(winextension)
 PWD != pwd
-build_dir := $(PWD)/bin
+build_dir ?= ./bin
+default_target=$(build_dir)/aquachain$(winextension)
 INSTALL_DIR ?= $(PREFIX)/bin
 release_dir=rel
 hashfn := sha384sum
 golangci_linter_version := v1.24.0
 main_deps := $(filter %.go,$(wildcard *.go */*.go */*/*.go */*/*/*.go */*/*/*/*.g))
+cgo=$(CGO_ENABLED)
 
 # disable cgo by default
 CGO_ENABLED ?= 0
@@ -38,32 +46,79 @@ ifeq (1,$(verbose))
 GO_FLAGS += -v 
 endif
 
-# if release=1, rebuild all sources
-ifeq (1,$(release))
-GO_FLAGS += -a
-endif
+
 
 # use ${GOCMD} for "net" and "os/user" packages (cgo by default)
 #GO_TAGS := static
 
-ifneq (1,$(CGO_ENABLED))
-GO_FLAGS += -tags 'netgo osusergo static'
+GO_FLAGS += -tags $(GOTAGS)
+TAGS64 := $(shell printf "$(GOTAGS)"|base64 -w 0)
+ifneq (1,$(cgo))
+#GO_FLAGS += -tags 'netgo osusergo static $(GO_TAGS)'
 else
-GO_FLAGS += -installsuffix cgo -tags 'netgo osusergo static'
+GO_FLAGS += -installsuffix cgo
 LD_FLAGS += -linkmode external -extldflags -static
 endif
 
-LD_FLAGS := -ldflags '-X main.gitCommit=${COMMITHASH} -X main.buildDate=${shell date -u +%s} -s -w' -v
-GO_FLAGS += $(LD_FLAGS)
+LD_FLAGS := -X main.gitCommit=${COMMITHASH} -X main.buildDate=${shell date -u +%s} -s -w 
+LD_FLAGS += -X gitlab.com/aquachain/aquachain/params.buildTags=${TAGS64}
+# if release=1, rebuild all sources
+codename:=${COMMITHASH}
+ifeq (1,$(release))
+GO_FLAGS += -a
+codename=release
+endif
+LD_FLAGS += -X gitlab.com/aquachain/aquachain/params.VersionMeta=${codename}
+GO_FLAGS += -ldflags '$(LD_FLAGS)'
 
-# build default target, aquachain for host OS/ARCH
 export GOFILES=$(shell find . -iname '*.go' -type f | grep -v /vendor/ | grep -v /build/)
-$(build_dir)/aquachain: $(GOFILES)
+# build default target, aquachain for host OS/ARCH
+#bin/aquachain:
+$(default_target): $(GOFILES)
 	CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build $(GO_FLAGS) -o $@ $(aquachain_cmd)
-default: $(build_dir)/$(maincmd_name)-$(GOOS)-$(GOARCH)
+	@echo compiled: $(default_target)
+	@sha256sum $(default_target) 2>/dev/null || true
+	@file $(default_target) 2>/dev/null || true
+default: $(build_dir)/$(maincmd_name)-$(GOOS)-$(GOARCH)$(winextension)
+
 .PHONY += default hash
 echoflags:
 	@echo "CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build $(GO_FLAGS) -o $@ $(aquachain_cmd)"
+
+.PHONY += install
+install:
+	install -v $(build_dir)/aquachain $(INSTALL_DIR)/
+
+all:
+	GOBIN=$(build_dir) CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} install $(GO_FLAGS)  ./cmd/...
+
+help:
+	@echo
+	@echo default target is: "$(default_target)"
+	@echo 'make install' target is: "$(INSTALL_DIR)/"
+	@echo using go flags: "$(GO_FLAGS)"
+	@echo
+	@echo to compile quickly, run \'make\' and then \'$(default_target) help\'
+	@echo to install system-wide, run something like \'sudo make install\'
+	@echo
+	@echo "to cross-compile, try 'make cross' or 'make GOOS=windows'"
+	@echo "to add things left out by default, use tags: 'make cgo=1'"
+	@echo
+	@echo note: this help response is dynamic and reacts to environmental variables.
+
+test:
+	CGO_ENABLED=0 bash testing/test-short-only.bash $(args)
+race:
+	CGO_ENABLED=1 bash testing/test-short-only.bash -race
+
+
+release: cross hash package
+clean:
+	rm -rf $(build_dir)
+hash: bin/hashes.txt
+bin/hashes.txt: $(wildcard $(build_dir)/aqua*)
+	$(hashfn) $^ > $@
+.PHONY += bin/hashes.txt
 
 release_files := \
 	$(maincmd_name)-linux-amd64 \
@@ -77,50 +132,40 @@ release_files := \
 # cross compile for each target OS/ARCH
 cross:	$(addprefix $(build_dir)/, $(release_files))
 .PHONY += cross
-$(build_dir)/aquachain.exe:
-	GOOS=windows \
-	GOARCH=amd64 \
-	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -tags '$(GO_TAGS)' -o $@ $(aquachain_cmd)
+#$(build_dir)/aquachain.exe:
+#	GOOS=windows \
+#	GOARCH=amd64 \
+#	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -o $@ $(aquachain_cmd)
 $(build_dir)/$(maincmd_name)-linux-amd64: $(main_deps)
 	GOOS=linux \
 	GOARCH=amd64 \
-	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -tags '$(GO_TAGS)' -o $@ $(aquachain_cmd)
+	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -o $@ $(aquachain_cmd)
 $(build_dir)/$(maincmd_name)-linux-arm: $(main_deps)
 	GOOS=linux \
 	GOARCH=arm \
-	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -tags '$(GO_TAGS)' -o $@ $(aquachain_cmd)
+	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -o $@ $(aquachain_cmd)
 $(build_dir)/$(maincmd_name)-windows-amd64.exe: $(main_deps)
 	GOOS=windows \
 	GOARCH=amd64 \
-	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -tags '$(GO_TAGS)' -o $@ $(aquachain_cmd)
+	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -o $@ $(aquachain_cmd)
 $(build_dir)/$(maincmd_name)-osx-amd64: $(main_deps)
 	GOOS=darwin \
 	GOARCH=amd64 \
-	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -tags '$(GO_TAGS)' -o $@ $(aquachain_cmd)
+	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -o $@ $(aquachain_cmd)
 $(build_dir)/$(maincmd_name)-openbsd-amd64: $(main_deps)
 	GOOS=openbsd \
 	GOARCH=amd64 \
-	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -tags '$(GO_TAGS)' -o $@ $(aquachain_cmd)
+	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -o $@ $(aquachain_cmd)
 $(build_dir)/$(maincmd_name)-netbsd-amd64: $(main_deps)
 	GOOS=netbsd \
 	GOARCH=amd64 \
-	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -tags '$(GO_TAGS)' -o $@ $(aquachain_cmd)
+	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -o $@ $(aquachain_cmd)
 $(build_dir)/$(maincmd_name)-freebsd-amd64: $(main_deps)
 	GOOS=freebsd \
 	GOARCH=amd64 \
-	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -tags '$(GO_TAGS)' -o $@ $(aquachain_cmd)
+	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -o $@ $(aquachain_cmd)
 
-.PHONY += install
-install:
-	install -v $(build_dir)/aquachain $(INSTALL_DIR)/
 
-release: cross hash package
-clean:
-	rm -rf $(build_dir)
-hash: bin/hashes.txt
-bin/hashes.txt: $(wildcard $(build_dir)/aqua*)
-	$(hashfn) $^ > $@
-.PHONY += bin/hashes.txt
 package: $(addprefix bin/,$(release_files)) bin/hashes.txt \
 	$(release_dir)/$(maincmd_name)-windows-amd64.zip \
 	$(release_dir)/$(maincmd_name)-osx-amd64.zip \
@@ -183,9 +228,3 @@ linter: bin/golangci-lint
 
 bin/golangci-lint:
 	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s $(golangci_linter_version)
-
-all:
-	GOBIN=$(build_dir) CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} install $(GO_FLAGS) -tags '$(GO_TAGS)' ./cmd/...
-
-test:
-	CGO_ENABLED=0 bash testing/test-short-only.bash
