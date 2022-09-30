@@ -49,19 +49,12 @@ func VersionWithCommit(gitCommit string) string {
 }
 
 // set with -X linker flag
-var buildTags string
+var Buildtags string
 
 func BuildTags() string {
-	b, err := base64.StdEncoding.DecodeString(buildTags)
+	b, err := base64.StdEncoding.DecodeString(Buildtags)
 	if err != nil {
 		panic(err)
 	}
 	return string(b)
-}
-
-// use in func init() in build tagged files
-func AddBuildTag(s string) {
-	xbuildTags := BuildTags()
-	xbuildTags += " " + s
-	buildTags = base64.StdEncoding.EncodeToString([]byte(s))
 }
