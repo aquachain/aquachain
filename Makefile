@@ -3,7 +3,7 @@ GOOS ?= $(shell ${GOCMD} env GOOS)
 GOARCH ?= $(shell ${GOCMD} env GOARCH)
 PREFIX ?= /usr/local
 GOPATH ?= $(shell go env GOPATH)
-GOTAGS ?= 'netgo osusergo static $(tags)'
+GOTAGS ?= netgo osusergo static
 
 export GOPATH
 define LOGO
@@ -51,8 +51,7 @@ endif
 # use ${GOCMD} for "net" and "os/user" packages (cgo by default)
 #GO_TAGS := static
 
-GO_FLAGS += -tags $(GOTAGS)
-TAGS64 := $(shell printf "$(GOTAGS)"|base64 -w 0)
+TAGS64 := $(shell printf "$(GOTAGS) $(tags)"|base64 -w 0)
 ifneq (1,$(cgo))
 #GO_FLAGS += -tags 'netgo osusergo static $(GO_TAGS)'
 else
@@ -75,7 +74,7 @@ export GOFILES=$(shell find . -iname '*.go' -type f | grep -v /vendor/ | grep -v
 # build default target, aquachain for host OS/ARCH
 #bin/aquachain:
 $(default_target): $(GOFILES)
-	CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build $(GO_FLAGS) -o $@ $(aquachain_cmd)
+	CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build -tags '$(GOTAGS) $(tags)' $(GO_FLAGS) -o $@ $(aquachain_cmd)
 	@echo compiled: $(default_target)
 	@sha256sum $(default_target) 2>/dev/null || true
 	@file $(default_target) 2>/dev/null || true
@@ -91,6 +90,15 @@ install:
 
 all:
 	GOBIN=$(build_dir) CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} install $(GO_FLAGS)  ./cmd/...
+
+cross:
+	mkdir -p $(build_dir)
+	cd $(build_dir) && mkdir -p linux freebsd osx windows
+	cd $(build_dir)/linux && GOOS=linux CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build -o . $(GO_FLAGS) ../../cmd/...
+	cd $(build_dir)/freebsd && GOOS=freebsd CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build -o . $(GO_FLAGS) ../../cmd/...
+	cd $(build_dir)/osx && GOOS=darwin CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build -o . $(GO_FLAGS) ../../cmd/...
+	cd $(build_dir)/windows && GOOS=windows CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build -o . $(GO_FLAGS) ../../cmd/...
+
 
 help:
 	@echo
@@ -130,7 +138,7 @@ release_files := \
 	$(maincmd_name)-osx-amd64
 
 # cross compile for each target OS/ARCH
-cross:	$(addprefix $(build_dir)/, $(release_files))
+crossold:	$(addprefix $(build_dir)/, $(release_files))
 .PHONY += cross
 #$(build_dir)/aquachain.exe:
 #	GOOS=windows \
