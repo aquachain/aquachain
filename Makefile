@@ -62,7 +62,7 @@ endif
 LD_FLAGS := -X main.gitCommit=${COMMITHASH} -X main.buildDate=${shell date -u +%s} -s -w 
 LD_FLAGS += -X gitlab.com/aquachain/aquachain/params.buildTags=${TAGS64}
 # if release=1, rebuild all sources
-codename:=${COMMITHASH}
+codename=dev
 ifeq (1,$(release))
 GO_FLAGS += -a
 codename=release
