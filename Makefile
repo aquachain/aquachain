@@ -137,14 +137,12 @@ race:
 	CGO_ENABLED=1 bash testing/test-short-only.bash -race
 
 
-
-
 release: cross package hash
 clean:
 	rm -rf $(build_dir)
 hash: release/SHA384.txt
 release/SHA384.txt:
-	$(hashfn) release/*.tar.gz release/*.zip >> $@
+	$(hashfn) release/*.tar.gz release/*.zip | tee $@
 
 release_files := \
 	$(maincmd_name)-linux-amd64 \
