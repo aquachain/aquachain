@@ -27,6 +27,9 @@ jobs:
 
       - name: build aquachain
         run: make
-
+      - name: Upload binary
+        uses: actions/upload-artifact@v3
+        with:
+          path: bin/*
       - name: test
         run: bash testing/test-short-only.bash
