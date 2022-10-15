@@ -27,10 +27,12 @@ jobs:
 
       - name: build aquachain
         run: make
+      - name: show system info
+        run: env || true; uname -a || true; test ! -e /etc/os-release || cat /etc/os-release;
       - name: Upload binary
         uses: actions/upload-artifact@v3
         with:
-          name: now
+          name: aquachain-${{ github.head_ref || github.run_id }}-${{ matrix.operating-system}}
           path: bin/*
       - name: test
         run: bash testing/test-short-only.bash
