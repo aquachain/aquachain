@@ -63,7 +63,7 @@ func TestTimerStop(t *testing.T) {
 func TestTimerFunc(t *testing.T) {
 	tm := NewTimer()
 	tm.Time(func() { time.Sleep(50e6) })
-	if max := tm.Max(); 45e6 > max || max > 55e6 {
+	if max := tm.Max(); 50e6 > max || max > 65e6 {
 		t.Errorf("tm.Max(): 45e6 > %v || %v > 55e6\n", max, max)
 	}
 }
