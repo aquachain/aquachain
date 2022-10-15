@@ -30,6 +30,7 @@ jobs:
       - name: Upload binary
         uses: actions/upload-artifact@v3
         with:
+          name: now
           path: bin/*
       - name: test
         run: bash testing/test-short-only.bash
