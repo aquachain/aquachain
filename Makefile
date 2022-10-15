@@ -65,12 +65,21 @@ endif
 
 LD_FLAGS := -X main.gitCommit=${COMMITHASH} -X main.buildDate=${shell date -u +%s} -s -w 
 LD_FLAGS += -X gitlab.com/aquachain/aquachain/params.buildTags=${TAGS64}
-# if release=1, rebuild all sources
-codename=dev
+
+## if release=1, rebuild all sources
 ifeq (1,$(release))
+codename = $(shell echo "${version}" | grep "-" | cut -d- -f2)
 GO_FLAGS += -a
+ifeq (,$(codename))
 codename=release
 endif
+endif
+
+# still x.x.x from previous release, no dash
+ifeq (,$(codename))
+codename=dev-${COMMITHASH}
+endif
+
 LD_FLAGS += -X gitlab.com/aquachain/aquachain/params.VersionMeta=${codename}
 GO_FLAGS += -ldflags '$(LD_FLAGS)'
 
@@ -101,6 +110,7 @@ all:
 		CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build -o . $(GO_FLAGS) ../cmd/...
 
 cross:
+	@echo to build a release, use "make clean release release=1"
 	mkdir -p $(build_dir)
 	cd $(build_dir) && mkdir -p linux freebsd osx windows
 	cd $(build_dir)/linux && GOOS=linux \
@@ -138,7 +148,12 @@ race:
 	CGO_ENABLED=1 bash testing/test-short-only.bash -race
 
 
-release: cross package hash
+checkrelease:
+ifneq (1,$(release))
+	echo "use make release release=1"
+	exit 1
+endif
+release: checkrelease package hash
 clean:
 	rm -rf $(build_dir) release
 hash: release/SHA384.txt
@@ -157,10 +172,9 @@ release_files := \
 # cross compile for each target OS/ARCH
 crossold:	$(addprefix $(build_dir)/, $(release_files))
 .PHONY += cross
-#$(build_dir)/aquachain.exe:
-#	GOOS=windows \
-#	GOARCH=amd64 \
-#	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -o $@ $(aquachain_cmd)
+
+
+## build binaries for each OS
 $(build_dir)/$(maincmd_name)-linux-amd64: $(main_deps)
 	GOOS=linux \
 	GOARCH=amd64 \
@@ -191,8 +205,8 @@ $(build_dir)/$(maincmd_name)-freebsd-amd64: $(main_deps)
 	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -o $@ $(aquachain_cmd)
 
 
-package: $(addprefix bin/,$(release_files)) \
-	$(release_dir)/$(maincmd_name)-windows-amd64.zip \
+## package above binaries 
+package: $(release_dir)/$(maincmd_name)-windows-amd64.zip \
 	$(release_dir)/$(maincmd_name)-osx-amd64.zip \
 	$(release_dir)/$(maincmd_name)-linux-amd64.tar.gz \
 	$(release_dir)/$(maincmd_name)-linux-arm.tar.gz \

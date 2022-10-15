@@ -7,7 +7,7 @@ Mirrored: https://github.com/aquachain/aquachain
 View or Improve the Documentation online: https://aquachain.github.io/docs/
 
 [![Build and Test](https://github.com/aquachain/aquachain/actions/workflows/test.yml/badge.svg)](https://github.com/aquachain/aquachain/actions/workflows/test.yml)
-
+[![Release](https://github.com/aquachain/aquachain/actions/workflows/release.yml/badge.svg)](https://github.com/aquachain/aquachain/releases/)
 
 ** Found a bug **in this software**? Documentation lacking?
 See https://gitlab.com/aquachain/aquachain/wikis/bugs **
