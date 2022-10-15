@@ -126,6 +126,7 @@ help:
 	@echo "to add things left out by default, use tags: 'make cgo=1'"
 	@echo
 	@echo "cross-compile release: 'make clean cross release=1'"
+	@echo "clean compile package release: 'make clean release release=1'"
 	@echo "cross-compile all tools: 'make clean cross release=1 cmds=all'"
 	@echo "compile with cgo and usb support: make cgo=1 tags=usb'"
 	@echo
@@ -139,7 +140,7 @@ race:
 
 release: cross package hash
 clean:
-	rm -rf $(build_dir)
+	rm -rf $(build_dir) release
 hash: release/SHA384.txt
 release/SHA384.txt:
 	$(hashfn) release/*.tar.gz release/*.zip | tee $@
@@ -216,27 +217,27 @@ $(release_dir)/$(maincmd_name)-linux-amd64.tar.gz: $(build_dir)/$(maincmd_name)-
 	mkdir -p $(release_dir)
 	mkdir -p tmp/${maincmd_name}-linux-${version}
 	cp -t tmp/${maincmd_name}-linux-${version}/ $^ ${releasetexts}
-	cd tmp && zip -r ../$@ ${maincmd_name}-linux-${version}
+	cd tmp && tar czf ../$@ ${maincmd_name}-linux-${version}
 $(release_dir)/$(maincmd_name)-linux-arm.tar.gz: $(build_dir)/$(maincmd_name)-linux-arm
 	mkdir -p $(release_dir)
 	mkdir -p tmp/${maincmd_name}-linux-arm-${version}
 	cp -t tmp/${maincmd_name}-linux-arm-${version}/ $^ ${releasetexts}
-	cd tmp && zip -r ../$@ ${maincmd_name}-linux-arm-${version}
+	cd tmp && tar czf ../$@ ${maincmd_name}-linux-arm-${version}
 $(release_dir)/$(maincmd_name)-freebsd-amd64.tar.gz: $(build_dir)/$(maincmd_name)-freebsd-amd64
 	mkdir -p $(release_dir)
 	mkdir -p tmp/${maincmd_name}-freebsd-${version}
 	cp -t tmp/${maincmd_name}-freebsd-${version}/ $^ ${releasetexts}
-	cd tmp && zip -r ../$@ ${maincmd_name}-freebsd-${version}
+	cd tmp && tar czf ../$@ ${maincmd_name}-freebsd-${version}
 $(release_dir)/$(maincmd_name)-openbsd-amd64.tar.gz: $(build_dir)/$(maincmd_name)-openbsd-amd64
 	mkdir -p $(release_dir)
 	mkdir -p tmp/${maincmd_name}-openbsd-${version}
 	cp -t tmp/${maincmd_name}-openbsd-${version}/ $^ ${releasetexts}
-	cd tmp && zip -r ../$@ ${maincmd_name}-openbsd-${version}
+	cd tmp && tar czf ../$@ ${maincmd_name}-openbsd-${version}
 $(release_dir)/$(maincmd_name)-netbsd-amd64.tar.gz: $(build_dir)/$(maincmd_name)-netbsd-amd64
 	mkdir -p $(release_dir)
 	mkdir -p tmp/${maincmd_name}-netbsd-${version}
 	cp -t tmp/${maincmd_name}-netbsd-${version}/ $^ ${releasetexts}
-	cd tmp && zip -r ../$@ ${maincmd_name}-netbsd-${version}
+	cd tmp && tar czf ../$@ ${maincmd_name}-netbsd-${version}
 
 .PHONY += hash
 
