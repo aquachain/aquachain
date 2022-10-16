@@ -155,7 +155,7 @@ ifneq (1,$(release))
 endif
 release: checkrelease package hash
 clean:
-	rm -rf $(build_dir) release
+	rm -rf $(build_dir) release docs
 hash: release/SHA384.txt
 release/SHA384.txt:
 	$(hashfn) release/*.tar.gz release/*.zip | tee $@
@@ -281,3 +281,8 @@ linter: bin/golangci-lint
 
 bin/golangci-lint:
 	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s $(golangci_linter_version)
+
+docs: mkdocs.yml Documentation/*/*
+	@echo building docs
+	mkdocs build
+

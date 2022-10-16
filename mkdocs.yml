@@ -1,0 +1,13 @@
+copyright: Copyright 2022 The Aquachain Authors
+site_description: Aquachain Documentation
+site_author: Aquachain Authors
+site_name: Aquachain
+theme: readthedocs
+repo_url: https://gitlab.com/aquachain/aquachain
+site_url: https://aquachain.github.io/docs/
+edit_uri: blob/master/Documentation/
+docs_dir: Documentation
+site_dir: docs
+
+
+

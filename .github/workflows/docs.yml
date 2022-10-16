@@ -1,0 +1,22 @@
+name: Publish docs via GitHub Pages
+on:
+  push:
+    branches:
+      - master
+      - dev
+
+jobs:
+  build:
+    name: Deploy docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v2
+      - name: Build docs
+        run: sudo apt update && sudo apt install -y mkdocs && make docs # to ./docs dir
+      - name: Deploy docs
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          deploy_key: ${{ secrets.DKEY }}
+          publish_dir: ./docs
+          external_repository: aquachain/docs

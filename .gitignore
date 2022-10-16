@@ -56,3 +56,5 @@ profile.cov
 /cmd/aquastrat/aquastrat
 /cmd/attacher/attacher
 
+
+/docs

@@ -1,8 +1,8 @@
-# How to AQUA RPC
+# How to Host a Public RPC
 
 To set up a private RPC, run with `-rpc` flag.
 
-TO set up a public RPC, follow this guide.
+To set up a public RPC, follow this guide.
 
 ### About Public RPC Nodes
 
@@ -20,7 +20,7 @@ Here is *one of many* setups that can provide a public https endpoint, offering 
 
   * For SSL (recommended), setup your subdomain DNS to your IP, before this.
   * It is recommended to use a machine with 2GB or more RAM.
-  * Need at least 50GB disk space, recommended SSD.
+  * Need at least 50GB disk space, recommended SSD but not necessary.
   * Preferably a dedicated machine, such as a VPS with no other uses.
   * A newer version of `caddy` or `go` may have arrived since this was published.
 
@@ -62,7 +62,7 @@ cat <<EOF >/home/aqua/reboot.bash
 #!/bin/bash
 TERM=xterm
 # can modify these for example --config or something
-AQUAFLAGS="-nokeys -rpc -rpccorsdomain='*' -rpcvhosts='*'"
+AQUAFLAGS="-nokeys -gcmode archive -rpc -rpccorsdomain='*' -rpcvhosts='*'"
 tmux new-session -n aqua -d /usr/local/bin/aquachain $AQUAFLAGS
 EOF
 
@@ -93,5 +93,5 @@ Open up a terminal and run: `aquachain attach https://mydomain.examplename`
 
 Use your domain name instead of the dummy name.
 
-If you get an AQUA console, you have achieved your goal.
+If you get an AQUA console, you have achieved your goal, a public https rpc server..
 
