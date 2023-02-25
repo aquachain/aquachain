@@ -36,10 +36,9 @@ require (
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/urfave/cli v1.22.9
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
-	golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e
-	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f // indirect
-	golang.org/x/sys v0.0.0-20220624220833-87e55d714810
-	golang.org/x/tools v0.1.11
+	golang.org/x/net v0.7.0
+	golang.org/x/sys v0.5.0
+	golang.org/x/tools v0.1.12
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f
