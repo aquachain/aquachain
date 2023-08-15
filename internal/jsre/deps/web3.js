@@ -5281,8 +5281,7 @@ var methods = function () {
         name: 'balance',
         call: 'aqua_balance',
         params: 2,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter],
-        outputFormatter: formatters.outputBigNumberFormatter
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
     });
 
     var getStorageAt = new Method({

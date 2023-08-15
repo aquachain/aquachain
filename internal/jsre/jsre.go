@@ -306,16 +306,28 @@ func (self *JSRE) loadScript(call otto.FunctionCall) otto.Value {
 // Evaluate executes code and pretty prints the result to the specified output
 // stream.
 func (self *JSRE) Evaluate(code string, w io.Writer) error {
+	if code == "" {
+		return fmt.Errorf("empty js input")
+	}
 	var fail error
 
 	self.Do(func(vm *otto.Otto) {
+		defer func() {
+			if err := recover(); err != nil {
+				fmt.Println("recovered JS panic:", err)
+			}
+		}()
+
 		val, err := vm.Run(code)
+
 		if err != nil {
 			prettyError(vm, err, w)
 		} else {
-			prettyPrint(vm, val, w)
+			if val.IsDefined() {
+				prettyPrint(vm, val, w)
+				fmt.Fprintln(w)
+			}
 		}
-		fmt.Fprintln(w)
 	})
 	return fail
 }

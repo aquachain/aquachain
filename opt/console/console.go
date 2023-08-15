@@ -353,8 +353,9 @@ function balance() {
 	c.jsre.Run(`
 		console.log("instance: " + web3.version.node);
 		console.log("coinbase: " + aqua.coinbase);
-		console.log("at block: " + aqua.blockNumber + " (" + new Date(1000 * aqua.getBlock(aqua.blockNumber).timestamp) + ")");
-		console.log("    algo: " + aqua.getBlock(aqua.blockNumber).version);
+		console.log("at block: " + aqua.blockNumber);
+		//console.log("at block: " + aqua.blockNumber + " (" + new Date(1000 * aqua.getBlock(aqua.blockNumber).timestamp) + ")");
+		//console.log("    algo: " + aqua.getBlock(aqua.blockNumber).version);
 		console.log(" datadir: " + admin.datadir);
 	`)
 
