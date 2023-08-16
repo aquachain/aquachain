@@ -322,11 +322,9 @@ func (self *JSRE) Evaluate(code string, w io.Writer) error {
 
 		if err != nil {
 			prettyError(vm, err, w)
-		} else {
-			if val.IsDefined() {
-				prettyPrint(vm, val, w)
-				fmt.Fprintln(w)
-			}
+		} else if val.IsDefined() {
+			prettyPrint(vm, val, w)
+			fmt.Fprintln(w)
 		}
 	})
 	return fail
