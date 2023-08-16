@@ -248,6 +248,9 @@ func (c *conn) is(f connFlag) bool {
 
 // Peers returns all connected peers.
 func (srv *Server) Peers() []*Peer {
+	if srv.Offline {
+		return []*Peer{}
+	}
 	var ps []*Peer
 	select {
 	// Note: We'd love to put this function into a variable but
@@ -266,6 +269,9 @@ func (srv *Server) Peers() []*Peer {
 
 // PeerCount returns the number of connected peers.
 func (srv *Server) PeerCount() int {
+	if srv.Offline {
+		return 0
+	}
 	var count int
 	select {
 	case srv.peerOp <- func(ps map[discover.NodeID]*Peer) { count = len(ps) }:
@@ -921,6 +927,9 @@ func (srv *Server) NodeInfo() *NodeInfo {
 
 // PeersInfo returns an array of metadata objects describing connected peers.
 func (srv *Server) PeersInfo() []*PeerInfo {
+	if srv.Offline {
+		return []*PeerInfo{}
+	}
 	// Gather all the generic and sub-protocol specific infos
 	infos := make([]*PeerInfo, 0, srv.PeerCount())
 	for _, peer := range srv.Peers() {
