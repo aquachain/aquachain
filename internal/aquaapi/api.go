@@ -1562,11 +1562,15 @@ func NewPublicNetAPI(net *p2p.Server, networkVersion uint64) *PublicNetAPI {
 
 // Listening returns an indication if the node is listening for network connections.
 func (s *PublicNetAPI) Listening() bool {
-	return true // always listening
+
+	return s != nil && s.net != nil && !s.net.Offline // always listening
 }
 
 // PeerCount returns the number of connected peers
 func (s *PublicNetAPI) PeerCount() hexutil.Uint {
+	if s == nil || s.net == nil || s.net.Offline {
+		return 0
+	}
 	return hexutil.Uint(s.net.PeerCount())
 }
 
