@@ -289,7 +289,7 @@ func TestPrettyError(t *testing.T) {
 
 	want := jsre.ErrorColor("hello") + "\n"
 	if output := tester.output.String(); output != want {
-		t.Fatalf("pretty error mismatch: have %s, want %s", output, want)
+		t.Fatalf("pretty error mismatch: have %q, want %q", output, want)
 	}
 }
 
