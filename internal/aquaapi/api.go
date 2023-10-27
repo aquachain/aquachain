@@ -688,13 +688,6 @@ func (s *PublicBlockChainAPI) doCall(ctx context.Context, args CallArgs, blockNr
 	}
 	// Set sender address or use a default if none specified
 	addr := args.From
-	if addr == (common.Address{}) {
-		if wallets := s.b.AccountManager().Wallets(); len(wallets) > 0 {
-			if accounts := wallets[0].Accounts(); len(accounts) > 0 {
-				addr = accounts[0].Address
-			}
-		}
-	}
 	// Set default gas & gas price if none were set
 	gas, gasPrice := uint64(args.Gas), args.GasPrice.ToInt()
 	if gas == 0 {
