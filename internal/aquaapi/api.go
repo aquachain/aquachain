@@ -688,13 +688,6 @@ func (s *PublicBlockChainAPI) doCall(ctx context.Context, args CallArgs, blockNr
 	}
 	// Set sender address or use a default if none specified
 	addr := args.From
-	if addr == (common.Address{}) {
-		if wallets := s.b.AccountManager().Wallets(); len(wallets) > 0 {
-			if accounts := wallets[0].Accounts(); len(accounts) > 0 {
-				addr = accounts[0].Address
-			}
-		}
-	}
 	// Set default gas & gas price if none were set
 	gas, gasPrice := uint64(args.Gas), args.GasPrice.ToInt()
 	if gas == 0 {
@@ -1562,11 +1555,15 @@ func NewPublicNetAPI(net *p2p.Server, networkVersion uint64) *PublicNetAPI {
 
 // Listening returns an indication if the node is listening for network connections.
 func (s *PublicNetAPI) Listening() bool {
-	return true // always listening
+
+	return s != nil && s.net != nil && !s.net.Offline // always listening
 }
 
 // PeerCount returns the number of connected peers
 func (s *PublicNetAPI) PeerCount() hexutil.Uint {
+	if s == nil || s.net == nil || s.net.Offline {
+		return 0
+	}
 	return hexutil.Uint(s.net.PeerCount())
 }
 

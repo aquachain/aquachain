@@ -442,8 +442,13 @@ func (s *Aquachain) AquaVersion() int {
 	}
 	return 0
 }
-func (s *Aquachain) NetVersion() uint64                 { return s.networkId }
-func (s *Aquachain) Downloader() *downloader.Downloader { return s.protocolManager.downloader }
+func (s *Aquachain) NetVersion() uint64 { return s.networkId }
+func (s *Aquachain) Downloader() *downloader.Downloader {
+	if s.protocolManager == nil {
+		return nil
+	}
+	return s.protocolManager.downloader
+}
 
 // Protocols implements node.Service, returning all the currently configured
 // network protocols to start.

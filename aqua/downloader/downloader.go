@@ -252,6 +252,9 @@ func New(mode SyncMode, stateDb aquadb.Database, mux *event.TypeMux, chain Block
 // these are zero.
 func (d *Downloader) Progress() aquachain.SyncProgress {
 	// Lock the current stats and return the progress
+	if d == nil || d.mux == nil || d.blockchain == nil {
+		return aquachain.SyncProgress{}
+	}
 	d.syncStatsLock.RLock()
 	defer d.syncStatsLock.RUnlock()
 

@@ -23,6 +23,7 @@ import (
 	"io"
 	"os"
 	"reflect"
+	"strings"
 	"unicode"
 
 	cli "github.com/urfave/cli"
@@ -90,6 +91,11 @@ func loadConfig(file string, cfg *gethConfig) error {
 	if _, ok := err.(*toml.LineError); ok {
 		err = errors.New(file + ", " + err.Error())
 	}
+	// after toml decode, lets replace tilde
+	if err == nil {
+		cfg.Node.DataDir = strings.Replace(cfg.Node.DataDir, "~/", "$HOME/", 1)
+		cfg.Node.DataDir = os.ExpandEnv(cfg.Node.DataDir)
+	}
 	return err
 }
 
@@ -97,8 +103,8 @@ func defaultNodeConfig() node.Config {
 	cfg := node.DefaultConfig
 	cfg.Name = clientIdentifier
 	cfg.Version = params.VersionWithCommit(gitCommit)
-	cfg.HTTPModules = append(cfg.HTTPModules, "aqua", "shh")
-	cfg.WSModules = append(cfg.WSModules, "aqua", "shh")
+	cfg.HTTPModules = append(cfg.HTTPModules, "aqua")
+	cfg.WSModules = append(cfg.WSModules, "aqua")
 	cfg.IPCPath = "aquachain.ipc"
 	return cfg
 }

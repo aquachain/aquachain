@@ -103,7 +103,8 @@ echoflags:
 .PHONY += install
 install:
 	install -v $(build_dir)/aquachain $(INSTALL_DIR)/
-
+internal/jsre/deps/bindata.go: internal/jsre/deps/web3.js  internal/jsre/deps/bignumber.js
+	test ! -x "$(which go-bindata)" || go generate -v ./$(shell dirname $@)/...
 all:
 	mkdir -p $(build_dir)
 	cd $(build_dir) && \

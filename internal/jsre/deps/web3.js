@@ -2210,7 +2210,7 @@ var toBigNumber = function(number) {
         return new BigNumber(number.replace('0x',''), 16);
     }
 
-    return new BigNumber(number.toString(10), 10);
+    return new BigNumber(Number(number).toString(16), 16);
 };
 
 /**
@@ -3834,7 +3834,7 @@ var outputBlockFormatter = function(block) {
     block.difficulty = utils.toBigNumber(block.difficulty);
     block.totalDifficulty = utils.toBigNumber(block.totalDifficulty);
 
-    if (utils.isArray(block.transactions)) {
+    if (utils.isArray(block.transactions) && block.transactions.length != 0) {
         block.transactions.forEach(function(item){
             if(!utils.isString(item))
                 return outputTransactionFormatter(item);
@@ -5281,8 +5281,7 @@ var methods = function () {
         name: 'balance',
         call: 'aqua_balance',
         params: 2,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter],
-        outputFormatter: formatters.outputBigNumberFormatter
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
     });
 
     var getStorageAt = new Method({
