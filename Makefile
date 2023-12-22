@@ -55,7 +55,7 @@ endif
 # use ${GOCMD} for "net" and "os/user" packages (cgo by default)
 #GO_TAGS := static
 
-TAGS64 := $(shell printf "$(GOTAGS) $(tags)"|base64 -w 0)
+TAGS64 := $(shell printf "$(GOTAGS) $(tags)"|base64 | tr -d '\r\n' | tr -d '\n')
 ifneq (1,$(cgo))
 #GO_FLAGS += -tags 'netgo osusergo static $(GO_TAGS)'
 else
