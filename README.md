@@ -99,7 +99,7 @@ you know that you are fully synchronized with the network.
 
 Enter AQUA javascript console: `aquachain.exe`
 
-Start Daemon (geth default): `aquachain.exe daemon`
+Start Daemon (geth's default): `aquachain.exe daemon`
 
 Run localhost rpc (port 8543): `aquachain.exe -rpc` 
 
@@ -108,6 +108,10 @@ See more commands: [Wiki](https://gitlab.com/aquachain/aquachain/wikis/Basics)
 Type `help` at the `AQUA>` prompt for common AQUA console commands.
 
 Run `aquachain.exe help` for command line flags and options.
+
+## RESOURCES
+
+On some platforms, such as OpenBSD, the login class capabilities must be increased before synchronizing the chain. The error will be an "Out of Memory" crash, while the machine has plenty of RAM. (see `man login.conf`)
 
 ## RPC SERVER
 
