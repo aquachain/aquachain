@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"unicode"
@@ -116,6 +117,17 @@ func makeConfigNode(ctx *cli.Context) (*node.Node, gethConfig) {
 		Node: defaultNodeConfig(),
 	}
 
+	// find config if exists in working-directory, and ~/.aquachain/aquachain.toml
+	if !ctx.GlobalIsSet(configFileFlag.Name) {
+		defaultDir := node.DefaultDataDir()
+
+		for _, path := range []string{"aquachain.toml", filepath.Join(defaultDir, "aquachain.toml")} {
+			if _, err := os.Stat(path); err == nil {
+				ctx.GlobalSet(configFileFlag.Name, path)
+				break
+			}
+		}
+	}
 	// Load config file.
 	if file := ctx.GlobalString(configFileFlag.Name); file != "" {
 		if err := loadConfig(file, &cfg); err != nil {
