@@ -111,7 +111,8 @@ Run `aquachain.exe help` for command line flags and options.
 
 ## RESOURCES
 
-On some platforms, such as OpenBSD, the login class capabilities must be increased before synchronizing the chain. The error will be an "Out of Memory" crash, while the machine has plenty of RAM. (see `man login.conf`)
+On some platforms, such as OpenBSD, the login class capabilities must be increased before synchronizing the chain. 
+Forgetting to do this will likely crash ("Out of Memory") while the machine has plenty of unused RAM. (see `man login.conf`)
 
 ## RPC SERVER
 
