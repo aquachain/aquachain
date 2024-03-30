@@ -109,10 +109,14 @@ func TestMocker(t *testing.T) {
 				}
 			case <-time.After(30 * time.Second):
 				wg.Done()
-				t.Fatalf("Timeout waiting for nodes being started up!")
+				return
 			}
 		}
 	}()
+	if connCount == 0 {
+		t.Fatalf("Timeout waiting for nodes being started up!")
+		return
+	}
 
 	//take the last element of the mockerlist as the default mocker-type to ensure one is enabled
 	mockertype := mockerlist[len(mockerlist)-1]

@@ -147,7 +147,11 @@ func waitForMessages(t *testing.T, in *json.Decoder, successes chan<- jsonSucces
 				failures <- jsonErrResponse{
 					Version: msg["jsonrpc"].(string),
 					Id:      msg["id"],
-					Error:   rpc.JsonError{int(params["subscription"].(float64)), params["message"].(string), params["data"]},
+					Error: rpc.JsonError{
+						Code:    int(params["subscription"].(float64)),
+						Message: params["message"].(string),
+						Data:    params["data"],
+					},
 				}
 				continue
 			}
