@@ -64,7 +64,7 @@ LD_FLAGS += -linkmode external -extldflags -static
 endif
 
 LD_FLAGS := -X main.gitCommit=${COMMITHASH} -X main.buildDate=${shell date -u +%s} -s -w 
-LD_FLAGS += -X gitlab.com/aquachain/aquachain/params.buildTags=${TAGS64}
+LD_FLAGS += -X gitlab.com/aquachain/aquachain/params.BuildTags=${TAGS64}
 
 ## if release=1, rebuild all sources
 ifeq (1,$(release))
