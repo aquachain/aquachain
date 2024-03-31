@@ -15,6 +15,7 @@
 */**/*tx_database*
 */**/*dapps*
 build/_vendor/pkg
+/consensus/aquahash/full-*
 
 # data
 /*.dat
