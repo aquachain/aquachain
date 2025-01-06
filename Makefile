@@ -164,6 +164,7 @@ release/SHA384.txt:
 release_files := \
 	$(maincmd_name)-linux-amd64 \
 	$(maincmd_name)-linux-arm \
+	$(maincmd_name)-linux-riscv64 \
 	$(maincmd_name)-windows-amd64.exe \
 	$(maincmd_name)-freebsd-amd64 \
 	$(maincmd_name)-openbsd-amd64 \
@@ -183,6 +184,14 @@ $(build_dir)/$(maincmd_name)-linux-amd64: $(main_deps)
 $(build_dir)/$(maincmd_name)-linux-arm: $(main_deps)
 	GOOS=linux \
 	GOARCH=arm \
+	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -o $@ $(aquachain_cmd)
+$(build_dir)/$(maincmd_name)-linux-arm64: $(main_deps)
+	GOOS=linux \
+	GOARCH=arm64 \
+	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -o $@ $(aquachain_cmd)
+$(build_dir)/$(maincmd_name)-linux-riscv64: $(main_deps)
+	GOOS=linux \
+	GOARCH=riscv64 \
 	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -o $@ $(aquachain_cmd)
 $(build_dir)/$(maincmd_name)-windows-amd64.exe: $(main_deps)
 	GOOS=windows \
@@ -210,46 +219,68 @@ $(build_dir)/$(maincmd_name)-freebsd-amd64: $(main_deps)
 package: $(release_dir)/$(maincmd_name)-windows-amd64.zip \
 	$(release_dir)/$(maincmd_name)-osx-amd64.zip \
 	$(release_dir)/$(maincmd_name)-linux-amd64.tar.gz \
+	$(release_dir)/$(maincmd_name)-linux-riscv64.tar.gz \
 	$(release_dir)/$(maincmd_name)-linux-arm.tar.gz \
 	$(release_dir)/$(maincmd_name)-freebsd-amd64.tar.gz \
 	$(release_dir)/$(maincmd_name)-openbsd-amd64.tar.gz \
-	$(release_dir)/$(maincmd_name)-netbsd-amd64.tar.gz \
+	$(release_dir)/$(maincmd_name)-netbsd-amd64.tar.gz
+
+# broken: $(release_dir)/$(maincmd_name)-linux-arm64.tar.gz
 
 
 
 releasetexts := README.md COPYING AUTHORS
 $(release_dir)/$(maincmd_name)-windows-amd64.zip: $(build_dir)/$(maincmd_name)-windows-amd64.exe
 	mkdir -p $(release_dir)
+	rm -rf tmp/${maincmd_name}-windows-${version}
 	mkdir -p tmp/${maincmd_name}-windows-${version}
 	cp -t tmp/${maincmd_name}-windows-${version}/ $^ ${releasetexts}
 	cd tmp && zip -r ../$@ ${maincmd_name}-windows-${version}
 $(release_dir)/$(maincmd_name)-osx-amd64.zip: $(build_dir)/$(maincmd_name)-osx-amd64
 	mkdir -p $(release_dir)
+	rm -rf tmp/${maincmd_name}-osx-${version}
 	mkdir -p tmp/${maincmd_name}-osx-${version}
 	cp -t tmp/${maincmd_name}-osx-${version}/ $^ ${releasetexts}
 	cd tmp && zip -r ../$@ ${maincmd_name}-osx-${version}
 $(release_dir)/$(maincmd_name)-linux-amd64.tar.gz: $(build_dir)/$(maincmd_name)-linux-amd64
 	mkdir -p $(release_dir)
+	rm -rf tmp/${maincmd_name}-linux-${version}
 	mkdir -p tmp/${maincmd_name}-linux-${version}
 	cp -t tmp/${maincmd_name}-linux-${version}/ $^ ${releasetexts}
 	cd tmp && tar czf ../$@ ${maincmd_name}-linux-${version}
 $(release_dir)/$(maincmd_name)-linux-arm.tar.gz: $(build_dir)/$(maincmd_name)-linux-arm
 	mkdir -p $(release_dir)
+	rm -rf tmp/${maincmd_name}-linux-arm-${version}
 	mkdir -p tmp/${maincmd_name}-linux-arm-${version}
 	cp -t tmp/${maincmd_name}-linux-arm-${version}/ $^ ${releasetexts}
 	cd tmp && tar czf ../$@ ${maincmd_name}-linux-arm-${version}
+$(release_dir)/$(maincmd_name)-linux-arm64.tar.gz: $(build_dir)/$(maincmd_name)-linux-arm64
+	mkdir -p $(release_dir)
+	rm -rf tmp/${maincmd_name}-linux-arm64-${version}
+	mkdir -p tmp/${maincmd_name}-linux-arm64-${version}
+	cp -t tmp/${maincmd_name}-linux-arm64-${version}/ $^ ${releasetexts}
+	cd tmp && tar czf ../$@ ${maincmd_name}-linux-arm64-${version}
+$(release_dir)/$(maincmd_name)-linux-riscv64.tar.gz: $(build_dir)/$(maincmd_name)-linux-riscv64
+	mkdir -p $(release_dir)
+	rm -rf tmp/${maincmd_name}-linux-riscv64-${version}
+	mkdir -p tmp/${maincmd_name}-linux-riscv64-${version}
+	cp -t tmp/${maincmd_name}-linux-riscv64-${version}/ $^ ${releasetexts}
+	cd tmp && tar czf ../$@ ${maincmd_name}-linux-riscv64-${version}
 $(release_dir)/$(maincmd_name)-freebsd-amd64.tar.gz: $(build_dir)/$(maincmd_name)-freebsd-amd64
 	mkdir -p $(release_dir)
+	rm -rf tmp/${maincmd_name}-freebsd-${version}
 	mkdir -p tmp/${maincmd_name}-freebsd-${version}
 	cp -t tmp/${maincmd_name}-freebsd-${version}/ $^ ${releasetexts}
 	cd tmp && tar czf ../$@ ${maincmd_name}-freebsd-${version}
 $(release_dir)/$(maincmd_name)-openbsd-amd64.tar.gz: $(build_dir)/$(maincmd_name)-openbsd-amd64
 	mkdir -p $(release_dir)
+	rm -rf tmp/${maincmd_name}-openbsd-${version}
 	mkdir -p tmp/${maincmd_name}-openbsd-${version}
 	cp -t tmp/${maincmd_name}-openbsd-${version}/ $^ ${releasetexts}
 	cd tmp && tar czf ../$@ ${maincmd_name}-openbsd-${version}
 $(release_dir)/$(maincmd_name)-netbsd-amd64.tar.gz: $(build_dir)/$(maincmd_name)-netbsd-amd64
 	mkdir -p $(release_dir)
+	rm -rf tmp/${maincmd_name}-netbsd-${version}
 	mkdir -p tmp/${maincmd_name}-netbsd-${version}
 	cp -t tmp/${maincmd_name}-netbsd-${version}/ $^ ${releasetexts}
 	cd tmp && tar czf ../$@ ${maincmd_name}-netbsd-${version}
