@@ -218,9 +218,9 @@ func (c *Console) init(preload []string) error {
 		// they got the password from the user and send the original web3 request to
 		// the backend.
 		if obj := personal.Object(); obj != nil { // make sure the personal api is enabled over the interface
-			if _, err = c.jsre.Run(`jeth.openWallet = personal.openWallet;`); err != nil {
-				return fmt.Errorf("personal.openWallet: %v", err)
-			}
+			// if _, err = c.jsre.Run(`jeth.openWallet = personal.openWallet;`); err != nil {
+			// 	return fmt.Errorf("personal.openWallet: %v", err)
+			// }
 			if _, err = c.jsre.Run(`jeth.unlockAccount = personal.unlockAccount;`); err != nil {
 				return fmt.Errorf("personal.unlockAccount: %v", err)
 			}
@@ -230,7 +230,7 @@ func (c *Console) init(preload []string) error {
 			if _, err = c.jsre.Run(`jeth.sign = personal.sign;`); err != nil {
 				return fmt.Errorf("personal.sign: %v", err)
 			}
-			obj.Set("openWallet", bridge.OpenWallet)
+			// obj.Set("openWallet", bridge.OpenWallet)
 			obj.Set("unlockAccount", bridge.UnlockAccount)
 			obj.Set("newAccount", bridge.NewAccount)
 			obj.Set("sign", bridge.Sign)
