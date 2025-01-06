@@ -1098,7 +1098,7 @@ func SetAquaConfig(ctx *cli.Context, stack *node.Node, cfg *aqua.Config) {
 	if gcmode := ctx.GlobalString(GCModeFlag.Name); gcmode != "full" && gcmode != "archive" {
 		Fatalf("--%s must be either 'full' or 'archive', use 'archive' for full state", GCModeFlag.Name)
 	}
-	cfg.NoPruning = ctx.GlobalString(GCModeFlag.Name) == "archive"
+	cfg.NoPruning = cfg.NoPruning || ctx.GlobalString(GCModeFlag.Name) == "archive"
 
 	if ctx.GlobalIsSet(CacheFlag.Name) || ctx.GlobalIsSet(CacheGCFlag.Name) {
 		cfg.TrieCache = ctx.GlobalInt(CacheFlag.Name) * ctx.GlobalInt(CacheGCFlag.Name) / 100

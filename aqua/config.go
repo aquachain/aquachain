@@ -79,7 +79,7 @@ type Config struct {
 	// Protocol options
 	NetworkId uint64 // Network ID to use for selecting peers to connect to
 	SyncMode  downloader.SyncMode
-	NoPruning bool
+	NoPruning bool `toml:"NoPruning"`
 
 	// Database options
 	SkipBcVersionCheck bool `toml:"-"`
