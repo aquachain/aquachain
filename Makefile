@@ -77,7 +77,7 @@ endif
 
 # still x.x.x from previous release, no dash
 ifeq (,$(codename))
-codename=dev-${COMMITHASH}
+codename=dev
 endif
 
 LD_FLAGS += -X gitlab.com/aquachain/aquachain/params.VersionMeta=${codename}
