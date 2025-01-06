@@ -40,7 +40,7 @@ const logo = `                              _           _
 var AppHelpTemplate = logo + `NAME:
    {{.App.Name}} - {{.App.Usage}}
 
-    Copyright 2018-2019 The aquachain authors
+    Copyright 2018-2025 The aquachain authors
     Copyright 2013-2018 The go-ethereum authors
 
 USAGE:
