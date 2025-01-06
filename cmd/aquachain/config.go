@@ -32,6 +32,7 @@ import (
 	"github.com/naoina/toml"
 	"gitlab.com/aquachain/aquachain/aqua"
 	"gitlab.com/aquachain/aquachain/cmd/utils"
+	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/node"
 	"gitlab.com/aquachain/aquachain/params"
 )
@@ -132,6 +133,13 @@ func makeConfigNode(ctx *cli.Context) (*node.Node, gethConfig) {
 	if file := ctx.GlobalString(configFileFlag.Name); file != "" {
 		if err := loadConfig(file, &cfg); err != nil {
 			utils.Fatalf("error loading config file: %v", err)
+		}
+	} else {
+		for _, v := range []string{"aquachain.toml", os.ExpandEnv("$HOME/.aquachain/aquachain.toml"), "/etc/aquachain/aquachain.toml"} {
+			if loadConfig(v, &cfg) == nil {
+				log.Info("Loaded config file", "location", v)
+				break
+			}
 		}
 	}
 
