@@ -118,26 +118,17 @@ func makeConfigNode(ctx *cli.Context) (*node.Node, gethConfig) {
 		Node: defaultNodeConfig(),
 	}
 
-	// find config if exists in working-directory, and ~/.aquachain/aquachain.toml
-	if !ctx.GlobalIsSet(configFileFlag.Name) {
-		defaultDir := node.DefaultDataDir()
-
-		for _, path := range []string{"aquachain.toml", filepath.Join(defaultDir, "aquachain.toml")} {
-			if _, err := os.Stat(path); err == nil {
-				ctx.GlobalSet(configFileFlag.Name, path)
-				break
-			}
-		}
-	}
 	// Load config file.
 	if file := ctx.GlobalString(configFileFlag.Name); file != "" {
 		if err := loadConfig(file, &cfg); err != nil {
+			log.Info("Loaded config file", "location", file)
 			utils.Fatalf("error loading config file: %v", err)
 		}
 	} else {
-		for _, v := range []string{"aquachain.toml", os.ExpandEnv("$HOME/.aquachain/aquachain.toml"), "/etc/aquachain/aquachain.toml"} {
-			if loadConfig(v, &cfg) == nil {
-				log.Info("Loaded config file", "location", v)
+		// find config if exists in working-directory, and ~/.aquachain/aquachain.toml
+		for _, file := range []string{"aquachain.toml", filepath.Join(node.DefaultDataDir(), "aquachain.toml"), "/etc/aquachain/aquachain.toml"} {
+			if loadConfig(file, &cfg) == nil {
+				log.Info("Loaded config file", "location", file)
 				break
 			}
 		}
