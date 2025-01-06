@@ -153,8 +153,7 @@ func init() {
 		// See accountcmd.go:
 		accountCommand,
 
-		// See walletcmd.go
-		walletCommand,
+		// See walletcmd_lite.go
 		paperCommand,
 		// See consolecmd.go:
 		consoleCommand,

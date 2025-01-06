@@ -14,16 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with aquachain. If not, see <http://www.gnu.org/licenses/>.
 
-// +build nousb
-
 package main
 
 import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log"
+	"os"
+	"runtime"
 	"strconv"
 	"strings"
+	"sync/atomic"
 
 	cli "github.com/urfave/cli"
 	"gitlab.com/aquachain/aquachain/cmd/utils"
@@ -31,20 +33,10 @@ import (
 )
 
 var (
-	walletCommand = cli.Command{
-		Name:     "wallet",
-		Usage:    `Launch MyAquaWallet, an offline wallet that connects to this aquachain program via JSON-RPC/HTTP`,
-		Category: "ACCOUNT COMMANDS",
-		Action:   launchmaw,
-		Description: `
-  aquachain wallet
-
-Disabled in this version of Aquachain`,
-	}
 	paperCommand = cli.Command{
 		Name:      "paper",
 		Usage:     `Generate paper wallet keypair`,
-		Flags:     []cli.Flag{utils.JsonFlag, utils.VanityFlag},
+		Flags:     []cli.Flag{utils.JsonFlag, utils.VanityFlag, utils.VanityEndFlag},
 		ArgsUsage: "[number of wallets]",
 		Category:  "ACCOUNT COMMANDS",
 		Action:    paper,
@@ -53,14 +45,10 @@ Generate a number of wallets.`,
 	}
 )
 
-func launchmaw(c *cli.Context) error {
-	return fmt.Errorf("MyAquaWallet is not included in this version of Aquachain")
-}
-
 type paperWallet struct{ Private, Public string }
 
 func paper(c *cli.Context) error {
-
+	log.SetFlags(0)
 	if c.NArg() > 1 {
 		return fmt.Errorf("too many arguments")
 	}
@@ -75,35 +63,67 @@ func paper(c *cli.Context) error {
 		}
 	}
 	wallets := []paperWallet{}
-	vanity := c.String("vanity")
-	for i := 0; i < count; i++ {
-		var wallet paperWallet
-		for {
-			key, err := crypto.GenerateKey()
-			if err != nil {
-				return err
+	vanity := strings.ToLower(c.String("vanity"))
+	vanityend := strings.ToLower(c.String("vanityend"))
+	if !strings.HasPrefix(vanity, "0x") {
+		vanity = "0x" + vanity
+	}
+	// check input
+	combined := vanity[2:] + vanityend
+	if len(combined)%2 != 0 {
+		combined += "0"
+	}
+	_, err = hex.DecodeString(combined)
+	if err != nil {
+		return fmt.Errorf("fatal: must use hex characters: %v", err)
+	}
+	ch := make(chan paperWallet, 100)
+	var found atomic.Int32
+	limit := int32(count)
+	threads := runtime.NumCPU()
+	log.Printf("threads: %d", threads)
+	for thread := 0; thread < threads; thread++ {
+		go func() {
+			for found.Load() < limit {
+				var wallet paperWallet
+				for {
+					key, err := crypto.GenerateKey()
+					if err != nil {
+						panic(err.Error())
+					}
+					addr := crypto.PubkeyToAddress(key.PublicKey).Hex()
+					wallet = paperWallet{
+						Private: hex.EncodeToString(crypto.FromECDSA(key)),
+						Public:  addr,
+					}
+					addr = strings.ToLower(addr)
+					if strings.HasPrefix(addr, vanity) && strings.HasSuffix(addr, vanityend) {
+						ch <- wallet
+					}
+				}
 			}
-
-			addr := crypto.PubkeyToAddress(key.PublicKey)
-			wallet = paperWallet{
-				Private: hex.EncodeToString(crypto.FromECDSA(key)),
-				Public:  "0x" + hex.EncodeToString(addr[:]),
-			}
-			if vanity == "" {
-				break
-			}
-			pubkey := hex.EncodeToString(addr[:])
-			if strings.HasPrefix(pubkey, vanity) {
-				break
-			}
+			close(ch)
+		}()
+	}
+	dojson := c.Bool("json")
+	for wallet := range ch {
+		found.Add(1)
+		if len(combined) > 5 {
+			fmt.Printf("\a") // bell
 		}
-		if c.Bool("json") {
+		if dojson {
 			wallets = append(wallets, wallet)
 		} else {
 			fmt.Println(wallet.Private, wallet.Public)
 		}
+		if found.Load() >= limit {
+			if dojson {
+				fmt.Fprintf(os.Stderr, "\r")
+			}
+			break
+		}
 	}
-	if c.Bool("json") {
+	if dojson {
 		b, _ := json.Marshal(wallets)
 		fmt.Println(string(b))
 	}
