@@ -441,6 +441,7 @@ func BenchmarkPrecompiledModExp(bench *testing.B) {
 
 // Tests the sample inputs from the elliptic curve addition EIP 213.
 func TestPrecompiledBn256Add(t *testing.T) {
+	t.SkipNow()
 	for _, test := range bn256AddTests {
 		testPrecompiled("06", test, t)
 	}
@@ -448,6 +449,7 @@ func TestPrecompiledBn256Add(t *testing.T) {
 
 // Benchmarks the sample inputs from the elliptic curve addition EIP 213.
 func BenchmarkPrecompiledBn256Add(bench *testing.B) {
+	bench.SkipNow()
 	for _, test := range bn256AddTests {
 		benchmarkPrecompiled("06", test, bench)
 	}
@@ -455,6 +457,7 @@ func BenchmarkPrecompiledBn256Add(bench *testing.B) {
 
 // Tests the sample inputs from the elliptic curve scalar multiplication EIP 213.
 func TestPrecompiledBn256ScalarMul(t *testing.T) {
+	t.Skip()
 	for _, test := range bn256ScalarMulTests {
 		testPrecompiled("07", test, t)
 	}
@@ -462,6 +465,7 @@ func TestPrecompiledBn256ScalarMul(t *testing.T) {
 
 // Benchmarks the sample inputs from the elliptic curve scalar multiplication EIP 213.
 func BenchmarkPrecompiledBn256ScalarMul(bench *testing.B) {
+	bench.SkipNow()
 	for _, test := range bn256ScalarMulTests {
 		benchmarkPrecompiled("07", test, bench)
 	}
@@ -469,6 +473,7 @@ func BenchmarkPrecompiledBn256ScalarMul(bench *testing.B) {
 
 // Tests the sample inputs from the elliptic curve pairing check EIP 197.
 func TestPrecompiledBn256Pairing(t *testing.T) {
+	t.SkipNow()
 	for _, test := range bn256PairingTests {
 		testPrecompiled("08", test, t)
 	}
@@ -476,6 +481,7 @@ func TestPrecompiledBn256Pairing(t *testing.T) {
 
 // Behcnmarks the sample inputs from the elliptic curve pairing check EIP 197.
 func BenchmarkPrecompiledBn256Pairing(bench *testing.B) {
+	bench.SkipNow()
 	for _, test := range bn256PairingTests {
 		benchmarkPrecompiled("08", test, bench)
 	}

@@ -18,13 +18,11 @@ package vm
 
 import (
 	"crypto/sha256"
-	"errors"
 	"math/big"
 
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/math"
 	"gitlab.com/aquachain/aquachain/crypto"
-	"gitlab.com/aquachain/aquachain/crypto/bn256"
 	"gitlab.com/aquachain/aquachain/params"
 	"golang.org/x/crypto/ripemd160"
 )
@@ -54,9 +52,17 @@ var PrecompiledContractsByzantium = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{3}): &ripemd160hash{},
 	common.BytesToAddress([]byte{4}): &dataCopy{},
 	common.BytesToAddress([]byte{5}): &bigModExp{},
-	common.BytesToAddress([]byte{6}): &bn256Add{},
-	common.BytesToAddress([]byte{7}): &bn256ScalarMul{},
-	common.BytesToAddress([]byte{8}): &bn256Pairing{},
+	common.BytesToAddress([]byte{6}): &fakebn256Add{},
+	common.BytesToAddress([]byte{7}): &fakebn256ScalarMul{},
+	common.BytesToAddress([]byte{8}): &fakebn256Pairing{},
+}
+
+var PrecompiledContracts2025 = map[common.Address]PrecompiledContract{
+	common.BytesToAddress([]byte{1}): &ecrecover{},
+	common.BytesToAddress([]byte{2}): &sha256hash{},
+	common.BytesToAddress([]byte{3}): &ripemd160hash{},
+	common.BytesToAddress([]byte{4}): &dataCopy{},
+	common.BytesToAddress([]byte{5}): &bigModExp{},
 }
 
 // RunPrecompiledContract runs and evaluates the output of a precompiled contract.
@@ -258,8 +264,10 @@ var (
 
 // errInvalidCurvePoint is returned if a point being unmarshalled as a bn256
 // elliptic curve point is invalid.
-//errInvalidCurvePoint = errors.New("invalid elliptic curve point")
+// errInvalidCurvePoint = errors.New("invalid elliptic curve point")
 )
+
+/*
 
 // newCurvePoint unmarshals a binary blob into a bn256 elliptic curve point,
 // returning it, or an error if the point is invalid.
@@ -280,6 +288,40 @@ func newTwistPoint(blob []byte) (*bn256.G2, error) {
 	}
 	return p, nil
 }
+*/
+
+type fakebn256Add struct{}
+
+func (c *fakebn256Add) RequiredGas(input []byte) uint64 {
+	return params.Bn256AddGas
+}
+
+func (c *fakebn256Add) Run(input []byte) ([]byte, error) {
+	return []byte{}, nil
+}
+
+type fakebn256ScalarMul struct{}
+
+func (c *fakebn256ScalarMul) RequiredGas(input []byte) uint64 {
+	return params.Bn256ScalarMulGas
+}
+
+func (c *fakebn256ScalarMul) Run(input []byte) ([]byte, error) {
+	return []byte{}, nil
+}
+
+type fakebn256Pairing struct{}
+
+func (c *fakebn256Pairing) RequiredGas(input []byte) uint64 {
+	return params.Bn256PairingBaseGas + uint64(len(input)/192)*params.Bn256PairingPerPointGas
+}
+
+func (c *fakebn256Pairing) Run(input []byte) ([]byte, error) {
+	return []byte{}, nil
+}
+
+/*
+
 
 // bn256Add implements a native elliptic curve point addition.
 type bn256Add struct{}
@@ -368,3 +410,4 @@ func (c *bn256Pairing) Run(input []byte) ([]byte, error) {
 	}
 	return false32Byte, nil
 }
+*/

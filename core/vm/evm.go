@@ -151,15 +151,17 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 	}
 
 	var (
-		to       = AccountRef(addr)
-		snapshot = evm.StateDB.Snapshot()
+		to               = AccountRef(addr)
+		snapshot         = evm.StateDB.Snapshot()
+		precompileExists bool
 	)
 	if !evm.StateDB.Exist(addr) {
 		precompiles := PrecompiledContractsHomestead
 		if evm.ChainConfig().IsByzantium(evm.BlockNumber) {
 			precompiles = PrecompiledContractsByzantium
 		}
-		if precompiles[addr] == nil && evm.ChainConfig().IsEIP158(evm.BlockNumber) && value.Sign() == 0 {
+		_, precompileExists = precompiles[addr]
+		if !precompileExists && evm.ChainConfig().IsEIP158(evm.BlockNumber) && value.Sign() == 0 {
 			return nil, gas, nil
 		}
 		evm.StateDB.CreateAccount(addr)
