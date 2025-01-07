@@ -374,10 +374,10 @@ func (s *PrivateAccountAPI) LockAccount(addr common.Address) bool {
 // and release it after the transaction has been submitted to the tx pool
 func (s *PrivateAccountAPI) signTransaction(ctx context.Context, args SendTxArgs, passwd string) (*types.Transaction, error) {
 	// Look up the wallet containing the requested signer
-	account := accounts.Account{Address: args.From}
 	if s.am == nil { // -nokeys
 		return nil, ErrKeystoreDisabled
 	}
+	account := accounts.Account{Address: args.From}
 	wallet, err := s.am.Find(account)
 	if err != nil {
 		return nil, err
@@ -393,7 +393,11 @@ func (s *PrivateAccountAPI) signTransaction(ctx context.Context, args SendTxArgs
 	if config := s.b.ChainConfig(); config.IsEIP155(s.b.CurrentBlock().Number()) {
 		chainID = config.ChainId
 	}
-	return wallet.SignTxWithPassphrase(account, passwd, tx, chainID)
+	signed, err := wallet.SignTxWithPassphrase(account, passwd, tx, chainID)
+	if err != nil {
+		return nil, err
+	}
+	return signed, nil
 }
 
 // SendTransaction will create a transaction from the given arguments and

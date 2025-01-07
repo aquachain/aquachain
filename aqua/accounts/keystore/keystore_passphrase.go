@@ -86,7 +86,7 @@ func (ks keyStorePassphrase) GetKey(addr common.Address, filename, auth string) 
 	}
 	// Make sure we're really operating on the requested key (no swap attacks)
 	if key.Address != addr {
-		return nil, fmt.Errorf("key content mismatch: have account %x, want %x", key.Address, addr)
+		return nil, fmt.Errorf("encrypted key content mismatch: have account %x, want %x", key.Address, addr)
 	}
 	return key, nil
 }

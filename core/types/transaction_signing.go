@@ -59,7 +59,20 @@ func SignTx(tx *Transaction, s Signer, prv *btcec.PrivateKey) (*Transaction, err
 	if err != nil {
 		return nil, fmt.Errorf("could not sign transaction: %w", err)
 	}
-	return tx.WithSignature(s, sig)
+	signed, err := tx.WithSignature(s, sig)
+	if err != nil {
+		return nil, fmt.Errorf("could not attach signature: %w", err)
+	}
+	from, err := s.Sender(signed)
+	if err != nil {
+		return nil, fmt.Errorf("could not recover sender: %w", err)
+	}
+	pubkey := prv.PubKey()
+	expectfrom := crypto.PubkeyToAddress(pubkey)
+	if from != expectfrom {
+		return nil, fmt.Errorf("SignTx: sender mismatch %02x != %02x", from, expectfrom)
+	}
+	return signed, err
 }
 
 // Sender returns the address derived from the signature (V, R, S) using secp256k1
@@ -122,7 +135,14 @@ func NewEIP155Signer(chainId *big.Int) EIP155Signer {
 
 func (s EIP155Signer) Equal(s2 Signer) bool {
 	eip155, ok := s2.(EIP155Signer)
-	return ok && eip155.chainId.Cmp(s.chainId) == 0
+	if !ok {
+		return false
+	}
+	if eip155.chainId.Cmp(s.chainId) == 0 {
+		return true
+	}
+	// log.Printf("mismatched chainId: %v != %v", eip155.chainId, s.chainId)
+	return false
 }
 
 var big8 = big.NewInt(8)
@@ -136,7 +156,7 @@ func (s EIP155Signer) Sender(tx *Transaction) (common.Address, error) {
 	}
 	V := new(big.Int).Sub(tx.data.V, s.chainIdMul)
 	V.Sub(V, big8)
-	return recoverPlain(s.Hash(tx), tx.data.R, tx.data.S, V, true)
+	return recoverPlain(s.Hash(tx), tx.data.R, tx.data.S, V, false)
 }
 
 // WithSignature returns a new transaction with the given signature. This signature
@@ -245,8 +265,8 @@ func recoverPlain(sighash common.Hash, R, S, Vb *big.Int, homestead bool) (commo
 	if len(pub) == 0 || pub[0] != 4 {
 		return common.Address{}, errors.New("invalid public key")
 	}
-	var addr common.Address
-	copy(addr[:], crypto.Keccak256(pub[1:])[12:])
+	// derive the address from the public key
+	addr := common.BytesToAddress(crypto.Keccak256(pub[1:])[12:])
 	return addr, nil
 }
 

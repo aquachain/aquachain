@@ -207,7 +207,10 @@ func Ecdsa2Btcec(priv *ecdsa.PrivateKey) *btcec.PrivateKey {
 	return pk
 }
 func Ecdsa2BtcecPub(pub *ecdsa.PublicKey) *btcec.PublicKey {
-	pubk, _ := btcec.ParsePubKey(FromECDSAPub(pub))
+	pubk, err := btcec.ParsePubKey(FromECDSAPub(pub))
+	if err != nil {
+		log.Printf("error parsing pub key: %v", err)
+	}
 	return pubk
 }
 
