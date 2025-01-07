@@ -198,6 +198,14 @@ func FromECDSAPub(pub *ecdsa.PublicKey) []byte {
 	}
 	return elliptic.Marshal(S256(), pub.X, pub.Y)
 }
+func Ecdsa2Btcec(priv *ecdsa.PrivateKey) *btcec.PrivateKey {
+	pk, _ := btcec.PrivKeyFromBytes(priv.D.Bytes())
+	return pk
+}
+func Ecdsa2BtcecPub(pub *ecdsa.PublicKey) *btcec.PublicKey {
+	pubk, _ := btcec.ParsePubKey(FromECDSAPub(pub))
+	return pubk
+}
 
 // HexToECDSA parses a secp256k1 private key.
 func HexToECDSA(hexkey string) (*btcec.PrivateKey, error) {

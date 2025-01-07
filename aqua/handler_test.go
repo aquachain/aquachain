@@ -306,8 +306,8 @@ func testGetNodeData(t *testing.T, protocol int) {
 	// Define three accounts to simulate transactions with
 	acc1Key, _ := crypto.HexToECDSA("8a1f9a8f95be41cd7ccb6168179afb4504aefe388d1e14474d32c45c72ce7b7a")
 	acc2Key, _ := crypto.HexToECDSA("49a7b37aa6f6645917e7b807e9d1c00d4fa71f18343b0d4122a4d2df64dd6fee")
-	acc1Addr := crypto.PubkeyToAddress(acc1Key.PublicKey)
-	acc2Addr := crypto.PubkeyToAddress(acc2Key.PublicKey)
+	acc1Addr := crypto.PubkeyToAddress(acc1Key.PubKey())
+	acc2Addr := crypto.PubkeyToAddress(acc2Key.PubKey())
 
 	signer := types.HomesteadSigner{}
 	// Create a chain generator with some simple transactions (blatantly stolen from @fjl/chain_markets_test)
@@ -398,8 +398,8 @@ func testGetReceipt(t *testing.T, protocol int) {
 	// Define three accounts to simulate transactions with
 	acc1Key, _ := crypto.HexToECDSA("8a1f9a8f95be41cd7ccb6168179afb4504aefe388d1e14474d32c45c72ce7b7a")
 	acc2Key, _ := crypto.HexToECDSA("49a7b37aa6f6645917e7b807e9d1c00d4fa71f18343b0d4122a4d2df64dd6fee")
-	acc1Addr := crypto.PubkeyToAddress(acc1Key.PublicKey)
-	acc2Addr := crypto.PubkeyToAddress(acc2Key.PublicKey)
+	acc1Addr := crypto.PubkeyToAddress(acc1Key.PubKey())
+	acc2Addr := crypto.PubkeyToAddress(acc2Key.PubKey())
 
 	signer := types.HomesteadSigner{}
 	// Create a chain generator with some simple transactions (blatantly stolen from @fjl/chain_markets_test)

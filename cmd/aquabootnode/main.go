@@ -18,12 +18,12 @@
 package main
 
 import (
-	"crypto/ecdsa"
 	"flag"
 	"fmt"
 	"net"
 	"os"
 
+	"github.com/btcsuite/btcd/btcec/v2"
 	"gitlab.com/aquachain/aquachain/cmd/utils"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/crypto"
@@ -45,7 +45,7 @@ func main() {
 		verbosity   = flag.Int("verbosity", int(log.LvlInfo), "log verbosity (0-9)")
 		vmodule     = flag.String("vmodule", "", "log verbosity pattern")
 		chainid     = flag.Uint64("chainid", 61717561, "chain id for p2p communication (set to 3 for ethereum-like)")
-		nodeKey     *ecdsa.PrivateKey
+		nodeKey     *btcec.PrivateKey
 		err         error
 	)
 	flag.Parse()
@@ -84,7 +84,7 @@ func main() {
 	}
 
 	if *writeAddr {
-		fmt.Printf("%v\n", discover.PubkeyID(&nodeKey.PublicKey))
+		fmt.Printf("%v\n", discover.PubkeyID(nodeKey.PubKey()))
 		os.Exit(0)
 	}
 

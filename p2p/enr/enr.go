@@ -29,12 +29,12 @@ package enr
 
 import (
 	"bytes"
-	"crypto/ecdsa"
 	"errors"
 	"fmt"
 	"io"
 	"sort"
 
+	"github.com/btcsuite/btcd/btcec/v2"
 	"gitlab.com/aquachain/aquachain/crypto"
 	"gitlab.com/aquachain/aquachain/crypto/sha3"
 	"gitlab.com/aquachain/aquachain/rlp"
@@ -221,10 +221,10 @@ func (r *Record) NodeAddr() []byte {
 // Sign signs the record with the given private key. It updates the record's identity
 // scheme, public key and increments the sequence number. Sign returns an error if the
 // encoded record is larger than the size limit.
-func (r *Record) Sign(privkey *ecdsa.PrivateKey) error {
+func (r *Record) Sign(privkey *btcec.PrivateKey) error {
 	r.seq = r.seq + 1
 	r.Set(ID_SECP256k1_KECCAK)
-	r.Set(Secp256k1(privkey.PublicKey))
+	r.Set(Secp256k1(*privkey.PubKey()))
 	return r.signAndEncode(privkey)
 }
 
@@ -236,7 +236,7 @@ func (r *Record) appendPairs(list []interface{}) []interface{} {
 	return list
 }
 
-func (r *Record) signAndEncode(privkey *ecdsa.PrivateKey) error {
+func (r *Record) signAndEncode(privkey *btcec.PrivateKey) error {
 	// Put record elements into a flat list. Leave room for the signature.
 	list := make([]interface{}, 1, len(r.pairs)*2+2)
 	list = r.appendPairs(list)

@@ -17,7 +17,6 @@
 package p2p
 
 import (
-	"crypto/ecdsa"
 	"errors"
 	"math/rand"
 	"net"
@@ -25,6 +24,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/btcsuite/btcd/btcec/v2"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/crypto"
 	"gitlab.com/aquachain/aquachain/crypto/sha3"
@@ -53,7 +53,7 @@ func newTestTransport(id discover.NodeID, fd net.Conn) transport {
 	return &testTransport{id: id, rlpx: wrapped}
 }
 
-func (c *testTransport) doEncHandshake(prv *ecdsa.PrivateKey, dialDest *discover.Node) (discover.NodeID, error) {
+func (c *testTransport) doEncHandshake(prv *btcec.PrivateKey, dialDest *discover.Node) (discover.NodeID, error) {
 	return c.id, nil
 }
 
@@ -371,7 +371,7 @@ func TestServerAtCap(t *testing.T) {
 func TestServerSetupConn(t *testing.T) {
 	id := randomID()
 	srvkey := newkey()
-	srvid := discover.PubkeyID(&srvkey.PublicKey)
+	srvid := discover.PubkeyID(srvkey.PubKey())
 	tests := []struct {
 		dontstart bool
 		tt        *setupTransport
@@ -467,7 +467,7 @@ type setupTransport struct {
 	closeErr error
 }
 
-func (c *setupTransport) doEncHandshake(prv *ecdsa.PrivateKey, dialDest *discover.Node) (discover.NodeID, error) {
+func (c *setupTransport) doEncHandshake(prv *btcec.PrivateKey, dialDest *discover.Node) (discover.NodeID, error) {
 	c.calls += "doEncHandshake,"
 	return c.id, c.encHandshakeErr
 }
@@ -491,7 +491,7 @@ func (c *setupTransport) ReadMsg() (Msg, error) {
 	panic("ReadMsg called on setupTransport")
 }
 
-func newkey() *ecdsa.PrivateKey {
+func newkey() *btcec.PrivateKey {
 	key, err := crypto.GenerateKey()
 	if err != nil {
 		panic("couldn't generate key: " + err.Error())

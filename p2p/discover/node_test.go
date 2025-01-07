@@ -231,7 +231,7 @@ func TestNodeID_recover(t *testing.T) {
 		t.Fatalf("signing error: %v", err)
 	}
 
-	pub := PubkeyID(&prv.PublicKey)
+	pub := PubkeyID(prv.PubKey())
 	recpub, err := recoverNodeID(hash, sig)
 	if err != nil {
 		t.Fatalf("recovery error: %v", err)
@@ -244,8 +244,8 @@ func TestNodeID_recover(t *testing.T) {
 	if err != nil {
 		t.Errorf("Pubkey error: %v", err)
 	}
-	if !reflect.DeepEqual(ecdsa, &prv.PublicKey) {
-		t.Errorf("Pubkey mismatch:\n  got:  %#v\n  want: %#v", ecdsa, &prv.PublicKey)
+	if !reflect.DeepEqual(ecdsa, prv.PubKey) {
+		t.Errorf("Pubkey mismatch:\n  got:  %#v\n  want: %#v", ecdsa, prv.PubKey())
 	}
 }
 

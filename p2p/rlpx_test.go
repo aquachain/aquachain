@@ -40,15 +40,15 @@ import (
 
 func TestSharedSecret(t *testing.T) {
 	prv0, _ := crypto.GenerateKey() // = ecdsa.GenerateKey(crypto.S256(), rand.Reader)
-	pub0 := &prv0.PublicKey
+	pub0 := prv0.PubKey()
 	prv1, _ := crypto.GenerateKey()
-	pub1 := &prv1.PublicKey
+	pub1 := prv1.PubKey()
 
-	ss0, err := ecies.ImportECDSA(prv0).GenerateShared(ecies.ImportECDSAPublic(pub1), sskLen, sskLen)
+	ss0, err := ecies.ImportECDSA(prv0.ToECDSA()).GenerateShared(ecies.ImportECDSAPublic(pub1.ToECDSA()), sskLen, sskLen)
 	if err != nil {
 		return
 	}
-	ss1, err := ecies.ImportECDSA(prv1).GenerateShared(ecies.ImportECDSAPublic(pub0), sskLen, sskLen)
+	ss1, err := ecies.ImportECDSA(prv1.ToECDSA()).GenerateShared(ecies.ImportECDSAPublic(pub0.ToECDSA()), sskLen, sskLen)
 	if err != nil {
 		return
 	}
@@ -96,12 +96,12 @@ func testEncHandshake(token []byte) error {
 		defer func() { output <- r }()
 		defer fd0.Close()
 
-		dest := &discover.Node{ID: discover.PubkeyID(&prv1.PublicKey)}
+		dest := &discover.Node{ID: discover.PubkeyID(prv1.PubKey())}
 		r.id, r.err = c0.doEncHandshake(prv0, dest)
 		if r.err != nil {
 			return
 		}
-		id1 := discover.PubkeyID(&prv1.PublicKey)
+		id1 := discover.PubkeyID(prv1.PubKey())
 		if r.id != id1 {
 			r.err = fmt.Errorf("remote ID mismatch: got %v, want: %v", r.id, id1)
 		}
@@ -115,7 +115,7 @@ func testEncHandshake(token []byte) error {
 		if r.err != nil {
 			return
 		}
-		id0 := discover.PubkeyID(&prv0.PublicKey)
+		id0 := discover.PubkeyID(prv0.PubKey())
 		if r.id != id0 {
 			r.err = fmt.Errorf("remote ID mismatch: got %v, want: %v", r.id, id0)
 		}
@@ -149,11 +149,11 @@ func testEncHandshake(token []byte) error {
 func TestProtocolHandshake(t *testing.T) {
 	var (
 		prv0, _ = crypto.GenerateKey()
-		node0   = &discover.Node{ID: discover.PubkeyID(&prv0.PublicKey), IP: net.IP{1, 2, 3, 4}, TCP: 33}
+		node0   = &discover.Node{ID: discover.PubkeyID(prv0.PubKey()), IP: net.IP{1, 2, 3, 4}, TCP: 33}
 		hs0     = &protoHandshake{Version: 3, ID: node0.ID, Caps: []Cap{{"a", 0}, {"b", 2}}}
 
 		prv1, _ = crypto.GenerateKey()
-		node1   = &discover.Node{ID: discover.PubkeyID(&prv1.PublicKey), IP: net.IP{5, 6, 7, 8}, TCP: 44}
+		node1   = &discover.Node{ID: discover.PubkeyID(prv1.PubKey()), IP: net.IP{5, 6, 7, 8}, TCP: 44}
 		hs1     = &protoHandshake{Version: 3, ID: node1.ID, Caps: []Cap{{"c", 1}, {"d", 3}}}
 
 		wg sync.WaitGroup
@@ -505,12 +505,12 @@ func TestHandshakeForwardCompatibility(t *testing.T) {
 	var (
 		keyA, _       = crypto.HexToECDSA("49a7b37aa6f6645917e7b807e9d1c00d4fa71f18343b0d4122a4d2df64dd6fee")
 		keyB, _       = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
-		pubA          = crypto.FromECDSAPub(&keyA.PublicKey)[1:]
-		pubB          = crypto.FromECDSAPub(&keyB.PublicKey)[1:]
+		pubA          = crypto.FromECDSAPub(keyA.PubKey().ToECDSA())[1:]
+		pubB          = crypto.FromECDSAPub(keyB.PubKey().ToECDSA())[1:]
 		ephA, _       = crypto.HexToECDSA("869d6ecf5211f1cc60418a13b9d870b22959d0c16f02bec714c960dd2298a32d")
 		ephB, _       = crypto.HexToECDSA("e238eb8e04fee6511ab04c6dd3c89ce097b11f25d584863ac2b6d5b35b1847e4")
-		ephPubA       = crypto.FromECDSAPub(&ephA.PublicKey)[1:]
-		ephPubB       = crypto.FromECDSAPub(&ephB.PublicKey)[1:]
+		ephPubA       = crypto.FromECDSAPub(ephA.PubKey().ToECDSA())[1:]
+		ephPubB       = crypto.FromECDSAPub(ephB.PubKey().ToECDSA())[1:]
 		nonceA        = unhex("7e968bba13b6c50e2c4cd7f241cc0d64d1ac25c7f5952df231ac6a2bda8ee5d6")
 		nonceB        = unhex("559aead08264d5795d3909718cdd05abd49572e84fe55590eef31a88a08fdffd")
 		_, _, _, _    = pubA, pubB, ephPubA, ephPubB
@@ -535,7 +535,7 @@ func TestHandshakeForwardCompatibility(t *testing.T) {
 	for _, test := range eip8HandshakeAuthTests {
 		r := bytes.NewReader(unhex(test.input))
 		msg := new(authMsgV4)
-		ciphertext, err := readHandshakeMsg(msg, encAuthMsgLen, keyB, r)
+		ciphertext, err := readHandshakeMsg(msg, encAuthMsgLen, keyB.ToECDSA(), r)
 		if err != nil {
 			t.Errorf("error for input %x:\n  %v", unhex(test.input), err)
 			continue
@@ -554,7 +554,7 @@ func TestHandshakeForwardCompatibility(t *testing.T) {
 		input := unhex(test.input)
 		r := bytes.NewReader(input)
 		msg := new(authRespV4)
-		ciphertext, err := readHandshakeMsg(msg, encAuthRespLen, keyA, r)
+		ciphertext, err := readHandshakeMsg(msg, encAuthRespLen, keyA.ToECDSA(), r)
 		if err != nil {
 			t.Errorf("error for input %x:\n  %v", input, err)
 			continue
@@ -573,7 +573,7 @@ func TestHandshakeForwardCompatibility(t *testing.T) {
 		hs = &encHandshake{
 			initiator:     false,
 			respNonce:     nonceB,
-			randomPrivKey: ecies.ImportECDSA(ephB),
+			randomPrivKey: ecies.ImportECDSA(ephB.ToECDSA()),
 		}
 		authCiphertext     = unhex(eip8HandshakeAuthTests[1].input)
 		authRespCiphertext = unhex(eip8HandshakeRespTests[1].input)
@@ -582,7 +582,7 @@ func TestHandshakeForwardCompatibility(t *testing.T) {
 		wantMAC            = unhex("2ea74ec5dae199227dff1af715362700e989d889d7a493cb0639691efb8e5f98")
 		wantFooIngressHash = unhex("0c7ec6340062cc46f5e9f1e3cf86f8c8c403c5a0964f5df0ebd34a75ddc86db5")
 	)
-	if err := hs.handleAuthMsg(authMsg, keyB); err != nil {
+	if err := hs.handleAuthMsg(authMsg, keyB.ToECDSA()); err != nil {
 		t.Fatalf("handleAuthMsg: %v", err)
 	}
 	derived, err := hs.secrets(authCiphertext, authRespCiphertext)

@@ -18,7 +18,6 @@ package discover
 
 import (
 	"bytes"
-	"crypto/ecdsa"
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
@@ -33,6 +32,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/davecgh/go-spew/spew"
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/crypto"
@@ -64,7 +64,7 @@ type udpTest struct {
 	table               *Table
 	udp                 *udp
 	sent                [][]byte
-	localkey, remotekey *ecdsa.PrivateKey
+	localkey, remotekey *btcec.PrivateKey
 	remoteaddr          *net.UDPAddr
 }
 
@@ -253,7 +253,7 @@ func TestUDP_findnode(t *testing.T) {
 
 	// ensure there's a bond with the test node,
 	// findnode won't be accepted otherwise.
-	test.table.db.updateBondTime(PubkeyID(&test.remotekey.PublicKey), time.Now())
+	test.table.db.updateBondTime(PubkeyID(test.remotekey.PubKey()), time.Now())
 
 	// check that closest neighbors are returned.
 	test.packetIn(nil, findnodePacket, &findnode{Target: testTarget, Expiration: futureExp})
@@ -282,7 +282,7 @@ func TestUDP_findnodeMultiReply(t *testing.T) {
 	// queue a pending findnode request
 	resultc, errc := make(chan []*Node), make(chan error)
 	go func() {
-		rid := PubkeyID(&test.remotekey.PublicKey)
+		rid := PubkeyID(test.remotekey.PubKey())
 		ns, err := test.udp.findnode(rid, test.remoteaddr, testTarget)
 		if err != nil && len(ns) == 0 {
 			errc <- err
@@ -375,7 +375,7 @@ func TestUDP_successfulPing(t *testing.T) {
 	// pong packet.
 	select {
 	case n := <-added:
-		rid := PubkeyID(&test.remotekey.PublicKey)
+		rid := PubkeyID(test.remotekey.PubKey())
 		if n.ID != rid {
 			t.Errorf("node has wrong ID: got %v, want %v", n.ID, rid)
 		}
@@ -482,7 +482,7 @@ var testPackets = []struct {
 func TestForwardCompatibility(t *testing.T) {
 	t.Skip()
 	testkey, _ := crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
-	wantNodeID := PubkeyID(&testkey.PublicKey)
+	wantNodeID := PubkeyID(testkey.PubKey())
 
 	for _, test := range testPackets {
 		input, err := hex.DecodeString(test.input)

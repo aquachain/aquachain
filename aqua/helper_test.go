@@ -20,13 +20,13 @@
 package aqua
 
 import (
-	"crypto/ecdsa"
 	"crypto/rand"
 	"math/big"
 	"sort"
 	"sync"
 	"testing"
 
+	"github.com/btcsuite/btcd/btcec/v2"
 	"gitlab.com/aquachain/aquachain/aqua/downloader"
 	"gitlab.com/aquachain/aquachain/aqua/event"
 	"gitlab.com/aquachain/aquachain/aquadb"
@@ -43,7 +43,7 @@ import (
 
 var (
 	testBankKey, _ = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
-	testBank       = crypto.PubkeyToAddress(testBankKey.PublicKey)
+	testBank       = crypto.PubkeyToAddress(testBankKey.PubKey())
 )
 
 // newTestProtocolManager creates a new protocol manager for testing purposes,
@@ -131,7 +131,7 @@ func (p *testTxPool) SubscribeTxPreEvent(ch chan<- core.TxPreEvent) event.Subscr
 }
 
 // newTestTransaction create a new dummy transaction.
-func newTestTransaction(from *ecdsa.PrivateKey, nonce uint64, datasize int) *types.Transaction {
+func newTestTransaction(from *btcec.PrivateKey, nonce uint64, datasize int) *types.Transaction {
 	tx := types.NewTransaction(nonce, common.Address{}, big.NewInt(0), 100000, big.NewInt(0), make([]byte, datasize))
 	tx, _ = types.SignTx(tx, types.HomesteadSigner{}, from)
 	return tx

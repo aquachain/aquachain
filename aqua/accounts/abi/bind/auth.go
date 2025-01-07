@@ -19,7 +19,6 @@ package bind
 import (
 	"errors"
 	"io"
-	"io/ioutil"
 
 	"github.com/btcsuite/btcd/btcec/v2"
 
@@ -32,7 +31,7 @@ import (
 // NewTransactor is a utility method to easily create a transaction signer from
 // an encrypted json key stream and the associated passphrase.
 func NewTransactor(keyin io.Reader, passphrase string) (*TransactOpts, error) {
-	json, err := ioutil.ReadAll(keyin)
+	json, err := io.ReadAll(keyin)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +47,7 @@ type PrivateKey = btcec.PrivateKey
 // NewKeyedTransactor is a utility method to easily create a transaction signer
 // from a single private key.
 func NewKeyedTransactor(key *PrivateKey) *TransactOpts {
-	keyAddr := crypto.PubkeyToAddress(key.PublicKey)
+	keyAddr := crypto.PubkeyToAddress(key.PubKey())
 	return &TransactOpts{
 		From: keyAddr,
 		Signer: func(signer types.Signer, address common.Address, tx *types.Transaction) (*types.Transaction, error) {

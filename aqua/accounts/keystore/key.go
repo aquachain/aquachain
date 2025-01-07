@@ -17,8 +17,6 @@
 package keystore
 
 import (
-	"crypto/ecdsa"
-	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -130,10 +128,6 @@ func (k *Key) UnmarshalJSON(j []byte) (err error) {
 
 type PrivateKey = btcec.PrivateKey
 
-func ecdsa2btcec(priv *PrivateKey) *btcec.PrivateKey {
-	return (*btcec.PrivateKey)(priv)
-}
-
 func newKeyFromECDSA(privateKeyECDSA *PrivateKey) *Key {
 	id := uuid.NewRandom()
 
@@ -156,21 +150,12 @@ func NewKeyForDirectICAP(rand io.Reader) *Key {
 	return key
 }
 
-func newKey(rand io.Reader) (*Key, error) {
+func newKey(_ io.Reader) (*Key, error) {
 	privateKeyECDSA, err := btcec.NewPrivateKey()
 	if err != nil {
 		return nil, err
 	}
 	return newKeyFromECDSA(privateKeyECDSA), nil
-}
-
-func Ecdsa2Btcec(priv *ecdsa.PrivateKey) *btcec.PrivateKey {
-	key, err := ecdsa.GenerateKey(btcec.S256(), rand.Reader)
-	if err != nil {
-		return nil
-	}
-	pk, _ := btcec.PrivKeyFromBytes(key.D.Bytes())
-	return pk
 }
 
 func storeNewKey(ks keyStore, rand io.Reader, auth string) (*Key, accounts.Account, error) {

@@ -464,5 +464,5 @@ func hexKey(prv string) *PrivateKey {
 	if err != nil {
 		panic(err)
 	}
-	return ImportECDSA(key)
+	return ImportECDSA(key.ToECDSA())
 }

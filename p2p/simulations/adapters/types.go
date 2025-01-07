@@ -17,13 +17,13 @@
 package adapters
 
 import (
-	"crypto/ecdsa"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net"
 	"os"
 
+	"github.com/btcsuite/btcd/btcec/v2"
 	"gitlab.com/aquachain/aquachain/crypto"
 	"gitlab.com/aquachain/aquachain/node"
 	"gitlab.com/aquachain/aquachain/opt/reexec"
@@ -38,7 +38,6 @@ import (
 // * SimNode    - An in-memory node
 // * ExecNode   - A child process node
 // * DockerNode - A Docker container node
-//
 type Node interface {
 	// Addr returns the node's address (e.g. an Enode URL)
 	Addr() []byte
@@ -81,7 +80,7 @@ type NodeConfig struct {
 
 	// PrivateKey is the node's private key which is used by the devp2p
 	// stack to encrypt communications
-	PrivateKey *ecdsa.PrivateKey
+	PrivateKey *btcec.PrivateKey
 
 	// Enable peer events for Msgs
 	EnableMsgEvents bool
@@ -164,7 +163,7 @@ func RandomNodeConfig() *NodeConfig {
 		panic("unable to generate key")
 	}
 	var id discover.NodeID
-	pubkey := crypto.FromECDSAPub(&key.PublicKey)
+	pubkey := crypto.FromECDSAPub(key.PubKey().ToECDSA())
 	copy(id[:], pubkey[1:])
 	return &NodeConfig{
 		ID:         id,

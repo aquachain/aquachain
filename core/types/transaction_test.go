@@ -18,11 +18,11 @@ package types
 
 import (
 	"bytes"
-	"crypto/ecdsa"
 	"encoding/json"
 	"math/big"
 	"testing"
 
+	"github.com/btcsuite/btcd/btcec/v2"
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/crypto"
 	"gitlab.com/aquachain/aquachain/rlp"
@@ -79,9 +79,9 @@ func decodeTx(data []byte) (*Transaction, error) {
 	return t, err
 }
 
-func defaultTestKey() (*ecdsa.PrivateKey, common.Address) {
+func defaultTestKey() (*btcec.PrivateKey, common.Address) {
 	key, _ := crypto.HexToECDSA("45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8")
-	addr := crypto.PubkeyToAddress(key.PublicKey)
+	addr := crypto.PubkeyToAddress(key.PubKey())
 	return key, addr
 }
 
@@ -128,7 +128,7 @@ func TestRecipientNormal(t *testing.T) {
 // the same account.
 func TestTransactionPriceNonceSort(t *testing.T) {
 	// Generate a batch of accounts to start with
-	keys := make([]*ecdsa.PrivateKey, 25)
+	keys := make([]*btcec.PrivateKey, 25)
 	for i := 0; i < len(keys); i++ {
 		keys[i], _ = crypto.GenerateKey()
 	}
@@ -137,7 +137,7 @@ func TestTransactionPriceNonceSort(t *testing.T) {
 	// Generate a batch of transactions with overlapping values, but shifted nonces
 	groups := map[common.Address]Transactions{}
 	for start, key := range keys {
-		addr := crypto.PubkeyToAddress(key.PublicKey)
+		addr := crypto.PubkeyToAddress(key.PubKey())
 		for i := 0; i < 25; i++ {
 			tx, _ := SignTx(NewTransaction(uint64(start+i), common.Address{}, big.NewInt(100), 100, big.NewInt(int64(start+i)), nil), signer, key)
 			groups[addr] = append(groups[addr], tx)

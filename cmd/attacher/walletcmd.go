@@ -68,7 +68,7 @@ func paper(c *cli.Context) error {
 				return err
 			}
 
-			addr := crypto.PubkeyToAddress(key.PublicKey)
+			addr := crypto.PubkeyToAddress(key.PubKey())
 			wallet = paperWallet{
 				Private: hex.EncodeToString(crypto.FromECDSA(key)),
 				Public:  "0x" + hex.EncodeToString(addr[:]),

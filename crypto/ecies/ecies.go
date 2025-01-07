@@ -100,6 +100,12 @@ func ImportECDSA(prv *ecdsa.PrivateKey) *PrivateKey {
 	return &PrivateKey{*pub, prv.D}
 }
 
+// Import an ECDSA private key as an ECIES private key.
+func ImportBtcec(prv *btcec.PrivateKey) *PrivateKey {
+	pub := ImportECDSAPublic(&prv.ToECDSA().PublicKey)
+	return &PrivateKey{*pub, prv.ToECDSA().D}
+}
+
 // Generate an elliptic curve public / private keypair. If params is nil,
 // the recommended default parameters for the key will be chosen.
 func GenerateKey(rand io.Reader, curve elliptic.Curve, params *ECIESParams) (prv *PrivateKey, err error) {

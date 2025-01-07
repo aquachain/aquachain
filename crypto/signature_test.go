@@ -90,7 +90,7 @@ func TestDecompressPubkey(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if uncompressed := FromECDSAPub(key); !bytes.Equal(uncompressed, testpubkey) {
+	if uncompressed := FromECDSAPub(key.ToECDSA()); !bytes.Equal(uncompressed, testpubkey) {
 		t.Errorf("wrong public key result: got %x, want %x", uncompressed, testpubkey)
 	}
 	if _, err := DecompressPubkey(nil); err == nil {
@@ -110,7 +110,8 @@ func TestCompressPubkey(t *testing.T) {
 		X:     math.MustParseBig256("0xe32df42865e97135acfb65f3bae71bdc86f4d49150ad6a440b6f15878109880a"),
 		Y:     math.MustParseBig256("0x0a2b2667f7e725ceea70c673093bf67663e0312623c8e091b13cf2c0f11ef652"),
 	}
-	compressed := CompressPubkey(key)
+	k := Ecdsa2BtcecPub(key)
+	compressed := CompressPubkey(k)
 	if !bytes.Equal(compressed, testpubkeyc) {
 		t.Errorf("wrong public key result: got %x, want %x", compressed, testpubkeyc)
 	}
@@ -124,12 +125,12 @@ func TestPubkeyRandom(t *testing.T) {
 		if err != nil {
 			t.Fatalf("iteration %d: %v", i, err)
 		}
-		pubkey2, err := DecompressPubkey(CompressPubkey(&key.PublicKey))
+		pubkey2, err := DecompressPubkey(CompressPubkey(key.PubKey()))
 		if err != nil {
 			t.Fatalf("iteration %d: %v", i, err)
 		}
-		if !reflect.DeepEqual(key.PublicKey, *pubkey2) {
-			t.Fatalf("iteration %d: keys not equal", i)
+		if !reflect.DeepEqual(key.PubKey(), pubkey2) {
+			t.Fatalf("iteration %d: keys not equal (%v, %v)", i, key.PubKey(), pubkey2)
 		}
 	}
 }

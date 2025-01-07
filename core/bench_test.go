@@ -17,12 +17,12 @@
 package core
 
 import (
-	"crypto/ecdsa"
 	"io/ioutil"
 	"math/big"
 	"os"
 	"testing"
 
+	"github.com/btcsuite/btcd/btcec/v2"
 	"gitlab.com/aquachain/aquachain/aquadb"
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/math"
@@ -73,7 +73,7 @@ func BenchmarkInsertChain_ring1000_diskdb(b *testing.B) {
 var (
 	// This is the content of the genesis block used by the benchmarks.
 	benchRootKey, _ = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
-	benchRootAddr   = crypto.PubkeyToAddress(benchRootKey.PublicKey)
+	benchRootAddr   = crypto.PubkeyToAddress(benchRootKey.PubKey())
 	benchRootFunds  = math.BigPow(2, 100)
 )
 
@@ -91,7 +91,7 @@ func genValueTx(nbytes int) func(int, *BlockGen) {
 }
 
 var (
-	ringKeys  = make([]*ecdsa.PrivateKey, 1000)
+	ringKeys  = make([]*btcec.PrivateKey, 1000)
 	ringAddrs = make([]common.Address, len(ringKeys))
 )
 
@@ -100,7 +100,7 @@ func init() {
 	ringAddrs[0] = benchRootAddr
 	for i := 1; i < len(ringKeys); i++ {
 		ringKeys[i], _ = crypto.GenerateKey()
-		ringAddrs[i] = crypto.PubkeyToAddress(ringKeys[i].PublicKey)
+		ringAddrs[i] = crypto.PubkeyToAddress(ringKeys[i].PubKey())
 	}
 }
 

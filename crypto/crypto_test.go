@@ -18,7 +18,6 @@ package crypto
 
 import (
 	"bytes"
-	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
@@ -26,6 +25,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/btcsuite/btcd/btcec/v2"
 	"gitlab.com/aquachain/aquachain/common"
 )
 
@@ -107,7 +107,7 @@ func TestSign(t *testing.T) {
 		t.Errorf("ECRecover error: %s", err)
 	}
 	pubKey := ToECDSAPub(recoveredPub)
-	recoveredAddr := PubkeyToAddress(*pubKey)
+	recoveredAddr := PubkeyToAddress(pubKey)
 	if addr != recoveredAddr {
 		t.Errorf("Address mismatch: want: %x have: %x", addr, recoveredAddr)
 	}
@@ -117,7 +117,7 @@ func TestSign(t *testing.T) {
 	if err != nil {
 		t.Errorf("ECRecover error: %s", err)
 	}
-	recoveredAddr2 := PubkeyToAddress(*recoveredPub2)
+	recoveredAddr2 := PubkeyToAddress(recoveredPub2)
 	if addr != recoveredAddr2 {
 		t.Errorf("Address mismatch: want: %x have: %x", addr, recoveredAddr2)
 	}
@@ -135,7 +135,7 @@ func TestInvalidSign(t *testing.T) {
 func TestNewContractAddress(t *testing.T) {
 	key, _ := HexToECDSA(testPrivHex)
 	addr := common.HexToAddress(testAddrHex)
-	genAddr := PubkeyToAddress(key.PublicKey)
+	genAddr := PubkeyToAddress(key.PubKey())
 	// sanity check before using addr to create contract address
 	checkAddr(t, genAddr, addr)
 
@@ -151,8 +151,8 @@ func TestLoadECDSAFile(t *testing.T) {
 	keyBytes := common.FromHex(testPrivHex)
 	fileName0 := "test_key0"
 	fileName1 := "test_key1"
-	checkKey := func(k *ecdsa.PrivateKey) {
-		checkAddr(t, PubkeyToAddress(k.PublicKey), common.HexToAddress(testAddrHex))
+	checkKey := func(k *btcec.PrivateKey) {
+		checkAddr(t, PubkeyToAddress(k.PubKey()), common.HexToAddress(testAddrHex))
 		loadedKeyBytes := FromECDSA(k)
 		if !bytes.Equal(loadedKeyBytes, keyBytes) {
 			t.Fatalf("private key mismatch: want: %x have: %x", keyBytes, loadedKeyBytes)

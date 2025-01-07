@@ -17,7 +17,6 @@
 package discover
 
 import (
-	"crypto/ecdsa"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -28,6 +27,7 @@ import (
 	"testing/quick"
 	"time"
 
+	"github.com/btcsuite/btcd/btcec/v2"
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/crypto"
 )
@@ -588,7 +588,7 @@ func (*preminedTestnet) ping(toid NodeID, toaddr *net.UDPAddr) error { return ni
 //	found := 0
 //	for found < bucketSize*10 {
 //		k := newkey()
-//		id := PubkeyID(&k.PublicKey)
+//		id := PubkeyID(&k.PubKey())
 //		sha := crypto.Keccak256Hash(id[:])
 //		ld := logdist(n.targetSha, sha)
 //		if len(n.dists[ld]) < bucketSize {
@@ -659,7 +659,7 @@ func gen(typ interface{}, rand *rand.Rand) interface{} {
 	return v.Interface()
 }
 
-func newkey() *ecdsa.PrivateKey {
+func newkey() *btcec.PrivateKey {
 	key, err := crypto.GenerateKey()
 	if err != nil {
 		panic("couldn't generate key: " + err.Error())
