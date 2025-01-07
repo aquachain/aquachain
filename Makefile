@@ -25,7 +25,6 @@ endif
 maincmd_name := aquachain-$(version)-$(COMMITHASH)$(winextension)
 PWD != pwd
 build_dir ?= ./bin
-default_target=$(build_dir)/aquachain$(winextension)
 INSTALL_DIR ?= $(PREFIX)/bin
 release_dir=release
 hashfn := sha384sum
@@ -84,14 +83,19 @@ LD_FLAGS += -X gitlab.com/aquachain/aquachain/params.VersionMeta=${codename}
 GO_FLAGS += -ldflags '$(LD_FLAGS)'
 
 export GOFILES=$(shell find . -iname '*.go' -type f | grep -v /vendor/ | grep -v /build/)
-# build default target, aquachain for host OS/ARCH
-#bin/aquachain:
-$(default_target): $(GOFILES)
+# build shorttarget, aquachain for host OS/ARCH
+# shorttarget = "bin/aquachain" or "bin/aquachain.exe"
+shorttarget=$(build_dir)/aquachain$(winextension)
+default_arch_target=$(build_dir)/$(maincmd_name)-$(GOOS)-$(GOARCH)$(winextension)
+$(shorttarget): $(GOFILES)
 	CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build -tags '$(GOTAGS) $(tags)' $(GO_FLAGS) -o $@ $(aquachain_cmd)
-	@echo compiled: $(default_target)
-	@sha256sum $(default_target) 2>/dev/null || true
-	@file $(default_target) 2>/dev/null || true
-default: $(build_dir)/$(maincmd_name)-$(GOOS)-$(GOARCH)$(winextension)
+	@echo compiled: $(shorttarget)
+	@sha256sum $(shorttarget) 2>/dev/null || true
+	@file $(shorttarget) 2>/dev/null || true
+default: $(default_arch_target)
+	@echo compiled: $<
+	@sha256sum $< 2>/dev/null || true
+	@file $< 2>/dev/null || true
 bootnode: bin/aquabootnode
 bin/aquabootnode: $(GOFILES)
 	CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build -tags '$(GOTAGS) $(tags)' $(GO_FLAGS) -o bin/aquabootnode ./cmd/aquabootnode
@@ -126,18 +130,20 @@ cross:
 
 help:
 	@echo
-	@echo default target is: "$(default_target)"
+	@echo without args, target is: "$(shorttarget)"
+	@echo 'make build', target is: "$(default_arch_target)"
 	@echo 'make install' target is: "$(INSTALL_DIR)/"
 	@echo using go flags: "$(GO_FLAGS)"
 	@echo
-	@echo to compile quickly, run \'make\' and then \'$(default_target) help\'
+	@echo to compile quickly, run \'make\' and then \'$(shorttarget) help\'
 	@echo to install system-wide, run something like \'sudo make install\'
 	@echo
 	@echo "to cross-compile, try 'make cross' or 'make GOOS=windows'"
 	@echo "to add things left out by default, use tags: 'make cgo=1'"
 	@echo
-	@echo "cross-compile release: 'make clean cross release=1'"
 	@echo "clean compile package release: 'make clean release release=1'"
+	@echo
+	@echo "cross-compile release: 'make clean cross release=1'"
 	@echo "cross-compile all tools: 'make clean cross release=1 cmds=all'"
 	@echo "compile with cgo and usb support: make cgo=1 tags=usb'"
 	@echo
@@ -156,7 +162,7 @@ ifneq (1,$(release))
 endif
 release: checkrelease package hash
 clean:
-	rm -rf $(build_dir) release docs
+	rm -rf bin release docs tmprelease
 hash: release/SHA384.txt
 release/SHA384.txt:
 	$(hashfn) release/*.tar.gz release/*.zip | tee $@
@@ -232,58 +238,58 @@ package: $(release_dir)/$(maincmd_name)-windows-amd64.zip \
 releasetexts := README.md COPYING AUTHORS
 $(release_dir)/$(maincmd_name)-windows-amd64.zip: $(build_dir)/$(maincmd_name)-windows-amd64.exe
 	mkdir -p $(release_dir)
-	rm -rf tmp/${maincmd_name}-windows-${version}
-	mkdir -p tmp/${maincmd_name}-windows-${version}
-	cp -t tmp/${maincmd_name}-windows-${version}/ $^ ${releasetexts}
-	cd tmp && zip -r ../$@ ${maincmd_name}-windows-${version}
+	rm -rf tmprelease/${maincmd_name}-windows-${version}
+	mkdir -p tmprelease/${maincmd_name}-windows-${version}
+	cp -t tmprelease/${maincmd_name}-windows-${version}/ $^ ${releasetexts}
+	cd tmprelease && zip -r ../$@ ${maincmd_name}-windows-${version}
 $(release_dir)/$(maincmd_name)-osx-amd64.zip: $(build_dir)/$(maincmd_name)-osx-amd64
 	mkdir -p $(release_dir)
-	rm -rf tmp/${maincmd_name}-osx-${version}
-	mkdir -p tmp/${maincmd_name}-osx-${version}
-	cp -t tmp/${maincmd_name}-osx-${version}/ $^ ${releasetexts}
-	cd tmp && zip -r ../$@ ${maincmd_name}-osx-${version}
+	rm -rf tmprelease/${maincmd_name}-osx-${version}
+	mkdir -p tmprelease/${maincmd_name}-osx-${version}
+	cp -t tmprelease/${maincmd_name}-osx-${version}/ $^ ${releasetexts}
+	cd tmprelease && zip -r ../$@ ${maincmd_name}-osx-${version}
 $(release_dir)/$(maincmd_name)-linux-amd64.tar.gz: $(build_dir)/$(maincmd_name)-linux-amd64
 	mkdir -p $(release_dir)
-	rm -rf tmp/${maincmd_name}-linux-${version}
-	mkdir -p tmp/${maincmd_name}-linux-${version}
-	cp -t tmp/${maincmd_name}-linux-${version}/ $^ ${releasetexts}
-	cd tmp && tar czf ../$@ ${maincmd_name}-linux-${version}
+	rm -rf tmprelease/${maincmd_name}-linux-${version}
+	mkdir -p tmprelease/${maincmd_name}-linux-${version}
+	cp -t tmprelease/${maincmd_name}-linux-${version}/ $^ ${releasetexts}
+	cd tmprelease && tar czf ../$@ ${maincmd_name}-linux-${version}
 $(release_dir)/$(maincmd_name)-linux-arm.tar.gz: $(build_dir)/$(maincmd_name)-linux-arm
 	mkdir -p $(release_dir)
-	rm -rf tmp/${maincmd_name}-linux-arm-${version}
-	mkdir -p tmp/${maincmd_name}-linux-arm-${version}
-	cp -t tmp/${maincmd_name}-linux-arm-${version}/ $^ ${releasetexts}
-	cd tmp && tar czf ../$@ ${maincmd_name}-linux-arm-${version}
+	rm -rf tmprelease/${maincmd_name}-linux-arm-${version}
+	mkdir -p tmprelease/${maincmd_name}-linux-arm-${version}
+	cp -t tmprelease/${maincmd_name}-linux-arm-${version}/ $^ ${releasetexts}
+	cd tmprelease && tar czf ../$@ ${maincmd_name}-linux-arm-${version}
 $(release_dir)/$(maincmd_name)-linux-arm64.tar.gz: $(build_dir)/$(maincmd_name)-linux-arm64
 	mkdir -p $(release_dir)
-	rm -rf tmp/${maincmd_name}-linux-arm64-${version}
-	mkdir -p tmp/${maincmd_name}-linux-arm64-${version}
-	cp -t tmp/${maincmd_name}-linux-arm64-${version}/ $^ ${releasetexts}
-	cd tmp && tar czf ../$@ ${maincmd_name}-linux-arm64-${version}
+	rm -rf tmprelease/${maincmd_name}-linux-arm64-${version}
+	mkdir -p tmprelease/${maincmd_name}-linux-arm64-${version}
+	cp -t tmprelease/${maincmd_name}-linux-arm64-${version}/ $^ ${releasetexts}
+	cd tmprelease && tar czf ../$@ ${maincmd_name}-linux-arm64-${version}
 $(release_dir)/$(maincmd_name)-linux-riscv64.tar.gz: $(build_dir)/$(maincmd_name)-linux-riscv64
 	mkdir -p $(release_dir)
-	rm -rf tmp/${maincmd_name}-linux-riscv64-${version}
-	mkdir -p tmp/${maincmd_name}-linux-riscv64-${version}
-	cp -t tmp/${maincmd_name}-linux-riscv64-${version}/ $^ ${releasetexts}
-	cd tmp && tar czf ../$@ ${maincmd_name}-linux-riscv64-${version}
+	rm -rf tmprelease/${maincmd_name}-linux-riscv64-${version}
+	mkdir -p tmprelease/${maincmd_name}-linux-riscv64-${version}
+	cp -t tmprelease/${maincmd_name}-linux-riscv64-${version}/ $^ ${releasetexts}
+	cd tmprelease && tar czf ../$@ ${maincmd_name}-linux-riscv64-${version}
 $(release_dir)/$(maincmd_name)-freebsd-amd64.tar.gz: $(build_dir)/$(maincmd_name)-freebsd-amd64
 	mkdir -p $(release_dir)
-	rm -rf tmp/${maincmd_name}-freebsd-${version}
-	mkdir -p tmp/${maincmd_name}-freebsd-${version}
-	cp -t tmp/${maincmd_name}-freebsd-${version}/ $^ ${releasetexts}
-	cd tmp && tar czf ../$@ ${maincmd_name}-freebsd-${version}
+	rm -rf tmprelease/${maincmd_name}-freebsd-${version}
+	mkdir -p tmprelease/${maincmd_name}-freebsd-${version}
+	cp -t tmprelease/${maincmd_name}-freebsd-${version}/ $^ ${releasetexts}
+	cd tmprelease && tar czf ../$@ ${maincmd_name}-freebsd-${version}
 $(release_dir)/$(maincmd_name)-openbsd-amd64.tar.gz: $(build_dir)/$(maincmd_name)-openbsd-amd64
 	mkdir -p $(release_dir)
-	rm -rf tmp/${maincmd_name}-openbsd-${version}
-	mkdir -p tmp/${maincmd_name}-openbsd-${version}
-	cp -t tmp/${maincmd_name}-openbsd-${version}/ $^ ${releasetexts}
-	cd tmp && tar czf ../$@ ${maincmd_name}-openbsd-${version}
+	rm -rf tmprelease/${maincmd_name}-openbsd-${version}
+	mkdir -p tmprelease/${maincmd_name}-openbsd-${version}
+	cp -t tmprelease/${maincmd_name}-openbsd-${version}/ $^ ${releasetexts}
+	cd tmprelease && tar czf ../$@ ${maincmd_name}-openbsd-${version}
 $(release_dir)/$(maincmd_name)-netbsd-amd64.tar.gz: $(build_dir)/$(maincmd_name)-netbsd-amd64
 	mkdir -p $(release_dir)
-	rm -rf tmp/${maincmd_name}-netbsd-${version}
-	mkdir -p tmp/${maincmd_name}-netbsd-${version}
-	cp -t tmp/${maincmd_name}-netbsd-${version}/ $^ ${releasetexts}
-	cd tmp && tar czf ../$@ ${maincmd_name}-netbsd-${version}
+	rm -rf tmprelease/${maincmd_name}-netbsd-${version}
+	mkdir -p tmprelease/${maincmd_name}-netbsd-${version}
+	cp -t tmprelease/${maincmd_name}-netbsd-${version}/ $^ ${releasetexts}
+	cd tmprelease && tar czf ../$@ ${maincmd_name}-netbsd-${version}
 
 .PHONY += hash
 

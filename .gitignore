@@ -59,6 +59,6 @@ profile.cov
 
 
 /docs
-tmp
+/tmp*
 /*.toml
 /*.txt
