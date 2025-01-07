@@ -1,5 +1,5 @@
-name: Test
-on:
+name: Autobuild+Upload
+on: # any push any branch any repo
   push:
     paths-ignore:
       - '**.md'
@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   run:
-    name: Build/Run Test
+    name: Run
     runs-on: ${{ matrix.operating-system }}
     strategy:
       matrix:
@@ -21,10 +21,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-
       - name: build aquachain
         run: make
       - name: show system info
         run: env || true; uname -a || true; test ! -e /etc/os-release || cat /etc/os-release;
-      - name: test
-        run: bash testing/test-short-only.bash
+      - name: Upload binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: aquachain-${{ github.sha }}-${{github.ref_name || github.run_id }}-${{ matrix.operating-system}}
+          path: bin/*

@@ -1,15 +1,15 @@
 name: Publish docs via GitHub Pages
 on:
   push:
-    repositories:
-      - aquachain/aquachain
     branches:
       - master
+      - docstest
 
 jobs:
   build:
     name: Deploy docs
     runs-on: ubuntu-latest
+    if: github.repository_owner == 'aquachain'
     steps:
       - name: Checkout main
         uses: actions/checkout@v2

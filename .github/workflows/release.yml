@@ -2,8 +2,6 @@
 name: Release
 on:
   push:
-    repositories:
-      - aquachain/aquachain
     tags:
     - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
   # on:
@@ -16,16 +14,17 @@ jobs:
   generate:
     name: Create release-artifacts
     runs-on: ubuntu-latest
+    if: github.repository_owner == 'aquachain'
     steps:
       - name: Checkout the repository
         uses: actions/checkout@master
       - name: Generate
         uses: skx/github-action-build@master
         with:
-          builder: .github/release
+          builder: .github/release # this is a shell script in *this* repo that builds ./release/* archives
       - name: Publish release
         id: release
-        uses: ncipollo/release-action@v1.11.1
+        uses: ncipollo/release-action@v1.14.0 # https://github.com/ncipollo/release-action?tab=readme-ov-file#action-inputs
         with:
           allowUpdates: true
           artifactErrorsFailBuild: false
