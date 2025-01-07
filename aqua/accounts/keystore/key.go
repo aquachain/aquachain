@@ -17,8 +17,8 @@
 package keystore
 
 import (
-	"bytes"
 	"crypto/ecdsa"
+	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -29,6 +29,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/pborman/uuid"
 	"gitlab.com/aquachain/aquachain/aqua/accounts"
 	"gitlab.com/aquachain/aquachain/common"
@@ -45,7 +46,7 @@ type Key struct {
 	Address common.Address
 	// we only store privkey as pubkey/address can be derived from it
 	// privkey in this struct is always in plaintext
-	PrivateKey *ecdsa.PrivateKey
+	PrivateKey *btcec.PrivateKey
 }
 
 type keyStore interface {
@@ -94,7 +95,7 @@ type cipherparamsJSON struct {
 func (k *Key) MarshalJSON() (j []byte, err error) {
 	jStruct := plainKeyJSON{
 		hex.EncodeToString(k.Address[:]),
-		hex.EncodeToString(crypto.FromECDSA(k.PrivateKey)),
+		hex.EncodeToString(k.PrivateKey.Serialize()),
 		k.Id.String(),
 		version,
 	}
@@ -127,11 +128,18 @@ func (k *Key) UnmarshalJSON(j []byte) (err error) {
 	return nil
 }
 
-func newKeyFromECDSA(privateKeyECDSA *ecdsa.PrivateKey) *Key {
+type PrivateKey = btcec.PrivateKey
+
+func ecdsa2btcec(priv *PrivateKey) *btcec.PrivateKey {
+	return (*btcec.PrivateKey)(priv)
+}
+
+func newKeyFromECDSA(privateKeyECDSA *PrivateKey) *Key {
 	id := uuid.NewRandom()
+
 	key := &Key{
 		Id:         id,
-		Address:    crypto.PubkeyToAddress(privateKeyECDSA.PublicKey),
+		Address:    crypto.PubkeyToAddress(privateKeyECDSA.PubKey()),
 		PrivateKey: privateKeyECDSA,
 	}
 	return key
@@ -141,17 +149,7 @@ func newKeyFromECDSA(privateKeyECDSA *ecdsa.PrivateKey) *Key {
 // into the Direct ICAP spec. for simplicity and easier compatibility with other libs, we
 // retry until the first byte is 0.
 func NewKeyForDirectICAP(rand io.Reader) *Key {
-	randBytes := make([]byte, 64)
-	_, err := rand.Read(randBytes)
-	if err != nil {
-		panic("key generation: could not read from random source: " + err.Error())
-	}
-	reader := bytes.NewReader(randBytes)
-	privateKeyECDSA, err := ecdsa.GenerateKey(crypto.S256(), reader)
-	if err != nil {
-		panic("key generation: ecdsa.GenerateKey failed: " + err.Error())
-	}
-	key := newKeyFromECDSA(privateKeyECDSA)
+	key, _ := newKey(rand)
 	if !strings.HasPrefix(key.Address.Hex(), "0x00") {
 		return NewKeyForDirectICAP(rand)
 	}
@@ -159,11 +157,20 @@ func NewKeyForDirectICAP(rand io.Reader) *Key {
 }
 
 func newKey(rand io.Reader) (*Key, error) {
-	privateKeyECDSA, err := ecdsa.GenerateKey(crypto.S256(), rand)
+	privateKeyECDSA, err := btcec.NewPrivateKey()
 	if err != nil {
 		return nil, err
 	}
 	return newKeyFromECDSA(privateKeyECDSA), nil
+}
+
+func Ecdsa2Btcec(priv *ecdsa.PrivateKey) *btcec.PrivateKey {
+	key, err := ecdsa.GenerateKey(btcec.S256(), rand.Reader)
+	if err != nil {
+		return nil
+	}
+	pk, _ := btcec.PrivKeyFromBytes(key.D.Bytes())
+	return pk
 }
 
 func storeNewKey(ks keyStore, rand io.Reader, auth string) (*Key, accounts.Account, error) {

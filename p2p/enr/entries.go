@@ -17,12 +17,11 @@
 package enr
 
 import (
-	"crypto/ecdsa"
 	"fmt"
 	"io"
 	"net"
 
-	"gitlab.com/aquachain/aquachain/crypto"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"gitlab.com/aquachain/aquachain/rlp"
 )
 
@@ -115,13 +114,13 @@ func (v *IP6) DecodeRLP(s *rlp.Stream) error {
 }
 
 // Secp256k1 is the "secp256k1" key, which holds a public key.
-type Secp256k1 ecdsa.PublicKey
+type Secp256k1 secp256k1.PublicKey
 
 func (v Secp256k1) ENRKey() string { return "secp256k1" }
 
 // EncodeRLP implements rlp.Encoder.
 func (v Secp256k1) EncodeRLP(w io.Writer) error {
-	return rlp.Encode(w, crypto.CompressPubkey((*ecdsa.PublicKey)(&v)))
+	return rlp.Encode(w, (*secp256k1.PublicKey)(&v).SerializeCompressed())
 }
 
 // DecodeRLP implements rlp.Decoder.
@@ -130,11 +129,11 @@ func (v *Secp256k1) DecodeRLP(s *rlp.Stream) error {
 	if err != nil {
 		return err
 	}
-	pk, err := crypto.DecompressPubkey(buf)
+	pub, err := secp256k1.ParsePubKey(buf)
 	if err != nil {
 		return err
 	}
-	*v = (Secp256k1)(*pk)
+	*v = Secp256k1(*pub)
 	return nil
 }
 

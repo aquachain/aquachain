@@ -123,7 +123,7 @@ func EncryptKey(key *Key, auth string, scryptN, scryptP int) ([]byte, error) {
 		return nil, err
 	}
 	encryptKey := derivedKey[:16]
-	keyBytes := math.PaddedBigBytes(key.PrivateKey.D, 32)
+	keyBytes := math.PaddedBigBytes(key.PrivateKey.ToECDSA().D, 32)
 
 	iv := randentropy.GetEntropyCSPRNG(aes.BlockSize) // 16
 	cipherText, err := aesCTRXOR(encryptKey, keyBytes, iv)
@@ -193,7 +193,7 @@ func DecryptKey(keyjson []byte, auth string) (*Key, error) {
 
 	return &Key{
 		Id:         uuid.UUID(keyId),
-		Address:    crypto.PubkeyToAddress(key.PublicKey),
+		Address:    crypto.PubkeyToAddress(key.PubKey()),
 		PrivateKey: key,
 	}, nil
 }

@@ -18,7 +18,6 @@
 package utils
 
 import (
-	"crypto/ecdsa"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -29,6 +28,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/btcsuite/btcd/btcec/v2"
 	cli "github.com/urfave/cli"
 	"gitlab.com/aquachain/aquachain/aqua"
 	"gitlab.com/aquachain/aquachain/aqua/accounts"
@@ -553,7 +553,7 @@ func setNodeKey(ctx *cli.Context, cfg *p2p.Config) {
 	var (
 		hex  = ctx.GlobalString(NodeKeyHexFlag.Name)
 		file = ctx.GlobalString(NodeKeyFileFlag.Name)
-		key  *ecdsa.PrivateKey
+		key  *btcec.PrivateKey
 		err  error
 	)
 	switch {

@@ -35,6 +35,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/golang/snappy"
 	"gitlab.com/aquachain/aquachain/crypto"
 	"gitlab.com/aquachain/aquachain/crypto/ecies"
@@ -174,15 +175,15 @@ func readProtocolHandshake(rw MsgReader, our *protoHandshake) (*protoHandshake, 
 	return &hs, nil
 }
 
-func (t *rlpx) doEncHandshake(prv *ecdsa.PrivateKey, dial *discover.Node) (discover.NodeID, error) {
+func (t *rlpx) doEncHandshake(prv *btcec.PrivateKey, dial *discover.Node) (discover.NodeID, error) {
 	var (
 		sec secrets
 		err error
 	)
 	if dial == nil {
-		sec, err = receiverEncHandshake(t.fd, prv)
+		sec, err = receiverEncHandshake(t.fd, prv.ToECDSA())
 	} else {
-		sec, err = initiatorEncHandshake(t.fd, prv, dial.ID)
+		sec, err = initiatorEncHandshake(t.fd, prv.ToECDSA(), dial.ID)
 	}
 	if err != nil {
 		return discover.NodeID{}, err
@@ -317,10 +318,11 @@ func (h *encHandshake) makeAuthMsg(prv *ecdsa.PrivateKey) (*authMsgV4, error) {
 		return nil, err
 	}
 	// Generate random keypair to for ECDH.
-	h.randomPrivKey, err = ecies.GenerateKey(rand.Reader, crypto.S256(), nil)
+	ke, err := btcec.NewPrivateKey()
 	if err != nil {
 		return nil, err
 	}
+	h.randomPrivKey = ecies.PrivateKeyFromBtcec(ke)
 
 	// Sign known message: static-shared-secret ^ nonce
 	token, err := h.staticSharedSecret(prv)
@@ -328,7 +330,7 @@ func (h *encHandshake) makeAuthMsg(prv *ecdsa.PrivateKey) (*authMsgV4, error) {
 		return nil, err
 	}
 	signed := xor(token, h.initNonce)
-	signature, err := crypto.Sign(signed, h.randomPrivKey.ExportECDSA())
+	signature, err := crypto.Sign(signed, ke)
 	if err != nil {
 		return nil, err
 	}
@@ -517,10 +519,10 @@ func importPublicKey(pubKey []byte) (*ecies.PublicKey, error) {
 	}
 	// TODO: fewer pointless conversions
 	pub := crypto.ToECDSAPub(pubKey65)
-	if pub.X == nil {
+	if pub == nil {
 		return nil, fmt.Errorf("invalid public key")
 	}
-	return ecies.ImportECDSAPublic(pub), nil
+	return ecies.ImportECDSAPublic(pub.ToECDSA()), nil
 }
 
 func exportPubkey(pub *ecies.PublicKey) []byte {

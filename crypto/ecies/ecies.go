@@ -39,6 +39,8 @@ import (
 	"hash"
 	"io"
 	"math/big"
+
+	"github.com/btcsuite/btcd/btcec/v2"
 )
 
 var (
@@ -77,6 +79,12 @@ func ImportECDSAPublic(pub *ecdsa.PublicKey) *PublicKey {
 type PrivateKey struct {
 	PublicKey
 	D *big.Int
+}
+
+func PrivateKeyFromBtcec(prv *btcec.PrivateKey) *PrivateKey {
+	ecds := prv.ToECDSA()
+	pub := ImportECDSAPublic(&ecds.PublicKey)
+	return &PrivateKey{*pub, ecds.D}
 }
 
 // Export an ECIES private key as an ECDSA private key.

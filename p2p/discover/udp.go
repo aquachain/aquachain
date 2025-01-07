@@ -19,12 +19,12 @@ package discover
 import (
 	"bytes"
 	"container/list"
-	"crypto/ecdsa"
 	"errors"
 	"fmt"
 	"net"
 	"time"
 
+	"github.com/btcsuite/btcd/btcec/v2"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/crypto"
 	"gitlab.com/aquachain/aquachain/p2p/netutil"
@@ -169,7 +169,7 @@ type conn interface {
 type udp struct {
 	conn        conn
 	netrestrict *netutil.Netlist
-	priv        *ecdsa.PrivateKey
+	priv        *PrivateKey
 	ourEndpoint rpcEndpoint
 
 	addpending chan *pending
@@ -227,7 +227,7 @@ type ReadPacket struct {
 // Config holds Table-related settings.
 type Config struct {
 	// These settings are required and configure the UDP listener:
-	PrivateKey *ecdsa.PrivateKey
+	PrivateKey *PrivateKey
 
 	// These settings are optional:
 	AnnounceAddr *net.UDPAddr      // local address announced in the DHT
@@ -267,7 +267,7 @@ func newUDP(c conn, cfg Config) (*Table, *udp, error) {
 	}
 	// TODO: separate TCP port
 	udp.ourEndpoint = makeEndpoint(realaddr, uint16(realaddr.Port))
-	tab, err := newTable(udp, PubkeyID(&cfg.PrivateKey.PublicKey), realaddr, cfg.NodeDBPath, cfg.Bootnodes)
+	tab, err := newTable(udp, PubkeyID(cfg.PrivateKey.PubKey()), realaddr, cfg.NodeDBPath, cfg.Bootnodes)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -522,7 +522,9 @@ func (t *udp) write(toaddr *net.UDPAddr, what string, packet []byte) error {
 	return err
 }
 
-func encodePacket(netcompat bool, priv *ecdsa.PrivateKey, ptype byte, req interface{}) (packet, hash []byte, err error) {
+type PrivateKey = btcec.PrivateKey
+
+func encodePacket(netcompat bool, priv *PrivateKey, ptype byte, req interface{}) (packet, hash []byte, err error) {
 	b := new(bytes.Buffer)
 	b.Write(headSpace)
 	b.WriteByte(ptype)

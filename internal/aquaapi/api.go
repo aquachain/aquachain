@@ -450,7 +450,8 @@ func (s *PrivateAccountAPI) SignTransaction(ctx context.Context, args SendTxArgs
 // safely used to calculate a signature from.
 //
 // The hash is calculated as
-//   keccak256("\x19Aquachain Signed Message:\n"${message length}${message}).
+//
+//	keccak256("\x19Aquachain Signed Message:\n"${message length}${message}).
 //
 // This gives context to the signed message and prevents signing of transactions.
 // TODO: changeme
@@ -512,7 +513,7 @@ func (s *PrivateAccountAPI) EcRecover(ctx context.Context, data, sig hexutil.Byt
 		return common.Address{}, err
 	}
 	pubKey := crypto.ToECDSAPub(rpk)
-	recoveredAddr := crypto.PubkeyToAddress(*pubKey)
+	recoveredAddr := crypto.PubkeyToAddress(pubKey)
 	return recoveredAddr, nil
 }
 

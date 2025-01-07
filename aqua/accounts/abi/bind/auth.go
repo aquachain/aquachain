@@ -17,10 +17,11 @@
 package bind
 
 import (
-	"crypto/ecdsa"
 	"errors"
 	"io"
 	"io/ioutil"
+
+	"github.com/btcsuite/btcd/btcec/v2"
 
 	"gitlab.com/aquachain/aquachain/aqua/accounts/keystore"
 	"gitlab.com/aquachain/aquachain/common"
@@ -42,9 +43,11 @@ func NewTransactor(keyin io.Reader, passphrase string) (*TransactOpts, error) {
 	return NewKeyedTransactor(key.PrivateKey), nil
 }
 
+type PrivateKey = btcec.PrivateKey
+
 // NewKeyedTransactor is a utility method to easily create a transaction signer
 // from a single private key.
-func NewKeyedTransactor(key *ecdsa.PrivateKey) *TransactOpts {
+func NewKeyedTransactor(key *PrivateKey) *TransactOpts {
 	keyAddr := crypto.PubkeyToAddress(key.PublicKey)
 	return &TransactOpts{
 		From: keyAddr,

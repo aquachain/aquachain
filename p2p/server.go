@@ -18,13 +18,13 @@
 package p2p
 
 import (
-	"crypto/ecdsa"
 	"errors"
 	"fmt"
 	"net"
 	"sync"
 	"time"
 
+	"github.com/btcsuite/btcd/btcec/v2"
 	"gitlab.com/aquachain/aquachain/aqua/event"
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/log"
@@ -55,7 +55,7 @@ var errServerStopped = errors.New("server stopped")
 // Config holds Server options.
 type Config struct {
 	// This field must be set to a valid secp256k1 private key.
-	PrivateKey *ecdsa.PrivateKey `toml:"-"`
+	PrivateKey *btcec.PrivateKey `toml:"-"`
 
 	// MaxPeers is the maximum number of peers that can be
 	// connected. It must be greater than zero.
@@ -201,7 +201,7 @@ type conn struct {
 
 type transport interface {
 	// The two handshakes.
-	doEncHandshake(prv *ecdsa.PrivateKey, dialDest *discover.Node) (discover.NodeID, error)
+	doEncHandshake(prv *btcec.PrivateKey, dialDest *discover.Node) (discover.NodeID, error)
 	doProtoHandshake(our *protoHandshake) (*protoHandshake, error)
 	// The MsgReadWriter can only be used after the encryption
 	// handshake has completed. The code uses conn.id to track this
@@ -321,12 +321,12 @@ func (srv *Server) makeSelf(listener net.Listener, ntab discoverTable) *discover
 	if ntab == nil {
 		// Inbound connections disabled, use zero address.
 		if listener == nil {
-			return &discover.Node{IP: net.ParseIP("0.0.0.0"), ID: discover.PubkeyID(&srv.PrivateKey.PublicKey)}
+			return &discover.Node{IP: net.ParseIP("0.0.0.0"), ID: discover.PubkeyID(srv.PrivateKey.PubKey())}
 		}
 		// Otherwise inject the listener address too
 		addr := listener.Addr().(*net.TCPAddr)
 		return &discover.Node{
-			ID:  discover.PubkeyID(&srv.PrivateKey.PublicKey),
+			ID:  discover.PubkeyID(srv.PrivateKey.PubKey()),
 			IP:  addr.IP,
 			TCP: uint16(addr.Port),
 		}
@@ -465,7 +465,7 @@ func (srv *Server) Start() (err error) {
 	dialer := newDialState(srv.StaticNodes, srv.BootstrapNodes, srv.ntab, dynPeers, srv.NetRestrict)
 
 	// handshake
-	srv.ourHandshake = &protoHandshake{Version: baseProtocolVersion, Name: srv.Name, ID: discover.PubkeyID(&srv.PrivateKey.PublicKey)}
+	srv.ourHandshake = &protoHandshake{Version: baseProtocolVersion, Name: srv.Name, ID: discover.PubkeyID(srv.PrivateKey.PubKey())}
 	for _, p := range srv.Protocols {
 		srv.ourHandshake.Caps = append(srv.ourHandshake.Caps, p.cap())
 	}
