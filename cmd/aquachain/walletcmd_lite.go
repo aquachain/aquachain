@@ -17,6 +17,7 @@
 package main
 
 import (
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -36,16 +37,12 @@ var (
 	paperCommand = cli.Command{
 		Name:      "paper",
 		Usage:     `Generate paper wallet keypair`,
-		Flags:     []cli.Flag{utils.JsonFlag, utils.VanityFlag, utils.VanityEndFlag, paperbeepflag, paperthreads},
+		Flags:     []cli.Flag{utils.JsonFlag, utils.VanityFlag, utils.VanityEndFlag, paperthreads},
 		ArgsUsage: "[number of wallets]",
 		Category:  "ACCOUNT COMMANDS",
 		Action:    paper,
 		Description: `
 Generate a number of wallets.`,
-	}
-	paperbeepflag = cli.StringFlag{
-		Name:  "nobeep",
-		Usage: "disable beep on paper vanity address generation",
 	}
 	paperthreads = cli.IntFlag{
 		Name:  "threads",
@@ -53,7 +50,10 @@ Generate a number of wallets.`,
 	}
 )
 
-type paperWallet struct{ Private, Public string }
+type paperWallet struct {
+	Private string `json:"private_key"`
+	Public  string `json:"address"`
+}
 
 func paper(c *cli.Context) error {
 	log.SetFlags(0)
@@ -70,7 +70,6 @@ func paper(c *cli.Context) error {
 			return err
 		}
 	}
-	wallets := []paperWallet{}
 	vanity := strings.ToLower(c.String("vanity"))
 	vanityend := strings.ToLower(c.String("vanityend"))
 	if !strings.HasPrefix(vanity, "0x") {
@@ -93,9 +92,11 @@ func paper(c *cli.Context) error {
 		threads = runtime.NumCPU()
 	}
 	log.Printf("threads: %d", threads)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	for thread := 0; thread < threads; thread++ {
 		go func() {
-			for found.Load() < limit {
+			for found.Load() < limit && ctx.Err() == nil {
 				var wallet paperWallet
 				for {
 					key, err := crypto.GenerateKey()
@@ -109,34 +110,31 @@ func paper(c *cli.Context) error {
 					}
 					addr = strings.ToLower(addr)
 					if strings.HasPrefix(addr, vanity) && strings.HasSuffix(addr, vanityend) {
-						ch <- wallet
+						select {
+						case <-ctx.Done():
+							return
+						case ch <- wallet:
+						}
 					}
 				}
 			}
-			close(ch)
+			if ctx.Err() == nil {
+				cancel()
+				close(ch)
+			}
 		}()
 	}
 	dojson := c.Bool("json")
 	for wallet := range ch {
 		found.Add(1)
-		if len(combined) > 5 {
-			fmt.Printf("\a") // bell for higher difficulty generation
-		}
 		if dojson {
-			wallets = append(wallets, wallet)
+			json.NewEncoder(os.Stdout).Encode(wallet)
 		} else {
 			fmt.Println(wallet.Private, wallet.Public)
 		}
 		if found.Load() >= limit {
-			if dojson {
-				fmt.Fprintf(os.Stderr, "\r")
-			}
 			break
 		}
-	}
-	if dojson {
-		b, _ := json.Marshal(wallets)
-		fmt.Println(string(b))
 	}
 	return nil
 }
