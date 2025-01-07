@@ -1,9 +1,10 @@
 name: Publish docs via GitHub Pages
 on:
   push:
+    repositories:
+      - aquachain/aquachain
     branches:
       - master
-      - dev
 
 jobs:
   build:
@@ -19,4 +20,4 @@ jobs:
         with:
           deploy_key: ${{ secrets.DKEY }}
           publish_dir: ./docs
-          external_repository: aquachain/docs
+          external_repository: aquachain/docs # for https://aquachain.github.io/docs
