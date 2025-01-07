@@ -36,12 +36,20 @@ var (
 	paperCommand = cli.Command{
 		Name:      "paper",
 		Usage:     `Generate paper wallet keypair`,
-		Flags:     []cli.Flag{utils.JsonFlag, utils.VanityFlag, utils.VanityEndFlag},
+		Flags:     []cli.Flag{utils.JsonFlag, utils.VanityFlag, utils.VanityEndFlag, paperbeepflag, paperthreads},
 		ArgsUsage: "[number of wallets]",
 		Category:  "ACCOUNT COMMANDS",
 		Action:    paper,
 		Description: `
 Generate a number of wallets.`,
+	}
+	paperbeepflag = cli.StringFlag{
+		Name:  "nobeep",
+		Usage: "disable beep on paper vanity address generation",
+	}
+	paperthreads = cli.IntFlag{
+		Name:  "threads",
+		Usage: "number of threads to use for paper wallet generation",
 	}
 )
 
@@ -80,7 +88,10 @@ func paper(c *cli.Context) error {
 	ch := make(chan paperWallet, 100)
 	var found atomic.Int32
 	limit := int32(count)
-	threads := runtime.NumCPU()
+	threads := c.Int("threads")
+	if threads == 0 {
+		threads = runtime.NumCPU()
+	}
 	log.Printf("threads: %d", threads)
 	for thread := 0; thread < threads; thread++ {
 		go func() {
@@ -91,7 +102,7 @@ func paper(c *cli.Context) error {
 					if err != nil {
 						panic(err.Error())
 					}
-					addr := crypto.PubkeyToAddress(key.PublicKey).Hex()
+					addr := crypto.PubkeyToAddress(key.PubKey()).Hex()
 					wallet = paperWallet{
 						Private: hex.EncodeToString(crypto.FromECDSA(key)),
 						Public:  addr,
@@ -109,7 +120,7 @@ func paper(c *cli.Context) error {
 	for wallet := range ch {
 		found.Add(1)
 		if len(combined) > 5 {
-			fmt.Printf("\a") // bell
+			fmt.Printf("\a") // bell for higher difficulty generation
 		}
 		if dojson {
 			wallets = append(wallets, wallet)
