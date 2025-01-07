@@ -17,6 +17,7 @@
 package core
 
 import (
+	"errors"
 	"math/big"
 	"math/rand"
 	"testing"
@@ -1162,7 +1163,7 @@ func TestEIP155Transition(t *testing.T) {
 		}
 	})
 	_, err := blockchain.InsertChain(blocks)
-	if err != types.ErrInvalidChainId {
+	if !errors.Is(err, types.ErrInvalidChainId) {
 		t.Error("expected error:", types.ErrInvalidChainId)
 	}
 }
