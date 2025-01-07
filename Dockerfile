@@ -1,5 +1,5 @@
 # Build AquaChain in a stock Go builder container
-FROM golang:latest-alpine as builder
+FROM golang:1-alpine AS builder
 
 RUN apk add --no-cache make musl-dev git
 
@@ -16,5 +16,5 @@ FROM alpine:latest
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /usr/local/bin/aquachain /usr/local/bin/
 
-EXPOSE 8543 8544 21303 21303/udp 21303/udp
+EXPOSE 8543 8544 21303/tcp 21303/udp
 CMD ["aquachain"]

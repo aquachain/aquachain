@@ -1,0 +1,7 @@
+/bin
+/tmp
+/*.log
+/*.txt
+/*.toml
+/tmp*
+

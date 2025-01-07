@@ -324,3 +324,5 @@ docs: mkdocs.yml Documentation/*/*
 	@echo building docs
 	mkdocs build
 
+docker:
+	docker build -t aquachain/aquachain .
