@@ -261,16 +261,20 @@ func (ac *accountCache) scanAccounts() error {
 		// Parse the address.
 		key.Address = ""
 		err = json.NewDecoder(buf).Decode(&key)
-		addr := common.HexToAddress(key.Address)
-		switch {
-		case err != nil:
-			log.Debug("Failed to decode keystore key", "path", path, "err", err)
-		case (addr == common.Address{}):
-			log.Debug("Failed to decode keystore key", "path", path, "err", "missing or zero address")
-		default:
-			return &accounts.Account{Address: addr, URL: accounts.URL{Scheme: KeyStoreScheme, Path: path}}
+		if err != nil {
+			log.Warn("Failed to decode json keystore file", "path", path, "err", err)
+			return nil
 		}
-		return nil
+		if key.Address == "" {
+			log.Warn("Failed to decode keystore key", "path", path, "err", "missing address")
+			return nil
+		}
+		addr := common.HexToAddress(key.Address)
+		if (addr == common.Address{}) {
+			log.Warn("Failed to decode keystore key", "path", path, "err", "missing or zero address")
+			return nil
+		}
+		return &accounts.Account{Address: addr, URL: accounts.URL{Scheme: KeyStoreScheme, Path: path}}
 	}
 	// Process all the file diffs
 	start := time.Now()

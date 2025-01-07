@@ -24,7 +24,6 @@ import (
 
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/crypto"
-	"gitlab.com/aquachain/aquachain/params"
 	"gitlab.com/aquachain/aquachain/rlp"
 )
 
@@ -200,65 +199,9 @@ func TestRecoverPaper(t *testing.T) {
 	}
 
 }
-func TestOtherInValid(t *testing.T) {
-	t.SkipNow()
-	/*
-		{
-			from: "0xbbc1595b297e6330d91561bd6a3d23901822ff4b",
-			gas: 21000,
-			gasPrice: 1000000000,
-			nonce: 1,
-			to: "0xbbc1595b297e6330d91561bd6a3d23901822ff4b",
-			value: "1000000000000000000"
-		  }
-		 {
-			raw: "0xf86f01843b9aca0082520894bbc1595b297e6330d91561bd6a3d23901822ff4b880de0b6b3a76400008084075b7896a0661499471a5eaed8e3517199afc4c30743df4352c52f1862ea6e65e5a5e3a7e9a056bcd9fb01b03bc7c918e352c4ce0c56d97cfa4206e4196852e11a4767cb9aa8",
-			tx: {
-			  gas: "0x5208",
-			  gasPrice: "0x3b9aca00",
-			  hash: "0x7feaff7ef852f6b1dae12b847b087732e33f572f8ec84a3e17cc76aab5e377be",
-			  input: "0x",
-			  nonce: "0x1",
-			  r: "0x661499471a5eaed8e3517199afc4c30743df4352c52f1862ea6e65e5a5e3a7e9",
-			  s: "0x56bcd9fb01b03bc7c918e352c4ce0c56d97cfa4206e4196852e11a4767cb9aa8",
-			  to: "0xbbc1595b297e6330d91561bd6a3d23901822ff4b",
-			  v: "0x75b7896",
-			  value: "0xde0b6b3a7640000"
-			}
-		  }
-	*/
-
-	raw := "f86f01843b9aca0082520894bbc1595b297e6330d91561bd6a3d23901822ff4b880de0b6b3a76400008084075b7896a0661499471a5eaed8e3517199afc4c30743df4352c52f1862ea6e65e5a5e3a7e9a056bcd9fb01b03bc7c918e352c4ce0c56d97cfa4206e4196852e11a4767cb9aa8"
-	tx := new(Transaction)
-	if err := rlp.DecodeBytes(common.Hex2Bytes(raw), tx); err != nil {
-		t.Fatalf("decoding tx: %v", err)
-	}
-
-	log.Printf("parsed tx: %s", tx.String()) // should cache the sender
-	if tx.Hash().Hex() != "0x7feaff7ef852f6b1dae12b847b087732e33f572f8ec84a3e17cc76aab5e377be" {
-		t.Fatalf("hash mismatch: want: %s have: %s", "0x7feaff7ef852f6b1dae12b847b087732e33f572f8ec84a3e17cc76aab5e377be", tx.Hash().Hex())
-	}
-	signer := NewEIP155Signer(params.MainnetChainConfig.ChainId)
-	from, err := Sender(signer, tx)
-	if err != nil {
-		t.Fatalf("unexpected sender error: %v", err)
-	}
-	if from.Hex() != "0xBBC1595b297E6330d91561bD6A3d23901822ff4b" {
-		t.Fatalf("expected sender %s got %s", "0xBBC1595b297E6330d91561bD6A3d23901822ff4b", from.Hex())
-	}
-
-	if from != *tx.To() {
-		t.Errorf("expected sender %s got %s", tx.To().Hex(), from.Hex())
-	}
-	// tx := NewTransaction(1, common.HexToAddress("0xbbc1595b297e6330d91561bd6a3d23901822ff4b"), big.NewInt(1000000000000000000), 21000, big.NewInt(1000000000), nil)
-	// tx.WithSignature(signer, sig)
-	// tx, err = SignTx(tx, NewEIP155Signer(big.NewInt(1)), common.HexToECDSA("0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"))
-	// if hash := tx.Hash(); hash.Hex() != "0x7feaff7ef852f6b1dae12b847b087732e33f572f8ec84a3e17cc76aab5e377be" {
-	// 	t.Errorf("hash mismatch: want: %s have: %s", "0x7feaff7ef852f6b1dae12b847b087732e33f572f8ec84a3e17cc76aab5e377be", hash.Hex())
-	// }
-}
 
 func TestOtherValid(t *testing.T) {
+	// {
 	// chainId:  61717561,
 	// from:     "0x29f3f6bd8d7d37400a138a9f9fab7f7c2ca847d0",
 	// gas:      21000,
@@ -266,6 +209,7 @@ func TestOtherValid(t *testing.T) {
 	// nonce:    1,
 	// to:       "0x29f3f6bd8d7d37400a138a9f9fab7f7c2ca847d0",
 	// value:    "1000000000000000000"
+	// }
 	// {
 	// 	raw: "0xf86f01843b9aca008252089429f3f6bd8d7d37400a138a9f9fab7f7c2ca847d0880de0b6b3a76400008084075b7896a0cfb22a5ed7e2a1ef0a8d768823c00d845f6bd4df06b56de4ac9c306b9861bf03a04b76a486e0934b07b21868b364038a884c174bbcbbbe181f726837637909ef88",
 	// 	tx: {

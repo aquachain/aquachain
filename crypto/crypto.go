@@ -238,15 +238,12 @@ func BytesToKey(b []byte) (*btcec.PrivateKey, error) {
 	if priv.ToECDSA().D.Cmp(secp256k1_N) >= 0 {
 		return nil, errors.New("private key is too large")
 	}
-
 	if priv.ToECDSA().D.Cmp(common.Big0) == 0 {
 		return nil, errors.New("private key is 0")
 	}
 	if priv.ToECDSA().D.Cmp(common.Big1) == 0 {
 		return nil, errors.New("private key is 1")
 	}
-
-	log.Printf("key: %02x", priv.Serialize())
 	return priv, nil
 }
 
