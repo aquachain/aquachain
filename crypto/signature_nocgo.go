@@ -20,7 +20,6 @@ import (
 	"crypto/elliptic"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/btcsuite/btcd/btcec/v2"
 	becdsa "github.com/btcsuite/btcd/btcec/v2/ecdsa"
@@ -38,6 +37,9 @@ func Ecrecover(hash, sig []byte) ([]byte, error) {
 
 // SigToPub returns the public key that created the given signature.
 func SigToPub(hash, sig []byte) (*btcec.PublicKey, error) {
+	if len(sig) != 65 {
+		return nil, fmt.Errorf("signature length is not 65 bytes (%d)", len(sig))
+	}
 	// Convert to btcec input format with 'recovery id' v at the beginning.
 	btcsig := make([]byte, 65)
 	btcsig[0] = sig[64] + 27
@@ -75,190 +77,12 @@ func Sign(hash []byte, prv0 *btcec.PrivateKey) ([]byte, error) {
 	}
 	// Convert to Ethereum signature format with 'recovery id' v at the end.
 	v := sig[0] - 27
-	log.Printf("v: %d", v)
+	if v != 0 && v != 1 {
+		return nil, fmt.Errorf("invalid signature recovery id: %d", v)
+	}
 	copy(sig, sig[1:])
 	sig[64] = v
 	return sig, nil
-}
-
-// Errors returned by canonicalPadding.
-var (
-	errNegativeValue          = errors.New("value may be interpreted as negative")
-	errExcessivelyPaddedValue = errors.New("value is excessively padded")
-)
-
-// canonicalPadding checks whether a big-endian encoded integer could
-// possibly be misinterpreted as a negative number (even though OpenSSL
-// treats all numbers as unsigned), or if there is any unnecessary
-// leading zero padding.
-func canonicalPadding(b []byte) error {
-	switch {
-	case b[0]&0x80 == 0x80:
-		return errNegativeValue
-	case len(b) > 1 && b[0] == 0x00 && b[1]&0x80 != 0x80:
-		return errExcessivelyPaddedValue
-	default:
-		return nil
-	}
-}
-
-const (
-	// MinSigLen is the minimum length of a DER encoded signature and is when both R
-	// and S are 1 byte each.
-	// 0x30 + <1-byte> + 0x02 + 0x01 + <byte> + 0x2 + 0x01 + <byte>
-	MinSigLen = 8
-
-	// MaxSigLen is the maximum length of a DER encoded signature and is
-	// when both R and S are 33 bytes each.  It is 33 bytes because a
-	// 256-bit integer requires 32 bytes and an additional leading null byte
-	// might be required if the high bit is set in the value.
-	//
-	// 0x30 + <1-byte> + 0x02 + 0x21 + <33 bytes> + 0x2 + 0x21 + <33 bytes>
-	MaxSigLen = 72
-)
-
-func parseSig(sigStr []byte, der bool) (*becdsa.Signature, error) {
-	// Originally this code used encoding/asn1 in order to parse the
-	// signature, but a number of problems were found with this approach.
-	// Despite the fact that signatures are stored as DER, the difference
-	// between go's idea of a bignum (and that they have sign) doesn't agree
-	// with the openssl one (where they do not). The above is true as of
-	// Go 1.1. In the end it was simpler to rewrite the code to explicitly
-	// understand the format which is this:
-	// 0x30 <length of whole message> <0x02> <length of R> <R> 0x2
-	// <length of S> <S>.
-
-	// The signature must adhere to the minimum and maximum allowed length.
-	totalSigLen := len(sigStr)
-	if totalSigLen < MinSigLen {
-		return nil, errors.New("malformed signature: too short")
-	}
-	if der && totalSigLen > MaxSigLen {
-		return nil, errors.New("malformed signature: too long")
-	}
-
-	// 0x30
-	index := 0
-	if sigStr[index] != 0x30 {
-		return nil, fmt.Errorf("malformed signature: no header magic (got %02x want 0x30)", sigStr[index])
-	}
-	index++
-	// length of remaining message
-	siglen := sigStr[index]
-	index++
-
-	// siglen should be less than the entire message and greater than
-	// the minimal message size.
-	if int(siglen+2) > len(sigStr) || int(siglen+2) < MinSigLen {
-		return nil, errors.New("malformed signature: bad length")
-	}
-	// trim the slice we're working on so we only look at what matters.
-	sigStr = sigStr[:siglen+2]
-
-	// 0x02
-	if sigStr[index] != 0x02 {
-		return nil,
-			errors.New("malformed signature: no 1st int marker")
-	}
-	index++
-
-	// Length of signature R.
-	rLen := int(sigStr[index])
-	// must be positive, must be able to fit in another 0x2, <len> <s>
-	// hence the -3. We assume that the length must be at least one byte.
-	index++
-	if rLen <= 0 || rLen > len(sigStr)-index-3 {
-		return nil, errors.New("malformed signature: bogus R length")
-	}
-
-	// Then R itself.
-	rBytes := sigStr[index : index+rLen]
-	if der {
-		switch err := canonicalPadding(rBytes); err {
-		case errNegativeValue:
-			return nil, errors.New("signature R is negative")
-		case errExcessivelyPaddedValue:
-			return nil, errors.New("signature R is excessively padded")
-		}
-	}
-
-	// Strip leading zeroes from R.
-	for len(rBytes) > 0 && rBytes[0] == 0x00 {
-		rBytes = rBytes[1:]
-	}
-
-	// R must be in the range [1, N-1].  Notice the check for the maximum number
-	// of bytes is required because SetByteSlice truncates as noted in its
-	// comment so it could otherwise fail to detect the overflow.
-	var r btcec.ModNScalar
-	if len(rBytes) > 32 {
-		str := "invalid signature: R is larger than 256 bits"
-		return nil, errors.New(str)
-	}
-	if overflow := r.SetByteSlice(rBytes); overflow {
-		str := "invalid signature: R >= group order"
-		return nil, errors.New(str)
-	}
-	if r.IsZero() {
-		str := "invalid signature: R is 0"
-		return nil, errors.New(str)
-	}
-	index += rLen
-	// 0x02. length already checked in previous if.
-	if sigStr[index] != 0x02 {
-		return nil, errors.New("malformed signature: no 2nd int marker")
-	}
-	index++
-
-	// Length of signature S.
-	sLen := int(sigStr[index])
-	index++
-	// S should be the rest of the string.
-	if sLen <= 0 || sLen > len(sigStr)-index {
-		return nil, errors.New("malformed signature: bogus S length")
-	}
-
-	// Then S itself.
-	sBytes := sigStr[index : index+sLen]
-	if der {
-		switch err := canonicalPadding(sBytes); err {
-		case errNegativeValue:
-			return nil, errors.New("signature S is negative")
-		case errExcessivelyPaddedValue:
-			return nil, errors.New("signature S is excessively padded")
-		}
-	}
-
-	// Strip leading zeroes from S.
-	for len(sBytes) > 0 && sBytes[0] == 0x00 {
-		sBytes = sBytes[1:]
-	}
-
-	// S must be in the range [1, N-1].  Notice the check for the maximum number
-	// of bytes is required because SetByteSlice truncates as noted in its
-	// comment so it could otherwise fail to detect the overflow.
-	var s btcec.ModNScalar
-	if len(sBytes) > 32 {
-		str := "invalid signature: S is larger than 256 bits"
-		return nil, errors.New(str)
-	}
-	if overflow := s.SetByteSlice(sBytes); overflow {
-		str := "invalid signature: S >= group order"
-		return nil, errors.New(str)
-	}
-	if s.IsZero() {
-		str := "invalid signature: S is 0"
-		return nil, errors.New(str)
-	}
-	index += sLen
-
-	// sanity check length parsing
-	if index != len(sigStr) {
-		return nil, fmt.Errorf("malformed signature: bad final length %v != %v",
-			index, len(sigStr))
-	}
-
-	return becdsa.NewSignature(&r, &s), nil
 }
 
 // VerifySignature checks that the given public key created signature over hash.
@@ -268,20 +92,20 @@ func VerifySignature(pubkey, hash, signature []byte) bool {
 	if len(signature) != 64 {
 		return false
 	}
-	sig, err := becdsa.ParseSignature(signature)
-	if err != nil {
-		log.Printf("signature parse error: %v", err)
+	var r, s btcec.ModNScalar
+	// check if truncated
+	if r.SetByteSlice(signature[:32]) || s.SetByteSlice(signature[32:]) {
 		return false
 	}
-
 	key, err := btcec.ParsePubKey(pubkey)
 	if err != nil {
 		return false
 	}
-	// // Reject malleable signatures. libsecp256k1 does this check but btcec doesn't.
-	// if sig.S.Cmp(secp256k1_halfN) > 0 {
-	// 	return false
-	// }
+	// Reject malleable signatures. libsecp256k1 does this check but decred doesn't.
+	if s.IsOverHalfOrder() {
+		return false
+	}
+	sig := becdsa.NewSignature(&r, &s)
 	return sig.Verify(hash, key)
 }
 

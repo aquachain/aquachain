@@ -284,18 +284,15 @@ func GenerateKey() (*btcec.PrivateKey, error) {
 // ValidateSignatureValues verifies whether the signature values are valid with
 // the given chain rules. The v value is assumed to be either 0 or 1.
 func ValidateSignatureValues(v byte, r, s *big.Int, homestead bool) bool {
+	if v != 0 && v != 1 {
+		return false
+	}
 	if r.Cmp(common.Big1) < 0 || s.Cmp(common.Big1) < 0 {
-		log.Printf("negative sig")
 		return false
 	}
 	// reject upper range of s values (ECDSA malleability)
 	// see discussion in secp256k1/libsecp256k1/include/secp256k1.h
 	if homestead && s.Cmp(secp256k1_halfN) > 0 {
-		log.Printf("mall sig")
-		return false
-	}
-	if v != 0 && v != 1 {
-		log.Printf("invalid v: %d", v)
 		return false
 	}
 	// Frontier: allow s to be in full N range

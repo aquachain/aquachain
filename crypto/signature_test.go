@@ -19,6 +19,7 @@ package crypto
 import (
 	"bytes"
 	"crypto/ecdsa"
+	"log"
 	"reflect"
 	"testing"
 
@@ -45,13 +46,8 @@ func TestEcrecover(t *testing.T) {
 }
 
 func TestVerifySignature(t *testing.T) {
+	log.SetFlags(log.Lshortfile)
 	sig := testsig[:len(testsig)-1] // remove recovery id
-	if !VerifySignature(testpubkey, testmsg, sig) {
-		t.Errorf("can't verify signature with uncompressed key")
-	}
-	if !VerifySignature(testpubkeyc, testmsg, sig) {
-		t.Errorf("can't verify signature with compressed key")
-	}
 
 	if VerifySignature(nil, testmsg, sig) {
 		t.Errorf("signature valid with no key")
@@ -73,6 +69,14 @@ func TestVerifySignature(t *testing.T) {
 	if VerifySignature(wrongkey, testmsg, sig) {
 		t.Errorf("signature valid with with wrong public key")
 	}
+
+	if !VerifySignature(testpubkey, testmsg, sig) {
+		t.Errorf("can't verify signature with uncompressed key")
+	}
+	if !VerifySignature(testpubkeyc, testmsg, sig) {
+		t.Errorf("can't verify signature with compressed key")
+	}
+
 }
 
 // This test checks that VerifySignature rejects malleable signatures with s > N/2.
