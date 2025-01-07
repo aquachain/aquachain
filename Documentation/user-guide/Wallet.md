@@ -14,7 +14,7 @@ When you're setting up a wallet, be sure to:
 ## Metamask
 
 Metamask is a cryptocurrency wallet available for IOS, Android and as a Chrome extension. Once installed, create a new wallet. Make sure to securely backup your private key. Anyone with access to your private keys gains access to your crypto.
-By default, MetaMask creates a wallet on Ethereum Mainnet network. To use AQUA with MetaMask, you need to add AquaChain network. Go to Settings->Networks->Add a network and fill following fields
+By default, MetaMask creates a wallet on Ethereum Mainnet network. To use AQUA with MetaMask, you need to add Aquachain network. Go to Settings->Networks->Add a network and fill following fields
 
 ```
 Network Name: Aquachain Mainnet

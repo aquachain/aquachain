@@ -1,4 +1,4 @@
-# Build AquaChain in a stock Go builder container
+# Build Aquachain in a stock Go builder container
 FROM golang:1-alpine AS builder
 
 RUN apk add --no-cache make musl-dev git
@@ -10,7 +10,7 @@ RUN cd /aquachain && make && cd / && \
     mv /aquachain/bin/aquachain* /usr/local/bin/aquachain && \
     rm -rf /aquachain
 
-# Pull AquaChain into a second stage deploy alpine container
+# Pull Aquachain into a second stage deploy alpine container
 FROM alpine:latest
 
 RUN apk add --no-cache ca-certificates

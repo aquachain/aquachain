@@ -2410,7 +2410,7 @@ var isJson = function (str) {
 };
 
 /**
- * Returns true if given string is a valid AquaChain block header bloom.
+ * Returns true if given string is a valid Aquachain block header bloom.
  *
  * @method isBloom
  * @param {String} hex encoded bloom filter
