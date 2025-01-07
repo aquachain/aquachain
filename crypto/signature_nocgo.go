@@ -44,7 +44,7 @@ func SigToPub(hash, sig []byte) (*btcec.PublicKey, error) {
 	copy(btcsig[1:], sig)
 	pub, _, err := becdsa.RecoverCompact(btcsig, hash)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("SigToPub failed to recover public key: %v", err)
 	}
 	return pub, nil
 
@@ -59,19 +59,23 @@ func SigToPub(hash, sig []byte) (*btcec.PublicKey, error) {
 //
 // The produced signature is in the [R || S || V] format where V is 0 or 1.
 func Sign(hash []byte, prv0 *btcec.PrivateKey) ([]byte, error) {
+	if prv0 == nil {
+		return nil, errors.New("private key is nil")
+	}
 	if len(hash) != 32 {
 		return nil, fmt.Errorf("hash is required to be exactly 32 bytes (%d)", len(hash))
 	}
-	prv := prv0.ToECDSA()
-	if prv.Curve != btcec.S256() {
-		return nil, fmt.Errorf("private key curve is not secp256k1")
-	}
+	// prv := prv0.ToECDSA()
+	// if prv.Curve != btcec.S256() {
+	// 	return nil, fmt.Errorf("private key curve is not secp256k1")
+	// }
 	sig := becdsa.SignCompact(prv0, hash, false)
 	if len(sig) != 65 {
 		return nil, fmt.Errorf("signature length is not 65 bytes (%d)", len(sig))
 	}
 	// Convert to Ethereum signature format with 'recovery id' v at the end.
 	v := sig[0] - 27
+	log.Printf("v: %d", v)
 	copy(sig, sig[1:])
 	sig[64] = v
 	return sig, nil

@@ -57,7 +57,7 @@ func SignTx(tx *Transaction, s Signer, prv *btcec.PrivateKey) (*Transaction, err
 	h := s.Hash(tx)
 	sig, err := crypto.Sign(h[:], prv)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not sign transaction: %w", err)
 	}
 	return tx.WithSignature(s, sig)
 }
@@ -85,7 +85,7 @@ func Sender(signer Signer, tx *Transaction) (common.Address, error) {
 
 	addr, err := signer.Sender(tx)
 	if err != nil {
-		return common.Address{}, err
+		return common.Address{}, fmt.Errorf("could not recover sender from %T: %w", signer, err)
 	}
 	tx.from.Store(sigCache{signer: signer, from: addr})
 	return addr, nil
@@ -227,6 +227,7 @@ func recoverPlain(sighash common.Hash, R, S, Vb *big.Int, homestead bool) (commo
 		return common.Address{}, ErrInvalidSig
 	}
 	V := byte(Vb.Uint64() - 27)
+
 	if !crypto.ValidateSignatureValues(V, R, S, homestead) {
 		return common.Address{}, ErrInvalidSig
 	}

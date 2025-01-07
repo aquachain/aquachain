@@ -59,11 +59,13 @@ func TestWaitDeployed(t *testing.T) {
 
 		// Create the transaction.
 		tx := types.NewContractCreation(0, big.NewInt(0), test.gas, big.NewInt(1), common.FromHex(test.code))
-		tx, _ = types.SignTx(tx, types.HomesteadSigner{}, testKey)
+		tx, err := types.SignTx(tx, types.HomesteadSigner{}, testKey)
+		if err != nil {
+			t.Fatalf("test %q: failed to sign transaction: %v", name, err)
+		}
 
 		// Wait for it to get mined in the background.
 		var (
-			err     error
 			address common.Address
 			mined   = make(chan struct{})
 			ctx     = context.Background()
@@ -74,7 +76,9 @@ func TestWaitDeployed(t *testing.T) {
 		}()
 
 		// Send and mine the transaction.
-		backend.SendTransaction(ctx, tx)
+		if err := backend.SendTransaction(ctx, tx); err != nil {
+			t.Fatalf("test %q: failed to send transaction: %v", name, err)
+		}
 		backend.Commit()
 
 		select {

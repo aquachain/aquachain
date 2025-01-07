@@ -243,7 +243,7 @@ func (tx *Transaction) AsMessage(s Signer) (Message, error) {
 func (tx *Transaction) WithSignature(signer Signer, sig []byte) (*Transaction, error) {
 	r, s, v, err := signer.SignatureValues(tx, sig)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to recover signature values: %v", err)
 	}
 	cpy := &Transaction{data: tx.data}
 	cpy.data.R, cpy.data.S, cpy.data.V = r, s, v

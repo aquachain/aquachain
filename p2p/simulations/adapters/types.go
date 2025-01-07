@@ -142,7 +142,7 @@ func (n *NodeConfig) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return err
 		}
-		privKey, err := crypto.ToECDSA(key)
+		privKey, err := crypto.BytesToKey(key)
 		if err != nil {
 			return err
 		}

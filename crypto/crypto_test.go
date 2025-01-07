@@ -23,6 +23,7 @@ import (
 	"io/ioutil"
 	"math/big"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -43,10 +44,10 @@ func TestKeccak256Hash(t *testing.T) {
 
 func TestToECDSAErrors(t *testing.T) {
 	if _, err := HexToECDSA("0000000000000000000000000000000000000000000000000000000000000000"); err == nil {
-		t.Fatal("HexToECDSA should've returned error")
+		t.Fatal("HexToECDSA 0000 should've returned error")
 	}
 	if _, err := HexToECDSA("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); err == nil {
-		t.Fatal("HexToECDSA should've returned error")
+		t.Fatal("HexToECDSA ffff should've returned error")
 	}
 }
 
@@ -54,6 +55,9 @@ func TestArgon2id(t *testing.T) {
 	a := []byte("aquachain")
 	fmt.Printf("\nArgonated: 0x%x\n", Argon2idA(a))
 	hex2hash := common.HexToHash(fmt.Sprintf("0x%x", Argon2idA(a)))
+	if hex2hash.Hex() != "0x1090f3198e771bbe9b3fc9f1291ce5a4744d796e0f099aa02cb681ede75209c0" {
+		t.Errorf("argon2 params mismatch")
+	}
 	bytes2hash := common.BytesToHash(Argon2idA(a))
 	if hex2hash.Big().Cmp(bytes2hash.Big()) != 0 {
 		t.Errorf("Unequal")
@@ -94,13 +98,24 @@ func BenchmarkArgon2idC(b *testing.B) {
 }
 
 func TestSign(t *testing.T) {
-	key, _ := HexToECDSA(testPrivHex)
+	key, err := HexToECDSA(testPrivHex)
+	if err != nil {
+		t.Errorf("HexToECDSA error: %s", err)
+		return
+	}
 	addr := common.HexToAddress(testAddrHex)
-
+	addr2 := PubkeyToAddress(key.PubKey())
+	if addr != addr2 {
+		t.Errorf("Address mismatch: want: %s have: %s", addr.Hex(), addr2.Hex())
+	}
+	if strings.ToLower(addr.Hex()[2:]) != testAddrHex {
+		t.Errorf("Address mismatch: want: %s have: %s", addr.Hex()[2:], testAddrHex)
+	}
 	msg := Keccak256([]byte("foo"))
 	sig, err := Sign(msg, key)
 	if err != nil {
 		t.Errorf("Sign error: %s", err)
+		return
 	}
 	recoveredPub, err := Ecrecover(msg, sig)
 	if err != nil {
