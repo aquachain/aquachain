@@ -238,58 +238,58 @@ package: $(release_dir)/$(maincmd_name)-windows-amd64.zip \
 releasetexts := README.md COPYING AUTHORS
 $(release_dir)/$(maincmd_name)-windows-amd64.zip: $(build_dir)/$(maincmd_name)-windows-amd64.exe
 	mkdir -p $(release_dir)
-	rm -rf tmprelease/${maincmd_name}-windows-${version}
-	mkdir -p tmprelease/${maincmd_name}-windows-${version}
-	cp -t tmprelease/${maincmd_name}-windows-${version}/ $^ ${releasetexts}
-	cd tmprelease && zip -r ../$@ ${maincmd_name}-windows-${version}
+	rm -rf tmprelease/${maincmd_name}-windows
+	mkdir -p tmprelease/${maincmd_name}-windows
+	cp -t tmprelease/${maincmd_name}-windows $^ ${releasetexts}
+	cd tmprelease && zip -r ../$@ ${maincmd_name}-windows
 $(release_dir)/$(maincmd_name)-osx-amd64.zip: $(build_dir)/$(maincmd_name)-osx-amd64
 	mkdir -p $(release_dir)
-	rm -rf tmprelease/${maincmd_name}-osx-${version}
-	mkdir -p tmprelease/${maincmd_name}-osx-${version}
-	cp -t tmprelease/${maincmd_name}-osx-${version}/ $^ ${releasetexts}
-	cd tmprelease && zip -r ../$@ ${maincmd_name}-osx-${version}
+	rm -rf tmprelease/${maincmd_name}-osx
+	mkdir -p tmprelease/${maincmd_name}-osx
+	cp -t tmprelease/${maincmd_name}-osx $^ ${releasetexts}
+	cd tmprelease && zip -r ../$@ ${maincmd_name}-osx
 $(release_dir)/$(maincmd_name)-linux-amd64.tar.gz: $(build_dir)/$(maincmd_name)-linux-amd64
 	mkdir -p $(release_dir)
-	rm -rf tmprelease/${maincmd_name}-linux-${version}
-	mkdir -p tmprelease/${maincmd_name}-linux-${version}
-	cp -t tmprelease/${maincmd_name}-linux-${version}/ $^ ${releasetexts}
-	cd tmprelease && tar czf ../$@ ${maincmd_name}-linux-${version}
+	rm -rf tmprelease/${maincmd_name}-linux
+	mkdir -p tmprelease/${maincmd_name}-linux
+	cp -t tmprelease/${maincmd_name}-linux $^ ${releasetexts}
+	cd tmprelease && tar czf ../$@ ${maincmd_name}-linux
 $(release_dir)/$(maincmd_name)-linux-arm.tar.gz: $(build_dir)/$(maincmd_name)-linux-arm
 	mkdir -p $(release_dir)
-	rm -rf tmprelease/${maincmd_name}-linux-arm-${version}
-	mkdir -p tmprelease/${maincmd_name}-linux-arm-${version}
-	cp -t tmprelease/${maincmd_name}-linux-arm-${version}/ $^ ${releasetexts}
-	cd tmprelease && tar czf ../$@ ${maincmd_name}-linux-arm-${version}
+	rm -rf tmprelease/${maincmd_name}-linux-arm
+	mkdir -p tmprelease/${maincmd_name}-linux-arm
+	cp -t tmprelease/${maincmd_name}-linux-arm $^ ${releasetexts}
+	cd tmprelease && tar czf ../$@ ${maincmd_name}-linux-arm
 $(release_dir)/$(maincmd_name)-linux-arm64.tar.gz: $(build_dir)/$(maincmd_name)-linux-arm64
 	mkdir -p $(release_dir)
-	rm -rf tmprelease/${maincmd_name}-linux-arm64-${version}
-	mkdir -p tmprelease/${maincmd_name}-linux-arm64-${version}
-	cp -t tmprelease/${maincmd_name}-linux-arm64-${version}/ $^ ${releasetexts}
-	cd tmprelease && tar czf ../$@ ${maincmd_name}-linux-arm64-${version}
+	rm -rf tmprelease/${maincmd_name}-linux-arm64
+	mkdir -p tmprelease/${maincmd_name}-linux-arm64
+	cp -t tmprelease/${maincmd_name}-linux-arm64 $^ ${releasetexts}
+	cd tmprelease && tar czf ../$@ ${maincmd_name}-linux-arm64
 $(release_dir)/$(maincmd_name)-linux-riscv64.tar.gz: $(build_dir)/$(maincmd_name)-linux-riscv64
 	mkdir -p $(release_dir)
-	rm -rf tmprelease/${maincmd_name}-linux-riscv64-${version}
-	mkdir -p tmprelease/${maincmd_name}-linux-riscv64-${version}
-	cp -t tmprelease/${maincmd_name}-linux-riscv64-${version}/ $^ ${releasetexts}
-	cd tmprelease && tar czf ../$@ ${maincmd_name}-linux-riscv64-${version}
+	rm -rf tmprelease/${maincmd_name}-linux-riscv64
+	mkdir -p tmprelease/${maincmd_name}-linux-riscv64
+	cp -t tmprelease/${maincmd_name}-linux-riscv64 $^ ${releasetexts}
+	cd tmprelease && tar czf ../$@ ${maincmd_name}-linux-riscv64
 $(release_dir)/$(maincmd_name)-freebsd-amd64.tar.gz: $(build_dir)/$(maincmd_name)-freebsd-amd64
 	mkdir -p $(release_dir)
-	rm -rf tmprelease/${maincmd_name}-freebsd-${version}
-	mkdir -p tmprelease/${maincmd_name}-freebsd-${version}
-	cp -t tmprelease/${maincmd_name}-freebsd-${version}/ $^ ${releasetexts}
-	cd tmprelease && tar czf ../$@ ${maincmd_name}-freebsd-${version}
+	rm -rf tmprelease/${maincmd_name}-freebsd
+	mkdir -p tmprelease/${maincmd_name}-freebsd
+	cp -t tmprelease/${maincmd_name}-freebsd $^ ${releasetexts}
+	cd tmprelease && tar czf ../$@ ${maincmd_name}-freebsd
 $(release_dir)/$(maincmd_name)-openbsd-amd64.tar.gz: $(build_dir)/$(maincmd_name)-openbsd-amd64
 	mkdir -p $(release_dir)
-	rm -rf tmprelease/${maincmd_name}-openbsd-${version}
-	mkdir -p tmprelease/${maincmd_name}-openbsd-${version}
-	cp -t tmprelease/${maincmd_name}-openbsd-${version}/ $^ ${releasetexts}
-	cd tmprelease && tar czf ../$@ ${maincmd_name}-openbsd-${version}
+	rm -rf tmprelease/${maincmd_name}-openbsd
+	mkdir -p tmprelease/${maincmd_name}-openbsd
+	cp -t tmprelease/${maincmd_name}-openbsd $^ ${releasetexts}
+	cd tmprelease && tar czf ../$@ ${maincmd_name}-openbsd
 $(release_dir)/$(maincmd_name)-netbsd-amd64.tar.gz: $(build_dir)/$(maincmd_name)-netbsd-amd64
 	mkdir -p $(release_dir)
-	rm -rf tmprelease/${maincmd_name}-netbsd-${version}
-	mkdir -p tmprelease/${maincmd_name}-netbsd-${version}
-	cp -t tmprelease/${maincmd_name}-netbsd-${version}/ $^ ${releasetexts}
-	cd tmprelease && tar czf ../$@ ${maincmd_name}-netbsd-${version}
+	rm -rf tmprelease/${maincmd_name}-netbsd
+	mkdir -p tmprelease/${maincmd_name}-netbsd
+	cp -t tmprelease/${maincmd_name}-netbsd $^ ${releasetexts}
+	cd tmprelease && tar czf ../$@ ${maincmd_name}-netbsd
 
 .PHONY += hash
 
