@@ -202,11 +202,11 @@ $(build_dir)/$(maincmd_name)-linux-riscv64: $(main_deps)
 $(build_dir)/$(maincmd_name)-windows-amd64.exe: $(main_deps)
 	GOOS=windows \
 	GOARCH=amd64 \
-	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -o $@ $(aquachain_cmd)
+	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build -buildvcs=false $(GO_FLAGS) -o $@ $(aquachain_cmd)
 $(build_dir)/$(maincmd_name)-osx-amd64: $(main_deps)
 	GOOS=darwin \
 	GOARCH=amd64 \
-	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build $(GO_FLAGS) -o $@ $(aquachain_cmd)
+	CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build -buildvcs=false $(GO_FLAGS) -o $@ $(aquachain_cmd)
 $(build_dir)/$(maincmd_name)-openbsd-amd64: $(main_deps)
 	GOOS=openbsd \
 	GOARCH=amd64 \

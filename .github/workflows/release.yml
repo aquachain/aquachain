@@ -2,8 +2,8 @@
 name: Release
 on:
   push:
-    tags:
-    - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+    # tags:
+    # - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
   # on:
   #  push:
   #    branches:
@@ -12,9 +12,9 @@ on:
   #    types: [created]
 jobs:
   generate:
-    name: Create release-artifacts
+    name: Cross-compile ${github.tag_name} release-artifacts
     runs-on: ubuntu-latest
-    if: github.repository_owner == 'aquachain'
+    # if: github.repository_owner == 'aquachain'
     steps:
       - name: Checkout the repository
         uses: actions/checkout@master
@@ -24,7 +24,7 @@ jobs:
           builder: .github/release # this is a shell script in *this* repo that builds ./release/* archives
       - name: Publish release
         id: release
-        uses: ncipollo/release-action@v1.14.0 # https://github.com/ncipollo/release-action?tab=readme-ov-file#action-inputs
+        uses: ncipollo/release-action@v1.15.0 # https://github.com/ncipollo/release-action?tab=readme-ov-file#action-inputs
         with:
           allowUpdates: true
           artifactErrorsFailBuild: false
@@ -32,9 +32,9 @@ jobs:
             release/*.*
           artifactContentType: "raw"
           #discussionCategory: "Release"
-          draft: false
+          draft: not(startsWith(github.event.ref, 'refs/tags/'))
           generateReleaseNotes: true
-          prerelease: false
+          prerelease: contains(github.tag_name, '-')
           replacesArtifacts: true
           omitDraftDuringUpdate: false
       - name: Dump Release Outputs

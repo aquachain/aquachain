@@ -8,7 +8,7 @@ on:
       - '**.md'
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci/${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -17,14 +17,19 @@ jobs:
     runs-on: ${{ matrix.operating-system }}
     strategy:
       matrix:
-        operating-system: [ubuntu-latest, windows-latest]
+        operating-system: [ubuntu-latest, debian-latest, windows-latest]
     steps:
-      - name: Checkout
+      - name: Checkout this branch
         uses: actions/checkout@v3
-
-      - name: build aquachain
+      - name: Build aquachain
         run: make
       - name: show system info
         run: env || true; uname -a || true; test ! -e /etc/os-release || cat /etc/os-release;
-      - name: test
+      - name: Test (short)
         run: bash testing/test-short-only.bash
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: aquachain-${{ github.sha }}-${{github.ref_name || github.run_id }}-${{ matrix.operating-system}}
+          path: bin/*
+          retention-days: 90
