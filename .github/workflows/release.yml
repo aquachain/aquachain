@@ -4,15 +4,11 @@ on:
   push:
     # tags:
     # - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
-  # on:
-  #  push:
-  #    branches:
-  #      - master
-  #  release:
-  #    types: [created]
 jobs:
   generate:
-    name: Cross-compile ${github.tag_name} release-artifacts
+    name: Cross-compile + Upload Release
+    env: # https://docs.github.com/en/actions/reference/environment-variables
+      GITHUB_TAG_NAME: ${{ github.ref }}
     runs-on: ubuntu-latest
     # if: github.repository_owner == 'aquachain'
     steps:
@@ -37,6 +33,8 @@ jobs:
           prerelease: contains(github.tag_name, '-')
           replacesArtifacts: true
           omitDraftDuringUpdate: false
+          tag: not(startsWith(github.event.ref, 'refs/tags/')) && 'nightly' || github.tag
+          
       - name: Dump Release Outputs
         env:
           RELEASE_OUTPUT: ${{ toJson(steps.release.outputs) }}

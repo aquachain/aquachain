@@ -9,6 +9,8 @@ jobs:
   deploydocs:
     name: Deploy docs
     runs-on: ubuntu-latest
+    # comment this 'if' to test on your own repo after setting up some ed25519 DKEY action secret
+    if: github.repository_owner == 'aquachain' 
     steps:
       - name: Checkout main
         uses: actions/checkout@v2

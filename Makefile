@@ -17,7 +17,10 @@ endef
 $(info $(LOGO))
 aquachain_cmd=./cmd/aquachain
 version != cat VERSION
-COMMITHASH != git rev-parse --short HEAD
+COMMITHASH := ${GITHUB_SHA}
+ifeq (,$(COMMITHASH))
+COMMITHASH := $(shell git rev-parse --short HEAD)
+endif
 winextension :=
 ifeq (windows,$(GOOS))
 winextension = .exe

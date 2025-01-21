@@ -1,2 +1,7 @@
 type zip 2>/dev/null || (apt update && apt install -y zip)
+ls -l
+whoami
+id -u
+id -g
+chown $(id -u):$(id -g) /github/workspace -R
 make clean release release=1
