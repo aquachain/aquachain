@@ -8,6 +8,7 @@ require (
 	github.com/cespare/cp v1.1.1
 	github.com/davecgh/go-spew v1.1.1
 	github.com/deckarep/golang-set v1.8.0
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1
 	github.com/edsrzf/mmap-go v1.2.0
 	github.com/fatih/color v1.18.0
 	github.com/go-stack/stack v1.8.1
@@ -36,7 +37,6 @@ require (
 
 require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect
-	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
