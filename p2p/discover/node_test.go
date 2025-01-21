@@ -225,27 +225,28 @@ func TestNodeID_textEncoding(t *testing.T) {
 
 func TestNodeID_recover(t *testing.T) {
 	prv := newkey()
+	nodeID := PubkeyID(prv.PubKey())
+	ecdsa, err := nodeID.Pubkey()
+	if err != nil {
+		t.Errorf("Pubkey error: %v", err)
+	}
 	hash := make([]byte, 32)
 	sig, err := crypto.Sign(hash, prv)
 	if err != nil {
 		t.Fatalf("signing error: %v", err)
 	}
 
-	pub := PubkeyID(prv.PubKey())
 	recpub, err := recoverNodeID(hash, sig)
 	if err != nil {
 		t.Fatalf("recovery error: %v", err)
 	}
-	if pub != recpub {
-		t.Errorf("recovered wrong pubkey:\ngot:  %v\nwant: %v", recpub, pub)
+
+	if nodeID != recpub {
+		t.Errorf("recovered wrong pubkey:\ngot:  %v\nwant: %v", recpub, nodeID)
 	}
 
-	ecdsa, err := pub.Pubkey()
-	if err != nil {
-		t.Errorf("Pubkey error: %v", err)
-	}
-	if !reflect.DeepEqual(ecdsa, prv.PubKey) {
-		t.Errorf("Pubkey mismatch:\n  got:  %#v\n  want: %#v", ecdsa, prv.PubKey())
+	if !prv.ToECDSA().PublicKey.Equal(ecdsa) {
+		t.Errorf("recovered wrong pubkey:\ngot:  %v\nwant: %v", ecdsa, prv.ToECDSA().PublicKey)
 	}
 }
 

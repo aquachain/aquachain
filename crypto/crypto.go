@@ -224,6 +224,16 @@ func HexToECDSA(hexkey string) (*btcec.PrivateKey, error) {
 
 }
 
+// HexToBtcec parses a secp256k1 private key.
+func HexToBtcec(hexkey string) (*btcec.PrivateKey, error) {
+	b, err := hex.DecodeString(hexkey)
+	if err != nil {
+		return nil, errors.New("invalid hex string")
+	}
+	return BytesToKey(b)
+
+}
+
 func BytesToKey(b []byte) (*btcec.PrivateKey, error) {
 	priv, pub := btcec.PrivKeyFromBytes(b)
 	if pub == nil {

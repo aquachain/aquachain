@@ -20,6 +20,7 @@ package simulations
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -90,6 +91,7 @@ func TestMocker(t *testing.T) {
 		for {
 			select {
 			case event := <-events:
+				log.Printf("Event received: %v", event)
 				//if the event is a node Up event only
 				if event.Node != nil && event.Node.Up {
 					//add the correspondent node ID to the map
@@ -113,10 +115,6 @@ func TestMocker(t *testing.T) {
 			}
 		}
 	}()
-	if connCount == 0 {
-		t.Fatalf("Timeout waiting for nodes being started up!")
-		return
-	}
 
 	//take the last element of the mockerlist as the default mocker-type to ensure one is enabled
 	mockertype := mockerlist[len(mockerlist)-1]
@@ -137,7 +135,10 @@ func TestMocker(t *testing.T) {
 	}
 
 	wg.Wait()
-
+	if connCount == 0 {
+		t.Fatalf("Timeout waiting for nodes being started up!")
+		return
+	}
 	//check there are nodeCount number of nodes in the network
 	nodes_info, err := client.GetNodes()
 	if err != nil {

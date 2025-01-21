@@ -88,20 +88,24 @@ func (r *Record) SetSeq(s uint64) {
 	r.seq = s
 }
 
+type HasENRKey interface {
+	ENRKey() string
+}
+
 // Load retrieves the value of a key/value pair. The given Entry must be a pointer and will
 // be set to the value of the entry in the record.
 //
 // Errors returned by Load are wrapped in KeyError. You can distinguish decoding errors
 // from missing keys using the IsNotFound function.
-func (r *Record) Load(e Entry) error {
-	i := sort.Search(len(r.pairs), func(i int) bool { return r.pairs[i].k >= e.ENRKey() })
-	if i < len(r.pairs) && r.pairs[i].k == e.ENRKey() {
-		if err := rlp.DecodeBytes(r.pairs[i].v, e); err != nil {
-			return &KeyError{Key: e.ENRKey(), Err: err}
+func (r *Record) Load(ptr HasENRKey) error {
+	i := sort.Search(len(r.pairs), func(i int) bool { return r.pairs[i].k >= ptr.ENRKey() })
+	if i < len(r.pairs) && r.pairs[i].k == ptr.ENRKey() {
+		if err := rlp.DecodeBytes(r.pairs[i].v, ptr); err != nil {
+			return &KeyError{Key: ptr.ENRKey(), Err: err}
 		}
 		return nil
 	}
-	return &KeyError{Key: e.ENRKey(), Err: errNotFound}
+	return &KeyError{Key: ptr.ENRKey(), Err: errNotFound}
 }
 
 // Set adds or updates the given entry in the record.

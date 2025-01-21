@@ -24,6 +24,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gitlab.com/aquachain/aquachain/crypto"
@@ -32,7 +33,7 @@ import (
 
 var (
 	privkey, _ = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
-	pubkey     = privkey.PubKey
+	pubkey     = privkey.PubKey()
 )
 
 var rnd = rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -94,9 +95,11 @@ func TestGetSetSecp256k1(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var pk Secp256k1
-	require.NoError(t, r.Load(&pk))
-	assert.EqualValues(t, pubkey, &pk)
+	var gotpublickey Secp256k1                // new empty public key
+	require.NoError(t, r.Load(&gotpublickey)) // load public key from signed record
+	assert.EqualValues(t, pubkey, &gotpublickey)
+	assert.True(t, pubkey.IsEqual((*btcec.PublicKey)(&gotpublickey)))
+	// log.Printf("compare %02x == %02x", pubkey.SerializeCompressed(), (*btcec.PublicKey)(&gotpublickey).SerializeCompressed())
 }
 
 func TestLoadErrors(t *testing.T) {
