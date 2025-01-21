@@ -13,11 +13,11 @@ concurrency:
 
 jobs:
   run:
-    name: Build/Run Test
+    name: Build/Run Test (Ubuntu/Windows)
     runs-on: ${{ matrix.operating-system }}
     strategy:
       matrix:
-        operating-system: [ubuntu-latest, debian-latest, windows-latest]
+        operating-system: [ubuntu-24.04, ubuntu-22.04, windows-2025, windows-2022]
     steps:
       - name: Checkout this branch
         uses: actions/checkout@v3
