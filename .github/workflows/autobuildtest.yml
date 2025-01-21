@@ -17,7 +17,7 @@ jobs:
     runs-on: ${{ matrix.operating-system }}
     strategy:
       matrix:
-        operating-system: [ubuntu-24.04]
+        operating-system: [ubuntu-24.04, windows-2025]
         # operating-system: [ubuntu-24.04, ubuntu-22.04, windows-2025, windows-2022]
     steps:
       - name: Checkout this branch
