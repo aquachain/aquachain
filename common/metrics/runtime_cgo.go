@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the aquachain library. If not, see <http://www.gnu.org/licenses/>.
 
-// +build cgo
-// +build !appengine
+//go:build cgo && !appengine
+// +build cgo,!appengine
 
 package metrics
 

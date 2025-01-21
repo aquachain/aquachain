@@ -1,3 +1,4 @@
+//go:build !linux && !windows && !freebsd && !darwin
 // +build !linux,!windows,!freebsd,!darwin
 
 package reexec
