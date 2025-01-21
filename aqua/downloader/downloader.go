@@ -1204,17 +1204,12 @@ func (d *Downloader) processHeaders(origin uint64, pivot uint64, td *big.Int) er
 			for i, header := range rollback {
 				hashes[i] = header.Hash()
 			}
-			lastHeader, lastFastBlock, lastBlock := d.lightchain.CurrentHeader().Number, common.Big0, common.Big0
-			//if d.mode != LightSync {
-			lastFastBlock = d.blockchain.CurrentFastBlock().Number()
-			lastBlock = d.blockchain.CurrentBlock().Number()
-			//}
+			lastHeader := d.lightchain.CurrentHeader().Number
+			lastFastBlock := d.blockchain.CurrentFastBlock().Number()
+			lastBlock := d.blockchain.CurrentBlock().Number()
 			d.lightchain.Rollback(hashes)
-			curFastBlock, curBlock := common.Big0, common.Big0
-			//if d.mode != LightSync {
-			curFastBlock = d.blockchain.CurrentFastBlock().Number()
-			curBlock = d.blockchain.CurrentBlock().Number()
-			//}
+			curFastBlock := d.blockchain.CurrentFastBlock().Number()
+			curBlock := d.blockchain.CurrentBlock().Number()
 			log.Warn("Rolled back headers", "count", len(hashes),
 				"header", fmt.Sprintf("%d->%d", lastHeader, d.lightchain.CurrentHeader().Number),
 				"fast", fmt.Sprintf("%d->%d", lastFastBlock, curFastBlock),
