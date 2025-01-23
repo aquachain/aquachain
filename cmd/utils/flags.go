@@ -37,6 +37,7 @@ import (
 	"gitlab.com/aquachain/aquachain/aqua/gasprice"
 	"gitlab.com/aquachain/aquachain/aquadb"
 	"gitlab.com/aquachain/aquachain/common"
+	"gitlab.com/aquachain/aquachain/common/alerts"
 	"gitlab.com/aquachain/aquachain/common/fdlimit"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/common/metrics"
@@ -142,6 +143,10 @@ var (
 		Usage: "Chain select (aqua, testnet, testnet2, testnet3)",
 		Value: "aqua",
 	}
+	AlertModeFlag = cli.BoolFlag{
+		Name:  "alerts",
+		Usage: "Enable alert notifications (requires env $ALERT_TOKEN, $ALERT_PLATFORM, and $ALERT_CHANNEL)",
+	}
 	TestnetFlag = cli.BoolFlag{
 		Name:  "testnet",
 		Usage: "Aquachain Regression Test Network",
@@ -152,7 +157,7 @@ var (
 	}
 	NetworkEthFlag = cli.BoolFlag{
 		Name:  "ethereum",
-		Usage: "Connect to Ethereum network (*experimental*)",
+		Usage: "Connect to Ethereum network (*broken*)",
 	}
 	DeveloperFlag = cli.BoolFlag{
 		Name:  "dev",
@@ -1062,7 +1067,10 @@ func SetAquaConfig(ctx *cli.Context, stack *node.Node, cfg *aqua.Config) {
 	// Avoid conflicting network flags
 	checkExclusive(ctx, DeveloperFlag, TestnetFlag, Testnet2Flag, NetworkEthFlag)
 	checkExclusive(ctx, FastSyncFlag, SyncModeFlag, OfflineFlag)
-
+	if ctx.GlobalBool(AlertModeFlag.Name) {
+		cfg.Alerts = alerts.MustParseAlertConfig()
+		log.Info("Alerts enabled")
+	}
 	chaincfg := SetChainId(ctx, cfg)
 
 	SetHardforkParams(ctx, chaincfg)

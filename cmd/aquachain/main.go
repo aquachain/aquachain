@@ -20,11 +20,13 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/joho/godotenv"
 	cli "github.com/urfave/cli"
 	"gitlab.com/aquachain/aquachain/aqua"
 	"gitlab.com/aquachain/aquachain/aqua/accounts"
@@ -131,10 +133,11 @@ var (
 		utils.WSAllowedOriginsFlag,
 		utils.IPCDisabledFlag,
 		utils.IPCPathFlag,
+		utils.AlertModeFlag,
 	}
 )
 
-func init() {
+func doinit() {
 	// Initialize the CLI app and start Aquachain
 	app.Action = localConsole // default command is 'console'
 
@@ -185,6 +188,10 @@ func init() {
 		go metrics.CollectProcessMetrics(3 * time.Second)
 
 		utils.SetupNetworkGasLimit(ctx)
+		_, autoalertmode := os.LookupEnv("ALERT_PLATFORM")
+		if autoalertmode {
+			ctx.Set(utils.AlertModeFlag.Name, "true")
+		}
 		return nil
 	}
 
@@ -196,6 +203,8 @@ func init() {
 }
 
 func main() {
+	godotenv.Load(".env", filepath.Join(node.DefaultDataDir(), ".env"), "/etc/aquachain/.env")
+	doinit()
 	if err := app.Run(os.Args); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

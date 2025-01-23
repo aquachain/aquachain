@@ -27,6 +27,7 @@ import (
 	"gitlab.com/aquachain/aquachain/aqua/downloader"
 	"gitlab.com/aquachain/aquachain/aqua/gasprice"
 	"gitlab.com/aquachain/aquachain/common"
+	"gitlab.com/aquachain/aquachain/common/alerts"
 	"gitlab.com/aquachain/aquachain/common/hexutil"
 	"gitlab.com/aquachain/aquachain/consensus/aquahash"
 	"gitlab.com/aquachain/aquachain/core"
@@ -108,8 +109,12 @@ type Config struct {
 
 	// Miscellaneous options
 	DocRoot string `toml:"-"`
+
+	// Alert options
+	Alerts alerts.AlertConfig
 }
 
+// configMarshaling must be changed if the Config struct changes.
 type configMarshaling struct {
 	ExtraData hexutil.Bytes
 }
