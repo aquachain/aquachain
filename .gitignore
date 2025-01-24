@@ -62,3 +62,8 @@ profile.cov
 /tmp*
 /*.toml
 /*.txt
+.env
+.private*
+/.v*
+*~
+*.swp
