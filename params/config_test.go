@@ -90,3 +90,33 @@ func TestCheckCompatible(t *testing.T) {
 		}
 	}
 }
+
+func TestChainConfigs(t *testing.T) {
+	all := AllChainConfigs()
+	for _, v := range all {
+		if v == nil {
+			t.Error("nil config")
+			continue
+		}
+		if !IsValid(v) {
+			t.Error("invalid config")
+		}
+		if v.ChainId == nil {
+			t.Error("nil chain id")
+		}
+		if GetChainConfig(v.Name()) != v {
+			t.Error("GetChainConfig mismatch")
+		}
+		if GetChainConfigByChainId(v.ChainId) != v {
+			t.Error("GetChainConfigByChainId mismatch")
+		}
+		name := v.Name()
+		should := name != "dev" && name != "test"
+		if v.DefaultBootstrapPort == 0 == should {
+			t.Errorf("missing default bootstrap port for %v", name)
+		}
+		if v.DefaultPortNumber == 0 == should {
+			t.Errorf("missing default discovery port for %v", name)
+		}
+	}
+}

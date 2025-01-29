@@ -21,6 +21,9 @@ import (
 	"fmt"
 )
 
+// regenerate to synchronize /VERSION file with below values
+//go:generate bash ./generate_version.bash
+
 const (
 	VersionMajor = 1  // Major version component of the current release
 	VersionMinor = 7  // Minor version component of the current release
@@ -49,10 +52,13 @@ func VersionWithCommit(gitCommit string) string {
 }
 
 // set with -X linker flag
-var Buildtags string
+var buildtags string
 
 func BuildTags() string {
-	b, err := base64.StdEncoding.DecodeString(Buildtags)
+	if buildtags == "" {
+		return ""
+	}
+	b, err := base64.RawStdEncoding.DecodeString(buildtags)
 	if err != nil {
 		panic(err)
 	}

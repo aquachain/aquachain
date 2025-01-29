@@ -46,7 +46,7 @@ var (
 		8: nil,               // HF8 (m_cost=16, diff algo, jump diff) // activated with flag
 	}
 
-	// TestnetHF is the map of hard forks (testnet)
+	// TestnetHF is the map of hard forks (testnet public network)
 	TestnetHF = ForkMap{
 		1: big.NewInt(1),   // increase min difficulty to the next multiple of 2048
 		2: big.NewInt(2),   // use simple difficulty algo (240 seconds)
@@ -58,7 +58,7 @@ var (
 		8: big.NewInt(650), // HF8
 	}
 
-	// Testnet2HF is the map of hard forks (testnet2 private network
+	// Testnet2HF is the map of hard forks (testnet2 private network)
 	Testnet2HF = ForkMap{
 		5: big.NewInt(0),
 		6: big.NewInt(0),
@@ -67,7 +67,7 @@ var (
 		9: big.NewInt(19),
 	}
 
-	// Testnet3HF is the map of hard forks (testnet2 private network
+	// Testnet3HF is the map of hard forks (testnet3 private network)
 	Testnet3HF = ForkMap{
 		5: big.NewInt(1),
 		6: big.NewInt(0),
@@ -85,52 +85,69 @@ var (
 
 	NoHF = ForkMap{}
 )
+
+func IsMainnet(cfg *ChainConfig) bool {
+	return cfg == MainnetChainConfig
+}
+
+func IsValid(cfg *ChainConfig) bool {
+	return cfg != nil && cfg.ChainId != nil && (cfg.ChainId.Cmp(MainnetChainConfig.ChainId) != 0 || cfg == MainnetChainConfig)
+}
+
 var (
 	// MainnetChainConfig is the chain parameters to run a node on the main network.
 	MainnetChainConfig = &ChainConfig{
-		ChainId:        big.NewInt(61717561),
-		HomesteadBlock: big.NewInt(0),
-		EIP150Block:    big.NewInt(0),
-		EIP155Block:    AquachainHF[7],
-		EIP158Block:    AquachainHF[7],
-		ByzantiumBlock: AquachainHF[7],
-		Aquahash:       new(AquahashConfig),
-		HF:             AquachainHF,
+		ChainId:              big.NewInt(61717561),
+		HomesteadBlock:       big.NewInt(0),
+		EIP150Block:          big.NewInt(0),
+		EIP155Block:          AquachainHF[7],
+		EIP158Block:          AquachainHF[7],
+		ByzantiumBlock:       AquachainHF[7],
+		Aquahash:             new(AquahashConfig),
+		HF:                   AquachainHF,
+		DefaultPortNumber:    21303,
+		DefaultBootstrapPort: 21000,
 	}
 
 	// TestnetChainConfig contains the chain parameters to run a node on the Aquachain test network.
 	TestnetChainConfig = &ChainConfig{
-		ChainId:        big.NewInt(3),
-		HomesteadBlock: big.NewInt(0),
-		EIP150Block:    big.NewInt(0),
-		EIP155Block:    TestnetHF[7],
-		EIP158Block:    TestnetHF[7],
-		ByzantiumBlock: TestnetHF[7],
-		Aquahash:       new(AquahashConfig),
-		HF:             TestnetHF,
+		ChainId:              big.NewInt(617175611),
+		HomesteadBlock:       big.NewInt(0),
+		EIP150Block:          big.NewInt(0),
+		EIP155Block:          TestnetHF[7],
+		EIP158Block:          TestnetHF[7],
+		ByzantiumBlock:       TestnetHF[7],
+		Aquahash:             new(AquahashConfig),
+		HF:                   TestnetHF,
+		DefaultPortNumber:    21304,
+		DefaultBootstrapPort: 21001,
 	}
 
 	// Testnet2ChainConfig contains the chain parameters to run a node on the Testnet2 test network.
 	Testnet2ChainConfig = &ChainConfig{
-		ChainId:        big.NewInt(4096),
-		HomesteadBlock: big.NewInt(0),
-		EIP150Block:    big.NewInt(0),
-		EIP155Block:    Testnet2HF[7],
-		EIP158Block:    Testnet2HF[7],
-		ByzantiumBlock: Testnet2HF[7],
-		Aquahash:       new(AquahashConfig),
-		HF:             Testnet2HF,
+		ChainId:              big.NewInt(617175612),
+		HomesteadBlock:       big.NewInt(0),
+		EIP150Block:          big.NewInt(0),
+		EIP155Block:          Testnet2HF[7],
+		EIP158Block:          Testnet2HF[7],
+		ByzantiumBlock:       Testnet2HF[7],
+		Aquahash:             new(AquahashConfig),
+		HF:                   Testnet2HF,
+		DefaultPortNumber:    21305,
+		DefaultBootstrapPort: 21002,
 	}
 	// Testnet3ChainConfig contains the chain parameters to run a node on the Testnet2 test network.
 	Testnet3ChainConfig = &ChainConfig{
-		ChainId:        big.NewInt(11110),
-		HomesteadBlock: big.NewInt(0),
-		EIP150Block:    big.NewInt(0),
-		EIP155Block:    Testnet3HF[7],
-		EIP158Block:    Testnet3HF[7],
-		ByzantiumBlock: Testnet3HF[7],
-		Aquahash:       new(AquahashConfig),
-		HF:             Testnet3HF,
+		ChainId:              big.NewInt(617175613),
+		HomesteadBlock:       big.NewInt(0),
+		EIP150Block:          big.NewInt(0),
+		EIP155Block:          Testnet3HF[7],
+		EIP158Block:          Testnet3HF[7],
+		ByzantiumBlock:       Testnet3HF[7],
+		Aquahash:             new(AquahashConfig),
+		HF:                   Testnet3HF,
+		DefaultPortNumber:    21306,
+		DefaultBootstrapPort: 21003,
 	}
 	EthnetChainConfig = &ChainConfig{
 		ChainId:             big.NewInt(1),
@@ -152,9 +169,9 @@ var (
 	//
 	// This configuration is intentionally not using keyed fields to force anyone
 	// adding flags to the config to also have to set these fields.
-	AllAquahashProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, new(AquahashConfig), TestHF}
+	AllAquahashProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, new(AquahashConfig), TestHF, 0, 0}
 
-	TestChainConfig = &ChainConfig{big.NewInt(3), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, new(AquahashConfig), TestHF}
+	TestChainConfig = &ChainConfig{big.NewInt(3), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, new(AquahashConfig), TestHF, 0, 0}
 	TestRules       = TestChainConfig.Rules(new(big.Int))
 )
 
@@ -187,13 +204,17 @@ type ChainConfig struct {
 
 	// HF Scheduled Maintenance Hardforks
 	HF ForkMap `json:"hf,omitempty"`
+
+	// DefaultPortNumber used by p2p package if nonzero
+	DefaultPortNumber    int `json:"portNumber,omitempty"`    // eg. 21303, udp and tcp
+	DefaultBootstrapPort int `json:"bootstrapPort,omitempty"` // eg. 21000, udp
 }
 
 func GetChainConfig(name string) *ChainConfig {
 	switch name {
 	default:
 		return nil
-	case "aqua":
+	case "aqua", "mainnet", "aquachain":
 		return MainnetChainConfig
 	case "testnet":
 		return TestnetChainConfig
@@ -201,6 +222,73 @@ func GetChainConfig(name string) *ChainConfig {
 		return Testnet2ChainConfig
 	case "testnet3":
 		return Testnet3ChainConfig
+	case "dev":
+		return AllAquahashProtocolChanges
+	case "test":
+		return TestChainConfig
+	case "eth":
+		panic("no eth net")
+	}
+}
+
+func GetChainConfigByChainId(chainid *big.Int) *ChainConfig {
+	for _, v := range AllChainConfigs() {
+		if v.ChainId.Cmp(chainid) == 0 {
+			return v
+		}
+	}
+	return nil
+}
+
+func ValidChainNames() []string {
+	return []string{
+		MainnetChainConfig.Name(),
+		TestnetChainConfig.Name(),
+		Testnet2ChainConfig.Name(),
+		Testnet3ChainConfig.Name(),
+		// AllAquahashProtocolChanges.Name(),
+		// TestChainConfig.Name(),
+	}
+}
+func ValidChainConfigs() []*ChainConfig {
+	return []*ChainConfig{
+		MainnetChainConfig,
+		TestnetChainConfig,
+		Testnet2ChainConfig,
+		Testnet3ChainConfig,
+		// AllAquahashProtocolChanges,
+		// TestChainConfig,
+	}
+}
+func AllChainConfigs() []*ChainConfig {
+	return []*ChainConfig{
+		MainnetChainConfig,
+		TestnetChainConfig,
+		Testnet2ChainConfig,
+		Testnet3ChainConfig,
+		AllAquahashProtocolChanges,
+		TestChainConfig,
+	}
+}
+
+func (c *ChainConfig) Name() string {
+	switch {
+	case c == MainnetChainConfig:
+		return "aqua"
+	case c == TestnetChainConfig:
+		return "testnet"
+	case c == Testnet2ChainConfig:
+		return "testnet2"
+	case c == Testnet3ChainConfig:
+		return "testnet3"
+	case c == EthnetChainConfig:
+		return "eth"
+	case c == AllAquahashProtocolChanges:
+		return "dev"
+	case c == TestChainConfig:
+		return "test"
+	default:
+		return "unknown"
 	}
 }
 
@@ -229,6 +317,27 @@ func (c *ChainConfig) String() string {
 		c.ByzantiumBlock,
 		engine,
 	)
+}
+
+// String implements the fmt.Stringer interface.
+func (c *ChainConfig) StringNoChainId() string {
+	return fmt.Sprintf("EIP150: %v EIP155: %v EIP158: %v Byzantium: %v",
+		c.EIP150Block,
+		c.EIP155Block,
+		c.EIP158Block,
+		c.ByzantiumBlock,
+	)
+}
+
+func (c *ChainConfig) EngineName() string {
+	var engine string
+	switch {
+	case c.Aquahash != nil:
+		engine = c.Aquahash.String()
+	default:
+		engine = "unknown"
+	}
+	return engine
 }
 
 // IsHomestead returns whether num is either equal to the homestead block or greater.
