@@ -1,4 +1,6 @@
-GOCMD ?= go # the go program
+# the go program
+GOCMD ?= go
+
 GOOS ?= $(shell ${GOCMD} env GOOS)
 GOARCH ?= $(shell ${GOCMD} env GOARCH)
 PREFIX ?= /usr/local
@@ -133,7 +135,8 @@ echoflags:
 install:
 	install -v $(build_dir)/aquachain $(INSTALL_DIR)/
 internal/jsre/deps/bindata.go: internal/jsre/deps/web3.js  internal/jsre/deps/bignumber.js
-	test ! -x "$(which go-bindata)" || go generate -v ./$(shell dirname $@)/...
+	@test -x "$(shell which go-bindata)" || echo 'go-bindata not found in PATH. run make devtools to install required development dependencies PATH=${PATH}'
+	test ! -x "$(shell which go-bindata)" || go generate -v ./$(shell dirname $@)/...
 all:
 	mkdir -p $(build_dir)
 	cd $(build_dir) && \
@@ -320,14 +323,15 @@ $(release_dir)/$(maincmd_name)-netbsd-amd64.tar.gz: $(build_dir)/$(maincmd_name)
 
 
 devtools:
-	env GOBIN= ${GOCMD} get golang.org/x/tools/cmd/stringer
-	env GOBIN= ${GOCMD} get github.com/kevinburke/go-bindata/go-bindata
-	env GOBIN= ${GOCMD} get github.com/fjl/gencodec
-	env GOBIN= ${GOCMD} get github.com/golang/protobuf/protoc-gen-go
-	env GOBIN= ${GOCMD} install gitlab.com/aquachain/x/cmd/abigen
-	@type "npm" 2> /dev/null || echo 'Please install node.js and npm'
-	@type "solc" 2> /dev/null || echo 'Please install solc'
-	@type "protoc" 2> /dev/null || echo 'Please install protoc'
+	${GOCMD} install golang.org/x/tools/cmd/stringer@latest
+	${GOCMD} install github.com/kevinburke/go-bindata/v4/...@latest
+	${GOCMD} install github.com/fjl/gencodec@latest
+#	env GOBIN= ${GOCMD} get github.com/golang/protobuf/protoc-gen-go@latest
+	${GOCMD} install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+#	${GOCMD} install gitlab.com/aquachain/x/cmd/aqua-abigen@latest
+	@type "npm" 2> /dev/null || echo 'Please install node.js and npm (eg. https://github.com/nvm-sh/nvm)'
+	@type "solc" 2> /dev/null || echo 'Please install solc (eg. https://github.com/ethereum/solidity/releases)'
+	@type "protoc" 2> /dev/null || echo 'Please install protoc (eg. apt install protobuf-compiler)'
 
 generate: devtools
 	${GOCMD} generate ./...
