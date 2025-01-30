@@ -4,6 +4,7 @@ package aqua
 
 import (
 	"math/big"
+	"time"
 
 	"gitlab.com/aquachain/aquachain/aqua/downloader"
 	"gitlab.com/aquachain/aquachain/aqua/gasprice"
@@ -16,15 +17,18 @@ import (
 
 var _ = (*configMarshaling)(nil)
 
+// MarshalTOML marshals as TOML.
 func (c Config) MarshalTOML() (interface{}, error) {
 	type Config struct {
 		Genesis                 *core.Genesis `toml:",omitempty"`
 		NetworkId               uint64
 		SyncMode                downloader.SyncMode
-		NoPruning               bool
+		NoPruning               bool `toml:"NoPruning"`
 		SkipBcVersionCheck      bool `toml:"-"`
 		DatabaseHandles         int  `toml:"-"`
 		DatabaseCache           int
+		TrieCache               int
+		TrieTimeout             time.Duration
 		Aquabase                common.Address `toml:",omitempty"`
 		MinerThreads            int            `toml:",omitempty"`
 		ExtraData               hexutil.Bytes  `toml:",omitempty"`
@@ -34,7 +38,7 @@ func (c Config) MarshalTOML() (interface{}, error) {
 		GPO                     gasprice.Config
 		EnablePreimageRecording bool
 		DocRoot                 string `toml:"-"`
-		Alerts 				alerts.AlertConfig // enabled by the "-alerts" flag
+		Alerts                  alerts.AlertConfig
 	}
 	var enc Config
 	enc.Genesis = c.Genesis
@@ -44,6 +48,8 @@ func (c Config) MarshalTOML() (interface{}, error) {
 	enc.SkipBcVersionCheck = c.SkipBcVersionCheck
 	enc.DatabaseHandles = c.DatabaseHandles
 	enc.DatabaseCache = c.DatabaseCache
+	enc.TrieCache = c.TrieCache
+	enc.TrieTimeout = c.TrieTimeout
 	enc.Aquabase = c.Aquabase
 	enc.MinerThreads = c.MinerThreads
 	enc.ExtraData = c.ExtraData
@@ -57,15 +63,18 @@ func (c Config) MarshalTOML() (interface{}, error) {
 	return &enc, nil
 }
 
+// UnmarshalTOML unmarshals from TOML.
 func (c *Config) UnmarshalTOML(unmarshal func(interface{}) error) error {
 	type Config struct {
 		Genesis                 *core.Genesis `toml:",omitempty"`
 		NetworkId               *uint64
 		SyncMode                *downloader.SyncMode
-		NoPruning               *bool
+		NoPruning               *bool `toml:"NoPruning"`
 		SkipBcVersionCheck      *bool `toml:"-"`
 		DatabaseHandles         *int  `toml:"-"`
 		DatabaseCache           *int
+		TrieCache               *int
+		TrieTimeout             *time.Duration
 		Aquabase                *common.Address `toml:",omitempty"`
 		MinerThreads            *int            `toml:",omitempty"`
 		ExtraData               *hexutil.Bytes  `toml:",omitempty"`
@@ -75,6 +84,7 @@ func (c *Config) UnmarshalTOML(unmarshal func(interface{}) error) error {
 		GPO                     *gasprice.Config
 		EnablePreimageRecording *bool
 		DocRoot                 *string `toml:"-"`
+		Alerts                  *alerts.AlertConfig
 	}
 	var dec Config
 	if err := unmarshal(&dec); err != nil {
@@ -100,6 +110,12 @@ func (c *Config) UnmarshalTOML(unmarshal func(interface{}) error) error {
 	}
 	if dec.DatabaseCache != nil {
 		c.DatabaseCache = *dec.DatabaseCache
+	}
+	if dec.TrieCache != nil {
+		c.TrieCache = *dec.TrieCache
+	}
+	if dec.TrieTimeout != nil {
+		c.TrieTimeout = *dec.TrieTimeout
 	}
 	if dec.Aquabase != nil {
 		c.Aquabase = *dec.Aquabase
@@ -127,6 +143,9 @@ func (c *Config) UnmarshalTOML(unmarshal func(interface{}) error) error {
 	}
 	if dec.DocRoot != nil {
 		c.DocRoot = *dec.DocRoot
+	}
+	if dec.Alerts != nil {
+		c.Alerts = *dec.Alerts
 	}
 	return nil
 }

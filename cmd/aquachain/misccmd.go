@@ -17,13 +17,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/aqua"
 	"gitlab.com/aquachain/aquachain/cmd/utils"
 	"gitlab.com/aquachain/aquachain/consensus/aquahash"
@@ -58,7 +59,7 @@ Regular users do not need to execute it.
 `,
 	}
 	versionCommand = cli.Command{
-		Action:    utils.MigrateFlags(version),
+		Action:    utils.MigrateFlags(printVersion),
 		Name:      "version",
 		Usage:     "Print version numbers",
 		ArgsUsage: " ",
@@ -77,8 +78,8 @@ The output of this command is supposed to be machine-readable.
 )
 
 // makecache generates an aquahash verification cache into the provided folder.
-func makecache(ctx *cli.Context) error {
-	args := ctx.Args()
+func makecache(_ context.Context, cmd *cli.Command) error {
+	args := cmd.Args().Slice()
 	if len(args) != 2 {
 		utils.Fatalf(`Usage: aquachain makecache <block number> <outputdir>`)
 	}
@@ -87,13 +88,12 @@ func makecache(ctx *cli.Context) error {
 		utils.Fatalf("Invalid block number: %v", err)
 	}
 	aquahash.MakeCache(block, args[1])
-
 	return nil
 }
 
 // makedag generates an aquahash mining DAG into the provided folder.
-func makedag(ctx *cli.Context) error {
-	args := ctx.Args()
+func makedag(_ context.Context, cmd *cli.Command) error {
+	args := cmd.Args().Slice()
 	if len(args) != 2 {
 		utils.Fatalf(`Usage: aquachain makedag <block number> <outputdir>`)
 	}
@@ -106,7 +106,7 @@ func makedag(ctx *cli.Context) error {
 	return nil
 }
 
-func version(ctx *cli.Context) error {
+func printVersion(_ context.Context, cmd *cli.Command) error {
 	fmt.Println(strings.Title(clientIdentifier), params.Version)
 	if gitCommit != "" {
 		fmt.Println("Git Commit:", gitCommit)
@@ -120,37 +120,34 @@ func version(ctx *cli.Context) error {
 		}
 	}
 
-	chaincfg := params.MainnetChainConfig
-	if ctx.GlobalIsSet(utils.ChainFlag.Name) {
-		chaincfg = params.GetChainConfig(ctx.GlobalString(utils.ChainFlag.Name))
-		fmt.Printf("Custom Chain: %s\n", ctx.GlobalString(utils.ChainFlag.Name))
-	} else if ctx.GlobalBool(utils.TestnetFlag.Name) {
-		chaincfg = params.TestnetChainConfig
-	} else if ctx.GlobalBool(utils.Testnet2Flag.Name) {
-		chaincfg = params.Testnet2ChainConfig
-	} else if ctx.GlobalBool(utils.NetworkEthFlag.Name) {
-		chaincfg = params.EthnetChainConfig
-	} else if ctx.GlobalBool(utils.DeveloperFlag.Name) {
-		chaincfg = params.TestChainConfig
+	// chaincfg := params.MainnetChainConfig
+
+	chainName := cmd.String(utils.ChainFlag.Name)
+	chaincfg := params.GetChainConfig(chainName)
+	if chaincfg == nil {
+		utils.Fatalf("invalid chain name: %q, try one of %q", chainName, params.ValidChainNames())
 	}
 
 	// set hardfork params for printing
-	utils.SetHardforkParams(ctx, chaincfg)
+	// utils.SetFParams(ctx, chaincfg)
 
 	fmt.Println("Architecture:", runtime.GOARCH)
-	fmt.Println("Protocol Versions:", aqua.ProtocolVersions)
-	fmt.Println("Network Id:", aqua.DefaultConfig.NetworkId)
+	fmt.Printf("Pure Go: %v\n", !CGO)
 	fmt.Println("Go Version:", runtime.Version())
 	fmt.Println("Operating System:", runtime.GOOS)
-	fmt.Printf("CGO_ENABLED=%v\n", CGO)
-	fmt.Printf("Build Tags: %s\n", params.BuildTags())
-	fmt.Printf("AQUA Fork Map: %s\n", chaincfg.HF.String())
-	fmt.Printf("Chain Config: %s\n", chaincfg)
-
+	fmt.Printf("Build Tags: %q\n", params.BuildTags())
+	fmt.Println("Protocol Versions:", aqua.ProtocolVersions)
+	//
+	fmt.Printf("Chain Selected: %s\n", chaincfg.Name())
+	fmt.Printf("Network Id: %d\n", aqua.DefaultConfig.NetworkId)
+	fmt.Printf("Chain Id:   %d\n", chaincfg.ChainId.Uint64())
+	fmt.Printf("Chain Config: {%s}\n", chaincfg.StringNoChainId())
+	fmt.Printf("Chain HF Map: {%s}\n", chaincfg.HF.String())
+	fmt.Printf("Consensus Engine: %s\n", chaincfg.EngineName())
 	return nil
 }
 
-func license(_ *cli.Context) error {
+func license(context.Context, *cli.Command) error {
 	fmt.Println(`Aquachain is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or

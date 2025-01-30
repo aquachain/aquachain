@@ -329,6 +329,8 @@ func (s Transactions) GetRlp(i int) []byte {
 }
 
 // TxDifference returns a new set t which is the difference between a to b.
+//
+// The resulting set t contains all transactions from a that are not in b.
 func TxDifference(a, b Transactions) (keep Transactions) {
 	keep = make(Transactions, 0, len(a))
 

@@ -18,6 +18,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -29,7 +30,7 @@ import (
 	"gitlab.com/aquachain/aquachain/cmd/internal/browser"
 	"gitlab.com/aquachain/aquachain/params"
 
-	cli "github.com/urfave/cli"
+	cli "github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/cmd/utils"
 )
 
@@ -45,7 +46,7 @@ const issueUrl = "https://github.com/aquachain/aquachain/issues/new"
 
 // reportBug reports a bug by opening a new URL to the aquachain GH issue
 // tracker and setting default values as the issue body.
-func reportBug(ctx *cli.Context) error {
+func reportBug(_ context.Context, cmd *cli.Command) error {
 	// execute template and write contents to buff
 	var buff bytes.Buffer
 

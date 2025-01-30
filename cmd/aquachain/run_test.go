@@ -17,7 +17,6 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -44,13 +43,13 @@ type testgeth struct {
 
 func init() {
 	// Run the app if we've been exec'd as "aquachain-test" in runAquachain.
-	reexec.Register("aquachain-test", func() {
-		if err := app.Run(os.Args); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-		os.Exit(0)
-	})
+	// reexec.Register("aquachain-test", func() {
+	// 	if err := x.Run(os.Args); err != nil {
+	// 		fmt.Fprintln(os.Stderr, err)
+	// 		os.Exit(1)
+	// 	}
+	// 	os.Exit(0)
+	// })
 }
 
 func TestMain(m *testing.M) {

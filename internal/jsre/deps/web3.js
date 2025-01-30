@@ -1905,7 +1905,7 @@ var unitMap = {
     'finney':       '1000000000000000',
     'milliether':    '1000000000000000',
     'milli':         '1000000000000000',
-    'aqua':        '1000000000000000000',
+    'aqua':         '1000000000000000000',
     'ether':        '1000000000000000000',
     'kether':       '1000000000000000000000',
     'grand':        '1000000000000000000000',
@@ -2269,9 +2269,11 @@ var isAddress = function (address) {
 var isChecksumAddress = function (address) {
     // Check each case
     address = address.replace('0x','');
+    console.log("uhoh")
     var addressHash = sha3(address.toLowerCase());
 
     for (var i = 0; i < 40; i++ ) {
+        console.log("uhoh")
         // the nth letter should be uppercase if the nth digit of casemap is 1
         if ((parseInt(addressHash[i], 16) > 7 && address[i].toUpperCase() !== address[i]) || (parseInt(addressHash[i], 16) <= 7 && address[i].toLowerCase() !== address[i])) {
             return false;
@@ -2291,7 +2293,7 @@ var isChecksumAddress = function (address) {
 */
 var toChecksumAddress = function (address) {
     if (typeof address === 'undefined') return '';
-
+    console.log("uhoh")
     address = address.toLowerCase().replace('0x','');
     var addressHash = sha3(address);
     var checksumAddress = '0x';

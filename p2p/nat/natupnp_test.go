@@ -223,7 +223,7 @@ func (dev *fakeIGD) replaceListenAddr(resp string) string {
 }
 
 func (dev *fakeIGD) listen() (err error) {
-	if dev.listener, err = net.Listen("tcp", "127.0.0.1:0"); err != nil {
+	if dev.listener, err = net.Listen("tcp4", "127.0.0.1:0"); err != nil {
 		return err
 	}
 	laddr := &net.UDPAddr{IP: net.ParseIP("239.255.255.250"), Port: 1900}

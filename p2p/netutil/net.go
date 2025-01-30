@@ -70,7 +70,7 @@ type Netlist []net.IPNet
 
 // ParseNetlist parses a comma-separated list of CIDR masks.
 // Whitespace and extra commas are ignored.
-func ParseNetlist(s string) (*Netlist, error) {
+func ParseNetlist(s string) (Netlist, error) {
 	ws := strings.NewReplacer(" ", "", "\n", "", "\t", "")
 	masks := strings.Split(ws.Replace(s), ",")
 	l := make(Netlist, 0)
@@ -84,7 +84,7 @@ func ParseNetlist(s string) (*Netlist, error) {
 		}
 		l = append(l, *n)
 	}
-	return &l, nil
+	return l, nil
 }
 
 // MarshalTOML implements toml.MarshalerRec.
@@ -125,7 +125,7 @@ func (l *Netlist) UnmarshalTOML(fn func(interface{}) error) error {
 func (l *Netlist) Add(cidr string) {
 	_, n, err := net.ParseCIDR(cidr)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 	*l = append(*l, *n)
 }

@@ -2,9 +2,11 @@ package alerts
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"time"
 
 	"net/http"
 	"os"
@@ -36,7 +38,7 @@ func Infof(f string, i ...any) {
 }
 
 func Warnf(f string, i ...any) {
-	if !mainCfg.Enabled() {
+	if true || !mainCfg.Enabled() {
 		log.Warn("alerts not configured:", "msg", fmt.Sprintf(f, i...))
 		return
 	}
@@ -86,6 +88,8 @@ func MustParseAlertConfig() AlertConfig {
 	return ac
 }
 
+var ErrAlertTimeout = fmt.Errorf("alert timeout")
+
 func (ac AlertConfig) Send(msg string) error {
 	if !ac.Enabled() {
 		log.Warn("(warn) alerts not configured: alert=%s", msg)
@@ -93,7 +97,9 @@ func (ac AlertConfig) Send(msg string) error {
 	}
 	switch ac.Platform {
 	case "tg":
-		return sendTelegram(ac.Token, ac.Channel, msg)
+		short, cancel := context.WithTimeoutCause(context.Background(), 5*time.Second, ErrAlertTimeout)
+		defer cancel()
+		return sendTelegram(short, ac.Token, ac.Channel, msg)
 	default:
 		panic("unsupported alert platform: " + ac.Platform)
 	}
@@ -124,25 +130,30 @@ func (p Payload) Reader() io.Reader {
 	return bytes.NewReader(p.Bytes())
 }
 
-func sendTelegram(token string, channelsinput string, msg string) error {
+func sendTelegram(ctx context.Context, token string, channelsinput string, msg string) error {
 	channels := strings.Split(channelsinput, ",")
 	for _, channel := range channels {
+		channel = strings.TrimSpace(channel)
 		data := Payload{
 			ChatID:              channel,
 			Text:                msg,
 			DisableNotification: false,
 		}
 		endpoint := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", token)
-		req, err := http.NewRequest(http.MethodPost, endpoint, data.Reader())
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, data.Reader())
 		if err != nil {
+			if ctx.Err() != nil {
+				return context.Cause(ctx) // is timeout etc
+			}
 			return err
 		}
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil { // maybe bad markdown, send a simple message as a fallback
-			log.Info("failed to send chain alert", "msg", data.Text)
-			data.Text = "failed to send chain alert (please check logs)"
-			_, _ = http.NewRequest(http.MethodPost, endpoint, data.Reader())
+			if ctx.Err() != nil {
+				return context.Cause(ctx) // is timeout etc
+			}
+			log.Info("failed to send chain alert", "msg", data.Text, "error", err.Error())
 			return err
 		}
 		resp.Body.Close()

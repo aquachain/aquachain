@@ -23,10 +23,12 @@ import (
 	"time"
 
 	"gitlab.com/aquachain/aquachain/common/hexutil"
+	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/common/metrics"
 	"gitlab.com/aquachain/aquachain/crypto"
 	"gitlab.com/aquachain/aquachain/p2p"
 	"gitlab.com/aquachain/aquachain/p2p/discover"
+	"gitlab.com/aquachain/aquachain/p2p/netutil"
 	"gitlab.com/aquachain/aquachain/rpc"
 )
 
@@ -40,6 +42,11 @@ type PrivateAdminAPI struct {
 // of the node itself.
 func NewPrivateAdminAPI(node *Node) *PrivateAdminAPI {
 	return &PrivateAdminAPI{node: node}
+}
+
+func (api *PrivateAdminAPI) ShutdownEverything() {
+	log.Warn("Shutting down everything (RPC request from admin)")
+
 }
 
 // AddPeer requests connecting to a remote node, and also maintaining the new
@@ -161,7 +168,7 @@ func (api *PrivateAdminAPI) StartRPC(host *string, port *int, cors *string, apis
 		}
 	}
 
-	allowedIPs := api.node.config.RPCAllowIP
+	allownet := parseAllowNet(api.node.config.RPCAllowIP)
 	behindreverseproxy := api.node.config.RPCBehindProxy
 	modules := api.node.httpWhitelist
 	if apis != nil {
@@ -171,7 +178,7 @@ func (api *PrivateAdminAPI) StartRPC(host *string, port *int, cors *string, apis
 		}
 	}
 
-	if err := api.node.startHTTP(fmt.Sprintf("%s:%d", *host, *port), api.node.rpcAPIs, modules, allowedOrigins, allowedVHosts, allowedIPs, behindreverseproxy); err != nil {
+	if err := api.node.startHTTP(fmt.Sprintf("%s:%d", *host, *port), api.node.rpcAPIs, modules, allowedOrigins, allowedVHosts, allownet, behindreverseproxy); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -190,7 +197,7 @@ func (api *PrivateAdminAPI) StopRPC() (bool, error) {
 }
 
 // StartWS starts the websocket RPC API server.
-func (api *PrivateAdminAPI) StartWS(host *string, port *int, allowedOrigins *string, apis *string) (bool, error) {
+func (api *PrivateAdminAPI) StartWS(host *string, port *int, allowedOrigins *string, allownet netutil.Netlist, apis *string) (bool, error) {
 	api.node.lock.Lock()
 	defer api.node.lock.Unlock()
 
@@ -206,10 +213,15 @@ func (api *PrivateAdminAPI) StartWS(host *string, port *int, allowedOrigins *str
 		host = &h
 	}
 	if port == nil {
-		port = &api.node.config.WSPort
+		p := api.node.config.WSPort
+		port = &p
 	}
 
 	origins := api.node.config.WSOrigins
+	if origins == nil && api.node.config.HTTPVirtualHosts != nil {
+		origins = api.node.config.HTTPVirtualHosts
+		log.Warn("Websocket origins not set, using HTTP virtual hosts")
+	}
 	if allowedOrigins != nil {
 		origins = nil
 		for _, origin := range strings.Split(*allowedOrigins, ",") {
@@ -225,7 +237,7 @@ func (api *PrivateAdminAPI) StartWS(host *string, port *int, allowedOrigins *str
 		}
 	}
 
-	if err := api.node.startWS(fmt.Sprintf("%s:%d", *host, *port), api.node.rpcAPIs, modules, origins, api.node.config.WSExposeAll, api.node.config.RPCAllowIP, api.node.config.RPCBehindProxy); err != nil {
+	if err := api.node.startWS(fmt.Sprintf("%s:%d", *host, *port), api.node.rpcAPIs, modules, origins, api.node.config.WSExposeAll, allownet, api.node.config.RPCBehindProxy); err != nil {
 		return false, err
 	}
 	return true, nil

@@ -27,7 +27,7 @@ jobs:
       - name: show system info
         run: env || true; uname -a || true; test ! -e /etc/os-release || cat /etc/os-release;
       - name: Test (short)
-        run: bash testing/test-short-only.bash
+        run: bash testing/test-short-only.bash -v
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:

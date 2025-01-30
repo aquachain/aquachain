@@ -32,6 +32,7 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"gitlab.com/aquachain/aquachain/common/log"
+	"gitlab.com/aquachain/aquachain/p2p/netutil"
 	"gitlab.com/aquachain/aquachain/rpc"
 )
 
@@ -420,14 +421,16 @@ func TestClientHTTP(t *testing.T) {
 	}
 }
 
+var allowAllSubnet = netutil.Netlist{net.IPNet{IP: net.IPv4(0, 0, 0, 0), Mask: net.IPv4Mask(0, 0, 0, 0)}}
+
 func TestClientReconnect(t *testing.T) {
 	startServer := func(addr string) (*rpc.Server, net.Listener) {
 		srv := newTestServer("service", new(Service))
-		l, err := net.Listen("tcp", addr)
+		l, err := net.Listen("tcp4", addr)
 		if err != nil {
 			t.Fatal(err)
 		}
-		go http.Serve(l, srv.WebsocketHandler([]string{"*"}, []string{"*"}, false))
+		go http.Serve(l, srv.WebsocketHandler([]string{"*"}, allowAllSubnet, false))
 		return srv, l
 	}
 
@@ -499,7 +502,7 @@ func httpTestClient(srv *rpc.Server, transport string, fl *flakeyListener) (*Cli
 	var hs *httptest.Server
 	switch transport {
 	case "ws":
-		hs = httptest.NewUnstartedServer(srv.WebsocketHandler([]string{"*"}, []string{"*"}, false))
+		hs = httptest.NewUnstartedServer(srv.WebsocketHandler([]string{"*"}, allowAllSubnet, false))
 	case "http":
 		hs = httptest.NewUnstartedServer(srv)
 	default:

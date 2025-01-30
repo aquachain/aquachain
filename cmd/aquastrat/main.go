@@ -22,17 +22,14 @@ import (
 	"math/big"
 	"math/rand"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
-	cli "github.com/urfave/cli"
-	"gitlab.com/aquachain/aquachain/cmd/utils"
+	cli "github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/consensus/aquahash"
 	"gitlab.com/aquachain/aquachain/consensus/lightvalid"
 	"gitlab.com/aquachain/aquachain/core/types"
-	"gitlab.com/aquachain/aquachain/internal/debug"
 	"gitlab.com/aquachain/aquachain/opt/aquaclient"
 	"gitlab.com/aquachain/aquachain/params"
 	"gitlab.com/aquachain/aquachain/rlp"
@@ -42,28 +39,28 @@ import (
 var gitCommit = ""
 
 var (
-	app    = utils.NewApp(gitCommit, "usage")
+	// app    = utils.NewApp(gitCommit, "usage")
 	big1   = big.NewInt(1)
 	Config *params.ChainConfig
 )
 
 func init() {
-	app.Name = "aquastrat"
-	app.Action = loopit
-	_ = filepath.Join
-	app.Flags = append(debug.Flags, []cli.Flag{
-		cli.StringFlag{
-			//Value: filepath.Join(utils.DataDirFlag.Value.String(), "testnet/aquachain.ipc"),
-			Value: "https://tx.aquacha.in/testnet/",
-			Name:  "rpc",
-			Usage: "path or url to rpc",
-		},
-		cli.StringFlag{
-			Value: "",
-			Name:  "coinbase",
-			Usage: "address for mining rewards",
-		},
-	}...)
+	// app.Name = "aquastrat"
+	// app.Action = loopit
+	// _ = filepath.Join
+	// app.Flags = append(debug.Flags, []cli.Flag{
+	// 	cli.StringFlag{
+	// 		//Value: filepath.Join(utils.DataDirFlag.Value.String(), "testnet/aquachain.ipc"),
+	// 		Value: "https://tx.aquacha.in/testnet/",
+	// 		Name:  "rpc",
+	// 		Usage: "path or url to rpc",
+	// 	},
+	// 	cli.StringFlag{
+	// 		Value: "",
+	// 		Name:  "coinbase",
+	// 		Usage: "address for mining rewards",
+	// 	},
+	// }...)
 }
 
 // valid block #1 using -testnet2
@@ -92,7 +89,7 @@ func main() {
 	}
 }
 
-func loopit(ctx *cli.Context) error {
+func loopit(_ context.Context, cmd *cli.Command) error {
 	for {
 		if err := runit(ctx); err != nil {
 			fmt.Println(err)
@@ -100,7 +97,7 @@ func loopit(ctx *cli.Context) error {
 		}
 	}
 }
-func runit(ctx *cli.Context) error {
+func runit(_ context.Context, cmd *cli.Command) error {
 	coinbase := ctx.String("coinbase")
 	if coinbase == "" || !strings.HasPrefix(coinbase, "0x") || len(coinbase) != 42 {
 		return fmt.Errorf("cant mine with no -coinbase flag, or invalid: len: %v, coinbase: %q", len(coinbase), coinbase)
@@ -219,7 +216,7 @@ func mine(cfg *params.ChainConfig, parent *types.Header, block *types.Block) ([]
 	}
 }
 
-func getclient(ctx *cli.Context) (*rpc.Client, error) {
+func getclient(cmd *cli.Command) (*rpc.Client, error) {
 	if strings.HasPrefix(ctx.String("rpc"), "http") {
 		return rpc.DialHTTP(ctx.String("rpc"))
 	} else {

@@ -459,7 +459,13 @@ func (tab *Table) loadSeedNodes(bond bool) {
 			log.Debug("Skipping bad seed node in database", "id", seed.ID, "addr", seed.addr(), "port", seed.UDP)
 			continue
 		}
-		age := log.Lazy{Fn: func() interface{} { return time.Since(tab.db.bondTime(seed.ID)) }}
+		age := log.Lazy{Fn: func() interface{} {
+			x := tab.db.bondTime(seed.ID)
+			if x.IsZero() {
+				return "never"
+			}
+			return time.Since(x)
+		}}
 		log.Debug("Found seed node in database", "id", seed.ID, "addr", seed.addr(), "age", age)
 		tab.add(seed)
 	}
@@ -600,10 +606,15 @@ func (tab *Table) bond(pinged bool, id NodeID, addr *net.UDPAddr, tcpPort uint16
 	}
 	// Start bonding if we haven't seen this node for a while or if it failed findnode too often.
 	node, fails := tab.db.node(id), tab.db.findFails(id)
-	age := time.Since(tab.db.bondTime(id))
+	agel := "never"
+	since := tab.db.bondTime(id)
+	if !since.IsZero() {
+		agel = time.Since(since).String()
+	}
+	// time.Since(tab.db.bondTime(id))
 	var result error
-	if fails > 0 || age > nodeDBNodeExpiration {
-		log.Trace("Starting bonding ping/pong", "id", id, "known", node != nil, "failcount", fails, "age", age)
+	if fails > 0 || since.IsZero() || time.Since(since) > nodeDBNodeExpiration {
+		log.Trace("Starting bonding ping/pong", "id", id, "known", node != nil, "failcount", fails, "age", agel)
 
 		tab.bondmu.Lock()
 		w := tab.bonding[id]

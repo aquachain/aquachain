@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"time"
 
@@ -241,7 +242,7 @@ func (self *JSRE) Stop(waitForCallbacks bool) {
 
 // Exec(file) loads and runs the contents of a file
 // if a relative path is given, the jsre's assetPath is used
-func (self *JSRE) Exec(file string) error {
+func (self *JSRE) ExecFile(file string) error {
 	code, err := ioutil.ReadFile(common.AbsolutePath(self.assetPath, file))
 	if err != nil {
 		return err
@@ -250,6 +251,7 @@ func (self *JSRE) Exec(file string) error {
 	self.Do(func(vm *otto.Otto) {
 		script, err = vm.Compile(file, code)
 		if err != nil {
+			log.Printf("failed to compile: %+v", err)
 			return
 		}
 		_, err = vm.Run(script)
@@ -314,7 +316,7 @@ func (self *JSRE) Evaluate(code string, w io.Writer) error {
 	self.Do(func(vm *otto.Otto) {
 		defer func() {
 			if err := recover(); err != nil {
-				fmt.Println("recovered JS panic:", err)
+				fmt.Printf("recovered JS panic: %+v", err)
 			}
 		}()
 

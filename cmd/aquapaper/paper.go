@@ -73,7 +73,7 @@ func main() {
 	for i := 0; i < count; i++ {
 		key, err := crypto.GenerateKey()
 		if err != nil {
-			log.Println("fatal:", err)
+			log.Println("fatal could not generate key:", err)
 			os.Exit(111)
 		}
 

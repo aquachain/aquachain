@@ -17,6 +17,7 @@
 package console
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -31,6 +32,7 @@ import (
 	colorable "github.com/mattn/go-colorable"
 	"github.com/peterh/liner"
 	"github.com/robertkrimen/otto"
+	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/internal/jsre"
 	"gitlab.com/aquachain/aquachain/internal/web3ext"
 	rpc "gitlab.com/aquachain/aquachain/rpc/rpcclient"
@@ -121,6 +123,7 @@ type Console struct {
 	printer  io.Writer    // Output writer to serialize any display strings to
 }
 
+// requires at least a config.Client, should set config.DataDir, optional preloads
 func New(config Config) (*Console, error) {
 	// Handle unset config values gracefully
 	if config.Prompter == nil {
@@ -155,15 +158,14 @@ func New(config Config) (*Console, error) {
 func (c *Console) init(preload []string) error {
 	// Initialize the JavaScript <-> Go RPC bridge
 	bridge := newBridge(c.client, c.prompter, c.printer)
-	c.jsre.Set("jeth", struct{}{})
-
+	c.jsre.Set("jeth", struct{}{}) // TODO rename to jseth?
 	jethObj, _ := c.jsre.Get("jeth")
 	jethObj.Object().Set("send", bridge.Send)
 	jethObj.Object().Set("sendAsync", bridge.Send)
 
 	consoleObj, _ := c.jsre.Get("console")
 	consoleObj.Object().Set("log", c.consoleOutput)
-	consoleObj.Object().Set("error", c.consoleOutput)
+	consoleObj.Object().Set("error", c.consoleOutputErr)
 
 	// Load all the internal utility JavaScript libraries
 	if err := c.jsre.Compile("bignumber.js", jsre.BigNumber_JS); err != nil {
@@ -178,13 +180,19 @@ func (c *Console) init(preload []string) error {
 	if _, err := c.jsre.Run("var web3 = new Web3(jeth);"); err != nil {
 		return fmt.Errorf("web3 provider: %v", err)
 	}
+	// NEW: add 'print' function alias for console.log("...")
+	if _, err := c.jsre.Run("var print = console.log;"); err != nil {
+		return fmt.Errorf("setting printer function: %v", err)
+	}
+
 	// Load the supported APIs into the JavaScript runtime environment
 	apis, err := c.client.SupportedModules()
 	if err != nil {
 		return fmt.Errorf("api modules: %v", err)
 	}
-	flatten := "var aqua = web3.aqua; var personal = web3.personal; "
+	flatten := "var aqua = web3.aqua; console.log('WOW'.toLowerCase(), web3.aqua); var personal = web3.personal; "
 	for api := range apis {
+		log.Info("js api...", "api", api)
 		if api == "web3" {
 			continue // manually mapped or ignore
 		}
@@ -234,6 +242,8 @@ func (c *Console) init(preload []string) error {
 			obj.Set("unlockAccount", bridge.UnlockAccount)
 			obj.Set("newAccount", bridge.NewAccount)
 			obj.Set("sign", bridge.Sign)
+		} else {
+			return fmt.Errorf("personal api not available?")
 		}
 	}
 	// The admin.sleep and admin.sleepBlocks are offered by the console and not by the RPC layer.
@@ -248,7 +258,7 @@ func (c *Console) init(preload []string) error {
 	}
 	// Preload any JavaScript files before starting the console
 	for _, path := range preload {
-		if err := c.jsre.Exec(path); err != nil {
+		if err := c.jsre.ExecFile(path); err != nil {
 			failure := err.Error()
 			if ottoErr, ok := err.(*otto.Error); ok {
 				failure = ottoErr.String()
@@ -282,6 +292,17 @@ func (c *Console) clearHistory() {
 // consoleOutput is an override for the console.log and console.error methods to
 // stream the output into the configured output stream instead of stdout.
 func (c *Console) consoleOutput(call otto.FunctionCall) otto.Value {
+	output := []string{}
+	for _, argument := range call.ArgumentList {
+		output = append(output, fmt.Sprintf("%#v", argument))
+	}
+	fmt.Fprintln(c.printer, strings.Join(output, " "))
+	return otto.Value{}
+}
+
+// consoleOutput is an override for the console.log and console.error methods to
+// stream the output into the configured output stream instead of stdout.
+func (c *Console) consoleOutputErr(call otto.FunctionCall) otto.Value {
 	output := []string{}
 	for _, argument := range call.ArgumentList {
 		output = append(output, fmt.Sprintf("%v", argument))
@@ -378,7 +399,7 @@ function balance() {
 func (c *Console) Evaluate(statement string) error {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Fprintf(c.printer, "[native] error: %v\n", r)
+			fmt.Fprintf(c.printer, "[native] error: %+v\n", r)
 		}
 	}()
 	return c.jsre.Evaluate(statement, c.printer)
@@ -386,7 +407,10 @@ func (c *Console) Evaluate(statement string) error {
 
 // Interactive starts an interactive user session, where input is propted from
 // the configured user prompter.
-func (c *Console) Interactive() {
+func (c *Console) Interactive(ctx context.Context, donefn func()) {
+	if donefn != nil {
+		defer donefn()
+	}
 	var (
 		prompt    = c.prompt          // Current prompt line (used for multi-line inputs)
 		indents   = 0                 // Current number of input indents (used for multi-line inputs)
@@ -395,7 +419,7 @@ func (c *Console) Interactive() {
 	)
 	// Start a goroutine to listen for promt requests and send back inputs
 	go func() {
-		for {
+		for ctx.Err() == nil {
 			// Read the next user input
 			line, err := c.prompter.PromptInput(<-scheduler)
 			if err != nil {
@@ -414,6 +438,7 @@ func (c *Console) Interactive() {
 	}()
 	// Monitor Ctrl-C too in case the input is empty and we need to bail
 	abort := make(chan os.Signal, 1)
+	log.Info("interactive console waiting for interrupt")
 	signal.Notify(abort, syscall.SIGINT, syscall.SIGTERM)
 
 	// Start sending prompts to the user and reading back inputs
@@ -572,8 +597,8 @@ func countIndents(input string) int {
 }
 
 // Execute runs the JavaScript file specified as the argument.
-func (c *Console) Execute(path string) error {
-	return c.jsre.Exec(path)
+func (c *Console) ExecuteFile(path string) error {
+	return c.jsre.ExecFile(path)
 }
 
 // Stop cleans up the console and terminates the runtime environment.

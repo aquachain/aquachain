@@ -280,7 +280,11 @@ func (db *nodeDB) updateLastPing(id NodeID, instance time.Time) error {
 
 // bondTime retrieves the time of the last successful pong from remote node.
 func (db *nodeDB) bondTime(id NodeID) time.Time {
-	return time.Unix(db.fetchInt64(makeKey(id, nodeDBDiscoverPong)), 0)
+	x := db.fetchInt64(makeKey(id, nodeDBDiscoverPong))
+	if x == 0 {
+		return time.Time{}
+	}
+	return time.Unix(x, 0)
 }
 
 // hasBond reports whether the given node is considered bonded.
@@ -332,7 +336,8 @@ seek:
 		if n.ID == db.self {
 			continue seek
 		}
-		if now.Sub(db.bondTime(n.ID)) > maxAge {
+		since := db.bondTime(n.ID)
+		if now.Sub(since) > maxAge {
 			continue seek
 		}
 		for i := range nodes {
@@ -340,6 +345,7 @@ seek:
 				continue seek // duplicate
 			}
 		}
+		log.Info("Found seed node in database", "id", n.ID, "ip", n.IP, "udp", n.UDP, "since", now.Sub(since), "db", db.self)
 		nodes = append(nodes, n)
 	}
 	return nodes

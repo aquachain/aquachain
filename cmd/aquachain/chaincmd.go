@@ -17,6 +17,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -26,7 +27,7 @@ import (
 	"time"
 
 	"github.com/syndtr/goleveldb/leveldb/util"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/aqua/downloader"
 	"gitlab.com/aquachain/aquachain/aqua/event"
 	"gitlab.com/aquachain/aquachain/aquadb"
@@ -63,11 +64,11 @@ It expects the genesis file as argument.`,
 		Usage:     "Import a blockchain file",
 		ArgsUsage: "<filename> (<filename 2> ... <filename N>) ",
 		Flags: []cli.Flag{
-			utils.DataDirFlag,
-			utils.CacheFlag,
-			utils.GCModeFlag,
-			utils.CacheDatabaseFlag,
-			utils.CacheGCFlag,
+			&utils.DataDirFlag,
+			&utils.CacheFlag,
+			&utils.GCModeFlag,
+			&utils.CacheDatabaseFlag,
+			&utils.CacheGCFlag,
 		},
 		Category: "BLOCKCHAIN COMMANDS",
 		Description: `
@@ -83,8 +84,8 @@ processing will proceed even if an individual RLP-file import failure occurs.`,
 		Usage:     "Export blockchain into file",
 		ArgsUsage: "<filename> [<blockNumFirst> <blockNumLast>]",
 		Flags: []cli.Flag{
-			utils.DataDirFlag,
-			utils.CacheFlag,
+			&utils.DataDirFlag,
+			&utils.CacheFlag,
 		},
 		Category: "BLOCKCHAIN COMMANDS",
 		Description: `
@@ -99,12 +100,12 @@ if already existing.`,
 		Usage:     "Create a local chain from a target chaindata folder",
 		ArgsUsage: "<sourceChaindataDir>",
 		Flags: []cli.Flag{
-			utils.DataDirFlag,
-			utils.CacheFlag,
-			utils.SyncModeFlag,
-			utils.FakePoWFlag,
-			utils.TestnetFlag,
-			utils.Testnet2Flag,
+			&utils.DataDirFlag,
+			&utils.CacheFlag,
+			&utils.SyncModeFlag,
+			&utils.FakePoWFlag,
+			&utils.TestnetFlag,
+			&utils.Testnet2Flag,
 		},
 		Category: "BLOCKCHAIN COMMANDS",
 		Description: `
@@ -116,7 +117,7 @@ The first argument must be the directory containing the blockchain to download f
 		Usage:     "Remove blockchain and state databases",
 		ArgsUsage: " ",
 		Flags: []cli.Flag{
-			utils.DataDirFlag,
+			&utils.DataDirFlag,
 		},
 		Category: "BLOCKCHAIN COMMANDS",
 		Description: `
@@ -128,8 +129,8 @@ Remove blockchain and state databases`,
 		Usage:     "Dump a specific block from storage",
 		ArgsUsage: "[<blockHash> | <blockNum>]...",
 		Flags: []cli.Flag{
-			utils.DataDirFlag,
-			utils.CacheFlag,
+			&utils.DataDirFlag,
+			&utils.CacheFlag,
 		},
 		Category: "BLOCKCHAIN COMMANDS",
 		Description: `
@@ -140,9 +141,9 @@ Use "aquachain dump 0" to dump the genesis block.`,
 
 // initGenesis will initialise the given JSON format genesis file and writes it as
 // the zero'd block (i.e. genesis) or will fail hard if it can't succeed.
-func initGenesis(ctx *cli.Context) error {
+func initGenesis(_ context.Context, cmd *cli.Command) error {
 	// Make sure we have a valid genesis JSON
-	genesisPath := ctx.Args().First()
+	genesisPath := cmd.Args().First()
 	if len(genesisPath) == 0 {
 		utils.Fatalf("Must supply path to genesis JSON file")
 	}
@@ -162,7 +163,7 @@ func initGenesis(ctx *cli.Context) error {
 	}
 
 	// Open an initialise db
-	stack := makeFullNode(ctx)
+	stack := makeFullNode(cmd)
 	for _, name := range []string{"chaindata"} {
 		chaindb, err := stack.OpenDatabase(name, 0, 0)
 		if err != nil {
@@ -177,12 +178,12 @@ func initGenesis(ctx *cli.Context) error {
 	return nil
 }
 
-func importChain(ctx *cli.Context) error {
-	if len(ctx.Args()) < 1 {
+func importChain(_ context.Context, cmd *cli.Command) error {
+	if cmd.Args().Len() < 1 {
 		utils.Fatalf("This command requires an argument.")
 	}
-	stack := makeFullNode(ctx)
-	chain, chainDb := utils.MakeChain(ctx, stack)
+	stack := makeFullNode(cmd)
+	chain, chainDb := utils.MakeChain(cmd, stack)
 	defer chainDb.Close()
 
 	// Start periodically gathering memory profiles
@@ -204,13 +205,13 @@ func importChain(ctx *cli.Context) error {
 	start := time.Now()
 	exitcode := 0
 
-	if len(ctx.Args()) == 1 {
-		if err := utils.ImportChain(chain, ctx.Args().First()); err != nil {
+	if cmd.Args().Len() == 1 {
+		if err := utils.ImportChain(chain, cmd.Args().First()); err != nil {
 			log.Error("Import error", "err", err)
 			exitcode = 111
 		}
 	} else {
-		for _, arg := range ctx.Args() {
+		for _, arg := range cmd.Args().Slice() {
 			if err := utils.ImportChain(chain, arg); err != nil {
 				log.Error("Import error", "file", arg, "err", err)
 			}
@@ -239,7 +240,7 @@ func importChain(ctx *cli.Context) error {
 	fmt.Printf("Allocations:   %.3f million\n", float64(mem.Mallocs)/1000000)
 	fmt.Printf("GC pause:      %v\n\n", time.Duration(mem.PauseTotalNs))
 
-	if ctx.GlobalIsSet(utils.NoCompactionFlag.Name) {
+	if cmd.IsSet(utils.NoCompactionFlag.Name) {
 		return nil
 	}
 
@@ -263,22 +264,22 @@ func importChain(ctx *cli.Context) error {
 	return nil
 }
 
-func exportChain(ctx *cli.Context) error {
-	if len(ctx.Args()) < 1 {
+func exportChain(_ context.Context, cmd *cli.Command) error {
+	if cmd.Args().Len() < 1 {
 		utils.Fatalf("This command requires an argument.")
 	}
-	stack := makeFullNode(ctx)
-	chain, _ := utils.MakeChain(ctx, stack)
+	stack := makeFullNode(cmd)
+	chain, _ := utils.MakeChain(cmd, stack)
 	start := time.Now()
 
 	var err error
-	fp := ctx.Args().First()
-	if len(ctx.Args()) < 3 {
+	fp := cmd.Args().First()
+	if cmd.Args().Len() < 3 {
 		err = utils.ExportChain(chain, fp)
 	} else {
 		// This can be improved to allow for numbers larger than 9223372036854775807
-		first, ferr := strconv.ParseInt(ctx.Args().Get(1), 10, 64)
-		last, lerr := strconv.ParseInt(ctx.Args().Get(2), 10, 64)
+		first, ferr := strconv.ParseInt(cmd.Args().Get(1), 10, 64)
+		last, lerr := strconv.ParseInt(cmd.Args().Get(2), 10, 64)
 		if ferr != nil || lerr != nil {
 			utils.Fatalf("Export error in parsing parameters: block number not an integer\n")
 		}
@@ -295,20 +296,20 @@ func exportChain(ctx *cli.Context) error {
 	return nil
 }
 
-func copyDb(ctx *cli.Context) error {
+func copyDb(_ context.Context, cmd *cli.Command) error {
 	// Ensure we have a source chain directory to copy
-	if len(ctx.Args()) != 1 {
+	if cmd.Args().Len() != 1 {
 		utils.Fatalf("Source chaindata directory path argument missing")
 	}
 	// Initialize a new chain for the running node to sync into
-	stack := makeFullNode(ctx)
-	chain, chainDb := utils.MakeChain(ctx, stack)
+	stack := makeFullNode(cmd)
+	chain, chainDb := utils.MakeChain(cmd, stack)
 
-	syncmode := *utils.GlobalTextMarshaler(ctx, utils.SyncModeFlag.Name).(*downloader.SyncMode)
+	syncmode := *utils.GlobalTextMarshaler(cmd, utils.SyncModeFlag.Name).(*downloader.SyncMode)
 	dl := downloader.New(syncmode, chainDb, new(event.TypeMux), chain, nil, nil)
 
 	// Create a source peer to satisfy downloader requests from
-	db, err := aquadb.NewLDBDatabase(ctx.Args().First(), ctx.GlobalInt(utils.CacheFlag.Name), 256)
+	db, err := aquadb.NewLDBDatabase(cmd.Args().First(), int(cmd.Int(utils.CacheFlag.Name)), 256)
 	if err != nil {
 		return err
 	}
@@ -343,8 +344,8 @@ func copyDb(ctx *cli.Context) error {
 	return nil
 }
 
-func removeDB(ctx *cli.Context) error {
-	stack, _ := makeConfigNode(ctx)
+func removeDB(_ context.Context, cmd *cli.Command) error {
+	stack, _ := makeConfigNode(cmd)
 
 	name := "chaindata"
 	// Ensure the database exists in the first place
@@ -372,10 +373,10 @@ func removeDB(ctx *cli.Context) error {
 	return nil
 }
 
-func dump(ctx *cli.Context) error {
-	stack := makeFullNode(ctx)
-	chain, chainDb := utils.MakeChain(ctx, stack)
-	for _, arg := range ctx.Args() {
+func dump(_ context.Context, cmd *cli.Command) error {
+	stack := makeFullNode(cmd)
+	chain, chainDb := utils.MakeChain(cmd, stack)
+	for _, arg := range cmd.Args().Slice() {
 		var block *types.Block
 		if hashish(arg) {
 			block = chain.GetBlockByHash(common.HexToHash(arg))

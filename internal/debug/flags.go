@@ -17,6 +17,7 @@
 package debug
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -25,7 +26,7 @@ import (
 	"runtime"
 
 	colorable "github.com/mattn/go-colorable"
-	"github.com/urfave/cli"
+	cli "github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/common/log/term"
 	"gitlab.com/aquachain/aquachain/common/metrics"
@@ -69,7 +70,7 @@ var (
 	memprofilerateFlag = cli.IntFlag{
 		Name:  "memprofilerate",
 		Usage: "Turn on memory profiling with the given rate",
-		Value: runtime.MemProfileRate,
+		Value: int64(runtime.MemProfileRate),
 	}
 	blockprofilerateFlag = cli.IntFlag{
 		Name:  "blockprofilerate",
@@ -87,9 +88,9 @@ var (
 
 // Flags holds all command-line flags required for debugging.
 var Flags = []cli.Flag{
-	verbosityFlag, vmoduleFlag, backtraceAtFlag, debugFlag,
-	pprofFlag, pprofAddrFlag, pprofPortFlag,
-	memprofilerateFlag, blockprofilerateFlag, cpuprofileFlag, traceFlag,
+	&verbosityFlag, &vmoduleFlag, &backtraceAtFlag, &debugFlag,
+	&pprofFlag, &pprofAddrFlag, &pprofPortFlag,
+	&memprofilerateFlag, &blockprofilerateFlag, &cpuprofileFlag, &traceFlag,
 }
 
 var glogger *log.GlogHandler
@@ -105,36 +106,36 @@ func init() {
 
 // Setup initializes profiling and logging based on the CLI flags.
 // It should be called as early as possible in the program.
-func Setup(ctx *cli.Context) error {
+func Setup(ctx_ context.Context, cmd *cli.Command) error {
 	// logging
-	log.PrintOrigins(ctx.GlobalBool(debugFlag.Name))
-	glogger.Verbosity(log.Lvl(ctx.GlobalInt(verbosityFlag.Name)))
-	glogger.Vmodule(wrapVmodule(ctx.GlobalString(vmoduleFlag.Name)))
-	glogger.BacktraceAt(ctx.GlobalString(backtraceAtFlag.Name))
+	log.PrintOrigins(cmd.Bool(debugFlag.Name))
+	glogger.Verbosity(log.Lvl(cmd.Int(verbosityFlag.Name)))
+	glogger.Vmodule(wrapVmodule(cmd.String(vmoduleFlag.Name)))
+	glogger.BacktraceAt(cmd.String(backtraceAtFlag.Name))
 	log.Root().SetHandler(glogger)
 
 	// profiling, tracing
-	runtime.MemProfileRate = ctx.GlobalInt(memprofilerateFlag.Name)
-	Handler.SetBlockProfileRate(ctx.GlobalInt(blockprofilerateFlag.Name))
-	if traceFile := ctx.GlobalString(traceFlag.Name); traceFile != "" {
+	runtime.MemProfileRate = int(cmd.Int(memprofilerateFlag.Name))
+	Handler.SetBlockProfileRate(int(cmd.Int(blockprofilerateFlag.Name)))
+	if traceFile := cmd.String(traceFlag.Name); traceFile != "" {
 		if err := Handler.StartGoTrace(traceFile); err != nil {
 			return err
 		}
 	}
-	if cpuFile := ctx.GlobalString(cpuprofileFlag.Name); cpuFile != "" {
+	if cpuFile := cmd.String(cpuprofileFlag.Name); cpuFile != "" {
 		if err := Handler.StartCPUProfile(cpuFile); err != nil {
 			return err
 		}
 	}
 
 	// pprof server
-	if ctx.GlobalBool(pprofFlag.Name) {
+	if cmd.Bool(pprofFlag.Name) {
 		// Hook go-metrics into expvar on any /debug/metrics request, load all vars
 		// from the registry into expvar, and execute regular expvar handler.
 		exp.Exp(metrics.DefaultRegistry)
 
 		runtime.SetMutexProfileFraction(10)
-		address := fmt.Sprintf("%s:%d", ctx.GlobalString(pprofAddrFlag.Name), ctx.GlobalInt(pprofPortFlag.Name))
+		address := fmt.Sprintf("%s:%d", cmd.String(pprofAddrFlag.Name), cmd.Int(pprofPortFlag.Name))
 		go func() {
 			log.Info("Starting pprof server", "addr", fmt.Sprintf("http://%s/debug/pprof", address))
 			if err := http.ListenAndServe(address, nil); err != nil {

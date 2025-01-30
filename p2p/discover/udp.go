@@ -103,7 +103,7 @@ type (
 
 	// reply to findnode
 	neighbors struct {
-		Nodes      []rpcNode
+		Nodes      rpcNodes
 		Expiration uint64
 		// Ignore additional fields (for forward compatibility).
 		Rest []rlp.RawValue `rlp:"tail"`
@@ -115,6 +115,7 @@ type (
 		TCP uint16 // for RLPx protocol
 		ID  NodeID
 	}
+	rpcNodes []rpcNode
 
 	rpcEndpoint struct {
 		IP  net.IP // len 4 for IPv4 or 16 for IPv6
@@ -122,6 +123,10 @@ type (
 		TCP uint16 // for RLPx protocol
 	}
 )
+
+func (r rpcNode) String() string {
+	return fmt.Sprintf("%v:%d", r.IP, r.UDP)
+}
 
 func makeEndpoint(addr *net.UDPAddr, tcpPort uint16) rpcEndpoint {
 	ip := addr.IP.To4()
@@ -158,6 +163,9 @@ type packet interface {
 	name() string
 }
 
+// type conn = *net.UDPConn
+
+// discover.conn
 type conn interface {
 	ReadFromUDP(b []byte) (n int, addr *net.UDPAddr, err error)
 	WriteToUDP(b []byte, addr *net.UDPAddr) (n int, err error)
@@ -168,7 +176,7 @@ type conn interface {
 // udp implements the RPC protocol.
 type udp struct {
 	conn        conn
-	netrestrict *netutil.Netlist
+	netrestrict netutil.Netlist
 	priv        *PrivateKey
 	ourEndpoint rpcEndpoint
 
@@ -232,7 +240,7 @@ type Config struct {
 	// These settings are optional:
 	AnnounceAddr *net.UDPAddr      // local address announced in the DHT
 	NodeDBPath   string            // if set, the node database is stored at this filesystem location
-	NetRestrict  *netutil.Netlist  // network whitelist
+	NetRestrict  netutil.Netlist   // network whitelist
 	Bootnodes    []*Node           // list of bootstrap nodes
 	Unhandled    chan<- ReadPacket // unhandled packets are sent on this channel
 	ChainId      uint64
@@ -240,11 +248,12 @@ type Config struct {
 
 // ListenUDP returns a new table that listens for UDP packets on laddr.
 func ListenUDP(c conn, cfg Config) (*Table, error) {
+	log.Info("starting p2p discovery udp listener", "addr", c.LocalAddr())
 	tab, _, err := newUDP(c, cfg)
 	if err != nil {
 		return nil, err
 	}
-	log.Info("UDP listener up", "self", tab.self)
+	log.Info("UDP listener up", "self", tab.self.String())
 	return tab, nil
 }
 
@@ -580,6 +589,8 @@ func (t *udp) readLoop(unhandled chan<- ReadPacket) {
 	}
 }
 
+var debugneighborpacket = true
+
 func (t *udp) handlePacket(from *net.UDPAddr, buf []byte) error {
 	packet, fromID, hash, err := decodePacket(t.netcompat(), buf)
 	if err != nil {
@@ -587,7 +598,16 @@ func (t *udp) handlePacket(from *net.UDPAddr, buf []byte) error {
 		return err
 	}
 	err = packet.handle(t, from, fromID, hash)
-	log.Trace("<< "+packet.name(), "addr", from, "err", err)
+	if err != nil {
+		log.Warn("Failed to handle discv4 packet", "addr", from, "err", err)
+		return err
+	}
+	name := packet.name()
+	if name == "NEIGHBORS/v4" && debugneighborpacket {
+		log.Trace("<< "+name, "addr", from, "neighbors", len(packet.(*neighbors).Nodes), "peers", packet.(*neighbors).Nodes)
+	} else {
+		log.Trace("<< "+name, "addr", from)
+	}
 	return err
 }
 
@@ -596,6 +616,9 @@ func decodePacket(netcompat bool, buf []byte) (packet, NodeID, []byte, error) {
 		return nil, NodeID{}, nil, errPacketTooSmall
 	}
 	hash, sig, sigdata := buf[:macSize], buf[macSize:headSize], buf[headSize:]
+	if len(sigdata) == 0 {
+		return nil, NodeID{}, hash, errors.New("empty discovery packet sigdata")
+	}
 	shouldhash := crypto.Keccak256(buf[macSize:])
 	if !bytes.Equal(hash, shouldhash) {
 		return nil, NodeID{}, nil, errBadHash
@@ -604,7 +627,7 @@ func decodePacket(netcompat bool, buf []byte) (packet, NodeID, []byte, error) {
 	if err != nil {
 		return nil, NodeID{}, hash, err
 	}
-	if netcompat && sigdata[0] < 133 {
+	if netcompat && sigdata[0] < 133 { // if not aqua, modify the packet Type byte
 		sigdata[0] += 133
 	}
 	var req packet

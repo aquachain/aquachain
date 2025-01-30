@@ -420,7 +420,7 @@ func TestDialStateNetRestrict(t *testing.T) {
 	restrict.Add("127.0.2.0/24")
 
 	runDialTest(t, dialtest{
-		init: newDialState(nil, nil, table, 10, restrict),
+		init: newDialState(nil, nil, table, 10, *restrict),
 		rounds: []round{
 			{
 				new: []task{

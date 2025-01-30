@@ -18,16 +18,18 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"unicode"
 
-	cli "github.com/urfave/cli"
+	cli "github.com/urfave/cli/v3"
 
 	"github.com/naoina/toml"
 	"gitlab.com/aquachain/aquachain/aqua"
@@ -50,7 +52,7 @@ var (
 
 	configFileFlag = cli.StringFlag{
 		Name:  "config",
-		Usage: "TOML configuration file",
+		Usage: "TOML configuration file (in case of multiple instances, use -config=none to disable auto-reading available config files)",
 	}
 )
 
@@ -65,7 +67,7 @@ var tomlSettings = toml.Config{
 	MissingField: func(rt reflect.Type, field string) error {
 		link := ""
 		if unicode.IsUpper(rune(rt.Name()[0])) && rt.PkgPath() != "main" {
-			link = fmt.Sprintf(", see https://godoc.org/%s#%s for available fields", rt.PkgPath(), rt.Name())
+			link = fmt.Sprintf(", see https://pkg.go.dev/%s#%s for available fields", rt.PkgPath(), rt.Name())
 		}
 		return fmt.Errorf("field '%s' is not defined in %s%s", field, rt.String(), link)
 	},
@@ -76,6 +78,7 @@ type ethstatsConfig struct {
 }
 
 type gethConfig struct {
+	Info      any `toml:",omitempty"`
 	Aqua      aqua.Config
 	Node      node.Config
 	Aquastats ethstatsConfig
@@ -87,16 +90,20 @@ func loadConfig(file string, cfg *gethConfig) error {
 		return err
 	}
 	defer f.Close()
-
 	err = tomlSettings.NewDecoder(bufio.NewReader(f)).Decode(cfg)
 	// Add file name to errors that have a line number.
 	if _, ok := err.(*toml.LineError); ok {
 		err = errors.New(file + ", " + err.Error())
 	}
-	// after toml decode, lets replace tilde
+	// after toml decode, lets expand DataDir (tilde, environmental variables)
+	// this keeps config file tidy and sharable.
 	if err == nil {
 		cfg.Node.DataDir = strings.Replace(cfg.Node.DataDir, "~/", "$HOME/", 1)
 		cfg.Node.DataDir = os.ExpandEnv(cfg.Node.DataDir)
+		cfg.Aqua.Aquahash.DatasetDir = strings.Replace(cfg.Aqua.Aquahash.DatasetDir, "~/", "$HOME/", 1)
+		cfg.Aqua.Aquahash.DatasetDir = os.ExpandEnv(cfg.Aqua.Aquahash.DatasetDir)
+		cfg.Aqua.Aquahash.CacheDir = strings.Replace(cfg.Aqua.Aquahash.CacheDir, "~/", "$HOME/", 1)
+		cfg.Aqua.Aquahash.CacheDir = os.ExpandEnv(cfg.Aqua.Aquahash.CacheDir)
 	}
 	return err
 }
@@ -111,47 +118,75 @@ func defaultNodeConfig() node.Config {
 	return cfg
 }
 
-func makeConfigNode(ctx *cli.Context) (*node.Node, gethConfig) {
-	// Load defaults.
-	cfg := gethConfig{
+func mkconfig(cmd *cli.Command, checkDefaultConfigFiles bool) *gethConfig {
+	cfgptr := &gethConfig{
 		Aqua: aqua.DefaultConfig,
 		Node: defaultNodeConfig(),
 	}
-
 	// Load config file.
-	if file := ctx.GlobalString(configFileFlag.Name); file != "" {
-		if err := loadConfig(file, &cfg); err != nil {
-			log.Info("Loaded config file", "location", file)
+	file := cmd.String(configFileFlag.Name)
+	switch {
+	default:
+		if err := loadConfig(file, cfgptr); err != nil {
 			utils.Fatalf("error loading config file: %v", err)
 		}
-	} else {
-		// find config if exists in working-directory, and ~/.aquachain/aquachain.toml
-		for _, file := range []string{"aquachain.toml", filepath.Join(node.DefaultDataDir(), "aquachain.toml"), "/etc/aquachain/aquachain.toml"} {
-			if loadConfig(file, &cfg) == nil {
-				log.Info("Loaded config file", "location", file)
+		log.Info("Loaded config", "file", file)
+	case file == "" && !checkDefaultConfigFiles || file == "none":
+		// default config, flags only
+	case file == "" && checkDefaultConfigFiles: // find config if exists in working-directory, ~/.aquachain/aquachain.toml, or /etc/aquachain/aquachain.toml
+		var userdatadir string
+		chainName := cmd.String(utils.ChainFlag.Name)
+		chainCfg := params.GetChainConfig(chainName)
+		if chainCfg == nil {
+			utils.Fatalf("invalid chain name: %q, try one of %q", chainName, params.ValidChainNames())
+		}
+		var slug string // eg: "_testnet" for testnet, "" for mainnet
+		if params.MainnetChainConfig == chainCfg {
+			userdatadir = node.DefaultDataDir()
+		} else {
+			userdatadir = filepath.Join(node.DefaultDataDir(), chainName)
+		}
+		if chainName != "aquachain" && chainName != "mainnet" && chainName != "aqua" {
+			slug = "_" + chainName
+		}
+
+		fn := "aquachain" + slug + ".toml" // eg: aquachain_testnet.toml or aquachain.toml
+		for _, file := range []string{fn, filepath.Join(userdatadir, fn), "/etc/aquachain/" + fn} {
+			if err := loadConfig(file, cfgptr); err == nil {
+				log.Info("Loaded config", "file", file)
 				break
+			} else if !errors.Is(err, fs.ErrNotExist) { // error loading an existing config file
+				utils.Fatalf("error loading config file: %v", err)
 			}
 		}
 	}
 
+	return cfgptr
+}
+
+func makeConfigNode(cmd *cli.Command) (*node.Node, *gethConfig) {
+	// Load defaults.
+	cfgptr := mkconfig(cmd, true)
 	// Apply flags.
-	if err := utils.SetNodeConfig(ctx, &cfg.Node); err != nil {
-		utils.Fatalf("Fatal: %v", err)
+	if err := utils.SetNodeConfig(cmd, &cfgptr.Node); err != nil {
+		utils.Fatalf("Fatal: could not set node config %+v", err)
 	}
-	stack, err := node.New(&cfg.Node)
+	stack, err := node.New(&cfgptr.Node)
 	if err != nil {
 		utils.Fatalf("Failed to create the protocol stack: %v", err)
 	}
-	utils.SetAquaConfig(ctx, stack, &cfg.Aqua)
-	if ctx.GlobalIsSet(utils.AquaStatsURLFlag.Name) {
-		cfg.Aquastats.URL = ctx.GlobalString(utils.AquaStatsURLFlag.Name)
+
+	utils.SetAquaConfig(cmd, stack, &cfgptr.Aqua)
+	if cmd.IsSet(utils.AquaStatsURLFlag.Name) {
+		cfgptr.Aquastats.URL = cmd.String(utils.AquaStatsURLFlag.Name)
 	}
 
-	return stack, cfg
+	return stack, cfgptr
+
 }
 
-func makeFullNode(ctx *cli.Context) *node.Node {
-	stack, cfg := makeConfigNode(ctx)
+func makeFullNode(cmd *cli.Command) *node.Node {
+	stack, cfg := makeConfigNode(cmd)
 
 	utils.RegisterAquaService(stack, &cfg.Aqua)
 
@@ -163,8 +198,8 @@ func makeFullNode(ctx *cli.Context) *node.Node {
 }
 
 // dumpConfig is the dumpconfig command.
-func dumpConfig(ctx *cli.Context) error {
-	_, cfg := makeConfigNode(ctx)
+func dumpConfig(_ context.Context, cmd *cli.Command) error {
+	_, cfg := makeConfigNode(cmd)
 	comment := ""
 
 	if cfg.Aqua.Genesis != nil {

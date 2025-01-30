@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -53,7 +52,7 @@ var websocketJSONCodec = websocket.Codec{
 //
 // allowedOrigins should be a comma-separated list of allowed origin URLs.
 // To allow connections with any origin, pass "*".
-func (srv *Server) WebsocketHandler(allowedOrigins []string, allowedIP []string, reverseproxy bool) http.Handler {
+func (srv *Server) WebsocketHandler(allowedOrigins []string, allowedIP netutil.Netlist, reverseproxy bool) http.Handler {
 	return websocket.Server{
 		Handshake: wsHandshakeValidator(allowedOrigins, allowedIP, reverseproxy),
 		Handler: func(conn *websocket.Conn) {
@@ -75,33 +74,17 @@ func (srv *Server) WebsocketHandler(allowedOrigins []string, allowedIP []string,
 // NewWSServer creates a new websocket RPC server around an API provider.
 //
 // Deprecated: use Server.WebsocketHandler
-func NewWSServer(allowedOrigins []string, allowedIP []string, reverseproxy bool, srv *Server) *http.Server {
+func NewWSServer(allowedOrigins []string, allowedIP netutil.Netlist, reverseproxy bool, srv *Server) *http.Server {
 	return &http.Server{Handler: srv.WebsocketHandler(allowedOrigins, allowedIP, reverseproxy)}
 }
 
 // wsHandshakeValidator returns a handler that verifies the origin during the
 // websocket upgrade process. When a '*' is specified as an allowed origins all
 // connections are accepted.
-func wsHandshakeValidator(allowedOrigins, allowedIP []string, reverseProxy bool) func(*websocket.Config, *http.Request) error {
+func wsHandshakeValidator(allowedOrigins []string, allowIPset netutil.Netlist, reverseProxy bool) func(*websocket.Config, *http.Request) error {
 	origins := set.NewSet()
-	allowIPset := make(netutil.Netlist, 0)
-	ws := strings.NewReplacer(" ", "", "\n", "", "\t", "")
-	for _, mask := range allowedIP {
-		mask = ws.Replace(mask)
-		if mask == "" {
-			continue
-		}
-		if mask == "*" {
-			log.Warn("Allowing public RPC access. Be sure to run with -nokeys flag!!!")
-			mask = "0.0.0.0/0"
-		}
-		_, n, err := net.ParseCIDR(mask)
-		if err != nil {
-			log.Warn("error parsing allowed IPs, not adding", "badmask", mask, "err", err)
-			continue
-		}
-		allowIPset = append(allowIPset, *n)
-	}
+	//replacer := strings.NewReplacer(" ", "", "\n", "", "\t", "")
+
 	allowAllOrigins := false
 	for _, origin := range allowedOrigins {
 		if origin == "*" {
@@ -120,8 +103,8 @@ func wsHandshakeValidator(allowedOrigins, allowedIP []string, reverseProxy bool)
 		}
 	}
 
-	log.Debug(fmt.Sprintf("Allowed origin(s) for WS RPC interface %v\n", origins.ToSlice()))
-	log.Debug(fmt.Sprintf("Allowed IP(s) for WS RPC interface %s\n", allowIPset.String()))
+	log.Info(fmt.Sprintf("Allowed origin(s) for WS RPC interface %v\n", origins.ToSlice()))
+	log.Info(fmt.Sprintf("Allowed IP(s) for WS RPC interface %s\n", allowIPset.String()))
 
 	f := func(cfg *websocket.Config, req *http.Request) error {
 		checkip := func(r *http.Request, reverseProxy bool) error {
@@ -143,9 +126,12 @@ func wsHandshakeValidator(allowedOrigins, allowedIP []string, reverseProxy bool)
 		if allowAllOrigins || origins.Contains(origin) {
 			return nil
 		}
-		log.Warn(fmt.Sprintf("origin '%s' not allowed on WS-RPC interface\n", origin))
+		// log.Warn(fmt.Sprintf("origin '%s' not allowed on WS-RPC interface\n", origin))
 		return fmt.Errorf("origin %s not allowed", origin)
 	}
 
 	return f
 }
+
+var ErrIP = fmt.Errorf("ip not allowed")
+var ErrOrigin = fmt.Errorf("origin not allowed")

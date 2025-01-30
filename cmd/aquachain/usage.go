@@ -24,7 +24,7 @@ import (
 
 	"strings"
 
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/cmd/utils"
 	"gitlab.com/aquachain/aquachain/internal/debug"
 )
@@ -75,134 +75,133 @@ var AppHelpFlagGroups = []flagGroup{
 	{
 		Name: "Aquachain",
 		Flags: []cli.Flag{
-			configFileFlag,
-			utils.DataDirFlag,
-			utils.KeyStoreDirFlag,
-			utils.UseUSBFlag,
-			utils.NetworkIdFlag,
-			utils.TestnetFlag,
-			utils.Testnet2Flag,
-			utils.SyncModeFlag,
-			utils.GCModeFlag,
-			utils.AquaStatsURLFlag,
-			utils.IdentityFlag,
+			&configFileFlag,
+			&utils.DataDirFlag,
+			&utils.KeyStoreDirFlag,
+			&utils.UseUSBFlag,
+			&utils.NetworkIdFlag,
+			&utils.TestnetFlag,
+			&utils.Testnet2Flag,
+			&utils.SyncModeFlag,
+			&utils.GCModeFlag,
+			&utils.AquaStatsURLFlag,
+			&utils.IdentityFlag,
 		},
 	},
 	{Name: "DEVELOPER CHAIN",
 		Flags: []cli.Flag{
-			utils.DeveloperFlag,
-			utils.DeveloperPeriodFlag,
+			&utils.DeveloperFlag,
+			&utils.DeveloperPeriodFlag,
 		},
 	},
 	{
 		Name: "AQUAHASH",
 		Flags: []cli.Flag{
-			utils.AquahashCacheDirFlag,
-			utils.AquahashCachesInMemoryFlag,
-			utils.AquahashCachesOnDiskFlag,
-			utils.AquahashDatasetDirFlag,
-			utils.AquahashDatasetsInMemoryFlag,
-			utils.AquahashDatasetsOnDiskFlag,
+			&utils.AquahashCacheDirFlag,
+			&utils.AquahashCachesInMemoryFlag,
+			&utils.AquahashCachesOnDiskFlag,
+			&utils.AquahashDatasetDirFlag,
+			&utils.AquahashDatasetsInMemoryFlag,
+			&utils.AquahashDatasetsOnDiskFlag,
 		},
 	},
 	{
 		Name: "TRANSACTION POOL",
 		Flags: []cli.Flag{
-			utils.TxPoolNoLocalsFlag,
-			utils.TxPoolJournalFlag,
-			utils.TxPoolRejournalFlag,
-			utils.TxPoolPriceLimitFlag,
-			utils.TxPoolPriceBumpFlag,
-			utils.TxPoolAccountSlotsFlag,
-			utils.TxPoolGlobalSlotsFlag,
-			utils.TxPoolAccountQueueFlag,
-			utils.TxPoolGlobalQueueFlag,
-			utils.TxPoolLifetimeFlag,
+			&utils.TxPoolNoLocalsFlag,
+			&utils.TxPoolJournalFlag,
+			&utils.TxPoolRejournalFlag,
+			&utils.TxPoolPriceLimitFlag,
+			&utils.TxPoolPriceBumpFlag,
+			&utils.TxPoolAccountSlotsFlag,
+			&utils.TxPoolGlobalSlotsFlag,
+			&utils.TxPoolAccountQueueFlag,
+			&utils.TxPoolGlobalQueueFlag,
+			&utils.TxPoolLifetimeFlag,
 		},
 	},
 	{
 		Name: "PERFORMANCE TUNING",
 		Flags: []cli.Flag{
-			utils.CacheFlag,
-			utils.CacheDatabaseFlag,
-			utils.CacheGCFlag,
-			utils.TrieCacheGenFlag,
+			&utils.CacheFlag,
+			&utils.CacheDatabaseFlag,
+			&utils.CacheGCFlag,
+			&utils.TrieCacheGenFlag,
 		},
 	},
 	{
 		Name: "ACCOUNT",
 		Flags: []cli.Flag{
-			utils.UnlockedAccountFlag,
-			utils.PasswordFileFlag,
+			&utils.UnlockedAccountFlag,
+			&utils.PasswordFileFlag,
 		},
 	},
 	{
 		Name: "API AND CONSOLE",
 		Flags: []cli.Flag{
-			utils.RPCEnabledFlag,
-			utils.RPCListenAddrFlag,
-			utils.RPCPortFlag,
-			utils.RPCApiFlag,
-			utils.WSEnabledFlag,
-			utils.WSListenAddrFlag,
-			utils.WSPortFlag,
-			utils.WSApiFlag,
-			utils.WSAllowedOriginsFlag,
-			utils.IPCDisabledFlag,
-			utils.IPCPathFlag,
-			utils.RPCCORSDomainFlag,
-			utils.RPCVirtualHostsFlag,
-			utils.JSpathFlag,
-			utils.ExecFlag,
-			utils.PreloadJSFlag,
+			&utils.RPCEnabledFlag,
+			&utils.RPCListenAddrFlag,
+			&utils.RPCPortFlag,
+			&utils.RPCApiFlag,
+			&utils.WSEnabledFlag,
+			&utils.WSListenAddrFlag,
+			&utils.WSPortFlag,
+			&utils.WSApiFlag,
+			&utils.WSAllowedOriginsFlag,
+			&utils.IPCDisabledFlag,
+			&utils.IPCPathFlag,
+			&utils.RPCCORSDomainFlag,
+			&utils.RPCVirtualHostsFlag,
+			&utils.JSpathFlag,
+			&utils.ExecFlag,
+			&utils.PreloadJSFlag,
 		},
 	},
 	{
 		Name: "NETWORKING",
 		Flags: []cli.Flag{
-			utils.BootnodesFlag,
-			utils.BootnodesV4Flag,
-			utils.ListenPortFlag,
-			utils.MaxPeersFlag,
-			utils.MaxPendingPeersFlag,
-			utils.NATFlag,
-			utils.NoDiscoverFlag,
-			utils.OfflineFlag,
-			utils.NetrestrictFlag,
-			utils.NodeKeyFileFlag,
-			utils.NodeKeyHexFlag,
+			&utils.BootnodesFlag,
+			&utils.ListenPortFlag,
+			&utils.MaxPeersFlag,
+			&utils.MaxPendingPeersFlag,
+			&utils.NATFlag,
+			&utils.NoDiscoverFlag,
+			&utils.OfflineFlag,
+			&utils.NetrestrictFlag,
+			&utils.NodeKeyFileFlag,
+			&utils.NodeKeyHexFlag,
 		},
 	},
 	{
 		Name: "MINER",
 		Flags: []cli.Flag{
-			utils.MiningEnabledFlag,
-			utils.MinerThreadsFlag,
-			utils.AquabaseFlag,
-			utils.TargetGasLimitFlag,
-			utils.GasPriceFlag,
-			utils.ExtraDataFlag,
+			&utils.MiningEnabledFlag,
+			&utils.MinerThreadsFlag,
+			&utils.AquabaseFlag,
+			&utils.TargetGasLimitFlag,
+			&utils.GasPriceFlag,
+			&utils.ExtraDataFlag,
 		},
 	},
 	{
 		Name: "GAS PRICE ORACLE",
 		Flags: []cli.Flag{
-			utils.GpoBlocksFlag,
-			utils.GpoPercentileFlag,
+			&utils.GpoBlocksFlag,
+			&utils.GpoPercentileFlag,
 		},
 	},
 	{
 		Name: "VIRTUAL MACHINE",
 		Flags: []cli.Flag{
-			utils.VMEnableDebugFlag,
+			&utils.VMEnableDebugFlag,
 		},
 	},
 	{
 		Name: "LOGGING AND DEBUGGING",
 		Flags: append([]cli.Flag{
-			utils.MetricsEnabledFlag,
-			utils.FakePoWFlag,
-			utils.NoCompactionFlag,
+			&utils.MetricsEnabledFlag,
+			&utils.FakePoWFlag,
+			&utils.NoCompactionFlag,
 		}, debug.Flags...),
 	},
 
@@ -211,7 +210,7 @@ var AppHelpFlagGroups = []flagGroup{
 	},
 	{
 		Name:  "MISC",
-		Flags: []cli.Flag{utils.FastSyncFlag},
+		Flags: []cli.Flag{&utils.FastSyncFlag},
 	},
 }
 
@@ -237,10 +236,22 @@ func (a byCategory) Less(i, j int) bool {
 	return iIdx < jIdx
 }
 
+func compareNames(a1, a2 []string) bool {
+	if len(a1) != len(a2) {
+		return false
+	}
+	for i, v := range a1 {
+		if v != a2[i] {
+			return false
+		}
+	}
+	return true
+}
+
 func flagCategory(flag cli.Flag) string {
 	for _, category := range AppHelpFlagGroups {
 		for _, flg := range category.Flags {
-			if flg.GetName() == flag.GetName() {
+			if compareNames(flg.Names(), flag.Names()) {
 				return category.Name
 			}
 		}
@@ -250,7 +261,7 @@ func flagCategory(flag cli.Flag) string {
 
 func init() {
 	// Override the default app help template
-	cli.AppHelpTemplate = AppHelpTemplate
+	// cli.AppHelpTemplate = AppHelpTemplate
 
 	// Define a one shot struct to pass to the usage template
 	type helpData struct {
@@ -269,10 +280,16 @@ func init() {
 					categorized[flag.String()] = struct{}{}
 				}
 			}
+			cmd, ok := data.(*cli.Command)
+			if !ok {
+				originalHelpPrinter(w, tmpl, data)
+				return
+			}
+			flags := cmd.Flags
 			uncategorized := []cli.Flag{}
-			for _, flag := range data.(*cli.App).Flags {
+			for _, flag := range flags {
 				if _, ok := categorized[flag.String()]; !ok {
-					if strings.HasPrefix(flag.GetName(), "dashboard") {
+					if strings.HasPrefix(flag.Names()[0], "dashboard") {
 						continue
 					}
 					uncategorized = append(uncategorized, flag)

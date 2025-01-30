@@ -311,5 +311,5 @@ func throwJSException(msg interface{}) otto.Value {
 	if err != nil {
 		log.Error("Failed to serialize JavaScript exception", "exception", msg, "err", err)
 	}
-	panic(val)
+	panic(fmt.Sprint(val))
 }

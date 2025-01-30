@@ -18,16 +18,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
-	"sort"
 	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
-	cli "github.com/urfave/cli"
+	cli "github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/aqua"
 	"gitlab.com/aquachain/aquachain/aqua/accounts"
 	"gitlab.com/aquachain/aquachain/aqua/accounts/keystore"
@@ -38,6 +38,7 @@ import (
 	"gitlab.com/aquachain/aquachain/node"
 	"gitlab.com/aquachain/aquachain/opt/aquaclient"
 	"gitlab.com/aquachain/aquachain/opt/console"
+	"gitlab.com/aquachain/aquachain/params"
 )
 
 const (
@@ -48,164 +49,173 @@ var (
 	// Git SHA1 commit hash and timestamp of the release (set via linker flags)
 	gitCommit, buildDate string
 	// The app that holds all commands and flags.
-	app = utils.NewApp(gitCommit, "the aquachain command line interface")
+	// app = utils.NewApp(gitCommit, "the aquachain command line interface")
 	// flags that configure the node
 	nodeFlags = []cli.Flag{
-		utils.IdentityFlag,
-		utils.UnlockedAccountFlag,
-		utils.PasswordFileFlag,
-		utils.BootnodesFlag,
-		utils.BootnodesV4Flag,
-		utils.DataDirFlag,
-		utils.KeyStoreDirFlag,
-		utils.NoKeysFlag,
-		utils.UseUSBFlag,
-		utils.AquahashCacheDirFlag,
-		utils.AquahashCachesInMemoryFlag,
-		utils.AquahashCachesOnDiskFlag,
-		utils.AquahashDatasetDirFlag,
-		utils.AquahashDatasetsInMemoryFlag,
-		utils.AquahashDatasetsOnDiskFlag,
-		utils.TxPoolNoLocalsFlag,
-		utils.TxPoolJournalFlag,
-		utils.TxPoolRejournalFlag,
-		utils.TxPoolPriceLimitFlag,
-		utils.TxPoolPriceBumpFlag,
-		utils.TxPoolAccountSlotsFlag,
-		utils.TxPoolGlobalSlotsFlag,
-		utils.TxPoolAccountQueueFlag,
-		utils.TxPoolGlobalQueueFlag,
-		utils.TxPoolLifetimeFlag,
-		utils.FastSyncFlag,
-		utils.SyncModeFlag,
-		utils.GCModeFlag,
-		utils.CacheFlag,
-		utils.CacheDatabaseFlag,
-		utils.CacheGCFlag,
-		utils.TrieCacheGenFlag,
-		utils.ListenPortFlag,
-		utils.ListenAddrFlag,
-		utils.MaxPeersFlag,
-		utils.MaxPendingPeersFlag,
-		utils.AquabaseFlag,
-		utils.GasPriceFlag,
-		utils.MinerThreadsFlag,
-		utils.MiningEnabledFlag,
-		utils.TargetGasLimitFlag,
-		utils.NATFlag,
-		utils.NoDiscoverFlag,
-		utils.OfflineFlag,
-		utils.NetrestrictFlag,
-		utils.NodeKeyFileFlag,
-		utils.NodeKeyHexFlag,
-		utils.DeveloperFlag,
-		utils.DeveloperPeriodFlag,
-		utils.TestnetFlag,
-		utils.Testnet2Flag,
-		utils.NetworkEthFlag,
-		utils.VMEnableDebugFlag,
-		utils.NetworkIdFlag,
-		utils.AquaStatsURLFlag,
-		utils.MetricsEnabledFlag,
-		utils.FakePoWFlag,
-		utils.NoCompactionFlag,
-		utils.GpoBlocksFlag,
-		utils.GpoPercentileFlag,
-		utils.ExtraDataFlag,
-		configFileFlag,
-		utils.HF8MainnetFlag,
-		utils.ChainFlag,
+		&utils.IdentityFlag,
+		&utils.UnlockedAccountFlag,
+		&utils.PasswordFileFlag,
+		&utils.BootnodesFlag,
+		&utils.DataDirFlag,
+		&utils.KeyStoreDirFlag,
+		&utils.NoKeysFlag,
+		&utils.UseUSBFlag,
+		&utils.AquahashCacheDirFlag,
+		&utils.AquahashCachesInMemoryFlag,
+		&utils.AquahashCachesOnDiskFlag,
+		&utils.AquahashDatasetDirFlag,
+		&utils.AquahashDatasetsInMemoryFlag,
+		&utils.AquahashDatasetsOnDiskFlag,
+		&utils.TxPoolNoLocalsFlag,
+		&utils.TxPoolJournalFlag,
+		&utils.TxPoolRejournalFlag,
+		&utils.TxPoolPriceLimitFlag,
+		&utils.TxPoolPriceBumpFlag,
+		&utils.TxPoolAccountSlotsFlag,
+		&utils.TxPoolGlobalSlotsFlag,
+		&utils.TxPoolAccountQueueFlag,
+		&utils.TxPoolGlobalQueueFlag,
+		&utils.TxPoolLifetimeFlag,
+		&utils.FastSyncFlag,
+		&utils.SyncModeFlag,
+		&utils.GCModeFlag,
+		&utils.CacheFlag,
+		&utils.CacheDatabaseFlag,
+		&utils.CacheGCFlag,
+		&utils.TrieCacheGenFlag,
+		&utils.ListenPortFlag,
+		&utils.ListenAddrFlag,
+		&utils.MaxPeersFlag,
+		&utils.MaxPendingPeersFlag,
+		&utils.AquabaseFlag,
+		&utils.GasPriceFlag,
+		&utils.MinerThreadsFlag,
+		&utils.MiningEnabledFlag,
+		&utils.TargetGasLimitFlag,
+		&utils.NATFlag,
+		&utils.NoDiscoverFlag,
+		&utils.OfflineFlag,
+		&utils.NetrestrictFlag,
+		&utils.NodeKeyFileFlag,
+		&utils.NodeKeyHexFlag,
+		&utils.DeveloperFlag,
+		&utils.DeveloperPeriodFlag,
+		&utils.TestnetFlag,
+		&utils.Testnet2Flag,
+		&utils.NetworkEthFlag,
+		&utils.VMEnableDebugFlag,
+		&utils.NetworkIdFlag,
+		&utils.AquaStatsURLFlag,
+		&utils.MetricsEnabledFlag,
+		&utils.FakePoWFlag,
+		&utils.NoCompactionFlag,
+		&utils.GpoBlocksFlag,
+		&utils.GpoPercentileFlag,
+		&utils.ExtraDataFlag,
+		&configFileFlag,
+		&utils.HF8MainnetFlag,
+		&utils.ChainFlag,
 	}
 
 	rpcFlags = []cli.Flag{
-		utils.RPCEnabledFlag,
-		utils.RPCUnlockFlag,
-		utils.RPCCORSDomainFlag,
-		utils.RPCVirtualHostsFlag,
-		utils.RPCListenAddrFlag,
-		utils.RPCAllowIPFlag,
-		utils.RPCPortFlag,
-		utils.RPCApiFlag,
-		utils.WSEnabledFlag,
-		utils.WSListenAddrFlag,
-		utils.WSPortFlag,
-		utils.WSApiFlag,
-		utils.WSAllowedOriginsFlag,
-		utils.IPCDisabledFlag,
-		utils.IPCPathFlag,
-		utils.AlertModeFlag,
+		&utils.RPCEnabledFlag,
+		&utils.RPCUnlockFlag,
+		&utils.RPCCORSDomainFlag,
+		&utils.RPCVirtualHostsFlag,
+		&utils.RPCListenAddrFlag,
+		&utils.RPCAllowIPFlag,
+		&utils.RPCPortFlag,
+		&utils.RPCApiFlag,
+		&utils.WSEnabledFlag,
+		&utils.WSListenAddrFlag,
+		&utils.WSPortFlag,
+		&utils.WSApiFlag,
+		&utils.WSAllowedOriginsFlag,
+		&utils.IPCDisabledFlag,
+		&utils.IPCPathFlag,
+		&utils.AlertModeFlag,
 	}
 )
 
-func doinit() {
+func doinit() *cli.Command {
+	app := &cli.Command{
+		Name:    "aquachain",
+		Usage:   "the Aquachain command line interface",
+		Version: params.VersionWithCommit(gitCommit),
+		Flags:   []cli.Flag{},
+	}
 	// Initialize the CLI app and start Aquachain
 	app.Action = localConsole // default command is 'console'
 
 	app.HideVersion = true // we have a command to print the version
 	app.Copyright = "Copyright 2018-2025 The Aquachain Authors"
-	app.Commands = []cli.Command{
-		// See chaincmd.go:
-		initCommand,
-		importCommand,
-		exportCommand,
-		copydbCommand,
-		removedbCommand,
-		dumpCommand,
-		// See monitorcmd.go:
-		//monitorCommand,
-		// See accountcmd.go:
-		accountCommand,
+	/*
+		app.Commands = []cli.Command{
+			// See chaincmd.go:
+			initCommand,
+			importCommand,
+			exportCommand,
+			copydbCommand,
+			removedbCommand,
+			dumpCommand,
+			// See monitorcmd.go:
+			//monitorCommand,
+			// See accountcmd.go:
+			accountCommand,
 
-		// See walletcmd_lite.go
-		paperCommand,
-		// See consolecmd.go:
-		consoleCommand,
-		daemonCommand, // previously default
-		attachCommand,
-		javascriptCommand,
-		// See misccmd.go:
-		makecacheCommand,
-		makedagCommand,
-		versionCommand,
-		bugCommand,
-		licenseCommand,
-		// See config.go
-		dumpConfigCommand,
-	}
-	sort.Sort(cli.CommandsByName(app.Commands))
+			// See walletcmd_lite.go
+			paperCommand,
+			// See consolecmd.go:
+			consoleCommand,
+			daemonCommand, // previously default
+			attachCommand,
+			javascriptCommand,
+			// See misccmd.go:
+			makecacheCommand,
+			makedagCommand,
+			versionCommand,
+			bugCommand,
+			licenseCommand,
+			// See config.go
+			dumpConfigCommand,
+		}
+	*/
+	// sort.Sort(cli.CommandsByName(app.Commands))
 
 	app.Flags = append(app.Flags, nodeFlags...)
 	app.Flags = append(app.Flags, rpcFlags...)
 	app.Flags = append(app.Flags, consoleFlags...)
 	app.Flags = append(app.Flags, debug.Flags...)
 
-	app.Before = func(ctx *cli.Context) error {
+	// func(context.Context, *Command) (context.Context, error)
+	app.Before = func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
 		runtime.GOMAXPROCS(runtime.NumCPU())
-		if err := debug.Setup(ctx); err != nil {
-			return err
+		if err := debug.Setup(mainctx, cmd); err != nil {
+			return ctx, err
 		}
 		// Start system runtime metrics collection
 		go metrics.CollectProcessMetrics(3 * time.Second)
 
-		utils.SetupNetworkGasLimit(ctx)
+		utils.SetupNetworkGasLimit(cmd)
 		_, autoalertmode := os.LookupEnv("ALERT_PLATFORM")
 		if autoalertmode {
-			ctx.Set(utils.AlertModeFlag.Name, "true")
+			cmd.Set(utils.AlertModeFlag.Name, "true")
 		}
-		return nil
+		return ctx, nil
 	}
 
-	app.After = func(ctx *cli.Context) error {
+	app.After = func(context.Context, *cli.Command) error {
 		debug.Exit()
 		console.Stdin.Close() // Resets terminal mode.
 		return nil
 	}
+	return app
 }
 
 func main() {
 	godotenv.Load(".env", filepath.Join(node.DefaultDataDir(), ".env"), "/etc/aquachain/.env")
-	doinit()
-	if err := app.Run(os.Args); err != nil {
+	app := doinit()
+	if err := app.Run(mainctx, os.Args); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
@@ -214,9 +224,9 @@ func main() {
 // daemonCommand is the main entry point into the system if the 'daemon' subcommand
 // is ran. It creates a default node based on the command line arguments
 // and runs it in blocking mode, waiting for it to be shut down.
-func daemonStart(ctx *cli.Context) error {
-	node := makeFullNode(ctx)
-	startNode(ctx, node)
+func daemonStart(_ context.Context, cmd *cli.Command) error {
+	node := makeFullNode(cmd)
+	startNode(cmd, node)
 	node.Wait()
 	return nil
 }
@@ -224,17 +234,17 @@ func daemonStart(ctx *cli.Context) error {
 // startNode boots up the system node and all registered protocols, after which
 // it unlocks any requested accounts, and starts the RPC/IPC interfaces and the
 // miner.
-func startNode(ctx *cli.Context, stack *node.Node) {
+func startNode(cmd *cli.Command, stack *node.Node) {
 	if !stack.Config().NoKeys {
-		unlocks := strings.Split(ctx.GlobalString(utils.UnlockedAccountFlag.Name), ",")
+		unlocks := strings.Split(cmd.String(utils.UnlockedAccountFlag.Name), ",")
 		if len(unlocks) > 0 && unlocks[0] != "" {
 			log.Warn("Unlocking account", "unlocks", unlocks)
-			passwords := utils.MakePasswordList(ctx)
+			passwords := utils.MakePasswordList(cmd)
 			// Unlock any account specifically requested
 			ks := stack.AccountManager().Backends(keystore.KeyStoreType)[0].(*keystore.KeyStore)
 			for i, account := range unlocks {
 				if trimmed := strings.TrimSpace(account); trimmed != "" {
-					unlockAccount(ctx, ks, trimmed, i, passwords)
+					unlockAccount(cmd, ks, trimmed, i, passwords)
 				}
 			}
 		}
@@ -286,22 +296,22 @@ func startNode(ctx *cli.Context, stack *node.Node) {
 		}()
 	}
 	// Start auxiliary services if enabled
-	if ctx.GlobalBool(utils.MiningEnabledFlag.Name) || ctx.GlobalBool(utils.DeveloperFlag.Name) {
+	if cmd.Bool(utils.MiningEnabledFlag.Name) || cmd.Bool(utils.DeveloperFlag.Name) {
 		var aquachain *aqua.Aquachain
 		if err := stack.Service(&aquachain); err != nil {
 			utils.Fatalf("Aquachain service not running: %v", err)
 		}
 		// Use a reduced number of threads if requested
-		if threads := ctx.GlobalInt(utils.MinerThreadsFlag.Name); threads > 0 {
+		if threads := cmd.Int(utils.MinerThreadsFlag.Name); threads > 0 {
 			type threaded interface {
 				SetThreads(threads int)
 			}
 			if th, ok := aquachain.Engine().(threaded); ok {
-				th.SetThreads(threads)
+				th.SetThreads(int(threads))
 			}
 		}
 		// Set the gas price to the limits from the CLI and start mining
-		aquachain.TxPool().SetGasPrice(utils.GlobalBig(ctx, utils.GasPriceFlag.Name))
+		aquachain.TxPool().SetGasPrice(utils.GlobalBig(cmd, utils.GasPriceFlag.Name))
 		if err := aquachain.StartMining(true); err != nil {
 			utils.Fatalf("Failed to start mining: %v", err)
 		}

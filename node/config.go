@@ -45,10 +45,11 @@ const (
 // Config represents a small collection of configuration values to fine tune the
 // P2P network layer of a protocol stack. These values can be further extended by
 // all registered services.
+//
+// Fields with 'toml:"-" are ignored by the TOML parser/writer.
 type Config struct {
 	// Name sets the instance name of the node. It must not contain the / character and is
-	// used in the devp2p node identifier. The instance name of aquachain is "aquachain". If no
-	// value is specified, the basename of the current executable is used.
+	// used in the devp2p node identifier. Instance name of aquachain is "aquachain".
 	Name string `toml:"-"`
 
 	// UserIdent, if set, is used as an additional component in the devp2p node identifier.
@@ -231,24 +232,30 @@ func DefaultWSEndpoint() string {
 	return config.WSEndpoint()
 }
 
-// NodeName returns the devp2p node identifier.
-func (c *Config) NodeName() string {
-	name := c.name()
-	if name == "aquachain" {
+// GetNodeName returns the devp2p node identifier.
+// eg: Aquachain/v1.7.17-dev-f09095/linux-amd64/go1.23.5
+func GetNodeName(c *Config) string {
+	name := c.Name // main name of program
+	if name == "" || name == "aquachain" {
+		panic("empty c.Name")
 		name = "Aquachain"
 	}
 	if c.UserIdent != "" {
-		name += "/" + c.UserIdent
+		name += "-" + c.UserIdent // e.g. Aquachain-supercoolpool
 	}
 	if c.Version != "" {
-		name += "/v" + c.Version
+		name += "/v" + strings.TrimPrefix(c.Version, "v") // eg: Aquachain-supercoolpool/v1.7.17-sometag
 	}
-	name += "/" + runtime.GOOS + "-" + runtime.GOARCH
-	name += "/" + common.ShortGoVersion()
+	name += "/" + runtime.GOOS + "-" + runtime.GOARCH // eg: Aquachain-supercoolpool/v1.7.17-sometag/linux-amd64
+	name += "/" + common.ShortGoVersion()             // eg: Aquachain-supercoolpool/v1.7.17-sometag/linux-amd64/go1.23.5
 	return name
 }
 
-func (c *Config) name() string {
+func GetShortName(codename string) {
+
+}
+
+func (c *Config) executablename() string {
 	if c.Name == "" {
 		progname := strings.TrimSuffix(filepath.Base(os.Args[0]), ".exe")
 		if progname == "" {
@@ -266,6 +273,16 @@ var isOldAquachainResource = map[string]bool{
 	"nodekey":            true,
 	"static-nodes.json":  true,
 	"trusted-nodes.json": true,
+}
+
+func (c *Config) name() string {
+	if c.Name == "" {
+		return "aquachain"
+	}
+	if strings.Contains(c.Name, "/") {
+		panic("c.Name must not contain '/'")
+	}
+	return c.Name
 }
 
 // resolvePath resolves path in the instance directory.
@@ -295,7 +312,10 @@ func (c *Config) instanceDir() string {
 	if c.DataDir == "" {
 		return ""
 	}
-	return filepath.Join(c.DataDir, c.name())
+	if c.Name == "" {
+	}
+
+	return filepath.Join(c.DataDir, c.Name)
 }
 
 // NodeKey retrieves the currently configured private key of the node, checking

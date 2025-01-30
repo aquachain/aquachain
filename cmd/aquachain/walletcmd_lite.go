@@ -28,7 +28,7 @@ import (
 	"strings"
 	"sync/atomic"
 
-	cli "github.com/urfave/cli"
+	cli "github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/cmd/utils"
 	"gitlab.com/aquachain/aquachain/crypto"
 )
@@ -37,7 +37,7 @@ var (
 	paperCommand = cli.Command{
 		Name:      "paper",
 		Usage:     `Generate paper wallet keypair`,
-		Flags:     []cli.Flag{utils.JsonFlag, utils.VanityFlag, utils.VanityEndFlag, paperthreads},
+		Flags:     []cli.Flag{&utils.JsonFlag, &utils.VanityFlag, &utils.VanityEndFlag, &paperthreads},
 		ArgsUsage: "[number of wallets]",
 		Category:  "ACCOUNT COMMANDS",
 		Action:    paper,
@@ -55,7 +55,7 @@ type paperWallet struct {
 	Public  string `json:"address"`
 }
 
-func paper(c *cli.Context) error {
+func paper(ctx context.Context, c *cli.Command) error {
 	log.SetFlags(0)
 	if c.NArg() > 1 {
 		return fmt.Errorf("too many arguments")
@@ -87,7 +87,7 @@ func paper(c *cli.Context) error {
 	ch := make(chan paperWallet, 100)
 	var found atomic.Int32
 	limit := int32(count)
-	threads := c.Int("threads")
+	threads := int(c.Int("threads"))
 	if threads == 0 {
 		threads = runtime.NumCPU()
 	}

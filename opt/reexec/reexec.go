@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"gitlab.com/aquachain/aquachain/common/log"
 )
 
 var registeredInitializers = make(map[string]func())
@@ -15,6 +17,7 @@ func Register(name string, initializer func()) {
 		panic(fmt.Sprintf("reexec func already registered under name %q", name))
 	}
 
+	log.Info("Registering reexec func", "name", name)
 	registeredInitializers[name] = initializer
 }
 

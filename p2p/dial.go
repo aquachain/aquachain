@@ -71,7 +71,7 @@ func (t TCPDialer) Dial(dest *discover.Node) (net.Conn, error) {
 type dialstate struct {
 	maxDynDials int
 	ntab        discoverTable
-	netrestrict *netutil.Netlist
+	netrestrict netutil.Netlist
 
 	lookupRunning bool
 	dialing       map[discover.NodeID]connFlag
@@ -127,7 +127,7 @@ type waitExpireTask struct {
 	time.Duration
 }
 
-func newDialState(static []*discover.Node, bootnodes []*discover.Node, ntab discoverTable, maxdyn int, netrestrict *netutil.Netlist) *dialstate {
+func newDialState(static []*discover.Node, bootnodes []*discover.Node, ntab discoverTable, maxdyn int, netrestrict netutil.Netlist) *dialstate {
 	s := &dialstate{
 		maxDynDials: maxdyn,
 		ntab:        ntab,

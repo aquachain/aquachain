@@ -58,7 +58,7 @@ func TestExec(t *testing.T) {
 	jsre, dir := newWithTestJS(t, `msg = "testMsg"`)
 	defer os.RemoveAll(dir)
 
-	err := jsre.Exec("test.js")
+	err := jsre.ExecFile("test.js")
 	if err != nil {
 		t.Errorf("expected no error, got %v", err)
 	}
@@ -81,7 +81,7 @@ func TestNatto(t *testing.T) {
 	jsre, dir := newWithTestJS(t, `setTimeout(function(){msg = "testMsg"}, 1);`)
 	defer os.RemoveAll(dir)
 
-	err := jsre.Exec("test.js")
+	err := jsre.ExecFile("test.js")
 	if err != nil {
 		t.Errorf("expected no error, got %v", err)
 	}

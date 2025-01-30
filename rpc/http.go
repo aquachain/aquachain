@@ -53,7 +53,7 @@ func (t *httpReadWriteNopCloser) Close() error {
 // NewHTTPServer creates a new HTTP RPC server around an API provider.
 //
 // Deprecated: Server implements http.Handler
-func NewHTTPServer(cors []string, vhosts []string, allowIP []string, behindreverseproxy bool, srv *Server) *http.Server {
+func NewHTTPServer(cors []string, vhosts []string, allowIP netutil.Netlist, behindreverseproxy bool, srv *Server) *http.Server {
 	// Check IPs, hostname, then CORS (in that order)
 	handler := newAllowIPHandler(allowIP, behindreverseproxy, newVHostHandler(vhosts, newCorsHandler(newLoggedHandler(srv), cors)))
 	return &http.Server{Handler: handler, ReadTimeout: 2 * time.Second, WriteTimeout: 2 * time.Second, IdleTimeout: time.Second * 30}
@@ -104,7 +104,7 @@ func validateRequest(r *http.Request) (int, error) {
 }
 
 func newLoggedHandler(srv *Server) http.Handler {
-	return loggedHandler{srv, srv.reverseproxy}
+	return loggedHandler{srv, srv.reverseproxy} // TODO: set reverseproxy!
 }
 
 func (l loggedHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -199,7 +199,7 @@ func newVHostHandler(vhosts []string, next http.Handler) http.Handler {
 
 // allowIPHandler is a handler which only allows certain IP
 type allowIPHandler struct {
-	allowedIPs   *netutil.Netlist
+	allowedIPs   netutil.Netlist
 	next         http.Handler
 	reverseproxy bool // if behind a reverse proxy (uses X-FORWARDED-FOR header)
 }
@@ -225,6 +225,7 @@ func getIP(r *http.Request, reverseproxy bool) net.IP {
 				return net.ParseIP(ip)
 			}
 		}
+		// no X-Forwarded-For header ...
 	}
 	remoteAddr, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
@@ -246,10 +247,6 @@ func (h *allowIPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "", http.StatusForbidden)
 }
 
-func newAllowIPHandler(allowIPmasks []string, behindreverseproxy bool, next http.Handler) http.Handler {
-	var allowIPMap = new(netutil.Netlist)
-	for i := range allowIPmasks {
-		allowIPMap.Add(allowIPmasks[i])
-	}
+func newAllowIPHandler(allowIPMap netutil.Netlist, behindreverseproxy bool, next http.Handler) http.Handler {
 	return &allowIPHandler{allowIPMap, next, behindreverseproxy}
 }

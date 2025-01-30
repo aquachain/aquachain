@@ -27,7 +27,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/common/math"
 )
 
@@ -55,6 +55,14 @@ type DirectoryFlag struct {
 	Usage string
 }
 
+func (df DirectoryFlag) Names() []string {
+	return strings.Split(df.Name, ",")
+}
+
+func (df DirectoryFlag) GetName() string {
+	return df.Name
+}
+
 func (self DirectoryFlag) String() string {
 	fmtString := "%s %v\t%v"
 	if len(self.Value.Value) > 0 {
@@ -63,6 +71,15 @@ func (self DirectoryFlag) String() string {
 	return fmt.Sprintf(fmtString, prefixedNames(self.Name), self.Value.Value, self.Usage)
 }
 
+func (df DirectoryFlag) IsSet() bool {
+	return len(df.Value.Value) > 0
+}
+
+func (self DirectoryFlag) Get() string {
+	return self.Value.Value
+}
+
+// do not use: this is a hack to get the name of the flag
 func eachName(longName string, fn func(string)) {
 	parts := strings.Split(longName, ",")
 	for _, name := range parts {
@@ -73,10 +90,11 @@ func eachName(longName string, fn func(string)) {
 
 // called by cli library, grabs variable from environment (if in env)
 // and adds variable to flag set for parsing.
-func (self DirectoryFlag) Apply(set *flag.FlagSet) {
+func (self DirectoryFlag) Apply(set *flag.FlagSet) error {
 	eachName(self.Name, func(name string) {
 		set.Var(&self.Value, self.Name, self.Usage)
 	})
+	return nil
 }
 
 type TextMarshaler interface {
@@ -108,6 +126,14 @@ type TextMarshalerFlag struct {
 	Usage string
 }
 
+func (f TextMarshalerFlag) Names() []string {
+	return strings.Split(f.Name, ",")
+}
+
+func (f TextMarshalerFlag) IsSet() bool {
+	return f.Value != nil
+}
+
 func (f TextMarshalerFlag) GetName() string {
 	return f.Name
 }
@@ -116,19 +142,20 @@ func (f TextMarshalerFlag) String() string {
 	return fmt.Sprintf("%s \"%v\"\t%v", prefixedNames(f.Name), f.Value, f.Usage)
 }
 
-func (f TextMarshalerFlag) Apply(set *flag.FlagSet) {
+func (f TextMarshalerFlag) Apply(set *flag.FlagSet) error {
 	eachName(f.Name, func(name string) {
 		set.Var(textMarshalerVal{f.Value}, f.Name, f.Usage)
 	})
+	return nil
 }
 
 // GlobalTextMarshaler returns the value of a TextMarshalerFlag from the global flag set.
-func GlobalTextMarshaler(ctx *cli.Context, name string) TextMarshaler {
-	val := ctx.GlobalGeneric(name)
+func GlobalTextMarshaler(cmd *cli.Command, name string) TextMarshaler {
+	val := cmd.Generic(name)
 	if val == nil {
 		return nil
 	}
-	return val.(textMarshalerVal).v
+	return val.Get().(textMarshalerVal).v
 }
 
 // BigFlag is a command line flag that accepts 256 bit big integers in decimal or
@@ -158,6 +185,14 @@ func (b *bigValue) Set(s string) error {
 	return nil
 }
 
+func (f BigFlag) Names() []string {
+	return strings.Split(f.Name, ",")
+}
+
+func (f BigFlag) IsSet() bool {
+	return f.Value != nil
+}
+
 func (f BigFlag) GetName() string {
 	return f.Name
 }
@@ -170,19 +205,21 @@ func (f BigFlag) String() string {
 	return fmt.Sprintf(fmtString, prefixedNames(f.Name), f.Value, f.Usage)
 }
 
-func (f BigFlag) Apply(set *flag.FlagSet) {
+func (f BigFlag) Apply(set *flag.FlagSet) error {
 	eachName(f.Name, func(name string) {
 		set.Var((*bigValue)(f.Value), f.Name, f.Usage)
 	})
+	return nil
 }
 
 // GlobalBig returns the value of a BigFlag from the global flag set.
-func GlobalBig(ctx *cli.Context, name string) *big.Int {
-	val := ctx.GlobalGeneric(name)
+func GlobalBig(cmd *cli.Command, name string) *big.Int {
+	val := cmd.Generic(name)
 	if val == nil {
 		return nil
 	}
-	return (*big.Int)(val.(*bigValue))
+
+	return (*big.Int)(val.Get().(*bigValue))
 }
 
 func prefixFor(name string) (prefix string) {
@@ -205,10 +242,6 @@ func prefixedNames(fullName string) (prefixed string) {
 		}
 	}
 	return
-}
-
-func (self DirectoryFlag) GetName() string {
-	return self.Name
 }
 
 func (self *DirectoryFlag) Set(value string) {

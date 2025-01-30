@@ -150,9 +150,9 @@ func TestPeerDisconnect(t *testing.T) {
 // This test is supposed to verify that Peer can reliably handle
 // multiple causes of disconnection occurring at the same time.
 func TestPeerDisconnectRace(t *testing.T) {
-	maybe := func() bool { return rand.Intn(1) == 1 }
+	maybe := func() bool { return rand.Intn(2) == 0 }
 
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 100000; i++ {
 		protoclose := make(chan error)
 		protodisc := make(chan DiscReason)
 		closer, rw, p, disc := testPeer([]Protocol{

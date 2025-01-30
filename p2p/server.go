@@ -75,7 +75,7 @@ type Config struct {
 	// Disabling is useful for protocol debugging (manual topology).
 	NoDiscovery bool
 
-	// Name sets the node name of this server.
+	// Name sets the node name of this server to build Name. (eg "Aquachain-${Name}/v1.7.17-dev-f09095/linux-amd64/go1.23.5"
 	// Use common.MakeName to create a name that follows existing conventions.
 	Name string `toml:"-"`
 
@@ -92,9 +92,9 @@ type Config struct {
 	TrustedNodes []*discover.Node
 
 	// Connectivity can be restricted to certain IP networks.
-	// If this option is set to a non-nil value, only hosts which match one of the
+	// Only hosts which match one of the
 	// IP networks contained in the list are considered.
-	NetRestrict *netutil.Netlist `toml:",omitempty"`
+	NetRestrict netutil.Netlist `toml:",omitempty"`
 
 	// NodeDatabase is the path to the database containing the previously seen
 	// live nodes in the network.
@@ -141,7 +141,6 @@ type Config struct {
 type Server struct {
 	// Config fields may not be modified while the server is running.
 	Config
-
 	// Hooks for testing. These are useful because we can inhibit
 	// the whole protocol stack.
 	newTransport func(net.Conn) transport
@@ -384,6 +383,10 @@ func (srv *Server) Start() (err error) {
 	if srv.Config.Offline {
 		return nil
 	}
+	for i := 0; i < 10; i++ {
+		log.Info("Starting P2P networking", "in", i, "on", srv.ListenAddr, "chain", srv.Config.Name)
+		time.Sleep(1 * time.Second)
+	}
 	srv.lock.Lock()
 	defer srv.lock.Unlock()
 	if srv.running {
@@ -425,7 +428,7 @@ func (srv *Server) Start() (err error) {
 		if err != nil {
 			return err
 		}
-		conn, err = net.ListenUDP("udp", addr)
+		conn, err = net.ListenUDP("udp4", addr)
 		if err != nil {
 			return err
 		}
@@ -487,12 +490,15 @@ func (srv *Server) Start() (err error) {
 
 func (srv *Server) startListening() error {
 	// Launch the TCP listener.
-	listener, err := net.Listen("tcp", srv.ListenAddr)
+	listener, err := net.Listen("tcp4", srv.ListenAddr)
 	if err != nil {
 		return err
 	}
 	laddr := listener.Addr().(*net.TCPAddr)
-	srv.ListenAddr = laddr.String()
+	if x := laddr.String(); x != srv.ListenAddr {
+		log.Info("swapping listen address", "old", srv.ListenAddr, "new", x)
+		srv.ListenAddr = x
+	}
 	srv.listener = listener
 	srv.loopWG.Add(1)
 	go srv.listenLoop()
@@ -621,7 +627,7 @@ running:
 					p.events = &srv.peerFeed
 				}
 				name := truncateName(c.name)
-				srv.log.Debug("Adding p2p peer", "name", name, "addr", c.fd.RemoteAddr(), "peers", len(peers)+1)
+				srv.log.Debug("Adding p2p peer", "name", name, "addr", c.fd.RemoteAddr(), "peers", len(peers)+1, "id", c.id.TerminalString())
 				go srv.runPeer(p)
 				peers[c.id] = p
 				if p.Inbound() {

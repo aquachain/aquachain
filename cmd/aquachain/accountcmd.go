@@ -17,9 +17,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
-	cli "github.com/urfave/cli"
+	cli "github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/aqua/accounts"
 	"gitlab.com/aquachain/aquachain/aqua/accounts/keystore"
 	"gitlab.com/aquachain/aquachain/cmd/utils"
@@ -53,14 +54,14 @@ It is safe to transfer the entire directory or the individual keys therein
 between aquachain nodes by simply copying.
 
 Make sure you backup your keys regularly.`,
-		Subcommands: []cli.Command{
+		Commands: []*cli.Command{
 			{
 				Name:   "list",
 				Usage:  "Print summary of existing accounts",
 				Action: utils.MigrateFlags(accountList),
 				Flags: []cli.Flag{
-					utils.DataDirFlag,
-					utils.KeyStoreDirFlag,
+					&utils.DataDirFlag,
+					&utils.KeyStoreDirFlag,
 				},
 				Description: `
 Print a short summary of all accounts`,
@@ -70,9 +71,9 @@ Print a short summary of all accounts`,
 				Usage:  "Create a new account",
 				Action: utils.MigrateFlags(accountCreate),
 				Flags: []cli.Flag{
-					utils.DataDirFlag,
-					utils.KeyStoreDirFlag,
-					utils.PasswordFileFlag,
+					&utils.DataDirFlag,
+					&utils.KeyStoreDirFlag,
+					&utils.PasswordFileFlag,
 				},
 				Description: `
     aquachain account new
@@ -93,9 +94,9 @@ password to file or expose in any other way.
 				Usage:  "Create a new mnemonic account",
 				Action: utils.MigrateFlags(accountGenerateMnemonic),
 				Flags: []cli.Flag{
-					utils.DataDirFlag,
-					utils.KeyStoreDirFlag,
-					utils.PasswordFileFlag,
+					&utils.DataDirFlag,
+					&utils.KeyStoreDirFlag,
+					&utils.PasswordFileFlag,
 				},
 				Description: `
     This only prints! Does not store key.
@@ -107,8 +108,8 @@ password to file or expose in any other way.
 				Action:    utils.MigrateFlags(accountUpdate),
 				ArgsUsage: "<address>",
 				Flags: []cli.Flag{
-					utils.DataDirFlag,
-					utils.KeyStoreDirFlag,
+					&utils.DataDirFlag,
+					&utils.KeyStoreDirFlag,
 				},
 				Description: `
     aquachain account update <address>
@@ -134,9 +135,9 @@ changing your password is only possible interactively.
 				Usage:  "Import a private key into a new account",
 				Action: utils.MigrateFlags(accountImport),
 				Flags: []cli.Flag{
-					utils.DataDirFlag,
-					utils.KeyStoreDirFlag,
-					utils.PasswordFileFlag,
+					&utils.DataDirFlag,
+					&utils.KeyStoreDirFlag,
+					&utils.PasswordFileFlag,
 				},
 				ArgsUsage: "<keyFile>",
 				Description: `
@@ -165,8 +166,8 @@ nodes.
 	}
 )
 
-func accountList(ctx *cli.Context) error {
-	stack, _ := makeConfigNode(ctx)
+func accountList(_ context.Context, cmd *cli.Command) error {
+	stack, _ := makeConfigNode(cmd)
 	var index int
 	for _, wallet := range stack.AccountManager().Wallets() {
 		for _, account := range wallet.Accounts() {
@@ -178,7 +179,7 @@ func accountList(ctx *cli.Context) error {
 }
 
 // tries unlocking the specified account a few times.
-func unlockAccount(_ *cli.Context, ks *keystore.KeyStore, address string, i int, passwords []string) (accounts.Account, string) {
+func unlockAccount(cmd *cli.Command, ks *keystore.KeyStore, address string, i int, passwords []string) (accounts.Account, string) {
 	account, err := utils.MakeAddress(ks, address)
 	if err != nil {
 		utils.Fatalf("Could not list accounts: %v", err)
@@ -263,22 +264,22 @@ func ambiguousAddrRecovery(ks *keystore.KeyStore, err *keystore.AmbiguousAddrErr
 }
 
 // accountCreate creates a new account into the keystore defined by the CLI flags.
-func accountCreate(ctx *cli.Context) error {
+func accountCreate(_ context.Context, cmd *cli.Command) error {
 	cfg := gethConfig{Node: defaultNodeConfig()}
 	// Load config file.
-	if file := ctx.GlobalString(configFileFlag.Name); file != "" {
+	if file := cmd.String(configFileFlag.Name); file != "" {
 		if err := loadConfig(file, &cfg); err != nil {
 			utils.Fatalf("%v", err)
 		}
 	}
-	utils.SetNodeConfig(ctx, &cfg.Node)
+	utils.SetNodeConfig(cmd, &cfg.Node)
 	scryptN, scryptP, keydir, err := cfg.Node.AccountConfig()
 
 	if err != nil {
 		utils.Fatalf("Failed to read configuration: %v", err)
 	}
 
-	password := getPassPhrase("Your new account is locked with a password. Please give a password. Do not forget this password.", true, 0, utils.MakePasswordList(ctx))
+	password := getPassPhrase("Your new account is locked with a password. Please give a password. Do not forget this password. Backup your keystore directory.", true, 0, utils.MakePasswordList(cmd))
 
 	address, err := keystore.StoreKey(keydir, password, scryptN, scryptP)
 
@@ -291,15 +292,15 @@ func accountCreate(ctx *cli.Context) error {
 
 // accountUpdate transitions an account from a previous format to the current
 // one, also providing the possibility to change the pass-phrase.
-func accountUpdate(ctx *cli.Context) error {
-	if len(ctx.Args()) == 0 {
+func accountUpdate(_ context.Context, cmd *cli.Command) error {
+	if cmd.Args().Len() == 0 {
 		utils.Fatalf("No accounts specified to update")
 	}
-	stack, _ := makeConfigNode(ctx)
+	stack, _ := makeConfigNode(cmd)
 	ks := stack.AccountManager().Backends(keystore.KeyStoreType)[0].(*keystore.KeyStore)
 
-	for _, addr := range ctx.Args() {
-		account, oldPassword := unlockAccount(ctx, ks, addr, 0, nil)
+	for _, addr := range cmd.Args().Slice() {
+		account, oldPassword := unlockAccount(cmd, ks, addr, 0, nil)
 		newPassword := getPassPhrase("Please give a new password. Do not forget this password.", true, 0, nil)
 		if err := ks.Update(account, oldPassword, newPassword); err != nil {
 			utils.Fatalf("Could not update the account: %v", err)
@@ -308,8 +309,8 @@ func accountUpdate(ctx *cli.Context) error {
 	return nil
 }
 
-func accountImport(ctx *cli.Context) error {
-	keyfile := ctx.Args().First()
+func accountImport(_ context.Context, cmd *cli.Command) error {
+	keyfile := cmd.Args().First()
 	if len(keyfile) == 0 {
 		utils.Fatalf("keyfile must be given as argument")
 	}
@@ -317,8 +318,8 @@ func accountImport(ctx *cli.Context) error {
 	if err != nil {
 		utils.Fatalf("Failed to load the private key: %v", err)
 	}
-	stack, _ := makeConfigNode(ctx)
-	passphrase := getPassPhrase("Your new account is locked with a password. Please give a password. Do not forget this password.", true, 0, utils.MakePasswordList(ctx))
+	stack, _ := makeConfigNode(cmd)
+	passphrase := getPassPhrase("Your new account is locked with a password. Please give a password. Do not forget this password.", true, 0, utils.MakePasswordList(cmd))
 
 	ks := stack.AccountManager().Backends(keystore.KeyStoreType)[0].(*keystore.KeyStore)
 	acct, err := ks.ImportECDSA(key, passphrase)

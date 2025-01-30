@@ -18,9 +18,11 @@ package console
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"strings"
 	"testing"
@@ -200,7 +202,7 @@ func TestInteractive(t *testing.T) {
 	tester := newTester(t, nil)
 	defer tester.Close(t)
 
-	go tester.console.Interactive()
+	go tester.console.Interactive(context.Background(), func() {})
 
 	// Wait for a promt and send a statement back
 	select {
@@ -235,18 +237,37 @@ func TestPreload(t *testing.T) {
 		t.Fatalf("preloaded variable missing: have %s, want %s", output, "some-preloaded-string")
 	}
 }
+func testerr(t *testing.T, err error) {
+	if err != nil {
+		t.Fatalf("failed to execute statement: %v", err)
+	}
+}
 
 // Tests that JavaScript scripts can be executes from the configured asset path.
 func TestExecute(t *testing.T) {
+	var err error
 	tester := newTester(t, nil)
 	defer tester.Close(t)
 
-	tester.console.Execute("exec.js")
+	tester.console.ExecuteFile("exec.js")
 
 	tester.console.Evaluate("execed")
 	if output := tester.output.String(); !strings.Contains(output, "some-executed-string") {
 		t.Fatalf("execed variable missing: have %s, want %s", output, "some-executed-string")
 	}
+	tester.output.Reset()
+	tester.console.ExecuteFile("testwei.js")
+	err = tester.console.Evaluate("txwei")
+	testerr(t, err)
+	if output := tester.output.String(); !strings.Contains(output, "1000000000000000000") {
+		t.Fatalf("execed variable missing: have %s, want %s", output, "1000000000000000000")
+	}
+
+	tester.output.Reset()
+	err = tester.console.Evaluate(`tx = {from: aqua.coinbase, to: '0xDA7064FB41A2a599275Dd74113787A7aA8ee3E4f', value: web3.toWei(1,'aqua')}`)
+	testerr(t, err)
+	err = tester.console.Evaluate("tx")
+	log.Printf("tx: %v", tester.output.String())
 }
 
 // Tests that the JavaScript objects returned by statement executions are properly

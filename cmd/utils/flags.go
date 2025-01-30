@@ -18,18 +18,17 @@
 package utils
 
 import (
-	"errors"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"math/big"
-	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
 
 	"github.com/btcsuite/btcd/btcec/v2"
-	cli "github.com/urfave/cli"
+	cli "github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/aqua"
 	"gitlab.com/aquachain/aquachain/aqua/accounts"
 	"gitlab.com/aquachain/aquachain/aqua/accounts/keystore"
@@ -56,8 +55,7 @@ import (
 	"gitlab.com/aquachain/aquachain/params"
 )
 
-var (
-	CommandHelpTemplate = `{{.cmd.Name}}{{if .cmd.Subcommands}} command{{end}}{{if .cmd.Flags}} [command options]{{end}} [arguments...]
+const CommandHelpTemplate = `{{.cmd.Name}}{{if .cmd.Subcommands}} command{{end}}{{if .cmd.Flags}} [command options]{{end}} [arguments...]
 {{if .cmd.Description}}{{.cmd.Description}}
 {{end}}{{if .cmd.Subcommands}}
 SUBCOMMANDS:
@@ -67,10 +65,8 @@ SUBCOMMANDS:
 {{range $categorized.Flags}}{{"\t"}}{{.}}
 {{end}}
 {{end}}{{end}}`
-)
 
-func init() {
-	cli.AppHelpTemplate = `{{.Name}} {{if .Flags}}[global options] {{end}}command{{if .Flags}} [command options]{{end}} [arguments...]
+const appHelpTemplate = `{{.Name}} {{if .Flags}}[global options] {{end}}command{{if .Flags}} [command options]{{end}} [arguments...]
 
 VERSION:
    {{.Version}}
@@ -83,20 +79,17 @@ GLOBAL OPTIONS:
    {{end}}{{end}}
 `
 
-	cli.CommandHelpTemplate = CommandHelpTemplate
-}
-
-// NewApp creates an app with sane defaults.
-func NewApp(gitCommit, usage string) *cli.App {
-	app := cli.NewApp()
-	app.Name = filepath.Base(os.Args[0])
-	app.Author = ""
-	//app.Authors = nil
-	app.Email = ""
-	app.Version = params.Version
-	app.Usage = usage
-	return app
-}
+// // NewApp creates an app with sane defaults.
+// func NewApp(gitCommit, usage string) *cli.App {
+// 	app := cli.DefaultAppComplete()
+// 	app.Name = filepath.Base(os.Args[0])
+// 	app.Author = ""
+// 	//app.Authors = nil
+// 	app.Email = ""
+// 	app.Version = params.Version
+// 	app.Usage = usage
+// 	return app
+// }
 
 // These are all the command line flags we support.
 // If you add to this list, please remember to include the
@@ -133,7 +126,7 @@ var (
 		Name:  "usb",
 		Usage: "Enables monitoring for and managing USB hardware wallets (disabled in pure-go builds)",
 	}
-	NetworkIdFlag = cli.Uint64Flag{
+	NetworkIdFlag = cli.UintFlag{
 		Name:  "networkid",
 		Usage: "Network identifier (integer)",
 		Value: aqua.DefaultConfig.NetworkId,
@@ -149,20 +142,24 @@ var (
 	}
 	TestnetFlag = cli.BoolFlag{
 		Name:  "testnet",
-		Usage: "Aquachain Regression Test Network",
+		Usage: "Deprecated: use --chain=testnet",
 	}
 	Testnet2Flag = cli.BoolFlag{
 		Name:  "testnet2",
-		Usage: "Aquachain Simulation Test Network (nodiscover)",
+		Usage: "Deprecated: use --chain=testnet2",
+	}
+	Testnet3Flag = cli.BoolFlag{
+		Name:  "testnet2",
+		Usage: "Deprecated: use --chain=testnet3",
 	}
 	NetworkEthFlag = cli.BoolFlag{
 		Name:  "ethereum",
-		Usage: "Connect to Ethereum network (*broken*)",
+		Usage: "Deprecated: dont use",
 	}
 	DeveloperFlag = cli.BoolFlag{
 		Name:  "dev",
 		Usage: "Ephemeral proof-of-authority network with a pre-funded developer account, mining enabled",
-	}
+	} // TODO: '-chain dev'
 	DeveloperPeriodFlag = cli.IntFlag{
 		Name:  "dev.period",
 		Usage: "Block period to use in developer mode (0 = mine only if transaction pending)",
@@ -199,12 +196,12 @@ var (
 	AquahashCachesInMemoryFlag = cli.IntFlag{
 		Name:  "aquahash.cachesinmem",
 		Usage: "Number of recent aquahash caches to keep in memory (16MB each)",
-		Value: aqua.DefaultConfig.Aquahash.CachesInMem,
+		Value: int64(aqua.DefaultConfig.Aquahash.CachesInMem),
 	}
 	AquahashCachesOnDiskFlag = cli.IntFlag{
 		Name:  "aquahash.cachesondisk",
 		Usage: "Number of recent aquahash caches to keep on disk (16MB each)",
-		Value: aqua.DefaultConfig.Aquahash.CachesOnDisk,
+		Value: int64(aqua.DefaultConfig.Aquahash.CachesOnDisk),
 	}
 	AquahashDatasetDirFlag = DirectoryFlag{
 		Name:  "aquahash.dagdir",
@@ -214,12 +211,12 @@ var (
 	AquahashDatasetsInMemoryFlag = cli.IntFlag{
 		Name:  "aquahash.dagsinmem",
 		Usage: "Number of recent aquahash mining DAGs to keep in memory (1+GB each)",
-		Value: aqua.DefaultConfig.Aquahash.DatasetsInMem,
+		Value: int64(aqua.DefaultConfig.Aquahash.DatasetsInMem),
 	}
 	AquahashDatasetsOnDiskFlag = cli.IntFlag{
 		Name:  "aquahash.dagsondisk",
 		Usage: "Number of recent aquahash mining DAGs to keep on disk (1+GB each)",
-		Value: aqua.DefaultConfig.Aquahash.DatasetsOnDisk,
+		Value: int64(aqua.DefaultConfig.Aquahash.DatasetsOnDisk),
 	}
 	// Transaction pool settings
 	TxPoolNoLocalsFlag = cli.BoolFlag{
@@ -236,32 +233,32 @@ var (
 		Usage: "Time interval to regenerate the local transaction journal",
 		Value: core.DefaultTxPoolConfig.Rejournal,
 	}
-	TxPoolPriceLimitFlag = cli.Uint64Flag{
+	TxPoolPriceLimitFlag = cli.UintFlag{
 		Name:  "txpool.pricelimit",
 		Usage: "Minimum gas price limit to enforce for acceptance into the pool",
 		Value: aqua.DefaultConfig.TxPool.PriceLimit,
 	}
-	TxPoolPriceBumpFlag = cli.Uint64Flag{
+	TxPoolPriceBumpFlag = cli.UintFlag{
 		Name:  "txpool.pricebump",
 		Usage: "Price bump percentage to replace an already existing transaction",
 		Value: aqua.DefaultConfig.TxPool.PriceBump,
 	}
-	TxPoolAccountSlotsFlag = cli.Uint64Flag{
+	TxPoolAccountSlotsFlag = cli.UintFlag{
 		Name:  "txpool.accountslots",
 		Usage: "Minimum number of executable transaction slots guaranteed per account",
 		Value: aqua.DefaultConfig.TxPool.AccountSlots,
 	}
-	TxPoolGlobalSlotsFlag = cli.Uint64Flag{
+	TxPoolGlobalSlotsFlag = cli.UintFlag{
 		Name:  "txpool.globalslots",
 		Usage: "Maximum number of executable transaction slots for all accounts",
 		Value: aqua.DefaultConfig.TxPool.GlobalSlots,
 	}
-	TxPoolAccountQueueFlag = cli.Uint64Flag{
+	TxPoolAccountQueueFlag = cli.UintFlag{
 		Name:  "txpool.accountqueue",
 		Usage: "Maximum number of non-executable transaction slots permitted per account",
 		Value: aqua.DefaultConfig.TxPool.AccountQueue,
 	}
-	TxPoolGlobalQueueFlag = cli.Uint64Flag{
+	TxPoolGlobalQueueFlag = cli.UintFlag{
 		Name:  "txpool.globalqueue",
 		Usage: "Maximum number of non-executable transaction slots for all accounts",
 		Value: aqua.DefaultConfig.TxPool.GlobalQueue,
@@ -290,7 +287,7 @@ var (
 	TrieCacheGenFlag = cli.IntFlag{
 		Name:  "trie-cache-gens",
 		Usage: "Number of trie node generations to keep in memory",
-		Value: int(state.MaxTrieCacheGen),
+		Value: int64(state.MaxTrieCacheGen),
 	}
 	// Miner settings
 	MiningEnabledFlag = cli.BoolFlag{
@@ -300,9 +297,9 @@ var (
 	MinerThreadsFlag = cli.IntFlag{
 		Name:  "minerthreads",
 		Usage: "Number of CPU threads to use for mining",
-		Value: runtime.NumCPU(),
+		Value: int64(runtime.NumCPU()),
 	}
-	TargetGasLimitFlag = cli.Uint64Flag{
+	TargetGasLimitFlag = cli.UintFlag{
 		Name:  "targetgaslimit",
 		Usage: "Target gas limit sets the artificial target gas floor for the blocks to mine",
 		Value: params.GenesisGasLimit,
@@ -418,7 +415,7 @@ var (
 	}
 	WSAllowedOriginsFlag = cli.StringFlag{
 		Name:  "wsorigins",
-		Usage: "Origins from which to accept websockets requests",
+		Usage: "Origins from which to accept websockets requests (see also rpcvhosts)",
 		Value: "",
 	}
 	RPCAllowIPFlag = cli.StringFlag{
@@ -457,7 +454,7 @@ var (
 	}
 	ListenAddrFlag = cli.StringFlag{
 		Name:  "addr",
-		Usage: "Network listening addr (default all interfaces, port 21303)",
+		Usage: "Network listening addr (all interfaces, port 21303 TCP and UDP)",
 		Value: "",
 	}
 	BootnodesFlag = cli.StringFlag{
@@ -465,11 +462,11 @@ var (
 		Usage: "Comma separated enode URLs for P2P discovery bootstrap (set v4+v5 instead for light servers)",
 		Value: "",
 	}
-	BootnodesV4Flag = cli.StringFlag{
-		Name:  "bootnodesv4",
-		Usage: "Comma separated enode URLs for P2P v4 discovery bootstrap (light server, full nodes)",
-		Value: "",
-	}
+	// BootnodesV4Flag = cli.StringFlag{
+	// 	Name:  "bootnodesv4",
+	// 	Usage: "Comma separated enode URLs for P2P v4 discovery bootstrap (light server, full nodes)",
+	// 	Value: "",
+	// }
 	NodeKeyFileFlag = cli.StringFlag{
 		Name:  "nodekey",
 		Usage: "P2P node key file",
@@ -511,14 +508,14 @@ var (
 	GpoBlocksFlag = cli.IntFlag{
 		Name:  "gpoblocks",
 		Usage: "Number of recent blocks to check for gas prices",
-		Value: aqua.DefaultConfig.GPO.Blocks,
+		Value: int64(aqua.DefaultConfig.GPO.Blocks),
 	}
 	GpoPercentileFlag = cli.IntFlag{
 		Name:  "gpopercentile",
 		Usage: "Suggested gas price is the given percentile of a set of recent transaction gas prices",
-		Value: aqua.DefaultConfig.GPO.Percentile,
+		Value: int64(aqua.DefaultConfig.GPO.Percentile),
 	}
-	HF8MainnetFlag = cli.Int64Flag{
+	HF8MainnetFlag = cli.IntFlag{
 		Name:  "hf8",
 		Usage: "Hard fork #8 activation block",
 		Value: -1,
@@ -528,21 +525,21 @@ var (
 // MakeDataDir retrieves the currently requested data directory, terminating
 // if none (or the empty string) is specified. If the node is starting a testnet,
 // the a subdirectory of the specified datadir will be used.
-func MakeDataDir(ctx *cli.Context) string {
-	if path := ctx.GlobalString(DataDirFlag.Name); path != "" {
-		if chain := ctx.GlobalString(ChainFlag.Name); chain != "aqua" {
+func MakeDataDir(cmd *cli.Command) string {
+	if path := cmd.String(DataDirFlag.Name); path != "" {
+		if chain := cmd.String(ChainFlag.Name); chain != "aqua" {
 			return filepath.Join(path, chain)
 		}
-		if ctx.GlobalBool(TestnetFlag.Name) {
+		if cmd.Bool(TestnetFlag.Name) {
 			return filepath.Join(path, "testnet")
 		}
-		if ctx.GlobalBool(DeveloperFlag.Name) {
+		if cmd.Bool(DeveloperFlag.Name) {
 			return filepath.Join(path, "develop")
 		}
-		if ctx.GlobalBool(Testnet2Flag.Name) {
+		if cmd.Bool(Testnet2Flag.Name) {
 			return filepath.Join(path, "testnet2")
 		}
-		if ctx.GlobalBool(NetworkEthFlag.Name) {
+		if cmd.Bool(NetworkEthFlag.Name) {
 			return filepath.Join(path, "ethereum")
 		}
 		return path
@@ -554,10 +551,10 @@ func MakeDataDir(ctx *cli.Context) string {
 // setNodeKey creates a node key from set command line flags, either loading it
 // from a file or as a specified hex value. If neither flags were provided, this
 // method returns nil and an emphemeral key is to be generated.
-func setNodeKey(ctx *cli.Context, cfg *p2p.Config) {
+func setNodeKey(cmd *cli.Command, cfg *p2p.Config) {
 	var (
-		hex  = ctx.GlobalString(NodeKeyHexFlag.Name)
-		file = ctx.GlobalString(NodeKeyFileFlag.Name)
+		hex  = cmd.String(NodeKeyHexFlag.Name)
+		file = cmd.String(NodeKeyFileFlag.Name)
 		key  *btcec.PrivateKey
 		err  error
 	)
@@ -578,91 +575,172 @@ func setNodeKey(ctx *cli.Context, cfg *p2p.Config) {
 }
 
 // setNodeUserIdent creates the user identifier from CLI flags.
-func setNodeUserIdent(ctx *cli.Context, cfg *node.Config) {
-	if identity := ctx.GlobalString(IdentityFlag.Name); len(identity) > 0 {
+func setNodeUserIdent(cmd *cli.Command, cfg *node.Config) {
+	if identity := cmd.String(IdentityFlag.Name); len(identity) > 0 {
 		cfg.UserIdent = identity
 	}
 }
 
-// setBootstrapNodes creates a list of bootstrap nodes from the command line
-// flags, reverting to pre-configured ones if none have been specified.
-func setBootstrapNodes(ctx *cli.Context, cfg *p2p.Config) {
-	var urls []string
-	if ctx.GlobalIsSet(ChainFlag.Name) {
-		chainName := ctx.GlobalString(ChainFlag.Name)
-		switch chainName {
-		default: // no bootnodes
-		case "aqua":
-			urls = params.MainnetBootnodes
-		case "testnet":
-			urls = params.TestnetBootnodes
-		}
-	} else {
-		urls = params.MainnetBootnodes
+// returns chainname, chaincfg, bootnodes, datadir
+func getStuff(cmd *cli.Command) (string, *params.ChainConfig, []*discover.Node, DirectoryConfig) {
+	chainName := cmd.String(ChainFlag.Name)
+	if chainName == "" {
 		switch {
-		case ctx.GlobalIsSet(BootnodesFlag.Name) || ctx.GlobalIsSet(BootnodesV4Flag.Name):
-			if ctx.GlobalIsSet(BootnodesV4Flag.Name) {
-				urls = strings.Split(ctx.GlobalString(BootnodesV4Flag.Name), ",")
-			} else {
-				urls = strings.Split(ctx.GlobalString(BootnodesFlag.Name), ",")
-			}
-		case ctx.GlobalBool(TestnetFlag.Name):
-			urls = params.TestnetBootnodes
-		case ctx.GlobalBool(Testnet2Flag.Name):
-			urls = params.Testnet2Bootnodes
-		case ctx.GlobalBool(NetworkEthFlag.Name):
-			urls = params.EthnetBootnodes
+		case cmd.Bool(TestnetFlag.Name):
+			chainName = "testnet"
+		case cmd.Bool(Testnet2Flag.Name):
+			chainName = "testnet2"
+		case cmd.Bool(Testnet3Flag.Name):
+			chainName = "testnet3"
+		case cmd.Bool(DeveloperFlag.Name):
+			chainName = "dev"
+		default:
+			chainName = "aqua"
 		}
+		cmd.Set(ChainFlag.Name, chainName) // set chainName for later
 	}
-	if cfg.BootstrapNodes != nil {
-		return // already set, don't apply defaults.
+	if chainName == "" {
+		Fatalf("No chain selected")
 	}
-	cfg.BootstrapNodes = make([]*discover.Node, 0, len(urls))
-	for _, url := range urls {
+	chaincfg := params.GetChainConfig(chainName)
+	if chaincfg == nil {
+		Fatalf("invalid chain name: %q", cmd.String(ChainFlag.Name))
+	}
+	return chainName, chaincfg, getBootstrapNodes(cmd), switchDatadir(cmd, chainName)
+}
+
+func getBootstrapNodes(cmd *cli.Command) []*discover.Node {
+	if cmd.IsSet(BootnodesFlag.Name) { // custom bootnodes flag
+		return StringToBootstraps(strings.Split(cmd.String(BootnodesFlag.Name), ","))
+	}
+	chainName := cmd.String(ChainFlag.Name)
+	if chainName == "" {
+		panic("woops") // should be already set
+	}
+	var urls []string
+	switch chainName {
+	case "aqua":
+		urls = params.MainnetBootnodes
+	case "testnet":
+		urls = params.TestnetBootnodes
+	case "testnet2":
+		urls = params.Testnet2Bootnodes
+	default: // no bootnodes (testnet3, etc)
+		return []*discover.Node{} // non-nil but empty
+	}
+	return StringToBootstraps(urls)
+
+}
+
+func StringToBootstraps(ss []string) []*discover.Node {
+	var nodes []*discover.Node
+	for _, url := range ss {
+		url = strings.TrimSpace(url)
 		node, err := discover.ParseNode(url)
 		if err != nil {
 			log.Crit("Bootstrap URL invalid", "enode", url, "err", err)
 		}
-		cfg.BootstrapNodes = append(cfg.BootstrapNodes, node)
+		nodes = append(nodes, node)
 	}
+	return nodes
 }
+
+// // setBootstrapNodes creates a list of bootstrap nodes from the command line
+// // flags, reverting to pre-configured ones if none have been specified.
+// func setBootstrapNodes(cmd *cli.Command, cfg *p2p.Config) {
+// 	if cfg.BootstrapNodes != nil {
+// 		return // already set, don't apply defaults.
+// 	}
+// 	var urls []string
+// 	if cmd.IsSet(ChainFlag.Name) {
+// 		chainName := cmd.String(ChainFlag.Name)
+// 		switch chainName {
+// 		default: // no bootnodes
+// 		case "aqua":
+// 			urls = params.MainnetBootnodes
+// 		case "testnet":
+// 			urls = params.TestnetBootnodes
+// 		case "testnet2":
+// 			urls = params.Testnet2Bootnodes
+// 		}
+// 	} else {
+
+// 	}
+// 	nodes := make([]*discover.Node, 0, len(urls))
+// 	for _, url := range urls {
+// 		node, err := discover.ParseNode(url)
+// 		if err != nil {
+// 			log.Crit("Bootstrap URL invalid", "enode", url, "err", err)
+// 		}
+// 		nodes = append(nodes, node)
+// 	}
+// 	cfg.BootstrapNodes = nodes
+// }
+/*
+// user might have set "-testnet" or "-chain testnet" flags
+// this should be set before any other flags are processed
+func setChainConfig(cmd *cli.Command) *params.ChainConfig {
+	chainName := cmd.String(ChainFlag.Name)
+	if chainName == "" {
+		switch {
+		case cmd.Bool(TestnetFlag.Name):
+			chainName = "testnet"
+		case cmd.Bool(Testnet2Flag.Name):
+			chainName = "testnet2"
+		default:
+			chainName = "aqua"
+		}
+	}
+	chaincfg := params.GetChainConfig(chainName)
+	if chaincfg == nil {
+		Fatalf("invalid chain name: %q", cmd.String(ChainFlag.Name))
+	}
+	return chaincfg
+}*/
 
 // setListenAddress creates a TCP listening address string from set command
 // line flags.
-func setListenAddress(ctx *cli.Context, cfg *p2p.Config) {
-	var listenaddr = ""
-	chaincfg := params.GetChainConfig(ctx.GlobalString(ChainFlag.Name))
-	if chaincfg == nil {
-		Fatalf("invalid chain: %v", ctx.GlobalString(ChainFlag.Name))
+func getListenAddress(cmd *cli.Command) string {
+	var listenaddr string
+	chainName := cmd.String(ChainFlag.Name)
+	if chainName == "" {
+		panic("no chain name")
 	}
-	switch ctx.GlobalString(ChainFlag.Name) {
+	switch chainName {
 	case "aqua":
-		listenaddr = ":21303"
+		listenaddr = "0.0.0.0:21303"
 	case "testnet":
-		listenaddr = ":21304"
+		listenaddr = "0.0.0.0:21304"
+		cmd.Set(TestnetFlag.Name, "true")
 	case "testnet2":
-		listenaddr = ":21305"
+		listenaddr = "0.0.0.0:21305"
+		cmd.Set(Testnet2Flag.Name, "true")
+	default:
+		listenaddr = "" // don't listen
 	}
 
-	if !ctx.GlobalIsSet(ListenAddrFlag.Name) && ctx.GlobalIsSet(ListenPortFlag.Name) {
-		listenaddr = fmt.Sprintf(":%d", ctx.GlobalInt(ListenPortFlag.Name))
+	// flag overrides
+
+	if !cmd.IsSet(ListenAddrFlag.Name) && cmd.IsSet(ListenPortFlag.Name) {
+		listenaddr = fmt.Sprintf(":%d", cmd.Int(ListenPortFlag.Name))
 	}
-	if ctx.GlobalIsSet(ListenAddrFlag.Name) {
-		listenaddr = ctx.GlobalString(ListenAddrFlag.Name)
+	if cmd.IsSet(ListenAddrFlag.Name) {
+		listenaddr = cmd.String(ListenAddrFlag.Name)
 	}
-	cfg.ListenAddr = listenaddr
+
+	return listenaddr
 }
 
 // setNAT creates a port mapper from command line flags.
-func setNAT(ctx *cli.Context, cfg *p2p.Config) {
-	if ctx.GlobalIsSet(NATFlag.Name) {
-		natif, err := nat.Parse(ctx.GlobalString(NATFlag.Name))
+func setNAT(cmd *cli.Command, cfg *p2p.Config) {
+	if cmd.IsSet(NATFlag.Name) {
+		natif, err := nat.Parse(cmd.String(NATFlag.Name))
 		if err != nil {
 			Fatalf("Option %s: %v", NATFlag.Name, err)
 		}
 		cfg.NAT = natif
 	}
-	if ctx.GlobalIsSet(OfflineFlag.Name) {
+	if cmd.IsSet(OfflineFlag.Name) {
 		cfg.NAT = nil
 	}
 }
@@ -679,64 +757,64 @@ func splitAndTrim(input string) []string {
 
 // setHTTP creates the HTTP RPC listener interface string from the set
 // command line flags, returning empty if the HTTP endpoint is disabled.
-func setHTTP(ctx *cli.Context, cfg *node.Config) {
-	if ctx.GlobalBool(RPCEnabledFlag.Name) && cfg.HTTPHost == "" {
+func setHTTP(cmd *cli.Command, cfg *node.Config) {
+	if cmd.Bool(RPCEnabledFlag.Name) && cfg.HTTPHost == "" {
 		cfg.HTTPHost = "127.0.0.1"
-		if ctx.GlobalIsSet(RPCListenAddrFlag.Name) && ctx.GlobalIsSet(UnlockedAccountFlag.Name) && !ctx.GlobalIsSet(RPCUnlockFlag.Name) {
+		if cmd.IsSet(RPCListenAddrFlag.Name) && cmd.IsSet(UnlockedAccountFlag.Name) && !cmd.IsSet(RPCUnlockFlag.Name) {
 			Fatalf("Woah there! By default, using -rpc and -unlock is \"safe\", (localhost).\n" +
 				"But you shouldn't use --rpcaddr with --unlock flag.\n" +
 				"If you really know what you are doing and would like to unlock a wallet while" +
 				"hosting a public HTTP RPC node, use the -UNSAFE_RPC_UNLOCK flag. See -allowip flag to restrict access")
 		}
-		if ctx.GlobalIsSet(RPCListenAddrFlag.Name) {
-			cfg.HTTPHost = ctx.GlobalString(RPCListenAddrFlag.Name)
+		if cmd.IsSet(RPCListenAddrFlag.Name) {
+			cfg.HTTPHost = cmd.String(RPCListenAddrFlag.Name)
 		}
 	}
 
-	if ctx.GlobalIsSet(RPCPortFlag.Name) {
-		cfg.HTTPPort = ctx.GlobalInt(RPCPortFlag.Name)
+	if cmd.IsSet(RPCPortFlag.Name) {
+		cfg.HTTPPort = int(cmd.Int(RPCPortFlag.Name))
 	}
-	if ctx.GlobalIsSet(RPCCORSDomainFlag.Name) {
-		cfg.HTTPCors = splitAndTrim(ctx.GlobalString(RPCCORSDomainFlag.Name))
+	if cmd.IsSet(RPCCORSDomainFlag.Name) {
+		cfg.HTTPCors = splitAndTrim(cmd.String(RPCCORSDomainFlag.Name))
 	}
-	if ctx.GlobalIsSet(RPCApiFlag.Name) {
-		cfg.HTTPModules = splitAndTrim(ctx.GlobalString(RPCApiFlag.Name))
+	if cmd.IsSet(RPCApiFlag.Name) {
+		cfg.HTTPModules = splitAndTrim(cmd.String(RPCApiFlag.Name))
 	}
 
-	cfg.HTTPVirtualHosts = splitAndTrim(ctx.GlobalString(RPCVirtualHostsFlag.Name))
-	cfg.RPCAllowIP = splitAndTrim(ctx.GlobalString(RPCAllowIPFlag.Name))
+	cfg.HTTPVirtualHosts = splitAndTrim(cmd.String(RPCVirtualHostsFlag.Name))
+	cfg.RPCAllowIP = splitAndTrim(cmd.String(RPCAllowIPFlag.Name))
 }
 
 // setWS creates the WebSocket RPC listener interface string from the set
 // command line flags, returning empty if the HTTP endpoint is disabled.
-func setWS(ctx *cli.Context, cfg *node.Config) {
-	if ctx.GlobalBool(WSEnabledFlag.Name) && cfg.WSHost == "" {
+func setWS(cmd *cli.Command, cfg *node.Config) {
+	if cmd.Bool(WSEnabledFlag.Name) && cfg.WSHost == "" {
 		cfg.WSHost = "127.0.0.1"
-		if ctx.GlobalIsSet(WSListenAddrFlag.Name) {
-			cfg.WSHost = ctx.GlobalString(WSListenAddrFlag.Name)
+		if cmd.IsSet(WSListenAddrFlag.Name) {
+			cfg.WSHost = cmd.String(WSListenAddrFlag.Name)
 		}
 	}
 
-	if ctx.GlobalIsSet(WSPortFlag.Name) {
-		cfg.WSPort = ctx.GlobalInt(WSPortFlag.Name)
+	if cmd.IsSet(WSPortFlag.Name) {
+		cfg.WSPort = int(cmd.Int(WSPortFlag.Name))
 	}
-	if ctx.GlobalIsSet(WSAllowedOriginsFlag.Name) {
-		cfg.WSOrigins = splitAndTrim(ctx.GlobalString(WSAllowedOriginsFlag.Name))
+	if cmd.IsSet(WSAllowedOriginsFlag.Name) {
+		cfg.WSOrigins = splitAndTrim(cmd.String(WSAllowedOriginsFlag.Name))
 	}
-	if ctx.GlobalIsSet(WSApiFlag.Name) {
-		cfg.WSModules = splitAndTrim(ctx.GlobalString(WSApiFlag.Name))
+	if cmd.IsSet(WSApiFlag.Name) {
+		cfg.WSModules = splitAndTrim(cmd.String(WSApiFlag.Name))
 	}
 }
 
 // setIPC creates an IPC path configuration from the set command line flags,
 // returning an empty string if IPC was explicitly disabled, or the set path.
-func setIPC(ctx *cli.Context, cfg *node.Config) {
-	checkExclusive(ctx, IPCDisabledFlag, IPCPathFlag)
+func setIPC(cmd *cli.Command, cfg *node.Config) {
+	checkExclusive(cmd, &IPCDisabledFlag, &IPCPathFlag)
 	switch {
-	case ctx.GlobalBool(IPCDisabledFlag.Name):
+	case cmd.Bool(IPCDisabledFlag.Name):
 		cfg.IPCPath = ""
-	case ctx.GlobalIsSet(IPCPathFlag.Name):
-		cfg.IPCPath = ctx.GlobalString(IPCPathFlag.Name)
+	case cmd.IsSet(IPCPathFlag.Name):
+		cfg.IPCPath = cmd.String(IPCPathFlag.Name)
 	}
 }
 
@@ -785,9 +863,9 @@ func MakeAddress(ks *keystore.KeyStore, account string) (accounts.Account, error
 
 // setAquabase retrieves the aquabase either from the directly specified
 // command line flags or from the keystore if CLI indexed.
-func setAquabase(ctx *cli.Context, ks *keystore.KeyStore, cfg *aqua.Config) {
-	if ctx.GlobalIsSet(AquabaseFlag.Name) {
-		account, err := MakeAddress(ks, ctx.GlobalString(AquabaseFlag.Name))
+func setAquabase(cmd *cli.Command, ks *keystore.KeyStore, cfg *aqua.Config) {
+	if cmd.IsSet(AquabaseFlag.Name) {
+		account, err := MakeAddress(ks, cmd.String(AquabaseFlag.Name))
 		if err != nil {
 			Fatalf("Option %q: %v", AquabaseFlag.Name, err)
 		}
@@ -796,8 +874,8 @@ func setAquabase(ctx *cli.Context, ks *keystore.KeyStore, cfg *aqua.Config) {
 }
 
 // MakePasswordList reads password lines from the file specified by the global --password flag.
-func MakePasswordList(ctx *cli.Context) []string {
-	path := ctx.GlobalString(PasswordFileFlag.Name)
+func MakePasswordList(cmd *cli.Command) []string {
+	path := cmd.String(PasswordFileFlag.Name)
 	if path == "" {
 		return nil
 	}
@@ -813,40 +891,39 @@ func MakePasswordList(ctx *cli.Context) []string {
 	return lines
 }
 
-func SetP2PConfig(ctx *cli.Context, cfg *p2p.Config) {
+func SetP2PConfig(cmd *cli.Command, cfg *p2p.Config) {
 	// cant be zero
 	if cfg.ChainId == 0 {
 		panic("P2P config has no chain ID")
 	}
 
-	setNodeKey(ctx, cfg)
-	setNAT(ctx, cfg)
-	setListenAddress(ctx, cfg)
-	setBootstrapNodes(ctx, cfg)
+	setNodeKey(cmd, cfg)
+	setNAT(cmd, cfg)
+	cfg.ListenAddr = getListenAddress(cmd)
 
 	log.Info("Listen Address:", "addr", cfg.ListenAddr)
-	if ctx.GlobalIsSet(MaxPeersFlag.Name) {
-		cfg.MaxPeers = ctx.GlobalInt(MaxPeersFlag.Name)
+	if cmd.IsSet(MaxPeersFlag.Name) {
+		cfg.MaxPeers = int(cmd.Int(MaxPeersFlag.Name))
 	}
 
 	log.Debug("Maximum peer count", "AQUA", cfg.MaxPeers)
 
-	if ctx.GlobalIsSet(MaxPendingPeersFlag.Name) {
-		cfg.MaxPendingPeers = ctx.GlobalInt(MaxPendingPeersFlag.Name)
+	if cmd.IsSet(MaxPendingPeersFlag.Name) {
+		cfg.MaxPendingPeers = int(cmd.Int(MaxPendingPeersFlag.Name))
 	}
 
-	if ctx.GlobalIsSet(OfflineFlag.Name) {
+	if cmd.IsSet(OfflineFlag.Name) {
 		cfg.NoDiscovery = true
 		cfg.Offline = true
 	}
 
-	if ctx.GlobalIsSet(NoDiscoverFlag.Name) {
+	if cmd.IsSet(NoDiscoverFlag.Name) {
 		cfg.NoDiscovery = true
 	}
-	if ctx.GlobalBool(Testnet2Flag.Name) {
+	if cmd.Bool(Testnet2Flag.Name) {
 		cfg.NoDiscovery = true
 	}
-	if netrestrict := ctx.GlobalString(NetrestrictFlag.Name); netrestrict != "" {
+	if netrestrict := cmd.String(NetrestrictFlag.Name); netrestrict != "" {
 		list, err := netutil.ParseNetlist(netrestrict)
 		if err != nil {
 			Fatalf("Option %q: %v", NetrestrictFlag.Name, err)
@@ -854,173 +931,221 @@ func SetP2PConfig(ctx *cli.Context, cfg *p2p.Config) {
 		cfg.NetRestrict = list
 	}
 
-	if ctx.GlobalBool(DeveloperFlag.Name) {
+	if cmd.Bool(DeveloperFlag.Name) {
 		// --dev mode can't use p2p networking.
 		cfg.MaxPeers = 0
-		cfg.ListenAddr = ":0"
+		cfg.ListenAddr = "127.0.0.1:0" // random local port
 		cfg.NoDiscovery = true
 	}
 
-	switch ctx.GlobalString(ChainFlag.Name) {
-	case "aqua":
-		cfg.ListenAddr = ":21303"
-	case "testnet":
-		cfg.ListenAddr = ":21304"
-	case "testnet2":
-		cfg.MaxPeers = 0
-		cfg.ListenAddr = "127.0.0.1:0"
-		cfg.NoDiscovery = true
-		cfg.Offline = true
-	case "testnet3":
-		cfg.MaxPeers = 0
-		cfg.ListenAddr = "127.0.0.1:0"
-		cfg.NoDiscovery = true
-		cfg.Offline = true
+	/*
+		switch cmd.String(ChainFlag.Name) {
+		case "aqua":
+			// cfg.ListenAddr = ":21303"
+		case "testnet":
+			// cfg.ListenAddr = ":21304"
+		case "testnet2":
+			// cfg.MaxPeers = 0
+			// cfg.ListenAddr = "127.0.0.1:0"
+			// cfg.NoDiscovery = true
+			// cfg.Offline = true
+		case "testnet3":
+			cfg.MaxPeers = 0
+			cfg.ListenAddr = "127.0.0.1:0"
+			cfg.NoDiscovery = true
+			cfg.Offline = true
+		}
+		// if cfg.ListenAddr == "" && cmd.Bool(TestnetFlag.Name) && !cmd.IsSet(ListenPortFlag.Name) {
+		// 	cfg.ListenAddr = "0.0.0.0:21304"
+		// }
+		// if cfg.ListenAddr == "" && cmd.Bool(NetworkEthFlag.Name) && !cmd.IsSet(ListenPortFlag.Name) {
+		// 	cfg.ListenAddr = ":30303"
+		// }
+	*/
+
+}
+
+type DirectoryConfig struct {
+	KeyStoreDir string
+	DataDir     string
+}
+
+// switchDatadir switches the data directory based on the chain name.
+// override with --datadir
+func switchDatadir(cmd *cli.Command, chainName string) DirectoryConfig {
+	var cfg DirectoryConfig
+	// var newdatadir string
+	if cmd.IsSet(KeyStoreDirFlag.Name) {
+		cfg.KeyStoreDir = cmd.String(KeyStoreDirFlag.Name)
 	}
-	if cfg.ListenAddr == "" && ctx.GlobalBool(TestnetFlag.Name) && !ctx.GlobalIsSet(ListenPortFlag.Name) {
-		cfg.ListenAddr = ":21304"
+	if cmd.IsSet(DataDirFlag.Name) {
+		cfg.DataDir = cmd.String(DataDirFlag.Name)
 	}
-	if cfg.ListenAddr == "" && ctx.GlobalBool(NetworkEthFlag.Name) && !ctx.GlobalIsSet(ListenPortFlag.Name) {
-		cfg.ListenAddr = ":30303"
+	if cfg.DataDir == "" && chainName == "" {
+		Fatalf("No chain and no data directory specified. Please specify a chain with --chain or a data directory with --datadir")
 	}
+	if cfg.DataDir != "" {
+		return cfg
+	}
+	if chainName == "aqua" {
+		cfg.DataDir = node.DefaultDataDir()
+	} else {
+		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "chains", chainName)
+	}
+	return cfg
+
+	// switch {
+	// case cmd.IsSet(ChainFlag.Name):
+	// 	chainName := cmd.String(ChainFlag.Name)
+	// 	chaincfg := params.GetChainConfig(chainName)
+	// 	if chaincfg == nil {
+	// 		return errors.New("invalid config name")
+	// 	}
+	// 	if chaincfg == params.MainnetChainConfig {
+	// 		newdatadir = node.DefaultDataDir()
+	// 	} else {
+	// 		newdatadir = filepath.Join(node.DefaultDataDir(), "chains", chainName)
+	// 	}
+	// 	cfg.P2P.ChainId = chaincfg.ChainId.Uint64()
+	// case cmd.IsSet(NetworkIdFlag.Name):
+	// 	cfg.P2P.ChainId = cmd.Uint(NetworkIdFlag.Name)
+	// 	newdatadir = filepath.Join(node.DefaultDataDir(), fmt.Sprintf("chainid-%v", cfg.P2P.ChainId))
+	// case cmd.Bool(DeveloperFlag.Name):
+	// 	newdatadir = filepath.Join(node.DefaultDataDir(), "develop")
+	// 	cfg.P2P.ChainId = 1337
+	// case cmd.Bool(TestnetFlag.Name):
+	// 	newdatadir = filepath.Join(node.DefaultDataDir(), "testnet")
+	// 	cfg.P2P.ChainId = params.TestnetChainConfig.ChainId.Uint64()
+	// case cmd.Bool(Testnet2Flag.Name):
+	// 	newdatadir = filepath.Join(node.DefaultDataDir(), "testnet2")
+	// 	cfg.P2P.ChainId = params.Testnet2ChainConfig.ChainId.Uint64()
+	// case cmd.Bool(NetworkEthFlag.Name):
+	// 	newdatadir = filepath.Join(node.DefaultDataDir(), "ethereum")
+	// 	cfg.P2P.ChainId = params.EthnetChainConfig.ChainId.Uint64()
+	// default:
+	// 	// mainnet
+	// 	cfg.P2P.ChainId = params.MainnetChainConfig.ChainId.Uint64()
+	// 	newdatadir = node.DefaultDataDir()
+	// }
+
+	// if cmd.IsSet(KeyStoreDirFlag.Name) {
+	// 	cfg.KeyStoreDir = cmd.String(KeyStoreDirFlag.Name)
+	// 	if cfg.KeyStoreDir == "" {
+	// 		cfg.NoKeys = true
+	// 	}
+	// }
+	// if cmd.IsSet(DataDirFlag.Name) {
+	// 	newdatadir = cmd.String(DataDirFlag.Name)
+	// }
+	// return newdatadir
 
 }
 
 // SetNodeConfig applies node-related command line flags to the config.
-func SetNodeConfig(ctx *cli.Context, cfg *node.Config) error {
+func SetNodeConfig(cmd *cli.Command, cfg *node.Config) error {
 
-	switch {
-	case ctx.GlobalIsSet(ChainFlag.Name):
-		chainName := ctx.GlobalString(ChainFlag.Name)
-		chaincfg := params.GetChainConfig(chainName)
-		if chaincfg == nil {
-			return errors.New("invalid config")
-		}
-		if chaincfg == params.MainnetChainConfig {
-			cfg.DataDir = node.DefaultDataDir()
-		} else {
-			cfg.DataDir = filepath.Join(node.DefaultDataDir(), chainName)
-		}
-		cfg.P2P.ChainId = chaincfg.ChainId.Uint64()
-	case ctx.GlobalIsSet(NetworkIdFlag.Name):
-		cfg.P2P.ChainId = ctx.GlobalUint64(NetworkIdFlag.Name)
-		cfg.DataDir = filepath.Join(node.DefaultDataDir(), fmt.Sprintf("chainid-%v", cfg.P2P.ChainId))
-	case ctx.GlobalBool(DeveloperFlag.Name):
-		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "develop")
-		cfg.P2P.ChainId = 1337
-	case ctx.GlobalBool(TestnetFlag.Name):
-		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "testnet")
-		cfg.P2P.ChainId = params.TestnetChainConfig.ChainId.Uint64()
-	case ctx.GlobalBool(Testnet2Flag.Name):
-		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "testnet2")
-		cfg.P2P.ChainId = params.Testnet2ChainConfig.ChainId.Uint64()
-	case ctx.GlobalBool(NetworkEthFlag.Name):
-		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "ethereum")
-		cfg.P2P.ChainId = params.EthnetChainConfig.ChainId.Uint64()
-	default:
-		// mainnet
-		cfg.P2P.ChainId = params.MainnetChainConfig.ChainId.Uint64()
-		cfg.DataDir = node.DefaultDataDir()
-	}
+	// setBootstrapNodes(ctx, cfg)
+	var (
+		chaincfg       *params.ChainConfig
+		chainName      string
+		bootstrapNodes []*discover.Node
+		directoryCfg   DirectoryConfig
+	)
 
-	if ctx.GlobalIsSet(KeyStoreDirFlag.Name) {
-		cfg.KeyStoreDir = ctx.GlobalString(KeyStoreDirFlag.Name)
-		if cfg.KeyStoreDir == "" {
-			cfg.NoKeys = true
-		}
-	}
-	if ctx.GlobalIsSet(DataDirFlag.Name) {
-		cfg.DataDir = ctx.GlobalString(DataDirFlag.Name)
-	}
+	chainName, chaincfg, bootstrapNodes, directoryCfg = getStuff(cmd)
+	log.Info("Loading...", "Chain Select", chainName, "ChainID", chaincfg.ChainId)
+	cfg.DataDir = directoryCfg.DataDir
+	cfg.P2P.ChainId = chaincfg.ChainId.Uint64()
+	cfg.P2P.BootstrapNodes = bootstrapNodes
 
-	SetP2PConfig(ctx, &cfg.P2P)
-	setIPC(ctx, cfg)
-	setHTTP(ctx, cfg)
-	setWS(ctx, cfg)
-	setNodeUserIdent(ctx, cfg)
-	if ctx.GlobalIsSet(NoKeysFlag.Name) {
-		cfg.NoKeys = ctx.GlobalBool(NoKeysFlag.Name)
+	SetP2PConfig(cmd, &cfg.P2P)
+	setIPC(cmd, cfg)
+	setHTTP(cmd, cfg)
+	setWS(cmd, cfg)
+	setNodeUserIdent(cmd, cfg)
+	if cmd.IsSet(NoKeysFlag.Name) {
+		cfg.NoKeys = cmd.Bool(NoKeysFlag.Name)
 	}
 
 	if cfg.NoKeys {
 		log.Info("No-Keys mode")
 	}
-	if ctx.GlobalIsSet(UseUSBFlag.Name) {
-		cfg.UseUSB = ctx.GlobalBool(UseUSBFlag.Name)
+	if cmd.IsSet(UseUSBFlag.Name) {
+		cfg.UseUSB = cmd.Bool(UseUSBFlag.Name)
 	}
-	if ctx.GlobalIsSet(RPCBehindProxyFlag.Name) {
-		cfg.RPCBehindProxy = ctx.GlobalBool(RPCBehindProxyFlag.Name)
+	if cmd.IsSet(RPCBehindProxyFlag.Name) {
+		cfg.RPCBehindProxy = cmd.Bool(RPCBehindProxyFlag.Name)
 	}
 	return nil
 }
 
-func setGPO(ctx *cli.Context, cfg *gasprice.Config) {
-	if ctx.GlobalIsSet(GpoBlocksFlag.Name) {
-		cfg.Blocks = ctx.GlobalInt(GpoBlocksFlag.Name)
+func setGPO(cmd *cli.Command, cfg *gasprice.Config) {
+	if cmd.IsSet(GpoBlocksFlag.Name) {
+		cfg.Blocks = int(cmd.Int(GpoBlocksFlag.Name))
 	}
-	if ctx.GlobalIsSet(GpoPercentileFlag.Name) {
-		cfg.Percentile = ctx.GlobalInt(GpoPercentileFlag.Name)
-	}
-}
-
-func setTxPool(ctx *cli.Context, cfg *core.TxPoolConfig) {
-	if ctx.GlobalIsSet(TxPoolNoLocalsFlag.Name) {
-		cfg.NoLocals = ctx.GlobalBool(TxPoolNoLocalsFlag.Name)
-	}
-	if ctx.GlobalIsSet(TxPoolJournalFlag.Name) {
-		cfg.Journal = ctx.GlobalString(TxPoolJournalFlag.Name)
-	}
-	if ctx.GlobalIsSet(TxPoolRejournalFlag.Name) {
-		cfg.Rejournal = ctx.GlobalDuration(TxPoolRejournalFlag.Name)
-	}
-	if ctx.GlobalIsSet(TxPoolPriceLimitFlag.Name) {
-		cfg.PriceLimit = ctx.GlobalUint64(TxPoolPriceLimitFlag.Name)
-	}
-	if ctx.GlobalIsSet(TxPoolPriceBumpFlag.Name) {
-		cfg.PriceBump = ctx.GlobalUint64(TxPoolPriceBumpFlag.Name)
-	}
-	if ctx.GlobalIsSet(TxPoolAccountSlotsFlag.Name) {
-		cfg.AccountSlots = ctx.GlobalUint64(TxPoolAccountSlotsFlag.Name)
-	}
-	if ctx.GlobalIsSet(TxPoolGlobalSlotsFlag.Name) {
-		cfg.GlobalSlots = ctx.GlobalUint64(TxPoolGlobalSlotsFlag.Name)
-	}
-	if ctx.GlobalIsSet(TxPoolAccountQueueFlag.Name) {
-		cfg.AccountQueue = ctx.GlobalUint64(TxPoolAccountQueueFlag.Name)
-	}
-	if ctx.GlobalIsSet(TxPoolGlobalQueueFlag.Name) {
-		cfg.GlobalQueue = ctx.GlobalUint64(TxPoolGlobalQueueFlag.Name)
-	}
-	if ctx.GlobalIsSet(TxPoolLifetimeFlag.Name) {
-		cfg.Lifetime = ctx.GlobalDuration(TxPoolLifetimeFlag.Name)
+	if cmd.IsSet(GpoPercentileFlag.Name) {
+		cfg.Percentile = int(cmd.Int(GpoPercentileFlag.Name))
 	}
 }
 
-func setAquahash(ctx *cli.Context, cfg *aqua.Config) {
-	if ctx.GlobalIsSet(AquahashCacheDirFlag.Name) {
-		cfg.Aquahash.CacheDir = ctx.GlobalString(AquahashCacheDirFlag.Name)
+func setTxPool(cmd *cli.Command, cfg *core.TxPoolConfig) {
+	if cmd.IsSet(TxPoolNoLocalsFlag.Name) {
+		cfg.NoLocals = cmd.Bool(TxPoolNoLocalsFlag.Name)
 	}
-	if ctx.GlobalIsSet(AquahashDatasetDirFlag.Name) {
-		cfg.Aquahash.DatasetDir = ctx.GlobalString(AquahashDatasetDirFlag.Name)
+	if cmd.IsSet(TxPoolJournalFlag.Name) {
+		cfg.Journal = cmd.String(TxPoolJournalFlag.Name)
 	}
-	if ctx.GlobalIsSet(AquahashCachesInMemoryFlag.Name) {
-		cfg.Aquahash.CachesInMem = ctx.GlobalInt(AquahashCachesInMemoryFlag.Name)
+	if cmd.IsSet(TxPoolRejournalFlag.Name) {
+		cfg.Rejournal = cmd.Duration(TxPoolRejournalFlag.Name)
 	}
-	if ctx.GlobalIsSet(AquahashCachesOnDiskFlag.Name) {
-		cfg.Aquahash.CachesOnDisk = ctx.GlobalInt(AquahashCachesOnDiskFlag.Name)
+	if cmd.IsSet(TxPoolPriceLimitFlag.Name) {
+		cfg.PriceLimit = cmd.Uint(TxPoolPriceLimitFlag.Name)
 	}
-	if ctx.GlobalIsSet(AquahashDatasetsInMemoryFlag.Name) {
-		cfg.Aquahash.DatasetsInMem = ctx.GlobalInt(AquahashDatasetsInMemoryFlag.Name)
+	if cmd.IsSet(TxPoolPriceBumpFlag.Name) {
+		cfg.PriceBump = cmd.Uint(TxPoolPriceBumpFlag.Name)
 	}
-	if ctx.GlobalIsSet(AquahashDatasetsOnDiskFlag.Name) {
-		cfg.Aquahash.DatasetsOnDisk = ctx.GlobalInt(AquahashDatasetsOnDiskFlag.Name)
+	if cmd.IsSet(TxPoolAccountSlotsFlag.Name) {
+		cfg.AccountSlots = cmd.Uint(TxPoolAccountSlotsFlag.Name)
+	}
+	if cmd.IsSet(TxPoolGlobalSlotsFlag.Name) {
+		cfg.GlobalSlots = cmd.Uint(TxPoolGlobalSlotsFlag.Name)
+	}
+	if cmd.IsSet(TxPoolAccountQueueFlag.Name) {
+		cfg.AccountQueue = cmd.Uint(TxPoolAccountQueueFlag.Name)
+	}
+	if cmd.IsSet(TxPoolGlobalQueueFlag.Name) {
+		cfg.GlobalQueue = cmd.Uint(TxPoolGlobalQueueFlag.Name)
+	}
+	if cmd.IsSet(TxPoolLifetimeFlag.Name) {
+		cfg.Lifetime = cmd.Duration(TxPoolLifetimeFlag.Name)
+	}
+}
+
+func setAquahash(cmd *cli.Command, cfg *aqua.Config) {
+	if cmd.IsSet(AquahashCacheDirFlag.Name) {
+		cfg.Aquahash.CacheDir = cmd.String(AquahashCacheDirFlag.Name)
+	}
+	if cmd.IsSet(AquahashDatasetDirFlag.Name) {
+		cfg.Aquahash.DatasetDir = cmd.String(AquahashDatasetDirFlag.Name)
+	}
+	if cmd.IsSet(AquahashCachesInMemoryFlag.Name) {
+		cfg.Aquahash.CachesInMem = int(cmd.Int(AquahashCachesInMemoryFlag.Name))
+	}
+	if cmd.IsSet(AquahashCachesOnDiskFlag.Name) {
+		cfg.Aquahash.CachesOnDisk = int(cmd.Int(AquahashCachesOnDiskFlag.Name))
+	}
+	if cmd.IsSet(AquahashDatasetsInMemoryFlag.Name) {
+		cfg.Aquahash.DatasetsInMem = int(cmd.Int(AquahashDatasetsInMemoryFlag.Name))
+	}
+	if cmd.IsSet(AquahashDatasetsOnDiskFlag.Name) {
+		cfg.Aquahash.DatasetsOnDisk = int(cmd.Int(AquahashDatasetsOnDiskFlag.Name))
 	}
 }
 
 // checkExclusive verifies that only a single isntance of the provided flags was
 // set by the user. Each flag might optionally be followed by a string type to
 // specialize it further.
-func checkExclusive(ctx *cli.Context, args ...interface{}) {
+func checkExclusive(cmd *cli.Command, args ...cli.Flag) {
 	set := make([]string, 0, 1)
 	for i := 0; i < len(args); i++ {
 		// Make sure the next argument is a flag and skip if not set
@@ -1029,16 +1154,17 @@ func checkExclusive(ctx *cli.Context, args ...interface{}) {
 			panic(fmt.Sprintf("invalid argument, not cli.Flag type: %T", args[i]))
 		}
 		// Check if next arg extends current and expand its name if so
-		name := flag.GetName()
+		names := flag.Names()
+		name := names[0]
 
 		if i+1 < len(args) {
-			switch option := args[i+1].(type) {
-			case string:
-				// Extended flag, expand the name and shift the arguments
-				if ctx.GlobalString(flag.GetName()) == option {
-					name += "=" + option
-				}
-				i++
+			switch args[i+1].(type) {
+			// case string:
+			// 	// Extended flag, expand the name and shift the arguments
+			// 	if cmd.String(name) == option {
+			// 		name += "=" + option
+			// 	}
+			// 	i++
 
 			case cli.Flag:
 			default:
@@ -1046,7 +1172,7 @@ func checkExclusive(ctx *cli.Context, args ...interface{}) {
 			}
 		}
 		// Mark the flag if it's set
-		if ctx.GlobalIsSet(flag.GetName()) {
+		if cmd.IsSet(name) {
 			set = append(set, "--"+name)
 		}
 	}
@@ -1055,80 +1181,83 @@ func checkExclusive(ctx *cli.Context, args ...interface{}) {
 	}
 }
 
-func SetHardforkParams(ctx *cli.Context, chaincfg *params.ChainConfig) {
+func setHardforkFlagParams(cmd *cli.Command, chaincfg *params.ChainConfig) {
 	// activate HF8 at block number X (not activated by default)
-	if ctx.GlobalIsSet(HF8MainnetFlag.Name) {
-		chaincfg.HF[8] = big.NewInt(0).SetUint64(uint64(ctx.GlobalUint64(HF8MainnetFlag.Name)))
+	if cmd.IsSet(HF8MainnetFlag.Name) && chaincfg.HF[8] == nil {
+		chaincfg.HF[8] = big.NewInt(0).SetUint64(uint64(cmd.Uint(HF8MainnetFlag.Name)))
 	}
 }
 
 // SetAquaConfig applies aqua-related command line flags to the config.
-func SetAquaConfig(ctx *cli.Context, stack *node.Node, cfg *aqua.Config) {
+func SetAquaConfig(cmd *cli.Command, stack *node.Node, cfg *aqua.Config) {
 	// Avoid conflicting network flags
-	checkExclusive(ctx, DeveloperFlag, TestnetFlag, Testnet2Flag, NetworkEthFlag)
-	checkExclusive(ctx, FastSyncFlag, SyncModeFlag, OfflineFlag)
-	if ctx.GlobalBool(AlertModeFlag.Name) {
+	checkExclusive(cmd, &DeveloperFlag, &TestnetFlag, &Testnet2Flag, &NetworkEthFlag)
+	checkExclusive(cmd, &FastSyncFlag, &SyncModeFlag, &OfflineFlag)
+	if cmd.Bool(AlertModeFlag.Name) {
 		cfg.Alerts = alerts.MustParseAlertConfig()
 		log.Info("Alerts enabled")
 	}
-	chaincfg := SetChainId(ctx, cfg)
+	chaincfg := SetChainId(cmd, cfg)
+	setHardforkFlagParams(cmd, chaincfg) // modify HF map
 
-	SetHardforkParams(ctx, chaincfg)
-
+	// get aquabase if exists in keystore if that exists (-nokeys)
 	am := stack.AccountManager()
 	if am != nil {
 		ks := am.Backends(keystore.KeyStoreType)[0].(*keystore.KeyStore)
-		setAquabase(ctx, ks, cfg)
+		setAquabase(cmd, ks, cfg)
 	}
 
-	setGPO(ctx, &cfg.GPO)
-	setTxPool(ctx, &cfg.TxPool)
-	setAquahash(ctx, cfg)
+	setGPO(cmd, &cfg.GPO)
+	setTxPool(cmd, &cfg.TxPool)
+	setAquahash(cmd, cfg)
 
 	switch {
-	case ctx.GlobalBool(OfflineFlag.Name):
+	default:
+		cfg.SyncMode = downloader.FullSync
+	case cmd.Bool(OfflineFlag.Name):
 		cfg.SyncMode = downloader.OfflineSync
-	case ctx.GlobalIsSet(SyncModeFlag.Name):
-		cfg.SyncMode = *GlobalTextMarshaler(ctx, SyncModeFlag.Name).(*downloader.SyncMode)
-	case ctx.GlobalBool(FastSyncFlag.Name):
+	case cmd.IsSet(SyncModeFlag.Name):
+		cfg.SyncMode = *GlobalTextMarshaler(cmd, SyncModeFlag.Name).(*downloader.SyncMode)
+	case cmd.Bool(FastSyncFlag.Name):
 		cfg.SyncMode = downloader.FastSync
 	}
 
-	if ctx.GlobalIsSet(NetworkIdFlag.Name) {
-		cfg.NetworkId = ctx.GlobalUint64(NetworkIdFlag.Name)
+	if cmd.IsSet(NetworkIdFlag.Name) {
+		log.Warn("Usage of --networkid flag is deprecated. Please use --chain instead.")
+		cfg.NetworkId = cmd.Uint(NetworkIdFlag.Name)
 	}
 
-	if ctx.GlobalIsSet(CacheFlag.Name) || ctx.GlobalIsSet(CacheDatabaseFlag.Name) {
-		cfg.DatabaseCache = ctx.GlobalInt(CacheFlag.Name) * ctx.GlobalInt(CacheDatabaseFlag.Name) / 100
+	if cmd.IsSet(CacheFlag.Name) || cmd.IsSet(CacheDatabaseFlag.Name) {
+		cfg.DatabaseCache = int(cmd.Int(CacheFlag.Name) * cmd.Int(CacheDatabaseFlag.Name) / 100)
 	}
 	cfg.DatabaseHandles = makeDatabaseHandles()
 
-	if gcmode := ctx.GlobalString(GCModeFlag.Name); gcmode != "full" && gcmode != "archive" {
+	if gcmode := cmd.String(GCModeFlag.Name); gcmode != "full" && gcmode != "archive" {
 		Fatalf("--%s must be either 'full' or 'archive', use 'archive' for full state", GCModeFlag.Name)
 	}
-	cfg.NoPruning = cfg.NoPruning || ctx.GlobalString(GCModeFlag.Name) == "archive"
+	cfg.NoPruning = cfg.NoPruning || cmd.String(GCModeFlag.Name) == "archive"
 
-	if ctx.GlobalIsSet(CacheFlag.Name) || ctx.GlobalIsSet(CacheGCFlag.Name) {
-		cfg.TrieCache = ctx.GlobalInt(CacheFlag.Name) * ctx.GlobalInt(CacheGCFlag.Name) / 100
+	if cmd.IsSet(CacheFlag.Name) || cmd.IsSet(CacheGCFlag.Name) {
+		cfg.TrieCache = int(cmd.Int(CacheFlag.Name) * cmd.Int(CacheGCFlag.Name) / 100)
 	}
-	if ctx.GlobalIsSet(MinerThreadsFlag.Name) {
-		cfg.MinerThreads = ctx.GlobalInt(MinerThreadsFlag.Name)
+	if cmd.IsSet(MinerThreadsFlag.Name) {
+		cfg.MinerThreads = int(cmd.Int(MinerThreadsFlag.Name))
 	}
-	if ctx.GlobalIsSet(DocRootFlag.Name) {
-		cfg.DocRoot = ctx.GlobalString(DocRootFlag.Name)
+	if cmd.IsSet(DocRootFlag.Name) {
+		cfg.DocRoot = cmd.String(DocRootFlag.Name)
 	}
-	if ctx.GlobalIsSet(ExtraDataFlag.Name) {
-		cfg.ExtraData = []byte(ctx.GlobalString(ExtraDataFlag.Name))
+	if cmd.IsSet(ExtraDataFlag.Name) {
+		cfg.ExtraData = []byte(cmd.String(ExtraDataFlag.Name))
 	}
-	if ctx.GlobalIsSet(GasPriceFlag.Name) {
-		cfg.GasPrice = GlobalBig(ctx, GasPriceFlag.Name)
+	if cmd.IsSet(GasPriceFlag.Name) {
+		cfg.GasPrice = GlobalBig(cmd, GasPriceFlag.Name)
 	}
-	if ctx.GlobalIsSet(VMEnableDebugFlag.Name) {
+	if cmd.IsSet(VMEnableDebugFlag.Name) {
 		// TODO(fjl): force-enable this in --dev mode
-		cfg.EnablePreimageRecording = ctx.GlobalBool(VMEnableDebugFlag.Name)
+		cfg.EnablePreimageRecording = cmd.Bool(VMEnableDebugFlag.Name)
 	}
 
-	if ctx.GlobalBool(DeveloperFlag.Name) {
+	if cmd.Bool(DeveloperFlag.Name) {
 		// Create new developer account or reuse existing one
 		var (
 			developer accounts.Account
@@ -1149,44 +1278,43 @@ func SetAquaConfig(ctx *cli.Context, stack *node.Node, cfg *aqua.Config) {
 				Fatalf("Failed to unlock developer account: %v", err)
 			}
 			log.Info("Using developer account", "address", developer.Address)
-			cfg.Genesis = core.DeveloperGenesisBlock(uint64(ctx.GlobalInt(DeveloperPeriodFlag.Name)), developer.Address)
+			cfg.Genesis = core.DeveloperGenesisBlock(uint64(cmd.Int(DeveloperPeriodFlag.Name)), developer.Address)
 		}
 
 	}
 
 }
 
-// SetChainId returns the chain config from the command line flags
-func SetChainId(ctx *cli.Context, cfg *aqua.Config) *params.ChainConfig {
-	// Override any default configs for hard coded networks.
-
+// SetChainId sets the chain ID based on the command line flags (eg --testnet or --chain testnet).
+func SetChainId(cmd *cli.Command, cfg *aqua.Config) *params.ChainConfig {
 	var chaincfg *params.ChainConfig
 	switch {
-	case ctx.GlobalIsSet(ChainFlag.Name):
-		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
-			cfg.NetworkId = params.GetChainConfig(ctx.GlobalString(ChainFlag.Name)).ChainId.Uint64()
+	case cmd.IsSet(ChainFlag.Name):
+		chaincfg = params.GetChainConfig(cmd.String(ChainFlag.Name))
+		if chaincfg == nil {
+			Fatalf("invalid chain name: %q", cmd.String(ChainFlag.Name))
 		}
-		cfg.Genesis = core.DefaultGenesisByName(ctx.GlobalString(ChainFlag.Name))
-	case ctx.GlobalBool(TestnetFlag.Name):
-		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
+		cfg.Genesis = core.DefaultGenesisByName(cmd.String(ChainFlag.Name))
+	case cmd.Bool(TestnetFlag.Name):
+		if !cmd.IsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = params.TestnetChainConfig.ChainId.Uint64()
 		}
 		cfg.Genesis = core.DefaultTestnetGenesisBlock()
 		chaincfg = params.TestnetChainConfig
-	case ctx.GlobalBool(Testnet2Flag.Name):
-		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
+	case cmd.Bool(Testnet2Flag.Name):
+		if !cmd.IsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = params.Testnet2ChainConfig.ChainId.Uint64()
 		}
 		cfg.Genesis = core.DefaultTestnet2GenesisBlock()
 		chaincfg = params.Testnet2ChainConfig
-	case ctx.GlobalBool(DeveloperFlag.Name):
-		if !ctx.GlobalIsSet(GasPriceFlag.Name) {
+	case cmd.Bool(DeveloperFlag.Name):
+		if !cmd.IsSet(GasPriceFlag.Name) {
 			cfg.GasPrice = big.NewInt(1)
 			cfg.NetworkId = 1337
 		}
 		chaincfg = params.Testnet2ChainConfig
-	case ctx.GlobalBool(NetworkEthFlag.Name):
-		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
+	case cmd.Bool(NetworkEthFlag.Name):
+		if !cmd.IsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = params.EthnetChainConfig.ChainId.Uint64()
 		}
 		cfg.Genesis = core.DefaultEthnetGenesisBlock()
@@ -1194,13 +1322,19 @@ func SetChainId(ctx *cli.Context, cfg *aqua.Config) *params.ChainConfig {
 	default:
 		chaincfg = params.MainnetChainConfig
 	}
+
+	// override chain ID if explicitly set
+	if !cmd.IsSet(NetworkIdFlag.Name) {
+		cfg.NetworkId = chaincfg.ChainId.Uint64()
+	}
+
 	// TODO(fjl): move trie cache generations into config
-	if gen := ctx.GlobalInt(TrieCacheGenFlag.Name); gen > 0 {
+	if gen := cmd.Int(TrieCacheGenFlag.Name); gen > 0 {
 		state.MaxTrieCacheGen = uint16(gen)
 	}
 
-	if ctx.GlobalIsSet(NetworkIdFlag.Name) {
-		cfg.NetworkId = ctx.GlobalUint64(NetworkIdFlag.Name)
+	if cmd.IsSet(NetworkIdFlag.Name) {
+		cfg.NetworkId = cmd.Uint(NetworkIdFlag.Name)
 	}
 
 	return chaincfg
@@ -1231,15 +1365,15 @@ func RegisterAquaStatsService(stack *node.Node, url string) {
 }
 
 // SetupNetwork configures the system for either the main net or some test network.
-func SetupNetworkGasLimit(ctx *cli.Context) {
+func SetupNetworkGasLimit(cmd *cli.Command) {
 	// TODO(fjl): move target gas limit into config
-	params.TargetGasLimit = ctx.GlobalUint64(TargetGasLimitFlag.Name)
+	params.TargetGasLimit = cmd.Uint(TargetGasLimitFlag.Name)
 }
 
 // MakeChainDatabase open an LevelDB using the flags passed to the client and will hard crash if it fails.
-func MakeChainDatabase(ctx *cli.Context, stack *node.Node) aquadb.Database {
+func MakeChainDatabase(cmd *cli.Command, stack *node.Node) aquadb.Database {
 	var (
-		cache   = ctx.GlobalInt(CacheFlag.Name) * ctx.GlobalInt(CacheDatabaseFlag.Name) / 100
+		cache   = int(cmd.Int(CacheFlag.Name) * cmd.Int(CacheDatabaseFlag.Name) / 100)
 		handles = makeDatabaseHandles()
 	)
 	name := "chaindata"
@@ -1250,34 +1384,34 @@ func MakeChainDatabase(ctx *cli.Context, stack *node.Node) aquadb.Database {
 	return chainDb
 }
 
-func MakeGenesis(ctx *cli.Context) *core.Genesis {
+func MakeGenesis(cmd *cli.Command) *core.Genesis {
 	var genesis *core.Genesis
 	switch {
-	case ctx.GlobalBool(TestnetFlag.Name):
+	case cmd.Bool(TestnetFlag.Name):
 		genesis = core.DefaultTestnetGenesisBlock()
-	case ctx.GlobalBool(Testnet2Flag.Name):
+	case cmd.Bool(Testnet2Flag.Name):
 		genesis = core.DefaultTestnet2GenesisBlock()
-	case ctx.GlobalBool(NetworkEthFlag.Name):
+	case cmd.Bool(NetworkEthFlag.Name):
 		genesis = core.DefaultEthnetGenesisBlock()
-	case ctx.GlobalBool(DeveloperFlag.Name):
+	case cmd.Bool(DeveloperFlag.Name):
 		Fatalf("Developer chains are ephemeral")
 	}
 	return genesis
 }
 
 // MakeChain creates a chain manager from set command line flags.
-func MakeChain(ctx *cli.Context, stack *node.Node) (chain *core.BlockChain, chainDb aquadb.Database) {
+func MakeChain(cmd *cli.Command, stack *node.Node) (chain *core.BlockChain, chainDb aquadb.Database) {
 	var err error
-	chainDb = MakeChainDatabase(ctx, stack)
+	chainDb = MakeChainDatabase(cmd, stack)
 
-	config, _, err := core.SetupGenesisBlock(chainDb, MakeGenesis(ctx))
+	config, _, err := core.SetupGenesisBlock(chainDb, MakeGenesis(cmd))
 	if err != nil {
 		Fatalf("%v", err)
 	}
 
 	var engine consensus.Engine = aquahash.NewFaker()
 
-	if !ctx.GlobalBool(FakePoWFlag.Name) {
+	if !cmd.Bool(FakePoWFlag.Name) {
 		engine = aquahash.New(aquahash.Config{
 			CacheDir:       stack.ResolvePath(aqua.DefaultConfig.Aquahash.CacheDir),
 			CachesInMem:    aqua.DefaultConfig.Aquahash.CachesInMem,
@@ -1288,18 +1422,18 @@ func MakeChain(ctx *cli.Context, stack *node.Node) (chain *core.BlockChain, chai
 		})
 	}
 
-	if gcmode := ctx.GlobalString(GCModeFlag.Name); gcmode != "full" && gcmode != "archive" {
+	if gcmode := cmd.String(GCModeFlag.Name); gcmode != "full" && gcmode != "archive" {
 		Fatalf("--%s must be either 'full' or 'archive'", GCModeFlag.Name)
 	}
 	cache := &core.CacheConfig{
-		Disabled:      ctx.GlobalString(GCModeFlag.Name) == "archive",
+		Disabled:      cmd.String(GCModeFlag.Name) == "archive",
 		TrieNodeLimit: aqua.DefaultConfig.TrieCache,
 		TrieTimeLimit: aqua.DefaultConfig.TrieTimeout,
 	}
-	if ctx.GlobalIsSet(CacheFlag.Name) || ctx.GlobalIsSet(CacheGCFlag.Name) {
-		cache.TrieNodeLimit = ctx.GlobalInt(CacheFlag.Name) * ctx.GlobalInt(CacheGCFlag.Name) / 100
+	if cmd.IsSet(CacheFlag.Name) || cmd.IsSet(CacheGCFlag.Name) {
+		cache.TrieNodeLimit = int(cmd.Int(CacheFlag.Name) * cmd.Int(CacheGCFlag.Name) / 100)
 	}
-	vmcfg := vm.Config{EnablePreimageRecording: ctx.GlobalBool(VMEnableDebugFlag.Name)}
+	vmcfg := vm.Config{EnablePreimageRecording: cmd.Bool(VMEnableDebugFlag.Name)}
 	chain, err = core.NewBlockChain(chainDb, cache, config, engine, vmcfg)
 	if err != nil {
 		Fatalf("Can't create BlockChain: %v", err)
@@ -1309,16 +1443,16 @@ func MakeChain(ctx *cli.Context, stack *node.Node) (chain *core.BlockChain, chai
 
 // MakeConsolePreloads retrieves the absolute paths for the console JavaScript
 // scripts to preload before starting.
-func MakeConsolePreloads(ctx *cli.Context) []string {
+func MakeConsolePreloads(cmd *cli.Command) []string {
 	// Skip preloading if there's nothing to preload
-	if ctx.GlobalString(PreloadJSFlag.Name) == "" {
+	if cmd.String(PreloadJSFlag.Name) == "" {
 		return nil
 	}
 	// Otherwise resolve absolute paths and return them
 	preloads := []string{}
 
-	assets := ctx.GlobalString(JSpathFlag.Name)
-	for _, file := range strings.Split(ctx.GlobalString(PreloadJSFlag.Name), ",") {
+	assets := cmd.String(JSpathFlag.Name)
+	for _, file := range strings.Split(cmd.String(PreloadJSFlag.Name), ",") {
 		preloads = append(preloads, common.AbsolutePath(assets, strings.TrimSpace(file)))
 	}
 	return preloads
@@ -1337,13 +1471,13 @@ func MakeConsolePreloads(ctx *cli.Context) []string {
 // This allows the use of the existing configuration functionality.
 // When all flags are migrated this function can be removed and the existing
 // configuration functionality must be changed that is uses local flags
-func MigrateFlags(action func(ctx *cli.Context) error) func(*cli.Context) error {
-	return func(ctx *cli.Context) error {
-		for _, name := range ctx.FlagNames() {
-			if ctx.IsSet(name) {
-				ctx.GlobalSet(name, ctx.String(name))
+func MigrateFlags(action func(_ context.Context, cmd *cli.Command) error) func(context.Context, *cli.Command) error {
+	return func(ctx context.Context, cmd *cli.Command) error {
+		for _, name := range cmd.FlagNames() {
+			if cmd.IsSet(name) {
+				cmd.Set(name, cmd.String(name))
 			}
 		}
-		return action(ctx)
+		return action(ctx, cmd)
 	}
 }

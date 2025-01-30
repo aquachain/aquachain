@@ -26,8 +26,10 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
+	"time"
 
 	"gitlab.com/aquachain/aquachain/common"
+	"gitlab.com/aquachain/aquachain/common/alerts"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/core"
 	"gitlab.com/aquachain/aquachain/core/types"
@@ -39,6 +41,8 @@ import (
 const (
 	importBatchSize = 2500
 )
+
+var start_time = time.Now().UTC()
 
 // Fatalf formats a message to standard error and exits the program.
 // The message is also printed to standard output if standard error
@@ -56,11 +60,12 @@ func Fatalf(format string, args ...interface{}) {
 			w = os.Stderr
 		}
 	}
+
 	fmt.Fprintf(w, "Fatal: "+format+"\n", args...)
 
 	// small traceback
-	if debug := os.Getenv("DEBUG"); debug != "" && debug != "0" {
-		pc := make([]uintptr, 5)
+	if debug := os.Getenv("DEBUG"); debug != "" || time.Since(start_time) > 5*time.Second {
+		pc := make([]uintptr, 8)
 		n := runtime.Callers(1, pc)
 		if n != 0 {
 			pc = pc[:n]
@@ -84,10 +89,12 @@ func StartNode(stack *node.Node) {
 		Fatalf("Error starting protocol stack: %v", err)
 	}
 	go func() {
+		log.Info("node.Node waiting for interrupt")
 		sigc := make(chan os.Signal, 1)
 		signal.Notify(sigc, syscall.SIGINT, syscall.SIGTERM)
 		defer signal.Stop(sigc)
 		<-sigc
+		go alerts.Warnf("Got interrupt, shutting down...") // might not make it
 		log.Info("Got interrupt, shutting down...")
 		go stack.Stop()
 		for i := 10; i > 0; i-- {
@@ -96,6 +103,9 @@ func StartNode(stack *node.Node) {
 				log.Warn("Already shutting down, interrupt more to panic.", "times", i-1)
 			}
 		}
+
+		time.Sleep(time.Second) // TODO remove this
+
 		debug.Exit() // ensure trace and CPU profile data is flushed.
 		debug.LoudPanic("boom")
 	}()
@@ -106,6 +116,7 @@ func ImportChain(chain *core.BlockChain, fn string) error {
 	// If a signal is received, the import will stop at the next batch.
 	interrupt := make(chan os.Signal, 1)
 	stop := make(chan struct{})
+	log.Info("Press ctrl+c to stop import")
 	signal.Notify(interrupt, syscall.SIGINT, syscall.SIGTERM)
 	defer signal.Stop(interrupt)
 	defer close(interrupt)

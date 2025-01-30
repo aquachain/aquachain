@@ -38,6 +38,11 @@ web3._extend({
 			params: 1
 		}),
 		new web3._extend.Method({
+			name: 'shutdownEverything',
+			call: 'admin_shutdownEverything',
+			params: 0
+		}),
+		new web3._extend.Method({
 			name: 'removePeer',
 			call: 'admin_removePeer',
 			params: 1

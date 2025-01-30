@@ -25,14 +25,17 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"time"
 
 	"gitlab.com/aquachain/aquachain/aqua/accounts"
 	"gitlab.com/aquachain/aquachain/aqua/event"
 	"gitlab.com/aquachain/aquachain/aquadb"
+	"gitlab.com/aquachain/aquachain/common/alerts"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/internal/debug"
 	"gitlab.com/aquachain/aquachain/internal/flock"
 	"gitlab.com/aquachain/aquachain/p2p"
+	"gitlab.com/aquachain/aquachain/p2p/netutil"
 	"gitlab.com/aquachain/aquachain/rpc"
 	rpcclient "gitlab.com/aquachain/aquachain/rpc/rpcclient"
 )
@@ -155,7 +158,10 @@ func (n *Node) Start() error {
 	// discovery databases.
 	n.serverConfig = n.config.P2P
 	n.serverConfig.PrivateKey = n.config.NodeKey()
-	n.serverConfig.Name = n.config.NodeName()
+	n.serverConfig.Name = n.config.Name
+	if n.serverConfig.Name == "" {
+		return errors.New("node name must be non-empty")
+	}
 	n.serverConfig.Logger = n.log
 	if n.serverConfig.StaticNodes == nil {
 		n.serverConfig.StaticNodes = n.config.StaticNodes()
@@ -166,9 +172,25 @@ func (n *Node) Start() error {
 	if n.serverConfig.NodeDatabase == "" {
 		n.serverConfig.NodeDatabase = n.config.NodeDB()
 	}
+	numTrusted := len(n.serverConfig.TrustedNodes)
+	numStatic := len(n.serverConfig.StaticNodes)
+	if numTrusted != 0 || numStatic != 0 || !n.serverConfig.NoDiscovery {
+		n.log.Info("Static nodes", "static", numStatic, "trusted", numTrusted, "discovery", !n.serverConfig.NoDiscovery)
+		for i, s := range n.serverConfig.StaticNodes {
+			n.log.Debug("Static node", "index", i, "node", s)
+		}
+		for i, s := range n.serverConfig.TrustedNodes {
+			n.log.Debug("Trusted node", "index", i, "node", s)
+		}
+
+	}
 	running := &p2p.Server{Config: n.serverConfig}
 	n.log.Info("Starting peer-to-peer node", "instance", n.serverConfig.Name, "listening", n.serverConfig.ListenAddr)
 
+	alerts.Warnf("Starting %s (%s) on %s\nDiscovery: %v",
+		n.serverConfig.Name,
+		"",
+		n.serverConfig.ListenAddr, !n.serverConfig.NoDiscovery)
 	// Otherwise copy and specialize the P2P configuration
 	services := make(map[reflect.Type]Service)
 	for _, constructor := range n.serviceFuncs {
@@ -254,10 +276,31 @@ func (n *Node) openDataDir() error {
 	return nil
 }
 
+func parseAllowNet(allowIPmasks []string) netutil.Netlist {
+	var allowIPMap netutil.Netlist
+	for _, cidr := range allowIPmasks {
+		if cidr == "*" {
+			cidr = "0.0.0.0/0"
+		}
+		if cidr == "0.0.0.0/0" {
+			log.Warn("Allowing public RPC access. Be sure to run with -nokeys flag!!!")
+			time.Sleep(time.Second * 2)
+		}
+		if !strings.Contains(cidr, "/") {
+			cidr += "/32" // helper for single IPs
+		}
+		allowIPMap.Add(cidr)
+	}
+	return allowIPMap
+}
+
 // startRPC is a helper method to start all the various RPC endpoint during node
 // startup. It's not meant to be called at any time afterwards as it makes certain
 // assumptions about the state of the node.
 func (n *Node) startRPC(services map[reflect.Type]Service) error {
+	// gather allownet
+	allownet := parseAllowNet(n.config.RPCAllowIP)
+
 	// Gather all the possible APIs to surface
 	apis := n.apis()
 	for _, service := range services {
@@ -271,12 +314,12 @@ func (n *Node) startRPC(services map[reflect.Type]Service) error {
 		n.stopInProc()
 		return err
 	}
-	if err := n.startHTTP(n.httpEndpoint, apis, n.config.HTTPModules, n.config.HTTPCors, n.config.HTTPVirtualHosts, n.config.RPCAllowIP, n.config.RPCBehindProxy); err != nil {
+	if err := n.startHTTP(n.httpEndpoint, apis, n.config.HTTPModules, n.config.HTTPCors, n.config.HTTPVirtualHosts, allownet, n.config.RPCBehindProxy); err != nil {
 		n.stopIPC()
 		n.stopInProc()
 		return err
 	}
-	if err := n.startWS(n.wsEndpoint, apis, n.config.WSModules, n.config.WSOrigins, n.config.WSExposeAll, n.config.RPCAllowIP, n.config.RPCBehindProxy); err != nil {
+	if err := n.startWS(n.wsEndpoint, apis, n.config.WSModules, n.config.WSOrigins, n.config.WSExposeAll, allownet, n.config.RPCBehindProxy); err != nil {
 		n.stopHTTP()
 		n.stopIPC()
 		n.stopInProc()
@@ -373,7 +416,10 @@ func (n *Node) stopIPC() {
 }
 
 // startHTTP initializes and starts the HTTP RPC endpoint.
-func (n *Node) startHTTP(endpoint string, apis []rpc.API, modules []string, cors []string, vhosts []string, allowip []string, behindreverseproxy bool) error {
+func (n *Node) startHTTP(endpoint string, apis []rpc.API, modules []string, cors []string, vhosts []string, allownet netutil.Netlist, behindreverseproxy bool) error {
+	if len(allownet) == 0 {
+		return fmt.Errorf("http rpc cant start with empty '-allowip' flag")
+	}
 	// Short circuit if the HTTP endpoint isn't being exposed
 	if endpoint == "" {
 		return nil
@@ -398,15 +444,13 @@ func (n *Node) startHTTP(endpoint string, apis []rpc.API, modules []string, cors
 		listener net.Listener
 		err      error
 	)
-	if listener, err = net.Listen("tcp", endpoint); err != nil {
+	if listener, err = net.Listen("tcp4", endpoint); err != nil {
 		return err
 	}
-	if len(allowip) == 0 || allowip[0] == "none" {
-		n.log.Warn("The '-allowip' flag has not been set. Please consider using it to restrict RPC access. HTTP server disabled. To allow any IP, use -allowip='*'")
-	} else {
-		go rpc.NewHTTPServer(cors, vhosts, allowip, behindreverseproxy, handler).Serve(listener)
-		n.log.Info("HTTP endpoint opened", "url", fmt.Sprintf("http://%s", endpoint), "cors", strings.Join(cors, ","), "vhosts", strings.Join(vhosts, ","), "allowip", strings.Join(allowip, ","))
-	}
+
+	go rpc.NewHTTPServer(cors, vhosts, allownet, behindreverseproxy, handler).Serve(listener)
+	n.log.Info("HTTP endpoint opened", "url", fmt.Sprintf("http://%s", endpoint), "cors", strings.Join(cors, ","), "vhosts", strings.Join(vhosts, ","), "allowip", allownet.String())
+
 	// All listeners booted successfully
 	n.httpEndpoint = endpoint
 	n.httpListener = listener
@@ -430,7 +474,7 @@ func (n *Node) stopHTTP() {
 }
 
 // startWS initializes and starts the websocket RPC endpoint.
-func (n *Node) startWS(endpoint string, apis []rpc.API, modules []string, wsOrigins []string, exposeAll bool, allowedip []string, behindproxy bool) error {
+func (n *Node) startWS(endpoint string, apis []rpc.API, modules []string, wsOrigins []string, exposeAll bool, allowedip netutil.Netlist, behindproxy bool) error {
 	// Short circuit if the WS endpoint isn't being exposed
 	if endpoint == "" {
 		return nil
@@ -455,7 +499,7 @@ func (n *Node) startWS(endpoint string, apis []rpc.API, modules []string, wsOrig
 		listener net.Listener
 		err      error
 	)
-	if listener, err = net.Listen("tcp", endpoint); err != nil {
+	if listener, err = net.Listen("tcp4", endpoint); err != nil {
 		return err
 	}
 	go rpc.NewWSServer(wsOrigins, allowedip, behindproxy, handler).Serve(listener)
