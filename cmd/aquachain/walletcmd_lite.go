@@ -37,14 +37,14 @@ var (
 	paperCommand = &cli.Command{
 		Name:      "paper",
 		Usage:     `Generate paper wallet keypair`,
-		Flags:     []cli.Flag{&utils.JsonFlag, &utils.VanityFlag, &utils.VanityEndFlag, &paperthreads},
+		Flags:     []cli.Flag{utils.JsonFlag, utils.VanityFlag, utils.VanityEndFlag, paperthreadsFlag},
 		ArgsUsage: "[number of wallets]",
 		Category:  "ACCOUNT COMMANDS",
 		Action:    paper,
 		Description: `
 Generate a number of wallets.`,
 	}
-	paperthreads = cli.IntFlag{
+	paperthreadsFlag = &cli.IntFlag{
 		Name:  "threads",
 		Usage: "number of threads to use for paper wallet generation",
 	}

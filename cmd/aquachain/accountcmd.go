@@ -60,8 +60,8 @@ Make sure you backup your keys regularly.`,
 				Usage:  "Print summary of existing accounts",
 				Action: utils.MigrateFlags(accountList),
 				Flags: []cli.Flag{
-					&utils.DataDirFlag,
-					&utils.KeyStoreDirFlag,
+					utils.DataDirFlag,
+					utils.KeyStoreDirFlag,
 				},
 				Description: `
 Print a short summary of all accounts`,
@@ -71,9 +71,9 @@ Print a short summary of all accounts`,
 				Usage:  "Create a new account",
 				Action: utils.MigrateFlags(accountCreate),
 				Flags: []cli.Flag{
-					&utils.DataDirFlag,
-					&utils.KeyStoreDirFlag,
-					&utils.PasswordFileFlag,
+					utils.DataDirFlag,
+					utils.KeyStoreDirFlag,
+					utils.PasswordFileFlag,
 				},
 				Description: `
     aquachain account new
@@ -94,9 +94,9 @@ password to file or expose in any other way.
 				Usage:  "Create a new mnemonic account",
 				Action: utils.MigrateFlags(accountGenerateMnemonic),
 				Flags: []cli.Flag{
-					&utils.DataDirFlag,
-					&utils.KeyStoreDirFlag,
-					&utils.PasswordFileFlag,
+					utils.DataDirFlag,
+					utils.KeyStoreDirFlag,
+					utils.PasswordFileFlag,
 				},
 				Description: `
     This only prints! Does not store key.
@@ -108,8 +108,8 @@ password to file or expose in any other way.
 				Action:    utils.MigrateFlags(accountUpdate),
 				ArgsUsage: "<address>",
 				Flags: []cli.Flag{
-					&utils.DataDirFlag,
-					&utils.KeyStoreDirFlag,
+					utils.DataDirFlag,
+					utils.KeyStoreDirFlag,
 				},
 				Description: `
     aquachain account update <address>
@@ -135,9 +135,9 @@ changing your password is only possible interactively.
 				Usage:  "Import a private key into a new account",
 				Action: utils.MigrateFlags(accountImport),
 				Flags: []cli.Flag{
-					&utils.DataDirFlag,
-					&utils.KeyStoreDirFlag,
-					&utils.PasswordFileFlag,
+					utils.DataDirFlag,
+					utils.KeyStoreDirFlag,
+					utils.PasswordFileFlag,
 				},
 				ArgsUsage: "<keyFile>",
 				Description: `

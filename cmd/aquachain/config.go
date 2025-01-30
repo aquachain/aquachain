@@ -50,7 +50,7 @@ var (
 		Description: `The dumpconfig command shows configuration values.`,
 	}
 
-	configFileFlag = cli.StringFlag{
+	configFileFlag = &cli.StringFlag{
 		Name:  "config",
 		Usage: "TOML configuration file (in case of multiple instances, use -config=none to disable auto-reading available config files)",
 	}
@@ -164,9 +164,21 @@ func mkconfig(cmd *cli.Command, checkDefaultConfigFiles bool) *gethConfig {
 	return cfgptr
 }
 
-func makeConfigNode(cmd *cli.Command) (*node.Node, *gethConfig) {
+type cfgopt int
+
+const (
+	NoPreviousConfig cfgopt = 1
+)
+
+func makeConfigNode(cmd *cli.Command, s ...cfgopt) (*node.Node, *gethConfig) {
 	// Load defaults.
-	cfgptr := mkconfig(cmd, true)
+	useprev := true
+	for _, v := range s {
+		if v == NoPreviousConfig {
+			useprev = false
+		}
+	}
+	cfgptr := mkconfig(cmd, useprev)
 	// Apply flags.
 	if err := utils.SetNodeConfig(cmd, &cfgptr.Node); err != nil {
 		utils.Fatalf("Fatal: could not set node config %+v", err)
@@ -199,7 +211,7 @@ func makeFullNode(cmd *cli.Command) *node.Node {
 
 // dumpConfig is the dumpconfig command.
 func dumpConfig(_ context.Context, cmd *cli.Command) error {
-	_, cfg := makeConfigNode(cmd)
+	_, cfg := makeConfigNode(cmd, NoPreviousConfig)
 	comment := ""
 
 	if cfg.Aqua.Genesis != nil {

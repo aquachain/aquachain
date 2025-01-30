@@ -21,7 +21,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"log"
 	"math/big"
 	"os"
 	"os/user"
@@ -80,29 +79,28 @@ func (self DirectoryFlag) String() string {
 }
 
 func (df DirectoryFlag) IsSet() bool {
-	return df.isSet
+	return df.Value.Value != ""
 }
 
 func (self DirectoryFlag) Get() string {
 	return self.Value.Value
 }
 
-// do not use: this is a hack to get the name of the flag
-func eachName(longName string, fn func(string)) {
-	parts := strings.Split(longName, ",")
+// in case a flag has multiple names, we need to split them and add them to the flag set
+func eachName(parts []string, fn func(string)) {
 	for _, name := range parts {
 		name = strings.Trim(name, " ")
 		fn(name)
 	}
+
 }
 
 // called by cli library, grabs variable from environment (if in env)
 // and adds variable to flag set for parsing.
-func (self *DirectoryFlag) Apply(set *flag.FlagSet) error {
-	eachName(self.Name, func(name string) {
-		log.Printf("name: %s", name)
-		set.Var(&self.Value, self.Name, self.Usage)
-		self.isSet = true
+func (df *DirectoryFlag) Apply(set *flag.FlagSet) error {
+	eachName(df.Names(), func(name string) {
+		set.Var(&df.Value, name, df.Usage)
+		df.isSet = true
 	})
 	return nil
 }
@@ -158,7 +156,7 @@ func (f TextMarshalerFlag) String() string {
 }
 
 func (f *TextMarshalerFlag) Apply(set *flag.FlagSet) error {
-	eachName(f.Name, func(name string) {
+	eachName(f.Names(), func(name string) {
 		set.Var(textMarshalerVal{f.Value}, f.Name, f.Usage)
 		f.isSet = true
 	})
@@ -194,11 +192,11 @@ func (b *bigValue) String() string {
 }
 
 func (b *bigValue) Set(s string) error {
-	int, ok := math.ParseBig256(s)
+	n, ok := math.ParseBig256(s)
 	if !ok {
 		return errors.New("invalid integer syntax")
 	}
-	*b = (bigValue)(*int)
+	*b = (bigValue)(*n)
 	return nil
 }
 
@@ -227,7 +225,7 @@ func (f BigFlag) String() string {
 }
 
 func (f *BigFlag) Apply(set *flag.FlagSet) error {
-	eachName(f.Name, func(name string) {
+	eachName(f.Names(), func(name string) {
 		set.Var((*bigValue)(f.Value), f.Name, f.Usage)
 		f.isSet = true
 	})
@@ -238,6 +236,7 @@ func (f *BigFlag) Apply(set *flag.FlagSet) error {
 func GlobalBig(cmd *cli.Command, name string) *big.Int {
 	val := cmd.Generic(name)
 	if val == nil {
+		panic("wtf flag is " + name)
 		return nil
 	}
 

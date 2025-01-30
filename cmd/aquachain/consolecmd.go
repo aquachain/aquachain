@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/aerth/tgun"
 	cli "github.com/urfave/cli/v3"
@@ -38,10 +39,10 @@ import (
 var mainctx, maincancel = signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
 var (
-	consoleFlags = []cli.Flag{&utils.JSpathFlag, &utils.ExecFlag, &utils.PreloadJSFlag, &cli.StringFlag{
+	consoleFlags = []cli.Flag{utils.JSpathFlag, utils.ExecFlag, utils.PreloadJSFlag, &cli.StringFlag{
 		Name:  "socks",
 		Value: "",
-		Usage: "",
+		Usage: "SOCKS5 proxy for outgoing RPC connections (eg: -socks socks5://localhost:1080)",
 	}}
 
 	consoleCommand = &cli.Command{
@@ -69,7 +70,7 @@ See https://gitlab.com/aquachain/aquachain/wiki/JavaScript-Console.`,
 		Name:      "attach",
 		Usage:     "Start an interactive JavaScript environment (connect to node)",
 		ArgsUsage: "[endpoint]",
-		Flags:     append(consoleFlags, &utils.DataDirFlag),
+		Flags:     append(consoleFlags, utils.DataDirFlag),
 		Category:  "CONSOLE COMMANDS",
 		Description: `
 The Aquachain console is an interactive shell for the JavaScript runtime environment
@@ -95,6 +96,17 @@ JavaScript API. See https://gitlab.com/aquachain/aquachain/wiki/JavaScript-Conso
 // same time.
 func localConsole(ctx context.Context, cmd *cli.Command) error {
 	// Create and start the node based on the CLI flags
+	if first := cmd.Args().First(); first != "" && first[0] != '-' && first != "console" {
+		return fmt.Errorf("uhoh: %q got here", first)
+	}
+	for i := 10; i >= 0 && ctx.Err() == nil; i-- {
+		log.Info("starting in ...", "seconds", i)
+		println("starting in", i)
+		time.Sleep(time.Second)
+	}
+	if ctx.Err() != nil {
+		return context.Cause(ctx)
+	}
 	if args := cmd.Args(); args.Len() != 0 && args.First() != "console" {
 		return fmt.Errorf("invalid command: %q", args.First())
 	}

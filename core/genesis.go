@@ -172,7 +172,7 @@ func SetupGenesisBlock(db aquadb.Database, genesis *Genesis) (*params.ChainConfi
 	if genesis != nil {
 		hash := genesis.ToBlock(nil).Hash()
 		if hash != stored {
-			return genesis.Config, hash, &GenesisMismatchError{stored, hash}
+			return genesis.Config, hash, &GenesisMismatchError{Stored: stored, New: hash}
 		}
 	}
 

@@ -26,6 +26,8 @@ import (
 	"strings"
 	"time"
 
+	logpkg "log"
+
 	"github.com/joho/godotenv"
 	cli "github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/aqua"
@@ -52,88 +54,88 @@ var (
 	// app = utils.NewApp(gitCommit, "the aquachain command line interface")
 	// flags that configure the node
 	nodeFlags = []cli.Flag{
-		&utils.IdentityFlag,
-		&utils.UnlockedAccountFlag,
-		&utils.PasswordFileFlag,
-		&utils.BootnodesFlag,
-		&utils.DataDirFlag,
-		&utils.KeyStoreDirFlag,
-		&utils.NoKeysFlag,
-		&utils.UseUSBFlag,
-		&utils.AquahashCacheDirFlag,
-		&utils.AquahashCachesInMemoryFlag,
-		&utils.AquahashCachesOnDiskFlag,
-		&utils.AquahashDatasetDirFlag,
-		&utils.AquahashDatasetsInMemoryFlag,
-		&utils.AquahashDatasetsOnDiskFlag,
-		&utils.TxPoolNoLocalsFlag,
-		&utils.TxPoolJournalFlag,
-		&utils.TxPoolRejournalFlag,
-		&utils.TxPoolPriceLimitFlag,
-		&utils.TxPoolPriceBumpFlag,
-		&utils.TxPoolAccountSlotsFlag,
-		&utils.TxPoolGlobalSlotsFlag,
-		&utils.TxPoolAccountQueueFlag,
-		&utils.TxPoolGlobalQueueFlag,
-		&utils.TxPoolLifetimeFlag,
-		&utils.FastSyncFlag,
-		&utils.SyncModeFlag,
-		&utils.GCModeFlag,
-		&utils.CacheFlag,
-		&utils.CacheDatabaseFlag,
-		&utils.CacheGCFlag,
-		&utils.TrieCacheGenFlag,
-		&utils.ListenPortFlag,
-		&utils.ListenAddrFlag,
-		&utils.MaxPeersFlag,
-		&utils.MaxPendingPeersFlag,
-		&utils.AquabaseFlag,
-		&utils.GasPriceFlag,
-		&utils.MinerThreadsFlag,
-		&utils.MiningEnabledFlag,
-		&utils.TargetGasLimitFlag,
-		&utils.NATFlag,
-		&utils.NoDiscoverFlag,
-		&utils.OfflineFlag,
-		&utils.NetrestrictFlag,
-		&utils.NodeKeyFileFlag,
-		&utils.NodeKeyHexFlag,
-		&utils.DeveloperFlag,
-		&utils.DeveloperPeriodFlag,
-		&utils.TestnetFlag,
-		&utils.Testnet2Flag,
-		&utils.NetworkEthFlag,
-		&utils.VMEnableDebugFlag,
-		&utils.NetworkIdFlag,
-		&utils.AquaStatsURLFlag,
-		&utils.MetricsEnabledFlag,
-		&utils.FakePoWFlag,
-		&utils.NoCompactionFlag,
-		&utils.GpoBlocksFlag,
-		&utils.GpoPercentileFlag,
-		&utils.ExtraDataFlag,
-		&configFileFlag,
-		&utils.HF8MainnetFlag,
-		&utils.ChainFlag,
+		utils.IdentityFlag,
+		utils.UnlockedAccountFlag,
+		utils.PasswordFileFlag,
+		utils.BootnodesFlag,
+		utils.DataDirFlag,
+		utils.KeyStoreDirFlag,
+		utils.NoKeysFlag,
+		utils.UseUSBFlag,
+		utils.AquahashCacheDirFlag,
+		utils.AquahashCachesInMemoryFlag,
+		utils.AquahashCachesOnDiskFlag,
+		utils.AquahashDatasetDirFlag,
+		utils.AquahashDatasetsInMemoryFlag,
+		utils.AquahashDatasetsOnDiskFlag,
+		utils.TxPoolNoLocalsFlag,
+		utils.TxPoolJournalFlag,
+		utils.TxPoolRejournalFlag,
+		utils.TxPoolPriceLimitFlag,
+		utils.TxPoolPriceBumpFlag,
+		utils.TxPoolAccountSlotsFlag,
+		utils.TxPoolGlobalSlotsFlag,
+		utils.TxPoolAccountQueueFlag,
+		utils.TxPoolGlobalQueueFlag,
+		utils.TxPoolLifetimeFlag,
+		utils.FastSyncFlag,
+		utils.SyncModeFlag,
+		utils.GCModeFlag,
+		utils.CacheFlag,
+		utils.CacheDatabaseFlag,
+		utils.CacheGCFlag,
+		utils.TrieCacheGenFlag,
+		utils.ListenPortFlag,
+		utils.ListenAddrFlag,
+		utils.MaxPeersFlag,
+		utils.MaxPendingPeersFlag,
+		utils.AquabaseFlag,
+		utils.GasPriceFlag,
+		utils.MinerThreadsFlag,
+		utils.MiningEnabledFlag,
+		utils.TargetGasLimitFlag,
+		utils.NATFlag,
+		utils.NoDiscoverFlag,
+		utils.OfflineFlag,
+		utils.NetrestrictFlag,
+		utils.NodeKeyFileFlag,
+		utils.NodeKeyHexFlag,
+		utils.DeveloperFlag,
+		utils.DeveloperPeriodFlag,
+		utils.TestnetFlag,
+		utils.Testnet2Flag,
+		utils.NetworkEthFlag,
+		utils.VMEnableDebugFlag,
+		utils.NetworkIdFlag,
+		utils.AquaStatsURLFlag,
+		utils.MetricsEnabledFlag,
+		utils.FakePoWFlag,
+		utils.NoCompactionFlag,
+		utils.GpoBlocksFlag,
+		utils.GpoPercentileFlag,
+		utils.ExtraDataFlag,
+		configFileFlag,
+		utils.HF8MainnetFlag,
+		utils.ChainFlag,
 	}
 
 	rpcFlags = []cli.Flag{
-		&utils.RPCEnabledFlag,
-		&utils.RPCUnlockFlag,
-		&utils.RPCCORSDomainFlag,
-		&utils.RPCVirtualHostsFlag,
-		&utils.RPCListenAddrFlag,
-		&utils.RPCAllowIPFlag,
-		&utils.RPCPortFlag,
-		&utils.RPCApiFlag,
-		&utils.WSEnabledFlag,
-		&utils.WSListenAddrFlag,
-		&utils.WSPortFlag,
-		&utils.WSApiFlag,
-		&utils.WSAllowedOriginsFlag,
-		&utils.IPCDisabledFlag,
-		&utils.IPCPathFlag,
-		&utils.AlertModeFlag,
+		utils.RPCEnabledFlag,
+		utils.RPCUnlockFlag,
+		utils.RPCCORSDomainFlag,
+		utils.RPCVirtualHostsFlag,
+		utils.RPCListenAddrFlag,
+		utils.RPCAllowIPFlag,
+		utils.RPCPortFlag,
+		utils.RPCApiFlag,
+		utils.WSEnabledFlag,
+		utils.WSListenAddrFlag,
+		utils.WSPortFlag,
+		utils.WSApiFlag,
+		utils.WSAllowedOriginsFlag,
+		utils.IPCDisabledFlag,
+		utils.IPCPathFlag,
+		utils.AlertModeFlag,
 	}
 )
 
@@ -142,7 +144,7 @@ func doinit() *cli.Command {
 		Name:    "aquachain",
 		Usage:   "the Aquachain command line interface",
 		Version: params.VersionWithCommit(gitCommit),
-		Flags:   []cli.Flag{},
+		Flags:   []cli.Flag{&cli.BoolFlag{Name: "noenv", Usage: "Skip loading existing .env file"}},
 		// UsageText: ,
 	}
 	// Initialize the CLI app and start Aquachain
@@ -191,6 +193,7 @@ func doinit() *cli.Command {
 	// func(context.Context, *Command) (context.Context, error)
 	app.Before = beforeFunc
 
+	println("ok")
 	app.After = afterFunc
 	return app
 }
@@ -202,6 +205,10 @@ func afterFunc(context.Context, *cli.Command) error {
 }
 
 func beforeFunc(ctx context.Context, cmd *cli.Command) (context.Context, error) {
+	if x := cmd.Args().First(); x != "" && x != "daemon" || x != "console" {
+		return ctx, nil
+	}
+
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	if err := debug.Setup(mainctx, cmd); err != nil {
 		return ctx, err
@@ -218,8 +225,18 @@ func beforeFunc(ctx context.Context, cmd *cli.Command) (context.Context, error) 
 }
 
 func main() {
-	godotenv.Load(".env", filepath.Join(node.DefaultDataDir(), ".env"), "/etc/aquachain/.env")
+	logpkg.SetFlags(logpkg.Lshortfile)
+	noenv := false
+	for _, v := range os.Args {
+		if strings.Contains(v, "-noenv") {
+			noenv = true
+		}
+	}
+	if !noenv {
+		godotenv.Load(".env", filepath.Join(node.DefaultDataDir(), ".env"), "/etc/aquachain/.env")
+	}
 	app := doinit()
+
 	if err := app.Run(mainctx, os.Args); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

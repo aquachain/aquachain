@@ -34,53 +34,53 @@ import (
 )
 
 var (
-	verbosityFlag = cli.IntFlag{
+	verbosityFlag = &cli.IntFlag{
 		Name:  "verbosity",
 		Usage: "Logging verbosity: 0=silent, 1=error, 2=warn, 3=info, 4=debug, 5=detail",
 		Value: 3,
 	}
-	vmoduleFlag = cli.StringFlag{
+	vmoduleFlag = &cli.StringFlag{
 		Name:  "vmodule",
 		Usage: "Per-module verbosity: comma-separated list of <pattern>=<level> (e.g. aqua/*=5,p2p=4), try \"good\" or \"great\" for predefined verbose logging",
 		Value: "",
 	}
-	backtraceAtFlag = cli.StringFlag{
+	backtraceAtFlag = &cli.StringFlag{
 		Name:  "backtrace",
 		Usage: "Request a stack trace at a specific logging statement (e.g. \"block.go:271\")",
 		Value: "",
 	}
-	debugFlag = cli.BoolFlag{
+	debugFlag = &cli.BoolFlag{
 		Name:  "debug",
 		Usage: "Prepends log messages with call-site location (file and line number)",
 	}
-	pprofFlag = cli.BoolFlag{
+	pprofFlag = &cli.BoolFlag{
 		Name:  "pprof",
 		Usage: "Enable the pprof HTTP server",
 	}
-	pprofPortFlag = cli.IntFlag{
+	pprofPortFlag = &cli.IntFlag{
 		Name:  "pprofport",
 		Usage: "pprof HTTP server listening port",
 		Value: 6060,
 	}
-	pprofAddrFlag = cli.StringFlag{
+	pprofAddrFlag = &cli.StringFlag{
 		Name:  "pprofaddr",
 		Usage: "pprof HTTP server listening interface",
 		Value: "127.0.0.1",
 	}
-	memprofilerateFlag = cli.IntFlag{
+	memprofilerateFlag = &cli.IntFlag{
 		Name:  "memprofilerate",
 		Usage: "Turn on memory profiling with the given rate",
 		Value: int64(runtime.MemProfileRate),
 	}
-	blockprofilerateFlag = cli.IntFlag{
+	blockprofilerateFlag = &cli.IntFlag{
 		Name:  "blockprofilerate",
 		Usage: "Turn on block profiling with the given rate",
 	}
-	cpuprofileFlag = cli.StringFlag{
+	cpuprofileFlag = &cli.StringFlag{
 		Name:  "cpuprofile",
 		Usage: "Write CPU profile to the given file",
 	}
-	traceFlag = cli.StringFlag{
+	traceFlag = &cli.StringFlag{
 		Name:  "trace",
 		Usage: "Write execution trace to the given file",
 	}
@@ -88,20 +88,20 @@ var (
 
 // Flags holds all command-line flags required for debugging.
 var Flags = []cli.Flag{
-	&verbosityFlag, &vmoduleFlag, &backtraceAtFlag, &debugFlag,
-	&pprofFlag, &pprofAddrFlag, &pprofPortFlag,
-	&memprofilerateFlag, &blockprofilerateFlag, &cpuprofileFlag, &traceFlag,
+	verbosityFlag, vmoduleFlag, backtraceAtFlag, debugFlag,
+	pprofFlag, pprofAddrFlag, pprofPortFlag,
+	memprofilerateFlag, blockprofilerateFlag, cpuprofileFlag, traceFlag,
 }
 
-var glogger *log.GlogHandler
+var glogger *log.GlogHandler = initglogger()
 
-func init() {
+func initglogger() *log.GlogHandler {
 	usecolor := os.Getenv("COLOR") == "1" || (term.IsTty(os.Stderr.Fd()) && os.Getenv("TERM") != "dumb")
 	output := io.Writer(os.Stderr)
 	if usecolor {
 		output = colorable.NewColorableStderr()
 	}
-	glogger = log.NewGlogHandler(log.StreamHandler(output, log.TerminalFormat(usecolor)))
+	return log.NewGlogHandler(log.StreamHandler(output, log.TerminalFormat(usecolor)))
 }
 
 // Setup initializes profiling and logging based on the CLI flags.
