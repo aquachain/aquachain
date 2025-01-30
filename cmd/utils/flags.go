@@ -181,10 +181,16 @@ var (
 		Usage: "Enable fast syncing through state downloads",
 	}
 	defaultSyncMode = aqua.DefaultConfig.SyncMode
-	SyncModeFlag    = TextMarshalerFlag{
+	SyncModeFlag    = cli.StringFlag{
 		Name:  "syncmode",
 		Usage: `Blockchain sync mode ("fast", "full")`,
-		Value: &defaultSyncMode,
+		Value: defaultSyncMode.String(),
+		Action: func(ctx context.Context, cmd *cli.Command, v string) error {
+			if v != "fast" && v != "full" && v != "offline" {
+				return fmt.Errorf("invalid sync mode: %q", v)
+			}
+			return nil
+		},
 	}
 	GCModeFlag = cli.StringFlag{
 		Name:  "gcmode",
@@ -1220,7 +1226,10 @@ func SetAquaConfig(cmd *cli.Command, stack *node.Node, cfg *aqua.Config) {
 	case cmd.Bool(OfflineFlag.Name):
 		cfg.SyncMode = downloader.OfflineSync
 	case cmd.IsSet(SyncModeFlag.Name):
-		cfg.SyncMode = *GlobalTextMarshaler(cmd, SyncModeFlag.Name).(*downloader.SyncMode)
+		err := cfg.SyncMode.UnmarshalText([]byte(cmd.String(SyncModeFlag.Name)))
+		if err != nil {
+			Fatalf("Failed to parse sync mode: %v", err)
+		}
 	case cmd.Bool(FastSyncFlag.Name):
 		cfg.SyncMode = downloader.FastSync
 	}

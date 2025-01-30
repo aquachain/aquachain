@@ -51,6 +51,8 @@ func (mode SyncMode) MarshalText() ([]byte, error) {
 		return []byte("full"), nil
 	case FastSync:
 		return []byte("fast"), nil
+	case OfflineSync:
+		return []byte("offline"), nil
 	default:
 		return nil, fmt.Errorf("unknown sync mode %d", mode)
 	}

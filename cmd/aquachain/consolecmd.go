@@ -69,7 +69,7 @@ See https://gitlab.com/aquachain/aquachain/wiki/JavaScript-Console.`,
 		Name:      "attach",
 		Usage:     "Start an interactive JavaScript environment (connect to node)",
 		ArgsUsage: "[endpoint]",
-		Flags:     append(consoleFlags, utils.DataDirFlag),
+		Flags:     append(consoleFlags, &utils.DataDirFlag),
 		Category:  "CONSOLE COMMANDS",
 		Description: `
 The Aquachain console is an interactive shell for the JavaScript runtime environment

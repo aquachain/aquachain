@@ -41,14 +41,23 @@ import (
 	"gitlab.com/aquachain/aquachain/trie"
 )
 
+func echo(_ context.Context, cmd *cli.Command) error {
+	fmt.Println("echo")
+	return nil
+}
+
 var (
+	echoCommand = &cli.Command{
+		Action: echo,
+		Name:   "echo",
+	}
 	initCommand = &cli.Command{
 		Action:    utils.MigrateFlags(initGenesis),
 		Name:      "init",
 		Usage:     "Bootstrap and initialize a new genesis block",
 		ArgsUsage: "<genesisPath>",
 		Flags: []cli.Flag{
-			utils.DataDirFlag,
+			&utils.DataDirFlag,
 		},
 		Category: "BLOCKCHAIN COMMANDS",
 		Description: `
@@ -305,7 +314,12 @@ func copyDb(_ context.Context, cmd *cli.Command) error {
 	stack := makeFullNode(cmd)
 	chain, chainDb := utils.MakeChain(cmd, stack)
 
-	syncmode := *utils.GlobalTextMarshaler(cmd, utils.SyncModeFlag.Name).(*downloader.SyncMode)
+	var syncmode downloader.SyncMode
+
+	err := syncmode.UnmarshalText([]byte(cmd.String(utils.SyncModeFlag.Name)))
+	if err != nil {
+		utils.Fatalf("%v", err)
+	}
 	dl := downloader.New(syncmode, chainDb, new(event.TypeMux), chain, nil, nil)
 
 	// Create a source peer to satisfy downloader requests from

@@ -152,6 +152,7 @@ func doinit() *cli.Command {
 
 	app.Commands = []*cli.Command{
 		// See chaincmd.go:
+		echoCommand,
 		initCommand,
 		importCommand,
 		exportCommand,

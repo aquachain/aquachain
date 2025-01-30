@@ -21,6 +21,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"log"
 	"math/big"
 	"os"
 	"os/user"
@@ -59,6 +60,7 @@ type DirectoryFlag struct {
 	Name  string
 	Value DirectoryString
 	Usage string
+	isSet bool
 }
 
 func (df DirectoryFlag) Names() []string {
@@ -78,7 +80,7 @@ func (self DirectoryFlag) String() string {
 }
 
 func (df DirectoryFlag) IsSet() bool {
-	return len(df.Value.Value) > 0
+	return df.isSet
 }
 
 func (self DirectoryFlag) Get() string {
@@ -96,9 +98,11 @@ func eachName(longName string, fn func(string)) {
 
 // called by cli library, grabs variable from environment (if in env)
 // and adds variable to flag set for parsing.
-func (self DirectoryFlag) Apply(set *flag.FlagSet) error {
+func (self *DirectoryFlag) Apply(set *flag.FlagSet) error {
 	eachName(self.Name, func(name string) {
+		log.Printf("name: %s", name)
 		set.Var(&self.Value, self.Name, self.Usage)
+		self.isSet = true
 	})
 	return nil
 }
@@ -134,6 +138,7 @@ type TextMarshalerFlag struct {
 	Name  string
 	Value TextMarshaler
 	Usage string
+	isSet bool
 }
 
 func (f TextMarshalerFlag) Names() []string {
@@ -141,7 +146,7 @@ func (f TextMarshalerFlag) Names() []string {
 }
 
 func (f TextMarshalerFlag) IsSet() bool {
-	return f.Value != nil
+	return f.isSet
 }
 
 func (f TextMarshalerFlag) GetName() string {
@@ -152,21 +157,22 @@ func (f TextMarshalerFlag) String() string {
 	return fmt.Sprintf("%s \"%v\"\t%v", prefixedNames(f.Name), f.Value, f.Usage)
 }
 
-func (f TextMarshalerFlag) Apply(set *flag.FlagSet) error {
+func (f *TextMarshalerFlag) Apply(set *flag.FlagSet) error {
 	eachName(f.Name, func(name string) {
 		set.Var(textMarshalerVal{f.Value}, f.Name, f.Usage)
+		f.isSet = true
 	})
 	return nil
 }
 
-// GlobalTextMarshaler returns the value of a TextMarshalerFlag from the global flag set.
-func GlobalTextMarshaler(cmd *cli.Command, name string) TextMarshaler {
-	val := cmd.Generic(name)
-	if val == nil {
-		return nil
-	}
-	return val.Get().(textMarshalerVal).v
-}
+// // GlobalTextMarshaler returns the value of a TextMarshalerFlag from the global flag set.
+// func GlobalTextMarshaler(cmd *cli.Command, name string) TextMarshaler {
+// 	val := cmd.Generic(name)
+// 	if val == nil {
+// 		return nil
+// 	}
+// 	return val.Get().(textMarshalerVal).v
+// }
 
 // BigFlag is a command line flag that accepts 256 bit big integers in decimal or
 // hexadecimal syntax.
@@ -174,6 +180,7 @@ type BigFlag struct {
 	Name  string
 	Value *big.Int
 	Usage string
+	isSet bool
 }
 
 // bigValue turns *big.Int into a flag.Value
@@ -204,7 +211,7 @@ func (f BigFlag) Names() []string {
 }
 
 func (f BigFlag) IsSet() bool {
-	return f.Value != nil
+	return f.isSet
 }
 
 func (f BigFlag) GetName() string {
@@ -219,9 +226,10 @@ func (f BigFlag) String() string {
 	return fmt.Sprintf(fmtString, prefixedNames(f.Name), f.Value, f.Usage)
 }
 
-func (f BigFlag) Apply(set *flag.FlagSet) error {
+func (f *BigFlag) Apply(set *flag.FlagSet) error {
 	eachName(f.Name, func(name string) {
 		set.Var((*bigValue)(f.Value), f.Name, f.Usage)
+		f.isSet = true
 	})
 	return nil
 }
