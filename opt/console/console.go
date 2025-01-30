@@ -294,7 +294,7 @@ func (c *Console) clearHistory() {
 func (c *Console) consoleOutput(call otto.FunctionCall) otto.Value {
 	output := []string{}
 	for _, argument := range call.ArgumentList {
-		output = append(output, fmt.Sprintf("%#v", argument))
+		output = append(output, fmt.Sprint(argument))
 	}
 	fmt.Fprintln(c.printer, strings.Join(output, " "))
 	return otto.Value{}
