@@ -22,14 +22,18 @@ import (
 	"math/big"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
 	cli "github.com/urfave/cli/v3"
+	"gitlab.com/aquachain/aquachain/cmd/utils"
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/consensus/aquahash"
 	"gitlab.com/aquachain/aquachain/consensus/lightvalid"
 	"gitlab.com/aquachain/aquachain/core/types"
+	"gitlab.com/aquachain/aquachain/internal/debug"
+	"gitlab.com/aquachain/aquachain/node"
 	"gitlab.com/aquachain/aquachain/opt/aquaclient"
 	"gitlab.com/aquachain/aquachain/params"
 	"gitlab.com/aquachain/aquachain/rlp"
@@ -37,31 +41,6 @@ import (
 )
 
 var gitCommit = ""
-
-var (
-	// app    = utils.NewApp(gitCommit, "usage")
-	big1   = big.NewInt(1)
-	Config *params.ChainConfig
-)
-
-func init() {
-	// app.Name = "aquastrat"
-	// app.Action = loopit
-	// _ = filepath.Join
-	// app.Flags = append(debug.Flags, []cli.Flag{
-	// 	cli.StringFlag{
-	// 		//Value: filepath.Join(utils.DataDirFlag.Value.String(), "testnet/aquachain.ipc"),
-	// 		Value: "https://tx.aquacha.in/testnet/",
-	// 		Name:  "rpc",
-	// 		Usage: "path or url to rpc",
-	// 	},
-	// 	cli.StringFlag{
-	// 		Value: "",
-	// 		Name:  "coinbase",
-	// 		Usage: "address for mining rewards",
-	// 	},
-	// }...)
-}
 
 // valid block #1 using -testnet2
 var header1 = &types.Header{
@@ -83,33 +62,58 @@ var header1 = &types.Header{
 	Version:     2,
 }
 
+var big1 = big.NewInt(1)
+var Config *params.ChainConfig = params.Testnet2ChainConfig
+
 func main() {
-	if err := app.Run(os.Args); err != nil {
+	ctx := context.Background()
+
+	var (
+		app = utils.NewApp(gitCommit, "usage")
+	)
+
+	app.Name = "aquastrat"
+	app.Action = loopit
+	_ = filepath.Join
+	app.Flags = append(debug.Flags, []cli.Flag{
+		&cli.StringFlag{
+			Value: filepath.Join(node.DefaultDatadirByChain(Config), "aquachain.ipc"),
+			Name:  "rpc",
+			Usage: "path or url to rpc",
+		},
+		&cli.StringFlag{
+			Value: "",
+			Name:  "coinbase",
+			Usage: "address for mining rewards",
+		},
+	}...)
+
+	if err := app.Run(ctx, os.Args); err != nil {
 		fmt.Println("fatal:", err)
 	}
 }
 
-func loopit(_ context.Context, cmd *cli.Command) error {
+func loopit(ctx context.Context, cmd *cli.Command) error {
 	for {
-		if err := runit(ctx); err != nil {
+		if err := runit(ctx, cmd); err != nil {
 			fmt.Println(err)
 			return err
 		}
 	}
 }
-func runit(_ context.Context, cmd *cli.Command) error {
-	coinbase := ctx.String("coinbase")
+func runit(ctx context.Context, cmd *cli.Command) error {
+	coinbase := cmd.String("coinbase")
 	if coinbase == "" || !strings.HasPrefix(coinbase, "0x") || len(coinbase) != 42 {
 		return fmt.Errorf("cant mine with no -coinbase flag, or invalid: len: %v, coinbase: %q", len(coinbase), coinbase)
 	}
 	coinbaseAddr := common.HexToAddress(coinbase)
 
-	rpcclient, err := getclient(ctx)
+	rpcclient, err := getclient(ctx, cmd)
 	if err != nil {
 		return err
 	}
 	aqua := aquaclient.NewClient(rpcclient)
-	block1, err := aqua.BlockByNumber(context.Background(), big1)
+	block1, err := aqua.BlockByNumber(ctx, big1)
 	if err != nil {
 		fmt.Println("blockbynumber")
 		return err
@@ -127,7 +131,7 @@ func runit(_ context.Context, cmd *cli.Command) error {
 	default:
 		Config = params.Testnet2ChainConfig
 	}
-	parent, err := aqua.BlockByNumber(context.Background(), nil)
+	parent, err := aqua.BlockByNumber(ctx, nil)
 	if err != nil {
 		fmt.Println("blockbynumber")
 		return err
@@ -142,7 +146,7 @@ func runit(_ context.Context, cmd *cli.Command) error {
 			return err
 		}
 	}
-	encoded, err = aqua.GetBlockTemplate(context.Background(), coinbaseAddr)
+	encoded, err = aqua.GetBlockTemplate(ctx, coinbaseAddr)
 	if err != nil {
 		println("gbt")
 		return err
@@ -164,7 +168,7 @@ func runit(_ context.Context, cmd *cli.Command) error {
 	if encoded == nil {
 		return fmt.Errorf("failed to encoded block to rlp")
 	}
-	if !aqua.SubmitBlock(context.Background(), encoded) {
+	if !aqua.SubmitBlock(ctx, encoded) {
 		fmt.Println("failed")
 		return fmt.Errorf("failed")
 	} else {
@@ -216,10 +220,10 @@ func mine(cfg *params.ChainConfig, parent *types.Header, block *types.Block) ([]
 	}
 }
 
-func getclient(cmd *cli.Command) (*rpc.Client, error) {
-	if strings.HasPrefix(ctx.String("rpc"), "http") {
-		return rpc.DialHTTP(ctx.String("rpc"))
+func getclient(ctx context.Context, cmd *cli.Command) (*rpc.Client, error) {
+	if strings.HasPrefix(cmd.String("rpc"), "http") {
+		return rpc.DialHTTP(cmd.String("rpc"))
 	} else {
-		return rpc.DialIPC(context.Background(), ctx.String("rpc"))
+		return rpc.DialIPC(ctx, cmd.String("rpc"))
 	}
 }

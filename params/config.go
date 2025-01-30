@@ -271,6 +271,9 @@ func AllChainConfigs() []*ChainConfig {
 	}
 }
 
+// Name returns the name of the chain config. (mainnet, testnet, etc)
+//
+// This is used for '-chain <name>' flag and default datadir.
 func (c *ChainConfig) Name() string {
 	switch {
 	case c == MainnetChainConfig:

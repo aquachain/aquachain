@@ -42,7 +42,7 @@ import (
 )
 
 var (
-	initCommand = cli.Command{
+	initCommand = &cli.Command{
 		Action:    utils.MigrateFlags(initGenesis),
 		Name:      "init",
 		Usage:     "Bootstrap and initialize a new genesis block",
@@ -58,7 +58,7 @@ participating.
 
 It expects the genesis file as argument.`,
 	}
-	importCommand = cli.Command{
+	importCommand = &cli.Command{
 		Action:    utils.MigrateFlags(importChain),
 		Name:      "import",
 		Usage:     "Import a blockchain file",
@@ -78,7 +78,7 @@ with several RLP-encoded blocks, or several files can be used.
 If only one file is used, import error will result in failure. If several files are used,
 processing will proceed even if an individual RLP-file import failure occurs.`,
 	}
-	exportCommand = cli.Command{
+	exportCommand = &cli.Command{
 		Action:    utils.MigrateFlags(exportChain),
 		Name:      "export",
 		Usage:     "Export blockchain into file",
@@ -94,7 +94,7 @@ Optional second and third arguments control the first and
 last block to write. In this mode, the file will be appended
 if already existing.`,
 	}
-	copydbCommand = cli.Command{
+	copydbCommand = &cli.Command{
 		Action:    utils.MigrateFlags(copyDb),
 		Name:      "copydb",
 		Usage:     "Create a local chain from a target chaindata folder",
@@ -111,7 +111,7 @@ if already existing.`,
 		Description: `
 The first argument must be the directory containing the blockchain to download from`,
 	}
-	removedbCommand = cli.Command{
+	removedbCommand = &cli.Command{
 		Action:    utils.MigrateFlags(removeDB),
 		Name:      "removedb",
 		Usage:     "Remove blockchain and state databases",
@@ -123,7 +123,7 @@ The first argument must be the directory containing the blockchain to download f
 		Description: `
 Remove blockchain and state databases`,
 	}
-	dumpCommand = cli.Command{
+	dumpCommand = &cli.Command{
 		Action:    utils.MigrateFlags(dump),
 		Name:      "dump",
 		Usage:     "Dump a specific block from storage",

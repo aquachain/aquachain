@@ -149,6 +149,9 @@ func Setup(ctx_ context.Context, cmd *cli.Command) error {
 // Exit stops all running profiles, flushing their output to the
 // respective file.
 func Exit() {
+	if Handler == nil {
+		return
+	}
 	Handler.StopCPUProfile()
 	Handler.StopGoTrace()
 }

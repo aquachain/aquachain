@@ -44,7 +44,7 @@ var (
 		Usage: "",
 	}}
 
-	consoleCommand = cli.Command{
+	consoleCommand = &cli.Command{
 		Action:   utils.MigrateFlags(localConsole),
 		Name:     "console",
 		Usage:    "Start an interactive JavaScript environment",
@@ -56,7 +56,7 @@ which exposes a node admin interface as well as the Ðapp JavaScript API.
 See https://gitlab.com/aquachain/aquachain/wiki/JavaScript-Console.`,
 	}
 
-	daemonCommand = cli.Command{
+	daemonCommand = &cli.Command{
 		Action:      utils.MigrateFlags(daemonStart),
 		Name:        "daemon",
 		Usage:       "Start a full node",
@@ -64,7 +64,7 @@ See https://gitlab.com/aquachain/aquachain/wiki/JavaScript-Console.`,
 		Description: "",
 	}
 
-	attachCommand = cli.Command{
+	attachCommand = &cli.Command{
 		Action:    utils.MigrateFlags(remoteConsole),
 		Name:      "attach",
 		Usage:     "Start an interactive JavaScript environment (connect to node)",
@@ -78,7 +78,7 @@ See https://gitlab.com/aquachain/aquachain/wiki/JavaScript-Console.
 This command allows to open a console on a running aquachain node.`,
 	}
 
-	javascriptCommand = cli.Command{
+	javascriptCommand = &cli.Command{
 		Action:    utils.MigrateFlags(ephemeralConsole),
 		Name:      "js",
 		Usage:     "Execute the specified JavaScript files",

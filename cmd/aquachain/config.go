@@ -40,7 +40,7 @@ import (
 )
 
 var (
-	dumpConfigCommand = cli.Command{
+	dumpConfigCommand = &cli.Command{
 		Action:      utils.MigrateFlags(dumpConfig),
 		Name:        "dumpconfig",
 		Usage:       "Show configuration values",

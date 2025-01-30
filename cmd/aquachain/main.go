@@ -143,43 +143,43 @@ func doinit() *cli.Command {
 		Usage:   "the Aquachain command line interface",
 		Version: params.VersionWithCommit(gitCommit),
 		Flags:   []cli.Flag{},
+		// UsageText: ,
 	}
 	// Initialize the CLI app and start Aquachain
 	app.Action = localConsole // default command is 'console'
-
-	app.HideVersion = true // we have a command to print the version
+	app.HideVersion = true    // we have a command to print the version
 	app.Copyright = "Copyright 2018-2025 The Aquachain Authors"
-	/*
-		app.Commands = []cli.Command{
-			// See chaincmd.go:
-			initCommand,
-			importCommand,
-			exportCommand,
-			copydbCommand,
-			removedbCommand,
-			dumpCommand,
-			// See monitorcmd.go:
-			//monitorCommand,
-			// See accountcmd.go:
-			accountCommand,
 
-			// See walletcmd_lite.go
-			paperCommand,
-			// See consolecmd.go:
-			consoleCommand,
-			daemonCommand, // previously default
-			attachCommand,
-			javascriptCommand,
-			// See misccmd.go:
-			makecacheCommand,
-			makedagCommand,
-			versionCommand,
-			bugCommand,
-			licenseCommand,
-			// See config.go
-			dumpConfigCommand,
-		}
-	*/
+	app.Commands = []*cli.Command{
+		// See chaincmd.go:
+		initCommand,
+		importCommand,
+		exportCommand,
+		copydbCommand,
+		removedbCommand,
+		dumpCommand,
+		// See monitorcmd.go:
+		//monitorCommand,
+		// See accountcmd.go:
+		accountCommand,
+
+		// See walletcmd_lite.go
+		paperCommand,
+		// See consolecmd.go:
+		consoleCommand,
+		daemonCommand, // previously default
+		attachCommand,
+		javascriptCommand,
+		// See misccmd.go:
+		makecacheCommand,
+		makedagCommand,
+		versionCommand,
+		bugCommand,
+		licenseCommand,
+		// See config.go
+		dumpConfigCommand,
+	}
+
 	// sort.Sort(cli.CommandsByName(app.Commands))
 
 	app.Flags = append(app.Flags, nodeFlags...)
@@ -188,28 +188,32 @@ func doinit() *cli.Command {
 	app.Flags = append(app.Flags, debug.Flags...)
 
 	// func(context.Context, *Command) (context.Context, error)
-	app.Before = func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
-		runtime.GOMAXPROCS(runtime.NumCPU())
-		if err := debug.Setup(mainctx, cmd); err != nil {
-			return ctx, err
-		}
-		// Start system runtime metrics collection
-		go metrics.CollectProcessMetrics(3 * time.Second)
+	app.Before = beforeFunc
 
-		utils.SetupNetworkGasLimit(cmd)
-		_, autoalertmode := os.LookupEnv("ALERT_PLATFORM")
-		if autoalertmode {
-			cmd.Set(utils.AlertModeFlag.Name, "true")
-		}
-		return ctx, nil
-	}
-
-	app.After = func(context.Context, *cli.Command) error {
-		debug.Exit()
-		console.Stdin.Close() // Resets terminal mode.
-		return nil
-	}
+	app.After = afterFunc
 	return app
+}
+
+func afterFunc(context.Context, *cli.Command) error {
+	debug.Exit()
+	console.Stdin.Close() // Resets terminal mode.
+	return nil
+}
+
+func beforeFunc(ctx context.Context, cmd *cli.Command) (context.Context, error) {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+	if err := debug.Setup(mainctx, cmd); err != nil {
+		return ctx, err
+	}
+	// Start system runtime metrics collection
+	go metrics.CollectProcessMetrics(3 * time.Second)
+
+	utils.SetupNetworkGasLimit(cmd)
+	_, autoalertmode := os.LookupEnv("ALERT_PLATFORM")
+	if autoalertmode {
+		cmd.Set(utils.AlertModeFlag.Name, "true")
+	}
+	return ctx, nil
 }
 
 func main() {

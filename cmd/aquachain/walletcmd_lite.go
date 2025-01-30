@@ -34,7 +34,7 @@ import (
 )
 
 var (
-	paperCommand = cli.Command{
+	paperCommand = &cli.Command{
 		Name:      "paper",
 		Usage:     `Generate paper wallet keypair`,
 		Flags:     []cli.Flag{&utils.JsonFlag, &utils.VanityFlag, &utils.VanityEndFlag, &paperthreads},

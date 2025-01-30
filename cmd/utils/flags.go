@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/big"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -79,17 +80,19 @@ GLOBAL OPTIONS:
    {{end}}{{end}}
 `
 
-// // NewApp creates an app with sane defaults.
-// func NewApp(gitCommit, usage string) *cli.App {
-// 	app := cli.DefaultAppComplete()
-// 	app.Name = filepath.Base(os.Args[0])
-// 	app.Author = ""
-// 	//app.Authors = nil
-// 	app.Email = ""
-// 	app.Version = params.Version
-// 	app.Usage = usage
-// 	return app
-// }
+// NewApp creates an app with sane defaults.
+func NewApp(gitCommit, usage string) *cli.Command {
+	app := &cli.Command{
+		Name:    filepath.Base(os.Args[0]),
+		Usage:   usage,
+		Version: params.Version,
+	}
+	//app.Flags
+	app.Name = filepath.Base(os.Args[0])
+	app.Version = params.Version
+	app.Usage = usage
+	return app
+}
 
 // These are all the command line flags we support.
 // If you add to this list, please remember to include the

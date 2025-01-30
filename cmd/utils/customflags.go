@@ -38,6 +38,8 @@ type DirectoryString struct {
 	Value string
 }
 
+var _ flag.Getter = (*DirectoryString)(nil)
+
 func (self *DirectoryString) String() string {
 	return self.Value
 }
@@ -45,6 +47,10 @@ func (self *DirectoryString) String() string {
 func (self *DirectoryString) Set(value string) error {
 	self.Value = expandPath(value)
 	return nil
+}
+
+func (self *DirectoryString) Get() any {
+	return self.Value
 }
 
 // Custom cli.Flag type which expand the received string to an absolute path.
@@ -119,6 +125,10 @@ func (v textMarshalerVal) Set(s string) error {
 	return v.v.UnmarshalText([]byte(s))
 }
 
+func (v textMarshalerVal) Get() any {
+	return v.v
+}
+
 // TextMarshalerFlag wraps a TextMarshaler value.
 type TextMarshalerFlag struct {
 	Name  string
@@ -183,6 +193,10 @@ func (b *bigValue) Set(s string) error {
 	}
 	*b = (bigValue)(*int)
 	return nil
+}
+
+func (b *bigValue) Get() any {
+	return (*big.Int)(b)
 }
 
 func (f BigFlag) Names() []string {

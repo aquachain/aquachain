@@ -24,6 +24,7 @@ import (
 
 	"gitlab.com/aquachain/aquachain/p2p"
 	"gitlab.com/aquachain/aquachain/p2p/nat"
+	"gitlab.com/aquachain/aquachain/params"
 )
 
 const (
@@ -65,6 +66,16 @@ func DefaultDataDir() string {
 	}
 	// As we cannot guess a stable location, return empty and handle later
 	return ""
+}
+
+func DefaultDatadirByChain(cfg *params.ChainConfig) string {
+	if cfg == nil {
+		cfg = params.MainnetChainConfig
+	}
+	if cfg == params.MainnetChainConfig {
+		return DefaultDataDir()
+	}
+	return filepath.Join(DefaultDataDir(), cfg.Name())
 }
 
 func homeDir() string {

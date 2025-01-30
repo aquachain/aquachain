@@ -32,7 +32,7 @@ import (
 )
 
 var (
-	makecacheCommand = cli.Command{
+	makecacheCommand = &cli.Command{
 		Action:    utils.MigrateFlags(makecache),
 		Name:      "makecache",
 		Usage:     "Generate aquahash verification cache (for testing)",
@@ -45,7 +45,7 @@ This command exists to support the system testing project.
 Regular users do not need to execute it.
 `,
 	}
-	makedagCommand = cli.Command{
+	makedagCommand = &cli.Command{
 		Action:    utils.MigrateFlags(makedag),
 		Name:      "makedag",
 		Usage:     "Generate aquahash mining DAG (for testing)",
@@ -58,7 +58,7 @@ This command exists to support the system testing project.
 Regular users do not need to execute it.
 `,
 	}
-	versionCommand = cli.Command{
+	versionCommand = &cli.Command{
 		Action:    utils.MigrateFlags(printVersion),
 		Name:      "version",
 		Usage:     "Print version numbers",
@@ -68,7 +68,7 @@ Regular users do not need to execute it.
 The output of this command is supposed to be machine-readable.
 `,
 	}
-	licenseCommand = cli.Command{
+	licenseCommand = &cli.Command{
 		Action:    utils.MigrateFlags(license),
 		Name:      "license",
 		Usage:     "Display license information",

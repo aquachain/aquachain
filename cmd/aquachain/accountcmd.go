@@ -30,7 +30,7 @@ import (
 )
 
 var (
-	accountCommand = cli.Command{
+	accountCommand = &cli.Command{
 		Name:     "account",
 		Usage:    "Manage accounts",
 		Category: "ACCOUNT COMMANDS",
