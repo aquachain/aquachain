@@ -43,6 +43,10 @@ import (
 
 func echo(_ context.Context, cmd *cli.Command) error {
 	fmt.Println("echo")
+	log.Info("echo")
+	for _, v := range cmd.Flags {
+		fmt.Printf("%s: %v (isset=%v)\n", v.Names()[0], v.String(), v.IsSet())
+	}
 	return nil
 }
 
@@ -113,8 +117,7 @@ if already existing.`,
 			utils.CacheFlag,
 			utils.SyncModeFlag,
 			utils.FakePoWFlag,
-			utils.TestnetFlag,
-			utils.Testnet2Flag,
+			utils.ChainFlag,
 		},
 		Category: "BLOCKCHAIN COMMANDS",
 		Description: `
@@ -127,6 +130,7 @@ The first argument must be the directory containing the blockchain to download f
 		ArgsUsage: " ",
 		Flags: []cli.Flag{
 			utils.DataDirFlag,
+			utils.ChainFlag,
 		},
 		Category: "BLOCKCHAIN COMMANDS",
 		Description: `

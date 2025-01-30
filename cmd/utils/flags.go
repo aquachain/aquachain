@@ -119,7 +119,7 @@ var (
 	DataDirFlag = &DirectoryFlag{
 		Name:  "datadir",
 		Usage: "Data directory for the databases, IPC socket, and keystore (also see -keystore flag)",
-		Value: DirectoryString{node.DefaultDataDir()},
+		Value: DirectoryString{node.DefaultDataDir(), false},
 	}
 	KeyStoreDirFlag = &DirectoryFlag{
 		Name:  "keystore",
@@ -138,6 +138,14 @@ var (
 		Name:  "chain",
 		Usage: "Chain select (aqua, testnet, testnet2, testnet3)",
 		Value: "aqua",
+		Action: func(ctx context.Context, cmd *cli.Command, v string) error {
+			cfg := params.GetChainConfig(v)
+			if cfg == nil {
+				return fmt.Errorf("invalid chain name: %q, try one of %q", v, params.ValidChainNames())
+			}
+			// cmd.Set("chain", v)
+			return nil
+		},
 	}
 	AlertModeFlag = &cli.BoolFlag{
 		Name:  "alerts",
@@ -146,22 +154,37 @@ var (
 	TestnetFlag = &cli.BoolFlag{
 		Name:  "testnet",
 		Usage: "Deprecated: use --chain=testnet",
+		Action: func(ctx context.Context, cmd *cli.Command, v bool) error {
+			return fmt.Errorf("flag %q is deprecated, use '-chain <name>'", "testnet")
+		},
 	}
 	Testnet2Flag = &cli.BoolFlag{
 		Name:  "testnet2",
 		Usage: "Deprecated: use --chain=testnet2",
+		Action: func(ctx context.Context, cmd *cli.Command, v bool) error {
+			return fmt.Errorf("flag %q is deprecated, use '-chain <name>'", "testnet2")
+		},
 	}
 	Testnet3Flag = &cli.BoolFlag{
-		Name:  "testnet2",
+		Name:  "testnet3",
 		Usage: "Deprecated: use --chain=testnet3",
+		Action: func(ctx context.Context, cmd *cli.Command, v bool) error {
+			return fmt.Errorf("flag %q is deprecated, use '-chain <name>'", "testnet3")
+		},
 	}
 	NetworkEthFlag = &cli.BoolFlag{
 		Name:  "ethereum",
 		Usage: "Deprecated: dont use",
+		Action: func(ctx context.Context, cmd *cli.Command, v bool) error {
+			return fmt.Errorf("flag %q is deprecated, use '-chain <name>'", "ethereum")
+		},
 	}
 	DeveloperFlag = &cli.BoolFlag{
 		Name:  "dev",
 		Usage: "Ephemeral proof-of-authority network with a pre-funded developer account, mining enabled",
+		Action: func(ctx context.Context, cmd *cli.Command, v bool) error {
+			return fmt.Errorf("flag %q is deprecated, use '-chain <name>'", "dev")
+		},
 	} // TODO: '-chain dev'
 	DeveloperPeriodFlag = &cli.IntFlag{
 		Name:  "dev.period",
@@ -174,7 +197,7 @@ var (
 	DocRootFlag = &DirectoryFlag{
 		Name:  "docroot",
 		Usage: "Working directory for importing JS files into console (default $HOME)",
-		Value: DirectoryString{homeDir()},
+		Value: DirectoryString{homeDir(), false},
 	}
 	FastSyncFlag = &cli.BoolFlag{
 		Name:  "fast",
@@ -218,7 +241,7 @@ var (
 	AquahashDatasetDirFlag = &DirectoryFlag{
 		Name:  "aquahash.dagdir",
 		Usage: "Directory to store the aquahash mining DAGs (default = inside home folder)",
-		Value: DirectoryString{aqua.DefaultConfig.Aquahash.DatasetDir},
+		Value: DirectoryString{aqua.DefaultConfig.Aquahash.DatasetDir, false},
 	}
 	AquahashDatasetsInMemoryFlag = &cli.IntFlag{
 		Name:  "aquahash.dagsinmem",
@@ -597,21 +620,23 @@ func setNodeUserIdent(cmd *cli.Command, cfg *node.Config) {
 // returns chainname, chaincfg, bootnodes, datadir
 func getStuff(cmd *cli.Command) (string, *params.ChainConfig, []*discover.Node, DirectoryConfig) {
 	chainName := cmd.String(ChainFlag.Name)
-	if chainName == "" {
-		switch {
-		case cmd.Bool(TestnetFlag.Name):
-			chainName = "testnet"
-		case cmd.Bool(Testnet2Flag.Name):
-			chainName = "testnet2"
-		case cmd.Bool(Testnet3Flag.Name):
-			chainName = "testnet3"
-		case cmd.Bool(DeveloperFlag.Name):
-			chainName = "dev"
-		default:
-			chainName = "aqua"
-		}
-		cmd.Set(ChainFlag.Name, chainName) // set chainName for later
-	}
+	log.Warn("chainName", "chainName", chainName)
+	// if chainName == "" {
+	// 	switch {
+	// 	case cmd.Bool(TestnetFlag.Name):
+	// 		chainName = "testnet"
+	// 	case cmd.Bool(Testnet2Flag.Name):
+	// 		chainName = "testnet2"
+	// 	case cmd.Bool(Testnet3Flag.Name):
+	// 		chainName = "testnet3"
+	// 	case cmd.Bool(DeveloperFlag.Name):
+	// 		chainName = "dev"
+	// 	default:
+	// 		log.Warn("No chain selected, defaulting to aqua")
+	// 		chainName = "aqua"
+	// 	}
+	// 	cmd.Set(ChainFlag.Name, chainName) // set chainName for later
+	// }
 	if chainName == "" {
 		Fatalf("No chain selected")
 	}
@@ -619,7 +644,7 @@ func getStuff(cmd *cli.Command) (string, *params.ChainConfig, []*discover.Node, 
 	if chaincfg == nil {
 		Fatalf("invalid chain name: %q", cmd.String(ChainFlag.Name))
 	}
-	return chainName, chaincfg, getBootstrapNodes(cmd), switchDatadir(cmd, chainName)
+	return chainName, chaincfg, getBootstrapNodes(cmd), switchDatadir(cmd, chaincfg)
 }
 
 func getBootstrapNodes(cmd *cli.Command) []*discover.Node {
@@ -913,21 +938,21 @@ func SetP2PConfig(cmd *cli.Command, cfg *p2p.Config) {
 	setNodeKey(cmd, cfg)
 	setNAT(cmd, cfg)
 	cfg.ListenAddr = getListenAddress(cmd)
-
-	log.Info("Listen Address:", "addr", cfg.ListenAddr)
 	if cmd.IsSet(MaxPeersFlag.Name) {
 		cfg.MaxPeers = int(cmd.Int(MaxPeersFlag.Name))
 	}
-
-	log.Debug("Maximum peer count", "AQUA", cfg.MaxPeers)
 
 	if cmd.IsSet(MaxPendingPeersFlag.Name) {
 		cfg.MaxPendingPeers = int(cmd.Int(MaxPendingPeersFlag.Name))
 	}
 
 	if cmd.IsSet(OfflineFlag.Name) {
+		log.Info("Offline mode enabled")
 		cfg.NoDiscovery = true
 		cfg.Offline = true
+	} else {
+		log.Info("Listen Address:", "tcp+udp", cfg.ListenAddr)
+		log.Debug("Maximum peer count", "AQUA", cfg.MaxPeers)
 	}
 
 	if cmd.IsSet(NoDiscoverFlag.Name) {
@@ -985,7 +1010,7 @@ type DirectoryConfig struct {
 
 // switchDatadir switches the data directory based on the chain name.
 // override with --datadir
-func switchDatadir(cmd *cli.Command, chainName string) DirectoryConfig {
+func switchDatadir(cmd *cli.Command, chaincfg *params.ChainConfig) DirectoryConfig {
 	var cfg DirectoryConfig
 	// var newdatadir string
 	if cmd.IsSet(KeyStoreDirFlag.Name) {
@@ -993,18 +1018,16 @@ func switchDatadir(cmd *cli.Command, chainName string) DirectoryConfig {
 	}
 	if cmd.IsSet(DataDirFlag.Name) {
 		cfg.DataDir = cmd.String(DataDirFlag.Name)
+		log.Info("set custom datadir", "path", cfg.DataDir)
 	}
-	if cfg.DataDir == "" && chainName == "" {
+	if cfg.DataDir == "" && chaincfg == nil {
 		Fatalf("No chain and no data directory specified. Please specify a chain with --chain or a data directory with --datadir")
 	}
 	if cfg.DataDir != "" {
+		println("datadir already set:", cfg.DataDir)
 		return cfg
 	}
-	if chainName == "aqua" {
-		cfg.DataDir = node.DefaultDataDir()
-	} else {
-		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "chains", chainName)
-	}
+	cfg.DataDir = node.DefaultDatadirByChain(chaincfg)
 	return cfg
 
 	// switch {
@@ -1066,8 +1089,9 @@ func SetNodeConfig(cmd *cli.Command, cfg *node.Config) error {
 	)
 
 	chainName, chaincfg, bootstrapNodes, directoryCfg = getStuff(cmd)
-	log.Info("Loading...", "Chain Select", chainName, "ChainID", chaincfg.ChainId)
+	log.Info("Loading...", "Chain Select", chainName, "ChainID", chaincfg.ChainId, "Datadir", directoryCfg.DataDir)
 	cfg.DataDir = directoryCfg.DataDir
+	cfg.KeyStoreDir = directoryCfg.KeyStoreDir
 	cfg.P2P.ChainId = chaincfg.ChainId.Uint64()
 	cfg.P2P.BootstrapNodes = bootstrapNodes
 
@@ -1169,15 +1193,15 @@ func checkExclusive(cmd *cli.Command, args ...cli.Flag) {
 		// Check if next arg extends current and expand its name if so
 		names := flag.Names()
 		name := names[0]
-
+		option := names[0]
 		if i+1 < len(args) {
 			switch args[i+1].(type) {
-			// case string:
-			// 	// Extended flag, expand the name and shift the arguments
-			// 	if cmd.String(name) == option {
-			// 		name += "=" + option
-			// 	}
-			// 	i++
+			case *cli.StringFlag:
+				// Extended flag, expand the name and shift the arguments
+				if cmd.String(name) == option {
+					name += "=" + option
+				}
+				i++
 
 			case cli.Flag:
 			default:
@@ -1488,14 +1512,14 @@ func MakeConsolePreloads(cmd *cli.Command) []string {
 // When all flags are migrated this function can be removed and the existing
 // configuration functionality must be changed that is uses local flags
 func MigrateFlags(action func(_ context.Context, cmd *cli.Command) error) func(context.Context, *cli.Command) error {
-	// return action
-	return func(ctx context.Context, cmd *cli.Command) error {
-		for _, name := range cmd.FlagNames() {
-			if cmd.IsSet(name) {
-				cmd.Set(name, cmd.String(name))
-			}
-		}
-		log.Info("running action", "name", cmd.Name)
-		return action(ctx, cmd)
-	}
+	return action
+	// return func(ctx context.Context, cmd *cli.Command) error {
+	// 	for _, name := range cmd.FlagNames() {
+	// 		if cmd.IsSet(name) {
+	// 			cmd.Set(name, cmd.String(name))
+	// 		}
+	// 	}
+	// 	log.Info("running action", "name", cmd.Name)
+	// 	return action(ctx, cmd)
+	// }
 }

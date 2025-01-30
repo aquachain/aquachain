@@ -99,10 +99,11 @@ func localConsole(ctx context.Context, cmd *cli.Command) error {
 	if first := cmd.Args().First(); first != "" && first[0] != '-' && first != "console" {
 		return fmt.Errorf("uhoh: %q got here", first)
 	}
-	for i := 10; i >= 0 && ctx.Err() == nil; i-- {
+	for i := 3; i > 0 && ctx.Err() == nil; i-- {
 		log.Info("starting in ...", "seconds", i)
-		println("starting in", i)
-		time.Sleep(time.Second)
+		for i := 0; i < 10 && ctx.Err() == nil; i++ {
+			time.Sleep(time.Second / 10)
+		}
 	}
 	if ctx.Err() != nil {
 		return context.Cause(ctx)
@@ -111,7 +112,7 @@ func localConsole(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("invalid command: %q", args.First())
 	}
 	node := makeFullNode(cmd)
-	startNode(cmd, node)
+	startNode(ctx, cmd, node)
 	defer node.Stop()
 
 	// Attach to the newly started node and start the JavaScript console
@@ -149,7 +150,8 @@ func remoteConsole(ctx context.Context, cmd *cli.Command) error {
 	// Attach to a remotely running aquachain instance and start the JavaScript console
 	endpoint := cmd.Args().First()
 	if endpoint == "" {
-		path := node.DefaultDataDir()
+		chaincfg := params.GetChainConfig(cmd.String(utils.ChainFlag.Name))
+		path := node.DefaultDatadirByChain(chaincfg)
 		if cmd.IsSet(utils.DataDirFlag.Name) {
 			path = cmd.String(utils.DataDirFlag.Name)
 		}
@@ -222,10 +224,10 @@ func dialRPC(endpoint string, socks string) (*rpc.Client, error) {
 // ephemeralConsole starts a new aquachain node, attaches an ephemeral JavaScript
 // console to it, executes each of the files specified as arguments and tears
 // everything down.
-func ephemeralConsole(_ context.Context, cmd *cli.Command) error {
+func ephemeralConsole(ctx context.Context, cmd *cli.Command) error {
 	// Create and start the node based on the CLI flags
 	node := makeFullNode(cmd)
-	startNode(cmd, node)
+	startNode(ctx, cmd, node)
 	defer node.Stop()
 
 	// Attach to the newly started node and start the JavaScript console

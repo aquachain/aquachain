@@ -17,6 +17,7 @@
 package node
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -42,6 +43,7 @@ import (
 
 // Node is a container on which services can be registered.
 type Node struct {
+	ctx      context.Context
 	eventmux *event.TypeMux // Event multiplexer used between the services of a stack
 	config   *Config
 	accman   *accounts.Manager
@@ -139,10 +141,13 @@ func (n *Node) Register(constructor ServiceConstructor) error {
 }
 
 // Start create a live P2P node and starts running it.
-func (n *Node) Start() error {
+func (n *Node) Start(ctx context.Context) error {
 	n.lock.Lock()
 	defer n.lock.Unlock()
-
+	if n.ctx != nil && n.ctx != ctx {
+		return ErrNodeRunning
+	}
+	n.ctx = ctx
 	if n.config.P2P.ChainId == 0 {
 		return fmt.Errorf("no chain id")
 	}
@@ -219,7 +224,7 @@ func (n *Node) Start() error {
 	for _, service := range services {
 		running.Protocols = append(running.Protocols, service.Protocols()...)
 	}
-	if err := running.Start(); err != nil {
+	if err := running.Start(ctx); err != nil {
 		return convertFileLockError(err)
 	}
 	// Start each of the services
@@ -602,7 +607,7 @@ func (n *Node) Restart() error {
 	if err := n.Stop(); err != nil {
 		return err
 	}
-	if err := n.Start(); err != nil {
+	if err := n.Start(n.ctx); err != nil {
 		return err
 	}
 	return nil

@@ -94,6 +94,7 @@ func (s *PublicAquachainAPI) Syncing() (interface{}, error) {
 		"highestBlock":  hexutil.Uint64(progress.HighestBlock),
 		"pulledStates":  hexutil.Uint64(progress.PulledStates),
 		"knownStates":   hexutil.Uint64(progress.KnownStates),
+		"numPeers":      hexutil.Uint64(progress.NumPeers),
 	}, nil
 }
 

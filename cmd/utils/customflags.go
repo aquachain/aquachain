@@ -36,6 +36,7 @@ import (
 // the argument is parsed
 type DirectoryString struct {
 	Value string
+	isSet bool
 }
 
 var _ flag.Getter = (*DirectoryString)(nil)
@@ -44,8 +45,8 @@ func (self *DirectoryString) String() string {
 	return self.Value
 }
 
-func (self *DirectoryString) Set(value string) error {
-	self.Value = expandPath(value)
+func (ds *DirectoryString) Set(value string) error {
+	ds.Value = expandPath(value)
 	return nil
 }
 
@@ -59,7 +60,6 @@ type DirectoryFlag struct {
 	Name  string
 	Value DirectoryString
 	Usage string
-	isSet bool
 }
 
 func (df DirectoryFlag) Names() []string {
@@ -79,7 +79,7 @@ func (self DirectoryFlag) String() string {
 }
 
 func (df DirectoryFlag) IsSet() bool {
-	return df.Value.Value != ""
+	return df.Value.isSet
 }
 
 func (self DirectoryFlag) Get() string {
@@ -100,7 +100,6 @@ func eachName(parts []string, fn func(string)) {
 func (df *DirectoryFlag) Apply(set *flag.FlagSet) error {
 	eachName(df.Names(), func(name string) {
 		set.Var(&df.Value, name, df.Usage)
-		df.isSet = true
 	})
 	return nil
 }
@@ -158,7 +157,6 @@ func (f TextMarshalerFlag) String() string {
 func (f *TextMarshalerFlag) Apply(set *flag.FlagSet) error {
 	eachName(f.Names(), func(name string) {
 		set.Var(textMarshalerVal{f.Value}, f.Name, f.Usage)
-		f.isSet = true
 	})
 	return nil
 }
@@ -227,7 +225,6 @@ func (f BigFlag) String() string {
 func (f *BigFlag) Apply(set *flag.FlagSet) error {
 	eachName(f.Names(), func(name string) {
 		set.Var((*bigValue)(f.Value), f.Name, f.Usage)
-		f.isSet = true
 	})
 	return nil
 }
@@ -265,8 +262,9 @@ func prefixedNames(fullName string) (prefixed string) {
 	return
 }
 
-func (self *DirectoryFlag) Set(value string) {
-	self.Value.Value = value
+func (df *DirectoryFlag) Set(value string) {
+	df.Value.Set(value)
+	df.Value.isSet = true
 }
 
 // Expands a file path

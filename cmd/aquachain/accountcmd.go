@@ -167,6 +167,9 @@ nodes.
 )
 
 func accountList(_ context.Context, cmd *cli.Command) error {
+	if cmd.Bool(utils.NoKeysFlag.Name) {
+		utils.Fatalf("Listing accounts is disabled (-nokeys)")
+	}
 	stack, _ := makeConfigNode(cmd)
 	var index int
 	for _, wallet := range stack.AccountManager().Wallets() {
@@ -180,6 +183,9 @@ func accountList(_ context.Context, cmd *cli.Command) error {
 
 // tries unlocking the specified account a few times.
 func unlockAccount(cmd *cli.Command, ks *keystore.KeyStore, address string, i int, passwords []string) (accounts.Account, string) {
+	if cmd.Bool(utils.NoKeysFlag.Name) {
+		utils.Fatalf("Unlocking accounts is disabled")
+	}
 	account, err := utils.MakeAddress(ks, address)
 	if err != nil {
 		utils.Fatalf("Could not list accounts: %v", err)

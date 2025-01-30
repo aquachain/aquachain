@@ -174,7 +174,7 @@ func makeConfigNode(cmd *cli.Command, s ...cfgopt) (*node.Node, *gethConfig) {
 	// Load defaults.
 	useprev := true
 	for _, v := range s {
-		if v == NoPreviousConfig {
+		if v == NoPreviousConfig { // so dumpconfig doesn't read auto-config without '-config <name>' flag
 			useprev = false
 		}
 	}

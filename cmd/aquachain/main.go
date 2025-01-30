@@ -21,7 +21,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -102,8 +101,6 @@ var (
 		utils.NodeKeyHexFlag,
 		utils.DeveloperFlag,
 		utils.DeveloperPeriodFlag,
-		utils.TestnetFlag,
-		utils.Testnet2Flag,
 		utils.NetworkEthFlag,
 		utils.VMEnableDebugFlag,
 		utils.NetworkIdFlag,
@@ -192,8 +189,6 @@ func doinit() *cli.Command {
 
 	// func(context.Context, *Command) (context.Context, error)
 	app.Before = beforeFunc
-
-	println("ok")
 	app.After = afterFunc
 	return app
 }
@@ -205,13 +200,13 @@ func afterFunc(context.Context, *cli.Command) error {
 }
 
 func beforeFunc(ctx context.Context, cmd *cli.Command) (context.Context, error) {
-	if x := cmd.Args().First(); x != "" && x != "daemon" || x != "console" {
-		return ctx, nil
-	}
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	if err := debug.Setup(mainctx, cmd); err != nil {
 		return ctx, err
+	}
+	if x := cmd.Args().First(); x != "" && x != "daemon" || x != "console" {
+		return ctx, nil
 	}
 	// Start system runtime metrics collection
 	go metrics.CollectProcessMetrics(3 * time.Second)
@@ -233,7 +228,7 @@ func main() {
 		}
 	}
 	if !noenv {
-		godotenv.Load(".env", filepath.Join(node.DefaultDataDir(), ".env"), "/etc/aquachain/.env")
+		godotenv.Load(".env")
 	}
 	app := doinit()
 
@@ -246,9 +241,9 @@ func main() {
 // daemonCommand is the main entry point into the system if the 'daemon' subcommand
 // is ran. It creates a default node based on the command line arguments
 // and runs it in blocking mode, waiting for it to be shut down.
-func daemonStart(_ context.Context, cmd *cli.Command) error {
+func daemonStart(ctx context.Context, cmd *cli.Command) error {
 	node := makeFullNode(cmd)
-	startNode(cmd, node)
+	startNode(ctx, cmd, node)
 	node.Wait()
 	return nil
 }
@@ -256,7 +251,7 @@ func daemonStart(_ context.Context, cmd *cli.Command) error {
 // startNode boots up the system node and all registered protocols, after which
 // it unlocks any requested accounts, and starts the RPC/IPC interfaces and the
 // miner.
-func startNode(cmd *cli.Command, stack *node.Node) {
+func startNode(ctx context.Context, cmd *cli.Command, stack *node.Node) {
 	if !stack.Config().NoKeys {
 		unlocks := strings.Split(cmd.String(utils.UnlockedAccountFlag.Name), ",")
 		if len(unlocks) > 0 && unlocks[0] != "" {
@@ -272,7 +267,7 @@ func startNode(cmd *cli.Command, stack *node.Node) {
 		}
 	}
 	// Start up the node itself
-	utils.StartNode(stack)
+	utils.StartNode(ctx, stack)
 
 	// Register wallet event handlers to open and auto-derive wallets
 	if !stack.Config().NoKeys {

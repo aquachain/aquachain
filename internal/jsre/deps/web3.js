@@ -3145,7 +3145,7 @@ module.exports = {
     },
     InvalidResponse: function (result){
         var message = !!result && !!result.error && !!result.error.message ? result.error.message : 'Invalid JSON RPC response: ' + JSON.stringify(result);
-        return new Error(message);
+        return new Error("Invalid Response: "+message);
     },
     ConnectionTimeout: function (ms){
         return new Error('CONNECTION TIMEOUT: timeout of ' + ms + ' ms achived');
@@ -3947,6 +3947,9 @@ var outputSyncingFormatter = function(result) {
     if (result.knownStates) {
         result.knownStates = utils.toDecimal(result.knownStates);
         result.pulledStates = utils.toDecimal(result.pulledStates);
+    }
+    if (result.numPeers) {
+        result.numPeers = utils.toDecimal(result.numPeers);
     }
 
     return result;
@@ -5475,7 +5478,8 @@ var properties = function () {
     return [
         new Property({
             name: 'coinbase',
-            getter: 'aqua_coinbase'
+            getter: 'aqua_coinbase',
+            allowNull: true     
         }),
         new Property({
             name: 'mining',

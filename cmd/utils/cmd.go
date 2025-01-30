@@ -19,6 +19,7 @@ package utils
 
 import (
 	"compress/gzip"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -84,8 +85,8 @@ func Fatalf(format string, args ...interface{}) {
 	os.Exit(111)
 }
 
-func StartNode(stack *node.Node) {
-	if err := stack.Start(); err != nil {
+func StartNode(ctx context.Context, stack *node.Node) {
+	if err := stack.Start(ctx); err != nil {
 		Fatalf("Error starting protocol stack: %v", err)
 	}
 	go func() {

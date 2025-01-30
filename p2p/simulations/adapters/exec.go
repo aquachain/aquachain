@@ -425,7 +425,7 @@ func execP2PNode() {
 	}
 
 	// start the stack
-	if err := stack.Start(); err != nil {
+	if err := stack.Start(context.TODO()); err != nil {
 		log.Crit("error stating node stack", "err", err)
 	}
 

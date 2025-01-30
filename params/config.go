@@ -21,6 +21,7 @@ import (
 	"math/big"
 
 	"gitlab.com/aquachain/aquachain/common"
+	"gitlab.com/aquachain/aquachain/common/log"
 )
 
 var (
@@ -213,6 +214,7 @@ type ChainConfig struct {
 func GetChainConfig(name string) *ChainConfig {
 	switch name {
 	default:
+		log.Warn("Unknown chain config", "name", name)
 		return nil
 	case "aqua", "mainnet", "aquachain":
 		return MainnetChainConfig

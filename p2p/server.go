@@ -18,6 +18,7 @@
 package p2p
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -379,13 +380,16 @@ func (s *sharedUDPConn) Close() error {
 
 // Start starts running the server.
 // Servers can not be re-used after stopping.
-func (srv *Server) Start() (err error) {
+func (srv *Server) Start(ctx context.Context) (err error) {
 	if srv.Config.Offline {
 		return nil
 	}
-	for i := 0; i < 10; i++ {
+	for i := 10; i > 0 && ctx.Err() == nil; i-- {
 		log.Info("Starting P2P networking", "in", i, "on", srv.ListenAddr, "chain", srv.Config.Name)
-		time.Sleep(1 * time.Second)
+		for i := 0; i < 10 && ctx.Err() == nil; i++ {
+			time.Sleep(time.Second / 10)
+		}
+
 	}
 	srv.lock.Lock()
 	defer srv.lock.Unlock()

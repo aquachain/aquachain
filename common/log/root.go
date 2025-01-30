@@ -33,7 +33,11 @@ func init() {
 // New returns a new logger with the given context.
 // New is a convenient alias for Root().New
 func New(ctx ...interface{}) Logger {
-	return root.New(ctx...)
+	println("New Logger")
+
+	logger := root.New(ctx...)
+	// logger.Error("New Logger Created")
+	return logger
 }
 
 // Root returns the root logger

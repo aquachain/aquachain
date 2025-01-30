@@ -277,6 +277,7 @@ type rpcProgress struct {
 	HighestBlock  hexutil.Uint64
 	PulledStates  hexutil.Uint64
 	KnownStates   hexutil.Uint64
+	NumPeers      hexutil.Uint64
 }
 
 // SyncProgress retrieves the current progress of the sync algorithm. If there's
@@ -301,6 +302,7 @@ func (c *Client) SyncProgress(ctx context.Context) (*aquachain.SyncProgress, err
 		HighestBlock:  uint64(progress.HighestBlock),
 		PulledStates:  uint64(progress.PulledStates),
 		KnownStates:   uint64(progress.KnownStates),
+		NumPeers:      uint64(progress.NumPeers),
 	}, nil
 }
 

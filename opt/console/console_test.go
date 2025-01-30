@@ -118,7 +118,7 @@ func newTester(t *testing.T, confOverride func(*aqua.Config)) *tester {
 		t.Fatalf("failed to register Aquachain protocol: %v", err)
 	}
 	// Start the node and assemble the JavaScript console around it
-	if err = stack.Start(); err != nil {
+	if err = stack.Start(context.Background()); err != nil {
 		t.Fatalf("failed to start test stack: %v", err)
 	}
 	client, err := stack.Attach()

@@ -17,6 +17,7 @@
 package p2p
 
 import (
+	"context"
 	"errors"
 	"math/rand"
 	"net"
@@ -79,7 +80,7 @@ func startTestServer(t *testing.T, id discover.NodeID, pf func(*Peer)) *Server {
 		newPeerHook:  pf,
 		newTransport: func(fd net.Conn) transport { return newTestTransport(id, fd) },
 	}
-	if err := server.Start(); err != nil {
+	if err := server.Start(context.Background()); err != nil {
 		t.Fatalf("Could not start server: %v", err)
 	}
 	return server
@@ -334,7 +335,7 @@ func TestServerAtCap(t *testing.T) {
 			ChainId:      333,
 		},
 	}
-	if err := srv.Start(); err != nil {
+	if err := srv.Start(context.Background()); err != nil {
 		t.Fatalf("could not start: %v", err)
 	}
 	defer srv.Stop()
@@ -441,7 +442,7 @@ func TestServerSetupConn(t *testing.T) {
 			log:          log.New(),
 		}
 		if !test.dontstart {
-			if err := srv.Start(); err != nil {
+			if err := srv.Start(context.Background()); err != nil {
 				t.Fatalf("couldn't start server: %v", err)
 			}
 		}

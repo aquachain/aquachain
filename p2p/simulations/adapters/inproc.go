@@ -17,6 +17,7 @@
 package adapters
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math"
@@ -250,7 +251,7 @@ func (self *SimNode) Start(snapshots map[string][]byte) error {
 		return regErr
 	}
 
-	if err := self.node.Start(); err != nil {
+	if err := self.node.Start(context.TODO()); err != nil {
 		return err
 	}
 

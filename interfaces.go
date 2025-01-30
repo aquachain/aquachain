@@ -110,6 +110,7 @@ type SyncProgress struct {
 	HighestBlock  uint64 // Highest alleged block number in the chain
 	PulledStates  uint64 // Number of state trie entries already downloaded
 	KnownStates   uint64 // Total number of state trie entries known about
+	NumPeers      uint64 // Number of peers currently connected to the client
 }
 
 // ChainSyncReader wraps access to the node's current sync status. If there's no

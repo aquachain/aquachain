@@ -22,12 +22,10 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
-	"syscall"
 
 	colorable "github.com/mattn/go-colorable"
 	"github.com/peterh/liner"
@@ -190,7 +188,7 @@ func (c *Console) init(preload []string) error {
 	if err != nil {
 		return fmt.Errorf("api modules: %v", err)
 	}
-	flatten := "var aqua = web3.aqua; console.log('WOW'.toLowerCase(), web3.aqua); var personal = web3.personal; "
+	flatten := "var aqua = web3.aqua; var personal = web3.personal; "
 	for api := range apis {
 		log.Info("js api...", "api", api)
 		if api == "web3" {
@@ -208,6 +206,10 @@ func (c *Console) init(preload []string) error {
 		}
 	}
 	if _, err = c.jsre.Run(flatten); err != nil {
+		return fmt.Errorf("namespace flattening: %v", err)
+	}
+
+	if _, err = c.jsre.Run("console.log('WOW'.toLowerCase(), JSON.stringify(Object.keys(web3.aqua))); "); err != nil {
 		return fmt.Errorf("namespace flattening: %v", err)
 	}
 	// Initialize the global name register (disabled for now)
@@ -437,16 +439,16 @@ func (c *Console) Interactive(ctx context.Context, donefn func()) {
 		}
 	}()
 	// Monitor Ctrl-C too in case the input is empty and we need to bail
-	abort := make(chan os.Signal, 1)
-	log.Info("interactive console waiting for interrupt")
-	signal.Notify(abort, syscall.SIGINT, syscall.SIGTERM)
+	// abort := make(chan os.Signal, 1)
+	// log.Info("interactive console waiting for interrupt")
+	// signal.Notify(abort, syscall.SIGINT, syscall.SIGTERM)
 
 	// Start sending prompts to the user and reading back inputs
 	for {
 		// Send the next prompt, triggering an input read and process the result
 		scheduler <- prompt
 		select {
-		case <-abort:
+		case <-ctx.Done():
 			// User forcefully quite the console
 			fmt.Fprintln(c.printer, "caught interrupt, exiting")
 			return

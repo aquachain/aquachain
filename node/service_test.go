@@ -17,6 +17,7 @@
 package node
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -90,7 +91,7 @@ func TestContextServices(t *testing.T) {
 		t.Fatalf("latter failed to register service: %v", err)
 	}
 	// Start the protocol stack and ensure services are constructed in order
-	if err := stack.Start(); err != nil {
+	if err := stack.Start(context.Background()); err != nil {
 		t.Fatalf("failed to start stack: %v", err)
 	}
 	defer stack.Stop()
