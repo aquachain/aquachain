@@ -309,9 +309,10 @@ var (
 		Value: int64(runtime.NumCPU()),
 	}
 	TargetGasLimitFlag = cli.UintFlag{
-		Name:  "targetgaslimit",
-		Usage: "Target gas limit sets the artificial target gas floor for the blocks to mine",
-		Value: params.GenesisGasLimit,
+		Name:        "targetgaslimit",
+		Usage:       "Target gas limit sets the artificial target gas floor for the blocks to mine",
+		Value:       params.GenesisGasLimit,
+		Destination: &params.TargetGasLimit,
 	}
 	AquabaseFlag = cli.StringFlag{
 		Name:  "aquabase",
