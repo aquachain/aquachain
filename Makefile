@@ -3,7 +3,8 @@ GOOS ?= $(shell ${GOCMD} env GOOS)
 GOARCH ?= $(shell ${GOCMD} env GOARCH)
 PREFIX ?= /usr/local
 GOPATH ?= $(shell go env GOPATH)
-GOTAGS ?= netgo osusergo static
+tags ?= netgo osusergo static
+LINKER_FLAGS ?= -s -w
 
 export GOPATH
 define LOGO
@@ -57,16 +58,16 @@ endif
 # use ${GOCMD} for "net" and "os/user" packages (cgo by default)
 #GO_TAGS := static
 
-TAGS64 := $(shell printf "$(GOTAGS) $(tags)"|base64 | tr -d '\r\n' | tr -d '\n')
+TAGS64 := $(shell printf "$(tags)"|base64 | tr -d '\r\n' | tr -d '\n')
 ifneq (1,$(cgo))
 #GO_FLAGS += -tags 'netgo osusergo static $(GO_TAGS)'
 else
 GO_FLAGS += -installsuffix cgo
-LD_FLAGS += -linkmode external -extldflags -static
+LINKER_FLAGS += -linkmode external -extldflags -static
 endif
 
-LD_FLAGS := -X main.gitCommit=${COMMITHASH} -X main.buildDate=${shell date -u +%s} -s -w 
-LD_FLAGS += -X gitlab.com/aquachain/aquachain/params.BuildTags=${TAGS64}
+LINKER_FLAGS = -X main.gitCommit=${COMMITHASH} -X main.buildDate=${shell date -u +%s} -s -w 
+LINKER_FLAGS += -X gitlab.com/aquachain/aquachain/params.buildtags=${TAGS64}
 
 ## if release=1, rebuild all sources
 ifeq (1,$(release))
@@ -77,33 +78,54 @@ codename=release
 endif
 endif
 
-# still x.x.x from previous release, no dash
 ifeq (,$(codename))
 codename=dev
 endif
 
-LD_FLAGS += -X gitlab.com/aquachain/aquachain/params.VersionMeta=${codename}
-GO_FLAGS += -ldflags '$(LD_FLAGS)'
+LINKER_FLAGS += -X gitlab.com/aquachain/aquachain/params.VersionMeta=${codename}
+GO_FLAGS += -ldflags '$(LINKER_FLAGS)'
 
-export GOFILES=$(shell find . -iname '*.go' -type f | grep -v /vendor/ | grep -v /build/)
+# rebuild if any go file changes
+export GOFILES=$(shell find . -name '*.go' -type f -not \( -path "./vendor/*" -o -path "./build/*" \))
+# export GOFILES=$(shell find . -iname '*.go' -type f -not \( -path "./vendor/*" -o -path "./build/*" \) | grep -v /vendor/ | grep -v /build/)
 # build shorttarget, aquachain for host OS/ARCH
 # shorttarget = "bin/aquachain" or "bin/aquachain.exe"
 shorttarget=$(build_dir)/aquachain$(winextension)
 default_arch_target=$(build_dir)/$(maincmd_name)-$(GOOS)-$(GOARCH)$(winextension)
 $(shorttarget): $(GOFILES)
-	CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build -tags '$(GOTAGS) $(tags)' $(GO_FLAGS) -o $@ $(aquachain_cmd)
+	CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build -tags '$(tags)' $(GO_FLAGS) -o $@ $(aquachain_cmd)
 	@echo compiled: $(shorttarget)
 	@sha256sum $(shorttarget) 2>/dev/null || true
 	@file $(shorttarget) 2>/dev/null || true
-default: $(default_arch_target)
-	@echo compiled: $<
-	@sha256sum $< 2>/dev/null || true
-	@file $< 2>/dev/null || true
+default: $(shorttarget)
+echo: # useful lol
+	@echo "GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=$(CGO_ENABLED)"
+	@echo GOCMD $(GOCMD)
+	@echo GOFILES $(GOFILES)
+	@echo shorttarget $(shorttarget)
+	@echo default_arch_target $(default_arch_target)
+	@echo GO_FLAGS $(GO_FLAGS)
+	@echo aquachain_cmd $(aquachain_cmd)
+	@echo tags $(tags)
+	@echo GOTAGS $(GOTAGS)
+	@echo GOOS $(GOOS)
+	@echo GOARCH $(GOARCH)
+	@echo COMMITHASH $(COMMITHASH)
+	@echo version $(version)
+	@echo codename $(codename)
+	@echo LINKER_FLAGS $(LINKER_FLAGS)
+	@echo TAGS64 $(TAGS64)
+	@echo cgo $(cgo)
+
+# default: $(default_arch_target)
+# 	@echo compiled: $<
+# 	@sha256sum $< 2>/dev/null || true
+# 	@file $< 2>/dev/null || true
 bootnode: bin/aquabootnode
 bin/aquabootnode: $(GOFILES)
-	CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build -tags '$(GOTAGS) $(tags)' $(GO_FLAGS) -o bin/aquabootnode ./cmd/aquabootnode
+	CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build -tags '$(tags)' $(GO_FLAGS) -o bin/aquabootnode ./cmd/aquabootnode
 
-.PHONY += default hash
+.PHONY += default bootnode hash
 echoflags:
 	@echo "CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build $(GO_FLAGS) -o $@ $(aquachain_cmd)"
 
@@ -142,7 +164,7 @@ help:
 	@echo to install system-wide, run something like \'sudo make install\'
 	@echo
 	@echo "to cross-compile, try 'make cross' or 'make GOOS=windows'"
-	@echo "to add things left out by default, use tags: 'make cgo=1'"
+	@echo "to add things left out by default, use tags: 'make tags=metrics'"
 	@echo
 	@echo "clean compile package release: 'make clean release release=1'"
 	@echo
