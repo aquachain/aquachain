@@ -29,6 +29,7 @@ import (
 	"syscall"
 	"time"
 
+	"gitlab.com/aquachain/aquachain/aqua"
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/alerts"
 	"gitlab.com/aquachain/aquachain/common/log"
@@ -255,4 +256,15 @@ func ExportAppendChain(blockchain *core.BlockChain, fn string, first uint64, las
 	}
 	log.Info("Exported blockchain to", "file", fn)
 	return nil
+}
+
+type EthstatsConfig struct {
+	URL string `toml:",omitempty"`
+}
+
+type AquachainConfig struct {
+	Info      any            `toml:",omitempty"` // this is so config file can have a comment at the top and still parse
+	Aqua      aqua.Config    // aquachain config
+	Node      node.Config    // p2p node config
+	Aquastats EthstatsConfig `toml:",omitempty"`
 }

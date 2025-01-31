@@ -639,10 +639,12 @@ func getStuff(cmd *cli.Command) (string, *params.ChainConfig, []*discover.Node, 
 	// }
 	if chainName == "" {
 		Fatalf("No chain selected")
+		panic("no chain name")
 	}
 	chaincfg := params.GetChainConfig(chainName)
 	if chaincfg == nil {
 		Fatalf("invalid chain name: %q", cmd.String(ChainFlag.Name))
+		panic("bad chain name")
 	}
 	return chainName, chaincfg, getBootstrapNodes(cmd), switchDatadir(cmd, chaincfg)
 }

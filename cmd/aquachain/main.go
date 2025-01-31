@@ -111,7 +111,7 @@ var (
 		utils.GpoBlocksFlag,
 		utils.GpoPercentileFlag,
 		utils.ExtraDataFlag,
-		configFileFlag,
+		utils.ConfigFileFlag,
 		utils.HF8MainnetFlag,
 		utils.ChainFlag,
 	}

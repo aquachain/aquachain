@@ -363,7 +363,7 @@ func copyDb(_ context.Context, cmd *cli.Command) error {
 }
 
 func removeDB(_ context.Context, cmd *cli.Command) error {
-	stack, _ := makeConfigNode(cmd)
+	stack, _ := utils.MakeConfigNode(cmd, gitCommit, clientIdentifier)
 
 	name := "chaindata"
 	// Ensure the database exists in the first place

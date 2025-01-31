@@ -28,6 +28,7 @@ import (
 	"strings"
 
 	"github.com/urfave/cli/v3"
+	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/common/math"
 )
 
@@ -54,6 +55,11 @@ func (self *DirectoryString) Get() any {
 	return self.Value
 }
 
+func (df *DirectoryFlag) Set(value string) {
+	df.Value.Set(value)
+	df.Value.isSet = true
+}
+
 // Custom cli.Flag type which expand the received string to an absolute path.
 // e.g. ~/.aquachain -> /home/username/.aquachain
 type DirectoryFlag struct {
@@ -70,12 +76,12 @@ func (df DirectoryFlag) GetName() string {
 	return df.Name
 }
 
-func (self DirectoryFlag) String() string {
+func (df DirectoryFlag) String() string {
 	fmtString := "%s %v\t%v"
-	if len(self.Value.Value) > 0 {
+	if len(df.Value.Value) > 0 {
 		fmtString = "%s \"%v\"\t%v"
 	}
-	return fmt.Sprintf(fmtString, prefixedNames(self.Name), self.Value.Value, self.Usage)
+	return fmt.Sprintf(fmtString, prefixedNames(df.Name), df.Value.Value, df.Usage)
 }
 
 func (df DirectoryFlag) IsSet() bool {
@@ -118,7 +124,10 @@ func (v textMarshalerVal) String() string {
 	if v.v == nil {
 		return ""
 	}
-	text, _ := v.v.MarshalText()
+	text, err := v.v.MarshalText()
+	if err != nil {
+		log.Warn("failed to marshal text", "err", err.Error())
+	}
 	return string(text)
 }
 
@@ -260,11 +269,6 @@ func prefixedNames(fullName string) (prefixed string) {
 		}
 	}
 	return
-}
-
-func (df *DirectoryFlag) Set(value string) {
-	df.Value.Set(value)
-	df.Value.isSet = true
 }
 
 // Expands a file path

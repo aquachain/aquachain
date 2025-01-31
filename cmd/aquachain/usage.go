@@ -75,7 +75,7 @@ var AppHelpFlagGroups = []flagGroup{
 	{
 		Name: "Aquachain",
 		Flags: []cli.Flag{
-			configFileFlag,
+			utils.ConfigFileFlag,
 			utils.DataDirFlag,
 			utils.KeyStoreDirFlag,
 			utils.UseUSBFlag,

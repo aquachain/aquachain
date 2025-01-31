@@ -169,7 +169,7 @@ func remoteConsole(ctx context.Context, cmd *cli.Command) error {
 		endpoint = fmt.Sprintf("%s/aquachain.ipc", path)
 	}
 	socks := cmd.String("socks")
-	client, err := dialRPC(endpoint, socks)
+	client, err := dialRPC(endpoint, socks, clientIdentifier)
 	if err != nil {
 		utils.Fatalf("Unable to attach to remote aquachain: %v", err)
 	}
@@ -201,7 +201,7 @@ func remoteConsole(ctx context.Context, cmd *cli.Command) error {
 // dialRPC returns a RPC client which connects to the given endpoint.
 // The check for empty endpoint implements the defaulting logic
 // for "aquachain attach" and "aquachain monitor" with no argument.
-func dialRPC(endpoint string, socks string) (*rpc.Client, error) {
+func dialRPC(endpoint string, socks string, clientIdentifier string) (*rpc.Client, error) {
 	/* log.Info("Dialing RPC server", "endpoint", endpoint)
 	if socks != "" {
 		log.Info("+SOCKS5")

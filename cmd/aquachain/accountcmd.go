@@ -170,7 +170,7 @@ func accountList(_ context.Context, cmd *cli.Command) error {
 	if cmd.Bool(utils.NoKeysFlag.Name) {
 		utils.Fatalf("Listing accounts is disabled (-nokeys)")
 	}
-	stack, _ := makeConfigNode(cmd)
+	stack, _ := utils.MakeConfigNode(cmd, gitCommit, clientIdentifier)
 	var index int
 	for _, wallet := range stack.AccountManager().Wallets() {
 		for _, account := range wallet.Accounts() {
@@ -271,10 +271,10 @@ func ambiguousAddrRecovery(ks *keystore.KeyStore, err *keystore.AmbiguousAddrErr
 
 // accountCreate creates a new account into the keystore defined by the CLI flags.
 func accountCreate(_ context.Context, cmd *cli.Command) error {
-	cfg := gethConfig{Node: defaultNodeConfig()}
+	cfg := utils.AquachainConfig{Node: utils.DefaultNodeConfig(gitCommit, clientIdentifier)}
 	// Load config file.
-	if file := cmd.String(configFileFlag.Name); file != "" {
-		if err := loadConfig(file, &cfg); err != nil {
+	if file := cmd.String(utils.ConfigFileFlag.Name); file != "" {
+		if err := utils.LoadConfigFromFile(file, &cfg); err != nil {
 			utils.Fatalf("%v", err)
 		}
 	}
@@ -302,7 +302,7 @@ func accountUpdate(_ context.Context, cmd *cli.Command) error {
 	if cmd.Args().Len() == 0 {
 		utils.Fatalf("No accounts specified to update")
 	}
-	stack, _ := makeConfigNode(cmd)
+	stack, _ := utils.MakeConfigNode(cmd, gitCommit, clientIdentifier)
 	ks := stack.AccountManager().Backends(keystore.KeyStoreType)[0].(*keystore.KeyStore)
 
 	for _, addr := range cmd.Args().Slice() {
@@ -324,7 +324,7 @@ func accountImport(_ context.Context, cmd *cli.Command) error {
 	if err != nil {
 		utils.Fatalf("Failed to load the private key: %v", err)
 	}
-	stack, _ := makeConfigNode(cmd)
+	stack, _ := utils.MakeConfigNode(cmd, gitCommit, clientIdentifier)
 	passphrase := getPassPhrase("Your new account is locked with a password. Please give a password. Do not forget this password.", true, 0, utils.MakePasswordList(cmd))
 
 	ks := stack.AccountManager().Backends(keystore.KeyStoreType)[0].(*keystore.KeyStore)
