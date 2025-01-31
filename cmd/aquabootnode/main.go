@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -48,22 +49,55 @@ type BootstrapConfig struct {
 }
 
 var bootstrapcfg = BootstrapConfig{
-	ChainId:      0,
-	ChainName:    "",
-	Bootnodes:    nil,
+	ChainId:      params.MainnetChainConfig.ChainId.Uint64(),
+	ChainName:    "aqua",
+	Bootnodes:    params.MainnetBootnodes.ToDiscoverNodes(),
 	AnnounceAddr: nil,
 	NetRestrict:  nil,
-	Addr:         net.UDPAddr{},
+	Addr:         net.UDPAddr{IP: net.IPv4zero, Port: 21000},
 }
 
 func main() {
 	flag.Func("addr", "listen address, port implies chainid and chainname unless set explicitly", func(s string) error {
-		if strings.HasPrefix(s, ":") {
-			s = "0.0.0.0" + s
+		println("parsing:", s)
+		if s == "" {
+			return nil
 		}
-		bootstrapcfg.Addr.IP = net.ParseIP(s)
+		if strings.HasPrefix(s, ":") {
+			s = "0.0.0.0" + s // ipv4 only
+		}
+		if ip := net.ParseIP(s); ip != nil {
+			bootstrapcfg.Addr.IP = ip
+		}
 		if bootstrapcfg.Addr.IP == nil || bootstrapcfg.Addr.IP.To4() == nil {
 			return fmt.Errorf("invalid IP address: %v", s)
+		}
+		if _, port, err := net.SplitHostPort(s); err == nil {
+			p, err := strconv.Atoi(port)
+			if err != nil {
+				return fmt.Errorf("invalid port: %v", port)
+			}
+			bootstrapcfg.Addr.Port = p
+		}
+		switch bootstrapcfg.Addr.Port {
+		default:
+			return fmt.Errorf("invalid port: %v", bootstrapcfg.Addr.Port)
+		case params.MainnetChainConfig.DefaultBootstrapPort:
+			bootstrapcfg.ChainId = params.MainnetChainConfig.ChainId.Uint64()
+			bootstrapcfg.ChainName = "mainnet"
+			bootstrapcfg.Bootnodes = params.MainnetBootnodes.ToDiscoverNodes()
+		case params.TestnetChainConfig.DefaultBootstrapPort:
+			bootstrapcfg.ChainId = params.TestnetChainConfig.ChainId.Uint64()
+			bootstrapcfg.ChainName = "testnet"
+			bootstrapcfg.Bootnodes = params.TestnetBootnodes.ToDiscoverNodes()
+		case params.Testnet2ChainConfig.DefaultBootstrapPort:
+			bootstrapcfg.ChainId = params.Testnet2ChainConfig.ChainId.Uint64()
+			bootstrapcfg.ChainName = "testnet2"
+			bootstrapcfg.Bootnodes = params.Testnet2Bootnodes.ToDiscoverNodes()
+		case params.Testnet3ChainConfig.DefaultBootstrapPort:
+			bootstrapcfg.ChainId = params.Testnet3ChainConfig.ChainId.Uint64()
+			bootstrapcfg.ChainName = "testnet3"
+			bootstrapcfg.Bootnodes = nil
 		}
 		return nil
 	})
@@ -108,11 +142,26 @@ func main() {
 	flag.Uint64Var(&bootstrapcfg.ChainId, "chainid", bootstrapcfg.ChainId, "chain id for p2p communication (deprecated, use chain flag)")
 	flag.StringVar(&bootstrapcfg.ChainName, "chain", bootstrapcfg.ChainName, "chain name to get chainid from config (aqua, mainnet, testnet, testnet2 ...)")
 	flag.BoolVar(&debug, "debug", debug, "debug mode (only shows line numbers, see -verbosity 9 for full debug)")
+	var colormode bool = true
+	flag.BoolVar(&colormode, "color", colormode, "colorize log output (default on when attached to terminal)")
 	var (
-		nodeKey *btcec.PrivateKey
-		err     error
+		// nodeKey *btcec.PrivateKey
+		err error
 	)
 	flag.Parse()
+	glogger := log.NewGlogHandler(log.StreamHandler(os.Stderr, log.TerminalFormat(colormode)))
+	glogger.Verbosity(log.Lvl(verbosity))
+	glogger.Vmodule(vmodule)
+	log.Root().SetHandler(glogger)
+	if debug {
+		log.PrintOrigins(true) // show line numbers
+	}
+
+	nodeKey := bootstrapcfg.nodekey
+	if nodeKey == nil {
+		log.Error("no private key set (-nodekey flag), for example, use -nodekey ~/.aquachain/aquachain/nodekey")
+		os.Exit(1)
+	}
 
 	// subcommands
 	switch {
@@ -131,9 +180,9 @@ func main() {
 	}
 
 	// serving...
-	servebootstrap(bootstrapcfg, vmodule, debug, verbosity)
+	servebootstrap(bootstrapcfg)
 }
-func servebootstrap(bootstrapcfg BootstrapConfig, vmodule string, debug bool, verbosity int) {
+func servebootstrap(bootstrapcfg BootstrapConfig) {
 	addr := bootstrapcfg.Addr
 	if bootstrapcfg.ChainName != "" { // get port from chain name
 		cfg := params.GetChainConfig(bootstrapcfg.ChainName)
@@ -161,7 +210,7 @@ func servebootstrap(bootstrapcfg BootstrapConfig, vmodule string, debug bool, ve
 			// no port change
 		}
 	} else {
-		switch addr.Port {
+		switch addr.Port { // no custom chain, use port number to guess
 		case params.MainnetChainConfig.DefaultBootstrapPort:
 			bootstrapcfg.ChainId = params.MainnetChainConfig.ChainId.Uint64()
 			bootstrapcfg.ChainName = "mainnet"
@@ -178,14 +227,7 @@ func servebootstrap(bootstrapcfg BootstrapConfig, vmodule string, debug bool, ve
 			bootstrapcfg.ChainName = "unknown"
 			// keep chainid
 		}
-	}
-
-	glogger := log.NewGlogHandler(log.StreamHandler(os.Stderr, log.TerminalFormat(false)))
-	glogger.Verbosity(log.Lvl(verbosity))
-	glogger.Vmodule(vmodule)
-	log.Root().SetHandler(glogger)
-	if debug {
-		log.PrintOrigins(true) // show line numbers
+		log.Info("chain set", "chain", bootstrapcfg.ChainName, "port", addr.Port, "chainid", bootstrapcfg.ChainId)
 	}
 
 	natm, err := nat.Parse(bootstrapcfg.Nat)
