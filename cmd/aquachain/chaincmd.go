@@ -44,7 +44,7 @@ import (
 func echo(_ context.Context, cmd *cli.Command) error {
 	fmt.Println("echo")
 	log.Info("echo")
-	for _, v := range cmd.Flags {
+	for _, v := range cmd.Root().Flags {
 		fmt.Printf("%s: %v (isset=%v)\n", v.Names()[0], v.String(), v.IsSet())
 	}
 	return nil
