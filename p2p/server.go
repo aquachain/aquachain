@@ -135,6 +135,8 @@ type Config struct {
 
 	// Offline
 	Offline bool
+
+	// ChainID is required
 	ChainId uint64
 }
 

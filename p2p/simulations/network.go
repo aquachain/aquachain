@@ -132,7 +132,7 @@ func (self *Network) NewNodeWithConfig(conf *adapters.NodeConfig) (*Node, error)
 		Node:   adapterNode,
 		Config: conf,
 	}
-	log.Trace(fmt.Sprintf("node %v created", id))
+	log.Info(fmt.Sprintf("node %v created", id))
 	self.nodeMap[id] = len(self.Nodes)
 	self.Nodes = append(self.Nodes, node)
 

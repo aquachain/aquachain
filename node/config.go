@@ -50,14 +50,16 @@ const (
 type Config struct {
 	// Name sets the instance name of the node. It must not contain the / character and is
 	// used in the devp2p node identifier. Instance name of aquachain is "aquachain".
+	//
+	// Set by the compiler, TODO remove and use global
 	Name string `toml:"-"`
-
-	// UserIdent, if set, is used as an additional component in the devp2p node identifier.
-	UserIdent string `toml:",omitempty"`
 
 	// Version should be set to the version number of the program. It is used
 	// in the devp2p node identifier.
 	Version string `toml:"-"`
+
+	// UserIdent, if set, is used as an additional component in the devp2p node identifier.
+	UserIdent string `toml:",omitempty"`
 
 	// DataDir is the file system folder the node should use for any data storage
 	// requirements. The configured data directory will not be directly shared with
@@ -237,8 +239,7 @@ func DefaultWSEndpoint() string {
 func GetNodeName(c *Config) string {
 	name := c.Name // main name of program
 	if name == "" || name == "aquachain" {
-		panic("empty c.Name")
-		name = "Aquachain"
+		panic("empty c.Name:" + name)
 	}
 	if c.UserIdent != "" {
 		name += "-" + c.UserIdent // e.g. Aquachain-supercoolpool

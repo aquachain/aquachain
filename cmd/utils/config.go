@@ -63,7 +63,13 @@ var tomlSettings = toml.Config{
 		if unicode.IsUpper(rune(rt.Name()[0])) && rt.PkgPath() != "main" {
 			link = fmt.Sprintf(", see https://pkg.go.dev/%s#%s for available fields", rt.PkgPath(), rt.Name())
 		}
-		return fmt.Errorf("field '%s' is not defined in %s%s", field, rt.String(), link)
+		err := fmt.Errorf("field '%s' is not defined in %s%s", field, rt.String(), link)
+		if os.Getenv("TOML_MISSING_FIELD") == "OK" {
+			log.Warn(err.Error())
+			return nil
+		}
+		// wrong config file, or outdated config file
+		return err
 	},
 }
 
@@ -75,7 +81,7 @@ func MakeConfigNode(cmd *cli.Command, gitCommit string, clientIdentifier string,
 			useprev = false
 		}
 	}
-	cfgptr := Mkconfig(cmd, useprev, gitCommit, clientIdentifier)
+	cfgptr := Mkconfig(cmd.String(ChainFlag.Name), cmd.String(ConfigFileFlag.Name), useprev, gitCommit, clientIdentifier)
 	// Apply flags.
 	if err := SetNodeConfig(cmd, &cfgptr.Node); err != nil {
 		Fatalf("Fatal: could not set node config %+v", err)
@@ -108,13 +114,13 @@ var ConfigFileFlag = &cli.StringFlag{
 	Usage: "TOML configuration file. NEW: In case of multiple instances, use -config=none to disable auto-reading available config files",
 }
 
-func Mkconfig(cmd *cli.Command, checkDefaultConfigFiles bool, gitCommit, clientIdentifier string) *AquachainConfig {
+func Mkconfig(chainName string, configFileOptional string, checkDefaultConfigFiles bool, gitCommit, clientIdentifier string) *AquachainConfig {
 	cfgptr := &AquachainConfig{
 		Aqua: aqua.DefaultConfig,
 		Node: DefaultNodeConfig(gitCommit, clientIdentifier),
 	}
 	// Load config file.
-	file := cmd.String(ConfigFileFlag.Name)
+	file := configFileOptional
 	switch {
 	default:
 		if err := LoadConfigFromFile(file, cfgptr); err != nil {
@@ -125,7 +131,7 @@ func Mkconfig(cmd *cli.Command, checkDefaultConfigFiles bool, gitCommit, clientI
 		// default config, flags only
 	case file == "" && checkDefaultConfigFiles: // find config if exists in working-directory, ~/.aquachain/aquachain.toml, or /etc/aquachain/aquachain.toml
 		var userdatadir string
-		chainName := cmd.String(ChainFlag.Name)
+		chainName := chainName
 		chainCfg := params.GetChainConfig(chainName)
 		if chainCfg == nil {
 			Fatalf("invalid chain name: %q, try one of %q", chainName, params.ValidChainNames())
