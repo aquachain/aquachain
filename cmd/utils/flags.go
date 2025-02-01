@@ -129,6 +129,10 @@ var (
 		Name:  "usb",
 		Usage: "Enables monitoring for and managing USB hardware wallets (disabled in pure-go builds)",
 	}
+	DoitNowFlag = &cli.BoolFlag{
+		Name:  "now",
+		Usage: "Start the node immediately, do not start countdown",
+	}
 	NetworkIdFlag = &cli.UintFlag{
 		Name:  "networkid",
 		Usage: "Network identifier (integer)",
@@ -219,7 +223,7 @@ var (
 	GCModeFlag = &cli.StringFlag{
 		Name:  "gcmode",
 		Usage: `GC mode to use, either "full" or "archive". Use "archive" for full, accurate state (for example, 'admin.supply')`,
-		Value: "full",
+		Value: "archive",
 	}
 )
 var (
@@ -1514,14 +1518,14 @@ func MakeConsolePreloads(cmd *cli.Command) []string {
 // When all flags are migrated this function can be removed and the existing
 // configuration functionality must be changed that is uses local flags
 func MigrateFlags(action func(_ context.Context, cmd *cli.Command) error) func(context.Context, *cli.Command) error {
-	return action
-	// return func(ctx context.Context, cmd *cli.Command) error {
-	// 	for _, name := range cmd.FlagNames() {
-	// 		if cmd.IsSet(name) {
-	// 			cmd.Set(name, cmd.String(name))
-	// 		}
-	// 	}
-	// 	log.Info("running action", "name", cmd.Name)
-	// 	return action(ctx, cmd)
-	// }
+	// return action
+	return func(ctx context.Context, cmd *cli.Command) error {
+		for _, name := range cmd.FlagNames() {
+			if cmd.IsSet(name) {
+				cmd.Set(name, cmd.String(name))
+			}
+		}
+		log.Info("running action", "name", cmd.Name)
+		return action(ctx, cmd)
+	}
 }
