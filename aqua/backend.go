@@ -211,37 +211,29 @@ func DecodeExtraData(extra []byte) (version [3]uint8, osname string, extradata [
 		v                   []interface{}
 		major, minor, patch uint8
 	)
-
 	err = rlp.DecodeBytes(extra, &v)
 	if err != nil {
 		return version, osname, extra, err
 	}
-
+	if len(v) != 3 {
+		return version, osname, extra, nil
+	}
 	// extract version
 	vr, ok := v[0].([]uint8)
 	if !ok || len(vr) != 3 {
-		fmt.Printf("%T type, len %v\n", v[0], len(vr))
+		// fmt.Printf("%T type, len %v\n", v[0], len(vr))
 		err = fmt.Errorf("could not decode version")
 		return version, osname, extra, err
 	}
 	major, minor, patch = vr[0], vr[1], vr[2]
-
-	// check "aquachain"
-	if aq, ok := v[1].([]byte); !ok {
-		return version, osname, extra, nil
-	} else if string(aq) != "aquachain" && string(aq) != "aqua" {
-		return version, osname, extra, nil
-	}
-
-	// get OS
-	if osnameBytes, ok := v[2].([]byte); !ok {
-		fmt.Printf("%T type\n", v[2])
-		return version, osname, extra, fmt.Errorf("osname")
-	} else {
+	version = [3]uint8{major, minor, patch}
+	if osnameBytes, ok := v[2].([]byte); ok {
 		osname = string(osnameBytes)
 	}
-
-	return [3]uint8{major, minor, patch}, osname, extra, nil
+	if extradataBytes, ok := v[3].([]byte); ok {
+		extradata = extradataBytes
+	}
+	return version, osname, extradata, nil
 }
 
 // CreateDB creates the chain database.
