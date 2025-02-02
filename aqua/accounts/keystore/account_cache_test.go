@@ -33,9 +33,16 @@ import (
 	"gitlab.com/aquachain/aquachain/common"
 )
 
+func getTestDir() (string, string) {
+	var basedir, _ = filepath.Abs(filepath.Join("..", "..", "..", "testdata", "testkeystore")) // test changes with TestTestDirs
+	var cachetestDir, _ = filepath.Abs(filepath.Join(basedir, "keystore"))                     // test changes with TestTestDirs
+
+	return basedir, cachetestDir
+}
+
 var (
-	cachetestDir, _   = filepath.Abs(filepath.Join("testdata", "keystore"))
-	cachetestAccounts = []accounts.Account{
+	basedir, cachetestDir = getTestDir()
+	cachetestAccounts     = []accounts.Account{
 		{
 			Address: common.HexToAddress("7ef5a6135f1fd6a02593eedc869c6d41d934aef8"),
 			URL:     accounts.URL{Scheme: KeyStoreScheme, Path: filepath.Join(cachetestDir, "UTC--2016-03-22T12-57-55.920751759Z--7ef5a6135f1fd6a02593eedc869c6d41d934aef8")},
@@ -51,87 +58,20 @@ var (
 	}
 )
 
-func TestWatchNewFile(t *testing.T) {
-	t.Skip()
-	t.Parallel()
-
-	dir, ks := tmpKeyStore(t, false)
-	defer os.RemoveAll(dir)
-
-	// Ensure the watcher is started before adding any files.
-	ks.Accounts()
-	time.Sleep(1000 * time.Millisecond)
-
-	// Move in the files.
-	wantAccounts := make([]accounts.Account, len(cachetestAccounts))
-	for i := range cachetestAccounts {
-		wantAccounts[i] = accounts.Account{
-			Address: cachetestAccounts[i].Address,
-			URL:     accounts.URL{Scheme: KeyStoreScheme, Path: filepath.Join(dir, filepath.Base(cachetestAccounts[i].URL.Path))},
-		}
-		if err := cp.CopyFile(wantAccounts[i].URL.Path, cachetestAccounts[i].URL.Path); err != nil {
-			t.Fatal(err)
+func TestTestDirs(t *testing.T) {
+	for _, filename := range []string{
+		basedir,
+		cachetestDir,
+		filepath.Join(cachetestDir, "UTC--2016-03-22T12-57-55.920751759Z--7ef5a6135f1fd6a02593eedc869c6d41d934aef8"),
+		filepath.Join(cachetestDir, "aaa"),
+		filepath.Join(cachetestDir, "zzz"),
+	} {
+		if _, err := os.Stat(filename); err != nil {
+			t.Errorf("test path %s does not exist", filename)
+			println(err.Error())
+			os.Exit(1) // this is a fatal error
 		}
 	}
-
-	// ks should see the accounts.
-	var list []accounts.Account
-	for d := 200 * time.Millisecond; d < 5*time.Second; d *= 2 {
-		list = ks.Accounts()
-		if reflect.DeepEqual(list, wantAccounts) {
-			// ks should have also received change notifications
-			select {
-			case <-ks.changes:
-			default:
-				t.Fatalf("wasn't notified of new accounts")
-			}
-			return
-		}
-		time.Sleep(d)
-	}
-	t.Errorf("got %s, want %s", spew.Sdump(list), spew.Sdump(wantAccounts))
-}
-
-func TestWatchNoDir(t *testing.T) {
-	t.Skip()
-	t.Parallel()
-
-	// Create ks but not the directory that it watches.
-	rand.Seed(time.Now().UnixNano())
-	dir := filepath.Join(os.TempDir(), fmt.Sprintf("aqua-keystore-watch-test-%d-%d", os.Getpid(), rand.Int()))
-	ks := NewKeyStore(dir, LightScryptN, LightScryptP)
-
-	list := ks.Accounts()
-	if len(list) > 0 {
-		t.Error("initial account list not empty:", list)
-	}
-	time.Sleep(100 * time.Millisecond)
-
-	// Create the directory and copy a key file into it.
-	os.MkdirAll(dir, 0700)
-	defer os.RemoveAll(dir)
-	file := filepath.Join(dir, "aaa")
-	if err := cp.CopyFile(file, cachetestAccounts[0].URL.Path); err != nil {
-		t.Fatal(err)
-	}
-
-	// ks should see the account.
-	wantAccounts := []accounts.Account{cachetestAccounts[0]}
-	wantAccounts[0].URL = accounts.URL{Scheme: KeyStoreScheme, Path: file}
-	for d := 200 * time.Millisecond; d < 8*time.Second; d *= 2 {
-		list = ks.Accounts()
-		if reflect.DeepEqual(list, wantAccounts) {
-			// ks should have also received change notifications
-			select {
-			case <-ks.changes:
-			default:
-				t.Fatalf("wasn't notified of new accounts")
-			}
-			return
-		}
-		time.Sleep(d)
-	}
-	t.Errorf("\ngot  %v\nwant %v", list, wantAccounts)
 }
 
 func TestCacheInitialReload(t *testing.T) {
@@ -143,7 +83,7 @@ func TestCacheInitialReload(t *testing.T) {
 }
 
 func TestCacheAddDeleteOrder(t *testing.T) {
-	cache, _ := newAccountCache("testdata/no-such-dir")
+	cache, _ := newAccountCache(filepath.Join(basedir, "no-such-dir"))
 	cache.watcher.running = true // prevent unexpected reloads
 
 	accs := []accounts.Account{
@@ -227,7 +167,7 @@ func TestCacheAddDeleteOrder(t *testing.T) {
 }
 
 func TestCacheFind(t *testing.T) {
-	dir := filepath.Join("testdata", "dir")
+	dir := filepath.Join(basedir, "dir")
 	cache, _ := newAccountCache(dir)
 	cache.watcher.running = true // prevent unexpected reloads
 
