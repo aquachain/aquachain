@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -172,25 +171,16 @@ func storeNewKey(ks keyStore, rand io.Reader, auth string) (*Key, accounts.Accou
 }
 
 func writeKeyFile(file string, content []byte) error {
+	if _, err := os.Stat(file); err == nil {
+		return fmt.Errorf("file already exists: %s", file)
+	}
 	// Create the keystore directory with appropriate permissions
 	// in case it is not present yet.
 	const dirPerm = 0700
 	if err := os.MkdirAll(filepath.Dir(file), dirPerm); err != nil {
 		return err
 	}
-	// Atomic write: create a temporary hidden file first
-	// then move it into place. TempFile assigns mode 0600.
-	f, err := ioutil.TempFile(filepath.Dir(file), "."+filepath.Base(file)+".tmp")
-	if err != nil {
-		return err
-	}
-	if _, err := f.Write(content); err != nil {
-		f.Close()
-		os.Remove(f.Name())
-		return err
-	}
-	f.Close()
-	return os.Rename(f.Name(), file)
+	return os.WriteFile(file, content, 0600)
 }
 
 // keyFileName implements the naming convention for keyfiles:
