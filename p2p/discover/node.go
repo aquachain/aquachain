@@ -196,6 +196,16 @@ func parseComplete(rawurl string) (*Node, error) {
 	return NewNode(id, ip, uint16(udpPort), uint16(tcpPort)), nil
 }
 
+type BootnodeStringList []string
+
+func (b BootnodeStringList) ToDiscoverNodes() []*Node {
+	nodes := make([]*Node, len(b))
+	for i, s := range b {
+		nodes[i] = MustParseNode(s)
+	}
+	return nodes
+}
+
 // MustParseNode parses a node URL. It panics if the URL is not valid.
 func MustParseNode(rawurl string) *Node {
 	n, err := ParseNode(rawurl)

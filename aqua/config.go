@@ -92,7 +92,7 @@ type Config struct {
 	// Mining-related options
 	Aquabase     common.Address `toml:",omitempty"`
 	MinerThreads int            `toml:",omitempty"`
-	ExtraData    []byte         `toml:",omitempty"`
+	ExtraData    hexutil.Bytes  `toml:",omitempty"`
 	GasPrice     *big.Int
 
 	// Aquahash options
@@ -114,7 +114,7 @@ type Config struct {
 	Alerts alerts.AlertConfig
 }
 
-// configMarshaling must be changed if the Config struct changes.
-type configMarshaling struct {
-	ExtraData hexutil.Bytes
-}
+// // configMarshaling must be changed if the Config struct changes.
+// type configMarshaling struct {
+// 	ExtraData hexutil.Bytes
+// }

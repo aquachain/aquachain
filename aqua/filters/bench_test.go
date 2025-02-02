@@ -64,7 +64,7 @@ func BenchmarkBloomBits32k(b *testing.B) {
 const benchFilterCnt = 2000
 
 func benchmarkBloomBits(b *testing.B, sectionSize uint64) {
-	benchDataDir := node.DefaultDataDir() + "/aquachain/chaindata"
+	benchDataDir := node.DefaultConfig.DataDir + "/aquachain/chaindata"
 	fmt.Println("Running bloombits benchmark   section size:", sectionSize)
 
 	db, err := aquadb.NewLDBDatabase(benchDataDir, 128, 1024)
@@ -175,7 +175,7 @@ func clearBloomBits(db aquadb.Database) {
 }
 
 func BenchmarkNoBloomBits(b *testing.B) {
-	benchDataDir := node.DefaultDataDir() + "/aquachain/chaindata"
+	benchDataDir := node.DefaultConfig.DataDir + "/aquachain/chaindata"
 	fmt.Println("Running benchmark without bloombits")
 	db, err := aquadb.NewLDBDatabase(benchDataDir, 128, 1024)
 	if err != nil {

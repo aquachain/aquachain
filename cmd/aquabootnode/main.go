@@ -51,7 +51,7 @@ type BootstrapConfig struct {
 var bootstrapcfg = BootstrapConfig{
 	ChainId:      params.MainnetChainConfig.ChainId.Uint64(),
 	ChainName:    "aqua",
-	Bootnodes:    params.MainnetBootnodes.ToDiscoverNodes(),
+	Bootnodes:    (discover.BootnodeStringList)(params.MainnetBootnodes).ToDiscoverNodes(),
 	AnnounceAddr: nil,
 	NetRestrict:  nil,
 	Addr:         net.UDPAddr{IP: net.IPv4zero, Port: 21000},
@@ -84,20 +84,20 @@ func main() {
 			return fmt.Errorf("invalid port: %v", bootstrapcfg.Addr.Port)
 		case params.MainnetChainConfig.DefaultBootstrapPort:
 			bootstrapcfg.ChainId = params.MainnetChainConfig.ChainId.Uint64()
-			bootstrapcfg.ChainName = "mainnet"
-			bootstrapcfg.Bootnodes = params.MainnetBootnodes.ToDiscoverNodes()
+			bootstrapcfg.ChainName = "aqua"
+			bootstrapcfg.Bootnodes = (discover.BootnodeStringList)(params.MainnetBootnodes).ToDiscoverNodes()
 		case params.TestnetChainConfig.DefaultBootstrapPort:
 			bootstrapcfg.ChainId = params.TestnetChainConfig.ChainId.Uint64()
 			bootstrapcfg.ChainName = "testnet"
-			bootstrapcfg.Bootnodes = params.TestnetBootnodes.ToDiscoverNodes()
+			bootstrapcfg.Bootnodes = (discover.BootnodeStringList)(params.TestnetBootnodes).ToDiscoverNodes()
 		case params.Testnet2ChainConfig.DefaultBootstrapPort:
 			bootstrapcfg.ChainId = params.Testnet2ChainConfig.ChainId.Uint64()
 			bootstrapcfg.ChainName = "testnet2"
-			bootstrapcfg.Bootnodes = params.Testnet2Bootnodes.ToDiscoverNodes()
+			bootstrapcfg.Bootnodes = (discover.BootnodeStringList)(params.Testnet2Bootnodes).ToDiscoverNodes()
 		case params.Testnet3ChainConfig.DefaultBootstrapPort:
 			bootstrapcfg.ChainId = params.Testnet3ChainConfig.ChainId.Uint64()
 			bootstrapcfg.ChainName = "testnet3"
-			bootstrapcfg.Bootnodes = nil
+			bootstrapcfg.Bootnodes = (discover.BootnodeStringList)(params.Testnet3Bootnodes).ToDiscoverNodes()
 		}
 		return nil
 	})
@@ -304,11 +304,11 @@ func servebootstrap(bootstrapcfg BootstrapConfig) {
 func Chain2Bootstraps(s string) []*discover.Node {
 	switch s {
 	case "mainnet", "aqua":
-		return params.MainnetBootnodes.ToDiscoverNodes()
+		return (discover.BootnodeStringList)(params.MainnetBootnodes).ToDiscoverNodes()
 	case "testnet":
-		return params.TestnetBootnodes.ToDiscoverNodes()
+		return (discover.BootnodeStringList)(params.TestnetBootnodes).ToDiscoverNodes()
 	case "testnet2":
-		return params.Testnet2Bootnodes.ToDiscoverNodes()
+		return (discover.BootnodeStringList)(params.Testnet2Bootnodes).ToDiscoverNodes()
 	}
 	return nil
 }

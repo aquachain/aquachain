@@ -45,10 +45,14 @@ var (
 	errClosed           = errors.New("socket closed")
 )
 
+func newExpiredErr(ago time.Duration) error {
+	return fmt.Errorf("expired %s ago: %w", ago, errExpired)
+}
+
 // Timeouts
 const (
 	respTimeout = 2000 * time.Millisecond
-	sendTimeout = 2 * time.Second
+	sendTimeout = 4 * time.Second // errExpired
 
 	ntpFailureThreshold = 32               // Continuous timeouts after which to check NTP
 	ntpWarningCooldown  = 10 * time.Minute // Minimum amount of time to pass before repeating NTP warning
@@ -527,7 +531,11 @@ func (t *udp) send(toaddr *net.UDPAddr, ptype byte, req packet) ([]byte, error) 
 
 func (t *udp) write(toaddr *net.UDPAddr, what string, packet []byte) error {
 	_, err := t.conn.WriteToUDP(packet, toaddr)
-	log.Trace(">> "+what, "addr", toaddr, "err", err)
+	if err != nil {
+		log.Trace(">> "+what, "addr", toaddr, "err", err)
+	} else {
+		log.Trace(">> "+what, "addr", toaddr)
+	}
 	return err
 }
 
@@ -591,6 +599,13 @@ func (t *udp) readLoop(unhandled chan<- ReadPacket) {
 
 var debugneighborpacket = true
 
+func shorten[T any](a []T, n int) []T {
+	if len(a) <= n {
+		return a
+	}
+	return a[:n]
+}
+
 func (t *udp) handlePacket(from *net.UDPAddr, buf []byte) error {
 	packet, fromID, hash, err := decodePacket(t.netcompat(), buf)
 	if err != nil {
@@ -600,13 +615,21 @@ func (t *udp) handlePacket(from *net.UDPAddr, buf []byte) error {
 	err = packet.handle(t, from, fromID, hash)
 	if err != nil {
 		log.Warn("Failed to handle discv4 packet", "addr", from, "err", err)
+
 		return err
 	}
 	name := packet.name()
-	if name == "NEIGHBORS/v4" && debugneighborpacket {
-		log.Trace("<< "+name, "addr", from, "neighbors", len(packet.(*neighbors).Nodes), "peers", packet.(*neighbors).Nodes)
-	} else {
-		log.Trace("<< "+name, "addr", from)
+	switch x := packet.(type) {
+	case *neighbors:
+		log.Trace("<< "+name, "addr", from, "neighbors", len(x.Nodes), "peers", shorten(x.Nodes, 4))
+	case *findnode:
+		log.Trace("<< "+name, "addr", from, "target", x.Target)
+	case *ping:
+		log.Trace("<< "+name, "addr", from, "from", x.From, "to", x.To)
+	case *pong:
+		log.Trace("<< "+name, "addr", from, "to", x.To)
+	default:
+		log.Warn("<< "+name, "addr", from, "unknown", x)
 	}
 	return err
 }
@@ -653,8 +676,8 @@ func decodePacket(netcompat bool, buf []byte) (packet, NodeID, []byte, error) {
 }
 
 func (req *ping) handle(t *udp, from *net.UDPAddr, fromID NodeID, mac []byte) error {
-	if expired(req.Expiration) {
-		return errExpired
+	if err := expired(req.Expiration); err != nil {
+		return err
 	}
 	pongPacket := aquapongPacket
 	pingPacket := aquapingPacket
@@ -678,8 +701,8 @@ func (req *ping) handle(t *udp, from *net.UDPAddr, fromID NodeID, mac []byte) er
 func (req *ping) name() string { return "PING/v4" }
 
 func (req *pong) handle(t *udp, from *net.UDPAddr, fromID NodeID, mac []byte) error {
-	if expired(req.Expiration) {
-		return errExpired
+	if err := expired(req.Expiration); err != nil {
+		return err
 	}
 	pongPacket := aquapongPacket
 	if t.netcompat() {
@@ -694,8 +717,8 @@ func (req *pong) handle(t *udp, from *net.UDPAddr, fromID NodeID, mac []byte) er
 func (req *pong) name() string { return "PONG/v4" }
 
 func (req *findnode) handle(t *udp, from *net.UDPAddr, fromID NodeID, mac []byte) error {
-	if expired(req.Expiration) {
-		return errExpired
+	if err := expired(req.Expiration); err != nil {
+		return err
 	}
 	if !t.db.hasBond(fromID) {
 		// No bond exists, we don't process the packet. This prevents
@@ -741,8 +764,8 @@ func (req *findnode) handle(t *udp, from *net.UDPAddr, fromID NodeID, mac []byte
 func (req *findnode) name() string { return "FINDNODE/v4" }
 
 func (req *neighbors) handle(t *udp, from *net.UDPAddr, fromID NodeID, mac []byte) error {
-	if expired(req.Expiration) {
-		return errExpired
+	if err := expired(req.Expiration); err != nil {
+		return err
 	}
 	neighborsPacket := aquaneighborsPacket
 	if t.netcompat() {
@@ -756,6 +779,10 @@ func (req *neighbors) handle(t *udp, from *net.UDPAddr, fromID NodeID, mac []byt
 
 func (req *neighbors) name() string { return "NEIGHBORS/v4" }
 
-func expired(ts uint64) bool {
-	return time.Unix(int64(ts), 0).Before(time.Now())
+func expired(ts uint64) error {
+	x := time.Since(time.Unix(int64(ts), 0))
+	if x < 0 {
+		return nil
+	}
+	return newExpiredErr(x)
 }

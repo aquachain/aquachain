@@ -36,6 +36,7 @@ import (
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/consensus"
 	"gitlab.com/aquachain/aquachain/consensus/aquahash"
+	"gitlab.com/aquachain/aquachain/consensus/clique"
 	"gitlab.com/aquachain/aquachain/core"
 	"gitlab.com/aquachain/aquachain/core/bloombits"
 	"gitlab.com/aquachain/aquachain/core/types"
@@ -257,19 +258,7 @@ func CreateDB(ctx *node.ServiceContext, config *Config, name string) (aquadb.Dat
 
 // CreateConsensusEngine creates the required type of consensus engine instance for an Aquachain service
 func CreateConsensusEngine(ctx *node.ServiceContext, config *aquahash.Config, chainConfig *params.ChainConfig, db aquadb.Database) consensus.Engine {
-	startVersion := func() byte {
-		big0 := big.NewInt(0)
-		if chainConfig == nil {
-			return 0
-		}
-		if chainConfig.IsHF(8, big0) {
-			return 3
-		}
-		if chainConfig.IsHF(5, big0) {
-			return 2
-		}
-		return 0
-	}()
+	startVersion := chainConfig.GetGenesisVersion()
 	switch {
 	case config.PowMode == aquahash.ModeFake:
 		log.Warn("Aquahash used in fake mode")
@@ -280,6 +269,9 @@ func CreateConsensusEngine(ctx *node.ServiceContext, config *aquahash.Config, ch
 	case config.PowMode == aquahash.ModeShared:
 		log.Warn("Aquahash used in shared mode")
 		return aquahash.NewShared()
+	case chainConfig.Clique != nil:
+		log.Info("Starting Clique", "period", chainConfig.Clique.Period, "epoch", chainConfig.Clique.Epoch)
+		return clique.New(chainConfig.Clique, db)
 	default:
 		log.Info("Starting aquahash", "version", startVersion)
 		if startVersion > 1 {
@@ -410,6 +402,14 @@ func (s *Aquachain) StartMining(local bool) error {
 	if err != nil {
 		log.Error("Cannot start mining without aquabase", "err", err)
 		return fmt.Errorf("aquabase missing: %v", err)
+	}
+	if clique, ok := s.engine.(*clique.Clique); ok {
+		wallet, err := s.accountManager.Find(accounts.Account{Address: eb})
+		if wallet == nil || err != nil {
+			log.Error("Aquabase account unavailable locally", "err", err)
+			return fmt.Errorf("signer missing: %v", err)
+		}
+		clique.Authorize(eb, wallet.SignHash)
 	}
 	if local {
 		// If local (CPU) mining is started, we can disable the transaction rejection

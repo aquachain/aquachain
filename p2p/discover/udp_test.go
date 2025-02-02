@@ -89,7 +89,7 @@ func (test *udpTest) packetIn(wantError error, ptype byte, data packet) error {
 		return test.errorf("packet (%d) encode error: %v", ptype, err)
 	}
 	test.sent = append(test.sent, enc)
-	if err = test.udp.handlePacket(test.remoteaddr, enc); err != wantError {
+	if err = test.udp.handlePacket(test.remoteaddr, enc); !errors.Is(err, wantError) {
 		return test.errorf("error mismatch: got %q, want %q", err, wantError)
 	}
 	return nil
