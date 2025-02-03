@@ -412,8 +412,10 @@ func (pool *TxPool) reset(oldHead, newHead *types.Header) {
 	pool.currentMaxGas = newHead.GasLimit
 
 	// Inject any transactions discarded due to reorgs
-	log.Debug("Reinjecting stale transactions", "count", len(reinject))
-	pool.addTxsLocked(reinject, false)
+	if l := len(reinject); l > 0 {
+		log.Debug("Reinjecting stale transactions", "count", len(reinject))
+		pool.addTxsLocked(reinject, false)
+	}
 
 	// validate the pool of pending transactions, this will remove
 	// any transactions that have been included in the block or
@@ -463,6 +465,9 @@ func (pool *TxPool) GasPrice() *big.Int {
 // SetGasPrice updates the minimum price required by the transaction pool for a
 // new transaction, and drops all transactions below this threshold.
 func (pool *TxPool) SetGasPrice(price *big.Int) {
+	if price == nil {
+		panic("nil gas price")
+	}
 	pool.mu.Lock()
 	defer pool.mu.Unlock()
 

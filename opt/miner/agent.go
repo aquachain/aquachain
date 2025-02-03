@@ -99,15 +99,24 @@ out:
 	}
 }
 
-func (self *CpuAgent) mine(work *Work, stop <-chan struct{}) {
-	if result, err := self.engine.Seal(self.chain, work.Block, stop); result != nil {
+func (miner *CpuAgent) mine(work *Work, stop <-chan struct{}) {
+	if result, err := miner.engine.Seal(miner.chain, work.Block, stop); result != nil {
 		log.Info("Successfully sealed new block", "number", result.Number(), "nonce", result.Nonce(), "version", result.Version())
-		self.returnCh <- &Result{work, result}
+		miner.returnCh <- &Result{work, result}
 	} else {
 		if err != nil {
-			log.Warn("Block sealing failed", "number", result.Number(), "version", result.Version(), "err", err)
+			if err.Error() == "unauthorized" {
+			}
+			switch err.Error() {
+			default:
+				log.Warn("Block sealing failed", "number", work.header.Number, "err", err)
+			case "waiting for transactions":
+				log.Info("Waiting for txs to begin mining", "number", work.header.Number)
+			case "unauthorized":
+				log.Warn("Signer not authorized", "number", work.header.Number)
+			}
 		}
-		self.returnCh <- nil
+		miner.returnCh <- nil
 	}
 }
 

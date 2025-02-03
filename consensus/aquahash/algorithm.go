@@ -66,7 +66,7 @@ func makeHasher(h hash.Hash) hasher {
 // dataset.
 func seedHash(block uint64, version byte) []byte {
 	if version > 1 {
-		return common.BytesToHash([]byte{version}).Bytes()
+		return common.BytesToHash([]byte{version}).Bytes() // eg 0x0000....0001
 	}
 	seed := make([]byte, 32)
 	if block < epochLength {

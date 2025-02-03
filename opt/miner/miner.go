@@ -59,14 +59,17 @@ type Miner struct {
 
 func New(aqua Backend, config *params.ChainConfig, mux *event.TypeMux, engine consensus.Engine) *Miner {
 	miner := &Miner{
-		aqua:     aqua,
-		mux:      mux,
-		engine:   engine,
-		worker:   newWorker(config, engine, common.Address{}, aqua, mux),
-		canStart: 1,
+		aqua:        aqua,
+		mux:         mux,
+		engine:      engine,
+		worker:      newWorker(config, engine, common.Address{}, aqua, mux),
+		canStart:    1,
+		coinbase:    common.Address{},
+		mining:      0,
+		shouldStart: 0,
 	}
 	miner.Register(NewCpuAgent(aqua.BlockChain(), engine))
-	go miner.update()
+	// go miner.update()
 
 	return miner
 }

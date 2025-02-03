@@ -18,6 +18,7 @@ package console
 
 import (
 	"context"
+	"embed"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -55,7 +56,7 @@ Web links:
 
 	Website: https://aquachain.github.io
 	Explorer: https://aquachain.github.io/explorer/
-	Wiki: http://github.com/aquanetwork/aquachain/wiki/Basics
+	Wiki: http://gitlab.com/aquachain/aquachain/wiki/Basics
 
 Common AQUA console commands::
 
@@ -99,13 +100,24 @@ const logo = `                              _           _
 // Config is the collection of configurations to fine tune the behavior of the
 // JavaScript console.
 type Config struct {
-	DataDir  string       // Data directory to store the console history at
-	DocRoot  string       // Filesystem path from where to load JavaScript files from
-	Client   *rpc.Client  // RPC client to execute Aquachain requests through
-	Prompt   string       // Input prompt prefix string (defaults to DefaultPrompt)
-	Prompter UserPrompter // Input prompter to allow interactive user feedback (defaults to TerminalPrompter)
-	Printer  io.Writer    // Output writer to serialize any display strings to (defaults to os.Stdout)
-	Preload  []string     // Absolute paths to JavaScript files to preload
+	DataDir          string       // Data directory to store the console history at
+	WorkingDirectory string       // Filesystem path from where to load JavaScript files from
+	Client           *rpc.Client  // RPC client to execute Aquachain requests through
+	Prompt           string       // Input prompt prefix string (defaults to DefaultPrompt)
+	Prompter         UserPrompter // Input prompter to allow interactive user feedback (defaults to TerminalPrompter)
+	Printer          io.Writer    // Output writer to serialize any display strings to (defaults to os.Stdout)
+	Preload          []string     // Absolute paths to JavaScript files to preload
+}
+
+//go:embed console.startup.js
+var embedded embed.FS
+
+func startupjs() string {
+	b, err := embedded.ReadFile("console.startup.js")
+	if err != nil {
+		panic("embedded \"console.startup.js\" file not found")
+	}
+	return string(b)
 }
 
 // Console is a JavaScript interpreted runtime environment. It is a fully fleged
@@ -136,7 +148,7 @@ func New(config Config) (*Console, error) {
 	// Initialize the console and return
 	console := &Console{
 		client:   config.Client,
-		jsre:     jsre.New(config.DocRoot, config.Printer),
+		jsre:     jsre.New(config.WorkingDirectory, config.Printer),
 		prompt:   config.Prompt,
 		prompter: config.Prompter,
 		printer:  config.Printer,
@@ -343,8 +355,9 @@ func (c *Console) AutoCompleteInput(line string, pos int) (string, []string, str
 // Welcome show summary of current Aquachain instance and some metadata about the
 // console's available modules.
 func (c *Console) Welcome() {
+	log.Info("console welcome")
 	// friendly balance
-	c.jsre.Run(`
+	_, err := c.jsre.Run(`
 function pending() {
 			var totalBal = 0;
 			for (var acctNum in aqua.accounts) {
@@ -369,17 +382,16 @@ function balance() {
 };
 	`)
 
+	if err != nil {
+		fmt.Fprintf(c.printer, "error: %v\n", err)
+	}
 	// Print some generic Aquachain metadata
 	fmt.Fprintf(c.printer, "\nWelcome to the Aquachain JavaScript console!\n")
-	fmt.Fprintf(c.printer, logo)
-
-	c.jsre.Run(`
-		console.log("instance: " + web3.version.node);
-		console.log("coinbase: " + aqua.coinbase);
-		console.log("at block: " + aqua.blockNumber + " (" + new Date(1000 * aqua.getBlock(aqua.blockNumber).timestamp) + ")");
-		console.log("    algo: " + aqua.getBlock(aqua.blockNumber).version);
-		console.log(" datadir: " + admin.datadir);
-	`)
+	fmt.Fprint(c.printer, logo)
+	_, err = c.jsre.Run(startupjs())
+	if err != nil {
+		fmt.Fprintf(c.printer, "error: %v\n", err)
+	}
 
 	// List all the supported modules for the user to call
 	if apis, err := c.client.SupportedModules(); err == nil {

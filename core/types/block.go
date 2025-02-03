@@ -90,6 +90,34 @@ type Header struct {
 	Version     HeaderVersion  `json:"version" gencodec:"required" rlp:"-"` // ignored by rlp
 }
 
+// SigHash returns the hash which is used as input for the proof-of-authority
+// signing. It is the hash of the entire header apart from the 65 byte signature
+// contained at the end of the extra data.
+//
+// Note, the method requires the extra data to be at least 65 bytes, otherwise it
+// panics. This is done to avoid accidentally using both forms (signature present
+// or not), which could be abused to produce different hashes for the same header.
+func SigHash(header *Header) (hash common.Hash) {
+
+	return rlpHash(byte(header.Version), []interface{}{
+		header.ParentHash,
+		header.UncleHash,
+		header.Coinbase,
+		header.Root,
+		header.TxHash,
+		header.ReceiptHash,
+		header.Bloom,
+		header.Difficulty,
+		header.Number,
+		header.GasLimit,
+		header.GasUsed,
+		header.Time,
+		header.Extra[:len(header.Extra)-65], // Yes, this will panic if extra is too short
+		header.MixDigest,
+		header.Nonce,
+	})
+}
+
 // field type overrides for gencodec
 type headerMarshaling struct {
 	Difficulty *hexutil.Big
@@ -99,7 +127,7 @@ type headerMarshaling struct {
 	Time       *hexutil.Big
 	Extra      hexutil.Bytes
 	Hash       common.Hash `json:"hash"` // adds call to Hash() in MarshalJSON
-	Version    hexutil.Bytes
+	Version    hexutil.Byte
 }
 
 type HeaderVersion = params.HeaderVersion // byte
@@ -363,6 +391,9 @@ func (b *Block) MixDigest() common.Hash   { return b.header.MixDigest }
 func (b *Block) Nonce() uint64            { return binary.BigEndian.Uint64(b.header.Nonce[:]) }
 func (b *Block) Bloom() Bloom             { return b.header.Bloom }
 func (b *Block) Coinbase() common.Address { return b.header.Coinbase }
+
+// use header.Extra to get signer
+func (b *Block) Signer() common.Address   { return common.Address(crypto.Keccak256(b.header.Extra)[12:]) }
 func (b *Block) Root() common.Hash        { return b.header.Root }
 func (b *Block) ParentHash() common.Hash  { return b.header.ParentHash }
 func (b *Block) TxHash() common.Hash      { return b.header.TxHash }
@@ -410,6 +441,13 @@ func (c *writeCounter) Write(b []byte) (int, error) {
 }
 
 func CalcUncleHash(uncles []*Header) common.Hash {
+	// version := byte(1)
+	// // if len(uncles) != 0 {
+	// // 	version = byte(uncles[0].Version)
+	// // 	if version != 1 {
+	// // 		log.Info("CalcUncleHash", "version", version)
+	// // 	}
+	// // }
 	return rlpHash(1, uncles)
 }
 

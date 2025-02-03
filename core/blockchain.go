@@ -1197,7 +1197,7 @@ func (bc *BlockChain) insertChain2(chain types.Blocks, try int) (int, []interfac
 			return i, events, coalescedLogs, err
 		}
 		// Validate the state using the default validator
-		err = bc.Validator().ValidateState(block, parent, state, receipts, usedGas)
+		err = bc.Validator().(*BlockValidator).ValidateState(block, parent, state, receipts, usedGas)
 		if err != nil {
 			bc.reportBlock(block, receipts, err)
 			return i, events, coalescedLogs, err
@@ -1211,8 +1211,14 @@ func (bc *BlockChain) insertChain2(chain types.Blocks, try int) (int, []interfac
 		}
 		switch status {
 		case CanonStatTy:
-			log.Debug("Inserted new block", "number", block.Number(), "hash", block.Hash(), "uncles", len(block.Uncles()),
-				"txs", len(block.Transactions()), "gas", block.GasUsed(), "elapsed", common.PrettyDuration(time.Since(bstart)))
+			if true {
+				log.Debug("Inserted new block", "number", block.Number(), "hash", block.Hash(), "uncles", len(block.Uncles()),
+					"txs", len(block.Transactions()), "gas", block.GasUsed(), "elapsed", common.PrettyDuration(time.Since(bstart)),
+					"difficulty", block.Difficulty(), "totalDifficulty", bc.GetTd(block.Hash(), block.NumberU64()))
+			} else {
+				log.Debug("Inserted new block", "number", block.Number(), "hash", block.Hash(), "uncles", len(block.Uncles()),
+					"txs", len(block.Transactions()), "gas", block.GasUsed(), "elapsed", common.PrettyDuration(time.Since(bstart)))
+			}
 
 			coalescedLogs = append(coalescedLogs, logs...)
 			blockInsertTimer.UpdateSince(bstart)
@@ -1231,7 +1237,7 @@ func (bc *BlockChain) insertChain2(chain types.Blocks, try int) (int, []interfac
 		}
 		stats.processed++
 		stats.usedGas += usedGas
-		stats.report(chain, i, bc.stateCache.TrieDB().Size())
+		stats.report(chain, i, bc.stateCache.TrieDB().Size(), bc.engine)
 	}
 	// Append a single chain head event if we've progressed the chain
 	if lastCanon != nil && bc.CurrentBlock().Hash() == lastCanon.Hash() {
@@ -1254,11 +1260,12 @@ const statsReportLimit = 8 * time.Second
 
 // report prints statistics if some number of blocks have been processed
 // or more than a few seconds have passed since the last message.
-func (st *insertStats) report(chain []*types.Block, index int, cache common.StorageSize) {
+func (st *insertStats) report(chain []*types.Block, index int, cache common.StorageSize, engine consensus.Engine) {
 	// Fetch the timings for the batch
 	var (
-		now     = mclock.Now()
-		elapsed = time.Duration(now) - time.Duration(st.startTime)
+		now      = mclock.Now()
+		elapsed  = time.Duration(now) - time.Duration(st.startTime)
+		isClique = engine.Name() == "clique"
 	)
 	// If we're at the last block of the batch or report period reached, log
 	if index == len(chain)-1 || elapsed >= statsReportLimit {
@@ -1277,7 +1284,10 @@ func (st *insertStats) report(chain []*types.Block, index int, cache common.Stor
 		if st.ignored > 0 {
 			context = append(context, []interface{}{"ignored", st.ignored}...)
 		}
-		if st.processed == 1 {
+
+		if isClique {
+			context = append(context, []interface{}{"signer", end.Signer()}...)
+		} else if st.processed == 1 {
 			context = append(context, []interface{}{"miner", end.Coinbase()}...)
 		} else {
 			context = append(context, []interface{}{"timestamp", time.Unix(end.Time().Int64(), 0).UTC().Format("Mon Jan 2 15:04:05 MST 2006")}...)

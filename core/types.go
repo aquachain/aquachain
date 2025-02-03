@@ -22,6 +22,8 @@ import (
 	"gitlab.com/aquachain/aquachain/core/vm"
 )
 
+var _ Validator = (*BlockValidator)(nil)
+
 // Validator is an interface which defines the standard for block validation. It
 // is only responsible for validating block contents, as the header validation is
 // done by the specific consensus engines.

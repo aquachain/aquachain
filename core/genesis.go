@@ -237,10 +237,12 @@ func (g *Genesis) configOrDefault(ghash common.Hash) *params.ChainConfig {
 		return params.TestnetChainConfig
 	case ghash == params.Testnet2GenesisHash:
 		return params.Testnet2ChainConfig
-	case ghash == params.EthnetGenesisHash:
+	case ghash == params.Testnet2GenesisHash:
 		return params.EthnetChainConfig
+	case ghash == params.Testnet3GenesisHash:
+		return params.Testnet3ChainConfig
 	default:
-		log.Info("unknown genesis hash", "hash", ghash)
+		log.Warn("unknown genesis hash", "hash", ghash)
 		return params.AllAquahashProtocolChanges
 	}
 }
@@ -388,14 +390,24 @@ func DefaultTestnet2GenesisBlock() *Genesis {
 	}
 }
 
-// DefaultTestnet3GenesisBlock returns the Testnet2 network genesis block.
+// DefaultTestnet3GenesisBlock returns the Testnet3 network genesis block.
 func DefaultTestnet3GenesisBlock() *Genesis {
+	m := decodePrealloc(allocData802018) // from mainnet block 802018
+	x := common.HexToAddress("0x615dc0d304ca8d97263db40b10968696c4828306")
+	_, ok := m[x]
+	if !ok {
+		y := big.NewInt(1_000000000_000000000)
+		y = y.Mul(y, big.NewInt(1_000))
+		m[x] = GenesisAccount{Balance: y}
+	}
 	return &Genesis{
 		Config:     params.Testnet3ChainConfig,
-		Timestamp:  1586999629,
+		Timestamp:  1738415639,
 		GasLimit:   42000000,
-		Difficulty: big.NewInt(1024),
-		Alloc:      decodePrealloc(Testnet3AllocData), // from mainnet block 256623
+		Difficulty: big.NewInt(1), // testnet3 is not pow
+		// Alloc:      decodePrealloc(Testnet3AllocData), // from mainnet block 256623
+		ExtraData: append(append(make([]byte, 32), x[:]...), make([]byte, 65)...),
+		Alloc:     m,
 	}
 }
 
@@ -403,8 +415,15 @@ func DefaultTestnet3GenesisBlock() *Genesis {
 // be seeded with the
 func DeveloperGenesisBlock(period uint64, faucet common.Address) *Genesis {
 	// Override the default period to the user requested one
-	config := *params.AllAquahashProtocolChanges
-
+	config := *params.AllCliqueProtocolChanges
+	// '-chain dev', disable pow, enable clique
+	if config.Aquahash != nil {
+		panic("DeveloperGenesisBlock: unexpected Aquahash config")
+	}
+	if config.Clique == nil {
+		panic("DeveloperGenesisBlock: unexpected Clique config")
+	}
+	config.Clique.Period = period
 	// Assemble and return the genesis with the precompiles and faucet pre-funded
 	return &Genesis{
 		Config:     &config,

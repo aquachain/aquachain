@@ -9,10 +9,12 @@ import (
 
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/hexutil"
+	"gitlab.com/aquachain/aquachain/params"
 )
 
 var _ = (*headerMarshaling)(nil)
 
+// MarshalJSON marshals as JSON.
 func (h Header) MarshalJSON() ([]byte, error) {
 	type Header struct {
 		ParentHash  common.Hash    `json:"parentHash"       gencodec:"required"`
@@ -30,6 +32,7 @@ func (h Header) MarshalJSON() ([]byte, error) {
 		Extra       hexutil.Bytes  `json:"extraData"        gencodec:"required"`
 		MixDigest   common.Hash    `json:"mixHash"          gencodec:"required"`
 		Nonce       BlockNonce     `json:"nonce"            gencodec:"required"`
+		Version     hexutil.Byte   `json:"version" gencodec:"required" rlp:"-"`
 		Hash        common.Hash    `json:"hash"`
 	}
 	var enc Header
@@ -48,10 +51,12 @@ func (h Header) MarshalJSON() ([]byte, error) {
 	enc.Extra = h.Extra
 	enc.MixDigest = h.MixDigest
 	enc.Nonce = h.Nonce
+	enc.Version = hexutil.Byte(h.Version)
 	enc.Hash = h.Hash()
 	return json.Marshal(&enc)
 }
 
+// UnmarshalJSON unmarshals from JSON.
 func (h *Header) UnmarshalJSON(input []byte) error {
 	type Header struct {
 		ParentHash  *common.Hash    `json:"parentHash"       gencodec:"required"`
@@ -69,6 +74,7 @@ func (h *Header) UnmarshalJSON(input []byte) error {
 		Extra       *hexutil.Bytes  `json:"extraData"        gencodec:"required"`
 		MixDigest   *common.Hash    `json:"mixHash"          gencodec:"required"`
 		Nonce       *BlockNonce     `json:"nonce"            gencodec:"required"`
+		Version     *hexutil.Byte   `json:"version" gencodec:"required" rlp:"-"`
 	}
 	var dec Header
 	if err := json.Unmarshal(input, &dec); err != nil {
@@ -134,5 +140,9 @@ func (h *Header) UnmarshalJSON(input []byte) error {
 		return errors.New("missing required field 'nonce' for Header")
 	}
 	h.Nonce = *dec.Nonce
+	if dec.Version == nil {
+		return errors.New("missing required field 'version' for Header")
+	}
+	h.Version = params.HeaderVersion(*dec.Version)
 	return nil
 }

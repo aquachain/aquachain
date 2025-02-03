@@ -37,6 +37,7 @@ import (
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/common/metrics"
 	"gitlab.com/aquachain/aquachain/consensus"
+	"gitlab.com/aquachain/aquachain/params"
 	"gitlab.com/aquachain/aquachain/rpc"
 )
 
@@ -387,7 +388,7 @@ type Config struct {
 	DatasetsInMem  int
 	DatasetsOnDisk int
 	PowMode        Mode
-	StartVersion   byte
+	StartVersion   params.HeaderVersion
 }
 
 // Aquahash is a consensus engine based on proot-of-work implementing the aquahash
@@ -410,6 +411,10 @@ type Aquahash struct {
 	fakeDelay time.Duration // Time delay to sleep for before returning from verify
 
 	lock sync.Mutex // Ensures thread safety for the in-memory caches and mining fields
+}
+
+func (aquahash *Aquahash) Name() string {
+	return "aquahash"
 }
 
 // New creates a full sized aquahash PoW scheme.

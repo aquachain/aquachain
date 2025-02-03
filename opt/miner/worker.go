@@ -17,6 +17,7 @@
 package miner
 
 import (
+	"bytes"
 	"fmt"
 	"math/big"
 	"sync"
@@ -29,6 +30,7 @@ import (
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/consensus"
+	"gitlab.com/aquachain/aquachain/consensus/clique"
 	"gitlab.com/aquachain/aquachain/consensus/misc"
 	"gitlab.com/aquachain/aquachain/core"
 	"gitlab.com/aquachain/aquachain/core/state"
@@ -268,6 +270,10 @@ func (w *worker) update() {
 
 				w.current.commitTransactions(w.mux, txset, w.chain, w.coinbase)
 				w.currentMu.Unlock()
+			} else if w.config.Clique != nil && w.config.Clique.Period == 0 { // period 0 = new tx new block
+				w.commitNewWork()
+			} else {
+				log.Trace("tx received while mining but not applied yet", "tx", ev.Tx.Hash().Hex())
 			}
 
 		// System stopped
@@ -299,7 +305,7 @@ func (w *worker) wait() {
 			hash := block.Hash()
 			// work is nil when using submitblock rpc
 			if work == nil {
-				log.Trace("inserting block via submitblock RPC", block.Number())
+				log.Info("Inserting block via submitblock RPC", block.Number(), "hash", hash.String())
 				_, err := w.chain.InsertChain(types.Blocks{block})
 				if err != nil {
 					log.Error("Failed writing block to chain", "err", err)
@@ -404,18 +410,26 @@ func (w *worker) commitNewWork() {
 	w.currentMu.Lock()
 	defer w.currentMu.Unlock()
 
-	tstart := time.Now()
-	parent := w.chain.CurrentBlock()
+	waiting := true
+	t0 := time.Now() // thread start time
+	var tstamp int64
+	var parent *types.Block
+	for waiting {
+		tstart := time.Now() // will be block timestamp
+		parent = w.chain.CurrentBlock()
 
-	tstamp := tstart.Unix()
-	if parent.Time().Cmp(new(big.Int).SetInt64(tstamp)) >= 0 {
-		tstamp = parent.Time().Int64() + 1
-	}
-	// this will ensure we're not going off too far in the future
-	if now := time.Now().Unix(); tstamp > now+1 {
-		wait := time.Duration(tstamp-now) * time.Second
-		log.Info("Mining too far in the future", "wait", common.PrettyDuration(wait))
-		time.Sleep(wait)
+		tstamp = tstart.Unix()
+		if parent.Time().Cmp(new(big.Int).SetInt64(tstamp)) >= 0 {
+			tstamp = parent.Time().Int64() + 1
+		}
+		// this will ensure we're not going off too far in the future
+		if now := time.Now().Unix(); tstamp > now+1 {
+			wait := time.Duration(tstamp-now) * time.Second
+			log.Info("Mining too far in the future", "wait", common.PrettyDuration(wait))
+			time.Sleep(wait)
+			continue
+		}
+		waiting = false
 	}
 
 	num := parent.Number()
@@ -428,10 +442,23 @@ func (w *worker) commitNewWork() {
 		Time:       big.NewInt(tstamp),
 		Version:    w.chain.Config().GetBlockVersion(numnew),
 	}
+	_, isClique := w.engine.(*clique.Clique)
+	if isClique {
+		// set extra data for clique
+		if len(header.Extra) < 32 {
+			header.Extra = append(header.Extra, bytes.Repeat([]byte{0x00}, 32-len(header.Extra))...)
+		}
+
+	} else {
+		header.Coinbase = w.coinbase
+	}
 	// Only set the coinbase if we are mining (avoid spurious block rewards)
 	if atomic.LoadInt32(&w.mining) == 1 {
 		header.Coinbase = w.coinbase
+	} else if !isClique {
+		log.Warn("Not mining, skipping block reward calc")
 	}
+	// log.Info("Engine", "engine", fmt.Sprintf("%T", w.engine), "Extra", len(header.Extra), "Coinbase", header.Coinbase.Hex())
 	if err := w.engine.Prepare(w.chain, header); err != nil {
 		log.Error("Failed to prepare header for mining", "err", err)
 		return
@@ -511,7 +538,7 @@ func (w *worker) commitNewWork() {
 	if atomic.LoadInt32(&w.mining) == 1 {
 		log.Info("Commit new mining work", "number", work.Block.Number(),
 			"txs", work.tcount, "uncles", len(uncles), "fees", header.GasUsed,
-			"bench", common.PrettyDuration(time.Since(tstart)),
+			"bench", common.PrettyDuration(time.Since(t0)),
 			"algo", header.Version, "diff", header.Difficulty)
 		w.unconfirmed.Shift(work.Block.NumberU64() - 1)
 	}

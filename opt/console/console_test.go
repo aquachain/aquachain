@@ -129,12 +129,12 @@ func newTester(t *testing.T, confOverride func(*aqua.Config)) *tester {
 	printer := new(bytes.Buffer)
 
 	console, err := New(Config{
-		DataDir:  stack.DataDir(),
-		DocRoot:  "testdata",
-		Client:   client,
-		Prompter: prompter,
-		Printer:  printer,
-		Preload:  []string{"preload.js"},
+		DataDir:          stack.DataDir(),
+		WorkingDirectory: "testdata",
+		Client:           client,
+		Prompter:         prompter,
+		Printer:          printer,
+		Preload:          []string{"preload.js"},
 	})
 	if err != nil {
 		t.Fatalf("failed to create JavaScript console: %v", err)

@@ -24,6 +24,7 @@ import (
 	"gitlab.com/aquachain/aquachain/core/state"
 	"gitlab.com/aquachain/aquachain/core/types"
 	"gitlab.com/aquachain/aquachain/params"
+
 	"gitlab.com/aquachain/aquachain/rpc"
 )
 
@@ -51,6 +52,8 @@ type ChainReader interface {
 
 // Engine is an algorithm agnostic consensus engine.
 type Engine interface {
+	Name() string // lowercase ("aquahash", "clique", etc)
+
 	// VerifyHeader checks whether a header conforms to the consensus rules of a
 	// given engine. Verifying the seal may be done optionally here, or explicitly
 	// via the VerifySeal method.
