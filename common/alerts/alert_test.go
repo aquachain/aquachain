@@ -1,23 +1,35 @@
 package alerts
 
 import (
+	"os"
+	"sync"
 	"testing"
 
 	"github.com/joho/godotenv"
 )
 
 func TestAlert(t *testing.T) {
-	godotenv.Load("../../.env") // we are in ./common/alerts/
+	if _, err := os.Stat("../../Makefile"); err != nil {
+		t.Fatal("bad test; only run in root directory")
+	}
+	err := godotenv.Load("../../.env") // we are in ./common/alerts/
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
 	ac, err := ParseAlertConfig()
 	if err != nil {
-		t.Errorf("expected no error, got %v", err)
+		t.Fatalf("expected no error, got %v", err)
 	}
 	if !ac.Enabled() {
-		t.Errorf("expected enabled, got disabled")
+		t.Fatalf("expected enabled, got disabled")
 	}
-	err = ac.Send("(test-alert) chain is on fire! send help! [aaaaahhhhh!!!] [  !")
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	err = ac.Send("(test-alert-1) chain is on fire! send help! [aaaaahhhhh!!!] [  ! .* <b>wow!</b>", wg.Done)
 	if err != nil {
-		t.Errorf("expected no error, got %v", err)
+		t.Fatalf("expected no error, got %v", err)
 	}
+	wg.Wait()
+	println("Alert Sent?")
 	// if fails with new token, make sure you "/start" the "bot" first, or Channel is correct
 }

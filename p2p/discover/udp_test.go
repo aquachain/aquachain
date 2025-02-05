@@ -253,7 +253,7 @@ func TestUDP_findnode(t *testing.T) {
 
 	// ensure there's a bond with the test node,
 	// findnode won't be accepted otherwise.
-	test.table.db.updateBondTime(PubkeyID(test.remotekey.PubKey()), time.Now())
+	test.table.db.updateBondTime(PubkeyID(test.remotekey.PubKey().ToECDSA()), time.Now())
 
 	// check that closest neighbors are returned.
 	test.packetIn(nil, findnodePacket, &findnode{Target: testTarget, Expiration: futureExp})
@@ -282,7 +282,7 @@ func TestUDP_findnodeMultiReply(t *testing.T) {
 	// queue a pending findnode request
 	resultc, errc := make(chan []*Node), make(chan error)
 	go func() {
-		rid := PubkeyID(test.remotekey.PubKey())
+		rid := PubkeyID(test.remotekey.PubKey().ToECDSA())
 		ns, err := test.udp.findnode(rid, test.remoteaddr, testTarget)
 		if err != nil && len(ns) == 0 {
 			errc <- err
@@ -375,7 +375,7 @@ func TestUDP_successfulPing(t *testing.T) {
 	// pong packet.
 	select {
 	case n := <-added:
-		rid := PubkeyID(test.remotekey.PubKey())
+		rid := PubkeyID(test.remotekey.PubKey().ToECDSA())
 		if n.ID != rid {
 			t.Errorf("node has wrong ID: got %v, want %v", n.ID, rid)
 		}
@@ -481,8 +481,8 @@ var testPackets = []struct {
 
 func TestForwardCompatibility(t *testing.T) {
 	t.Skip()
-	testkey, _ := crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
-	wantNodeID := PubkeyID(testkey.PubKey())
+	testkey, _ := crypto.HexToBtcec("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
+	wantNodeID := PubkeyID(testkey.PubKey().ToECDSA())
 
 	for _, test := range testPackets {
 		input, err := hex.DecodeString(test.input)

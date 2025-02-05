@@ -138,11 +138,11 @@ type KeyStoreTestV1 struct {
 
 func TestV3_PBKDF2_1(t *testing.T) {
 	t.Parallel()
-	tests := loadKeyStoreTestV3("testdata/v3_test_vector.json", t)
+	tests := loadKeyStoreTestV3(filepath.Join(basedir, "v3_test_vector.json"), t)
 	testDecryptV3(tests["wikipage_test_vector_pbkdf2"], t)
 }
 
-var testsSubmodule = filepath.Join("..", "..", "tests", "testdata", "KeyStoreTests")
+var testsSubmodule = filepath.Join(basedir, "KeyStoreTests")
 
 func skipIfSubmoduleMissing(t *testing.T) {
 	if !common.FileExist(testsSubmodule) {

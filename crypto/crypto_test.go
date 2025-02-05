@@ -98,7 +98,7 @@ func BenchmarkArgon2idC(b *testing.B) {
 }
 
 func TestSign(t *testing.T) {
-	key, err := HexToECDSA(testPrivHex)
+	key, err := HexToBtcec(testPrivHex)
 	if err != nil {
 		t.Errorf("HexToECDSA error: %s", err)
 		return
@@ -148,7 +148,7 @@ func TestInvalidSign(t *testing.T) {
 }
 
 func TestNewContractAddress(t *testing.T) {
-	key, _ := HexToECDSA(testPrivHex)
+	key, _ := HexToBtcec(testPrivHex)
 	addr := common.HexToAddress(testAddrHex)
 	genAddr := PubkeyToAddress(key.PubKey())
 	// sanity check before using addr to create contract address
@@ -260,7 +260,7 @@ func checkAddr(t *testing.T, addr0, addr1 common.Address) {
 // skip but keep it after they are done
 func TestPythonIntegration(t *testing.T) {
 	kh := "289c2857d4598e37fb9647507e47a309d6133539bf21a8b9cb6df88fd5232032"
-	k0, _ := HexToECDSA(kh)
+	k0, _ := HexToBtcec(kh)
 
 	msg0 := Keccak256([]byte("foo"))
 	sig0, _ := Sign(msg0, k0)

@@ -18,6 +18,7 @@ package p2p
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"errors"
 	"math/rand"
 	"net"
@@ -31,6 +32,11 @@ import (
 	"gitlab.com/aquachain/aquachain/crypto/sha3"
 	"gitlab.com/aquachain/aquachain/p2p/discover"
 )
+
+// instead of waiting (eg. no -now flag)
+func contextBackground() context.Context {
+	return context.WithValue(context.Background(), "doitnow", true)
+}
 
 func init() {
 	// log.Root().SetHandler(log.LvlFilterHandler(log.LvlError, log.StreamHandler(os.Stderr, log.TerminalFormat(false))))
@@ -54,7 +60,7 @@ func newTestTransport(id discover.NodeID, fd net.Conn) transport {
 	return &testTransport{id: id, rlpx: wrapped}
 }
 
-func (c *testTransport) doEncHandshake(prv *btcec.PrivateKey, dialDest *discover.Node) (discover.NodeID, error) {
+func (c *testTransport) doEncHandshake(prv *ecdsa.PrivateKey, dialDest *discover.Node) (discover.NodeID, error) {
 	return c.id, nil
 }
 
@@ -80,7 +86,7 @@ func startTestServer(t *testing.T, id discover.NodeID, pf func(*Peer)) *Server {
 		newPeerHook:  pf,
 		newTransport: func(fd net.Conn) transport { return newTestTransport(id, fd) },
 	}
-	if err := server.Start(context.Background()); err != nil {
+	if err := server.Start(contextBackground()); err != nil {
 		t.Fatalf("Could not start server: %v", err)
 	}
 	return server
@@ -335,7 +341,7 @@ func TestServerAtCap(t *testing.T) {
 			ChainId:      333,
 		},
 	}
-	if err := srv.Start(context.Background()); err != nil {
+	if err := srv.Start(contextBackground()); err != nil {
 		t.Fatalf("could not start: %v", err)
 	}
 	defer srv.Stop()
@@ -372,7 +378,7 @@ func TestServerAtCap(t *testing.T) {
 func TestServerSetupConn(t *testing.T) {
 	id := randomID()
 	srvkey := newkey()
-	srvid := discover.PubkeyID(srvkey.PubKey())
+	srvid := discover.PubkeyID(srvkey.PubKey().ToECDSA())
 	tests := []struct {
 		dontstart bool
 		tt        *setupTransport
@@ -442,7 +448,7 @@ func TestServerSetupConn(t *testing.T) {
 			log:          log.New(),
 		}
 		if !test.dontstart {
-			if err := srv.Start(context.Background()); err != nil {
+			if err := srv.Start(contextBackground()); err != nil {
 				t.Fatalf("couldn't start server: %v", err)
 			}
 		}
@@ -468,7 +474,7 @@ type setupTransport struct {
 	closeErr error
 }
 
-func (c *setupTransport) doEncHandshake(prv *btcec.PrivateKey, dialDest *discover.Node) (discover.NodeID, error) {
+func (c *setupTransport) doEncHandshake(prv *ecdsa.PrivateKey, dialDest *discover.Node) (discover.NodeID, error) {
 	c.calls += "doEncHandshake,"
 	return c.id, c.encHandshakeErr
 }

@@ -57,7 +57,7 @@ func BenchmarkFilters(b *testing.B) {
 		logsFeed   = new(event.Feed)
 		chainFeed  = new(event.Feed)
 		backend    = &testBackend{mux, db, 0, txFeed, rmLogsFeed, logsFeed, chainFeed}
-		key1, _    = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
+		key1, _    = crypto.HexToBtcec("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
 		addr1      = crypto.PubkeyToAddress(key1.PubKey())
 		addr2      = common.BytesToAddress([]byte("jeff"))
 		addr3      = common.BytesToAddress([]byte("aquachain"))
@@ -122,7 +122,7 @@ func TestFilters(t *testing.T) {
 		logsFeed   = new(event.Feed)
 		chainFeed  = new(event.Feed)
 		backend    = &testBackend{mux, db, 0, txFeed, rmLogsFeed, logsFeed, chainFeed}
-		key1, _    = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
+		key1, _    = crypto.HexToBtcec("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
 		addr       = crypto.PubkeyToAddress(key1.PubKey())
 
 		hash1 = common.BytesToHash([]byte("topic1"))

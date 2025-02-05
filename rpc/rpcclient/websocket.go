@@ -21,7 +21,6 @@ import (
 	"crypto/tls"
 	"net"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
@@ -35,15 +34,9 @@ import (
 // affect subsequent interactions with the client.
 func DialWebsocket(ctx context.Context, endpoint, origin string) (*Client, error) {
 	if origin == "" {
-		var err error
-		if origin, err = os.Hostname(); err != nil {
-			return nil, err
-		}
-		if strings.HasPrefix(endpoint, "wss") {
-			origin = "https://" + strings.ToLower(origin)
-		} else {
-			origin = "http://" + strings.ToLower(origin)
-		}
+		origin = endpoint
+		origin = strings.Replace(origin, "ws://", "http://", 1)
+		origin = strings.Replace(origin, "wss://", "https://", 1)
 	}
 	config, err := websocket.NewConfig(endpoint, origin)
 	if err != nil {

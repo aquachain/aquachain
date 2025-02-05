@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"sort"
 	"strings"
 	"time"
 
@@ -53,6 +54,7 @@ var (
 	// app = utils.NewApp(gitCommit, "the aquachain command line interface")
 	// flags that configure the node
 	nodeFlags = []cli.Flag{
+		utils.DoitNowFlag,
 		utils.IdentityFlag,
 		utils.UnlockedAccountFlag,
 		utils.PasswordFileFlag,
@@ -103,7 +105,7 @@ var (
 		utils.DeveloperPeriodFlag,
 		utils.NetworkEthFlag,
 		utils.VMEnableDebugFlag,
-		utils.NetworkIdFlag,
+
 		utils.AquaStatsURLFlag,
 		utils.MetricsEnabledFlag,
 		utils.FakePoWFlag,
@@ -180,7 +182,7 @@ func doinit() *cli.Command {
 		dumpConfigCommand,
 	}
 
-	// sort.Sort(cli.CommandsByName(app.Commands))
+	sort.Sort(cli.FlagsByName(app.Flags))
 
 	app.Flags = append(app.Flags, nodeFlags...)
 	app.Flags = append(app.Flags, rpcFlags...)
@@ -200,12 +202,13 @@ func afterFunc(context.Context, *cli.Command) error {
 }
 
 func beforeFunc(ctx context.Context, cmd *cli.Command) (context.Context, error) {
-
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	if err := debug.Setup(mainctx, cmd); err != nil {
+
+	// TODO move logging setup out of debug?
+	if err := debug.Setup(ctx, cmd); err != nil {
 		return ctx, err
 	}
-	if x := cmd.Args().First(); x != "" && x != "daemon" || x != "console" {
+	if x := cmd.Args().First(); x != "" && x != "daemon" || x != "console" { // is subcommand..
 		return ctx, nil
 	}
 	// Start system runtime metrics collection
@@ -231,7 +234,6 @@ func main() {
 		godotenv.Load(".env")
 	}
 	app := doinit()
-
 	if err := app.Run(mainctx, os.Args); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -266,6 +268,7 @@ func startNode(ctx context.Context, cmd *cli.Command, stack *node.Node) {
 			}
 		}
 	}
+	ctx = context.WithValue(ctx, "doitnow", cmd.Bool(utils.DoitNowFlag.Name)) // TODO
 	// Start up the node itself
 	utils.StartNode(ctx, stack)
 
@@ -328,7 +331,12 @@ func startNode(ctx context.Context, cmd *cli.Command, stack *node.Node) {
 			}
 		}
 		// Set the gas price to the limits from the CLI and start mining
-		aquachain.TxPool().SetGasPrice(utils.GlobalBig(cmd, utils.GasPriceFlag.Name))
+		if cmd.IsSet(utils.GasPriceFlag.Name) {
+			if x := utils.GlobalBig(cmd, utils.GasPriceFlag.Name); x != nil {
+				aquachain.TxPool().SetGasPrice(x)
+			}
+		}
+		log.Info("gas price", "min", aquachain.TxPool().GasPrice())
 		if err := aquachain.StartMining(true); err != nil {
 			utils.Fatalf("Failed to start mining: %v", err)
 		}

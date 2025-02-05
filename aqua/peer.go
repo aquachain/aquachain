@@ -237,7 +237,7 @@ func (p *peer) Handshake(network uint64, td *big.Int, head common.Hash, genesis 
 	go func() {
 		errc <- p2p.Send(p.rw, StatusMsg, &statusData{
 			ProtocolVersion: uint32(p.version),
-			NetworkId:       network,
+			ChainId:         network,
 			TD:              td,
 			CurrentBlock:    head,
 			GenesisBlock:    genesis,
@@ -280,8 +280,8 @@ func (p *peer) readStatus(network uint64, status *statusData, genesis common.Has
 	if status.GenesisBlock != genesis {
 		return errResp(ErrGenesisBlockMismatch, "%x (!= %x)", status.GenesisBlock[:8], genesis[:8])
 	}
-	if status.NetworkId != network {
-		return errResp(ErrNetworkIdMismatch, "%d (!= %d)", status.NetworkId, network)
+	if status.ChainId != network {
+		return errResp(ErrNetworkIdMismatch, "%d (!= %d)", status.ChainId, network)
 	}
 	if int(status.ProtocolVersion) != p.version {
 		return errResp(ErrProtocolVersionMismatch, "%d (!= %d)", status.ProtocolVersion, p.version)

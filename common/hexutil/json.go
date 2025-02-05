@@ -30,7 +30,41 @@ var (
 	bigT    = reflect.TypeOf((*Big)(nil))
 	uintT   = reflect.TypeOf(Uint(0))
 	uint64T = reflect.TypeOf(Uint64(0))
+	byteT   = reflect.TypeOf(Byte(0))
 )
+
+type Byte byte
+
+// MarshalText implements encoding.TextMarshaler.
+func (b Byte) MarshalText() ([]byte, error) {
+	return []byte(fmt.Sprintf("0x%02x", b)), nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (b *Byte) UnmarshalJSON(input []byte) error {
+	if !isString(input) {
+		return errNonString(byteT)
+	}
+	return wrapTypeError(b.UnmarshalText(input[1:len(input)-1]), byteT)
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (b *Byte) UnmarshalText(input []byte) error {
+	raw, err := checkText(input, true)
+	if err != nil {
+		return err
+	}
+	if len(raw) != 2 {
+		return ErrSyntax
+	}
+	nib1 := decodeNibble(raw[0])
+	nib2 := decodeNibble(raw[1])
+	if nib1 == badNibble || nib2 == badNibble {
+		return ErrSyntax
+	}
+	*b = Byte(nib1<<4 | nib2)
+	return nil
+}
 
 // Bytes marshals/unmarshals as a JSON string with 0x prefix.
 // The empty slice marshals as "0x".

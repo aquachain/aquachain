@@ -175,15 +175,15 @@ func readProtocolHandshake(rw MsgReader, our *protoHandshake) (*protoHandshake, 
 	return &hs, nil
 }
 
-func (t *rlpx) doEncHandshake(prv *btcec.PrivateKey, dial *discover.Node) (discover.NodeID, error) {
+func (t *rlpx) doEncHandshake(prv *ecdsa.PrivateKey, dial *discover.Node) (discover.NodeID, error) {
 	var (
 		sec secrets
 		err error
 	)
 	if dial == nil {
-		sec, err = receiverEncHandshake(t.fd, prv.ToECDSA())
+		sec, err = receiverEncHandshake(t.fd, prv)
 	} else {
-		sec, err = initiatorEncHandshake(t.fd, prv.ToECDSA(), dial.ID)
+		sec, err = initiatorEncHandshake(t.fd, prv, dial.ID)
 	}
 	if err != nil {
 		return discover.NodeID{}, err
@@ -309,9 +309,13 @@ func initiatorEncHandshake(conn io.ReadWriter, prv *ecdsa.PrivateKey, remoteID d
 func (h *encHandshake) makeAuthMsg(prv *ecdsa.PrivateKey) (*authMsgV4, error) {
 	rpub, err := h.remoteID.Pubkey()
 	if err != nil {
-		return nil, fmt.Errorf("bad remoteID: %v", err)
+		return nil, fmt.Errorf("bad ecdsa remoteID: %w", err)
 	}
 	h.remotePub = ecies.ImportECDSAPublic(rpub)
+	if h.remotePub == nil {
+		return nil, fmt.Errorf("bad ecies remoteID: %w", err)
+	}
+
 	// Generate random initiator nonce.
 	h.initNonce = make([]byte, shaLen)
 	if _, err := rand.Read(h.initNonce); err != nil {
@@ -383,6 +387,18 @@ func receiverEncHandshake(conn io.ReadWriter, prv *ecdsa.PrivateKey) (s secrets,
 	return h.secrets(authPacket, authRespPacket)
 }
 
+func NewEciesKey() (*ecies.PrivateKey, error) {
+	ke, err := btcec.NewPrivateKey()
+	if err != nil {
+		return nil, err
+	}
+	return ecies.PrivateKeyFromBtcec(ke), nil
+}
+
+func NewEciesPubkey(from []byte) (*ecies.PublicKey, error) {
+	return importPublicKey(from)
+}
+
 func (h *encHandshake) handleAuthMsg(msg *authMsgV4, prv *ecdsa.PrivateKey) error {
 	// Import the remote identity.
 	h.initNonce = msg.Nonce[:]
@@ -396,7 +412,7 @@ func (h *encHandshake) handleAuthMsg(msg *authMsgV4, prv *ecdsa.PrivateKey) erro
 	// Generate random keypair for ECDH.
 	// If a private key is already set, use it instead of generating one (for testing).
 	if h.randomPrivKey == nil {
-		h.randomPrivKey, err = ecies.GenerateKey(rand.Reader, crypto.S256(), nil)
+		h.randomPrivKey, err = NewEciesKey()
 		if err != nil {
 			return err
 		}
@@ -481,6 +497,9 @@ func readHandshakeMsg(msg plainDecoder, plainSize int, prv *ecdsa.PrivateKey, r 
 	}
 	// Attempt decoding pre-EIP-8 "plain" format.
 	key := ecies.ImportECDSA(prv)
+	if !crypto.S256().IsOnCurve(key.PublicKey.X, key.PublicKey.Y) {
+		return buf, fmt.Errorf("invalid public key (not on curve)")
+	}
 	if dec, err := key.Decrypt(buf, nil, nil); err == nil {
 		msg.decodePlain(dec)
 		return buf, nil

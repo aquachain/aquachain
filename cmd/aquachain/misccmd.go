@@ -139,7 +139,6 @@ func printVersion(_ context.Context, cmd *cli.Command) error {
 	fmt.Println("Protocol Versions:", aqua.ProtocolVersions)
 	//
 	fmt.Printf("Chain Selected: %s\n", chaincfg.Name())
-	fmt.Printf("Network Id: %d\n", aqua.DefaultConfig.NetworkId)
 	fmt.Printf("Chain Id:   %d\n", chaincfg.ChainId.Uint64())
 	fmt.Printf("Chain Config: {%s}\n", chaincfg.StringNoChainId())
 	fmt.Printf("Chain HF Map: {%s}\n", chaincfg.HF.String())

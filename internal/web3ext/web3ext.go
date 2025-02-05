@@ -19,6 +19,7 @@ package web3ext
 
 var Modules = map[string]string{
 	"admin":    Admin_JS,
+	"clique":   Clique_JS,
 	"debug":    Debug_JS,
 	"aqua":     Aqua_JS,
 	"miner":    Miner_JS,
@@ -119,6 +120,57 @@ web3._extend({
 		new web3._extend.Property({
 			name: 'datadir',
 			getter: 'admin_datadir'
+		}),
+	]
+});
+`
+
+const Clique_JS = `
+web3._extend({
+	property: 'clique',
+	methods: [
+		new web3._extend.Method({
+			name: 'getSnapshot',
+			call: 'clique_getSnapshot',
+			params: 1,
+			inputFormatter: [web3._extend.formatters.inputBlockNumberFormatter]
+		}),
+		new web3._extend.Method({
+			name: 'getSnapshotAtHash',
+			call: 'clique_getSnapshotAtHash',
+			params: 1
+		}),
+		new web3._extend.Method({
+			name: 'getSigners',
+			call: 'clique_getSigners',
+			params: 1,
+			inputFormatter: [web3._extend.formatters.inputBlockNumberFormatter]
+		}),
+		new web3._extend.Method({
+			name: 'getSignersAtHash',
+			call: 'clique_getSignersAtHash',
+			params: 1
+		}),
+		new web3._extend.Method({
+			name: 'propose',
+			call: 'clique_propose',
+			params: 2
+		}),
+		new web3._extend.Method({
+			name: 'discard',
+			call: 'clique_discard',
+			params: 1
+		}),
+		new web3._extend.Method({
+			name: 'status',
+			call: 'clique_status',
+			params: 0
+		}),
+	],
+	properties: [
+		new web3._extend.Property({
+			name: 'proposals',
+			getter: 'clique_proposals'
 		}),
 	]
 });

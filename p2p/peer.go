@@ -99,7 +99,7 @@ type PeerEvent struct {
 type Peer struct {
 	rw      *conn
 	running map[string]*protoRW
-	log     log.Logger
+	log     log.LoggerI
 	created mclock.AbsTime
 
 	wg       sync.WaitGroup
@@ -179,7 +179,7 @@ func newPeer(conn *conn, protocols []Protocol) *Peer {
 	return p
 }
 
-func (p *Peer) Log() log.Logger {
+func (p *Peer) Log() log.LoggerI {
 	return p.log
 }
 

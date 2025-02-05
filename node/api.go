@@ -19,6 +19,7 @@ package node
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -134,6 +135,11 @@ func (api *PrivateAdminAPI) PeerEvents(ctx context.Context) (*rpc.Subscription, 
 
 // StartRPC starts the HTTP RPC API server.
 func (api *PrivateAdminAPI) StartRPC(host *string, port *int, cors *string, apis *string, vhosts *string) (bool, error) {
+	ok := os.Getenv("AQUA_ALLOW_RPC")
+	if ok != "true" {
+		return false, fmt.Errorf("StartRPC not allowed, set AQUA_ALLOW_RPC=true to enable this method")
+	}
+	log.Warn("Starting RPC", "host", host, "port", port, "cors", cors, "apis", apis, "vhosts", vhosts)
 	api.node.lock.Lock()
 	defer api.node.lock.Unlock()
 
@@ -151,6 +157,7 @@ func (api *PrivateAdminAPI) StartRPC(host *string, port *int, cors *string, apis
 	if port == nil {
 		port = &api.node.config.HTTPPort
 	}
+	endpoint := fmt.Sprintf("%s:%d", *host, *port)
 
 	allowedOrigins := api.node.config.HTTPCors
 	if cors != nil {
@@ -169,6 +176,9 @@ func (api *PrivateAdminAPI) StartRPC(host *string, port *int, cors *string, apis
 	}
 
 	allownet := parseAllowNet(api.node.config.RPCAllowIP)
+	if len(allownet) == 0 {
+		return false, fmt.Errorf("missing AllowIP")
+	}
 	behindreverseproxy := api.node.config.RPCBehindProxy
 	modules := api.node.httpWhitelist
 	if apis != nil {
@@ -178,7 +188,7 @@ func (api *PrivateAdminAPI) StartRPC(host *string, port *int, cors *string, apis
 		}
 	}
 
-	if err := api.node.startHTTP(fmt.Sprintf("%s:%d", *host, *port), api.node.rpcAPIs, modules, allowedOrigins, allowedVHosts, allownet, behindreverseproxy); err != nil {
+	if err := api.node.startHTTP(endpoint, api.node.rpcAPIs, modules, allowedOrigins, allowedVHosts, allownet, behindreverseproxy); err != nil {
 		return false, err
 	}
 	return true, nil

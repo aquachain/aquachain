@@ -38,31 +38,38 @@ import (
 
 var mainctx, maincancel = signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
+// // ATM the url is left to the user and deployment to
+//
+//	JSpathFlag = &cli.StringFlag{
+//		Name:  "jspath",
+//		Usage: "JavaScript root path for `loadScript`",
+//		Value: ".",
+//	}
 var (
-	consoleFlags = []cli.Flag{utils.JSpathFlag, utils.ExecFlag, utils.PreloadJSFlag, &cli.StringFlag{
+	consoleFlags = []cli.Flag{utils.JavascriptDirectoryFlag, utils.ExecFlag, utils.PreloadJSFlag, &cli.StringFlag{
 		Name:  "socks",
 		Value: "",
 		Usage: "SOCKS5 proxy for outgoing RPC connections (eg: -socks socks5://localhost:1080)",
 	}}
-
+	daemonFlags   = append(nodeFlags, rpcFlags...)
+	daemonCommand = &cli.Command{
+		Action:      utils.MigrateFlags(daemonStart),
+		Name:        "daemon",
+		Flags:       daemonFlags,
+		Usage:       "Start a full node",
+		Category:    "CONSOLE COMMANDS",
+		Description: "",
+	}
 	consoleCommand = &cli.Command{
 		Action:   utils.MigrateFlags(localConsole),
 		Name:     "console",
 		Usage:    "Start an interactive JavaScript environment",
-		Flags:    append(append(nodeFlags, rpcFlags...), consoleFlags...),
+		Flags:    append(daemonFlags, consoleFlags...),
 		Category: "CONSOLE COMMANDS",
 		Description: `
 The Aquachain console is an interactive shell for the JavaScript runtime environment
 which exposes a node admin interface as well as the Ðapp JavaScript API.
 See https://gitlab.com/aquachain/aquachain/wiki/JavaScript-Console.`,
-	}
-
-	daemonCommand = &cli.Command{
-		Action:      utils.MigrateFlags(daemonStart),
-		Name:        "daemon",
-		Usage:       "Start a full node",
-		Category:    "CONSOLE COMMANDS",
-		Description: "",
 	}
 
 	attachCommand = &cli.Command{
@@ -99,10 +106,12 @@ func localConsole(ctx context.Context, cmd *cli.Command) error {
 	if first := cmd.Args().First(); first != "" && first[0] != '-' && first != "console" {
 		return fmt.Errorf("uhoh: %q got here", first)
 	}
-	for i := 3; i > 0 && ctx.Err() == nil; i-- {
-		log.Info("starting in ...", "seconds", i)
-		for i := 0; i < 10 && ctx.Err() == nil; i++ {
-			time.Sleep(time.Second / 10)
+	if !cmd.Root().Bool("now") {
+		for i := 3; i > 0 && ctx.Err() == nil; i-- {
+			log.Info("starting in ...", "seconds", i)
+			for i := 0; i < 10 && ctx.Err() == nil; i++ {
+				time.Sleep(time.Second / 10)
+			}
 		}
 	}
 	if ctx.Err() != nil {
@@ -121,10 +130,10 @@ func localConsole(ctx context.Context, cmd *cli.Command) error {
 		utils.Fatalf("Failed to attach to the inproc aquachain: %v", err)
 	}
 	config := console.Config{
-		DataDir: utils.MakeDataDir(cmd),
-		DocRoot: cmd.String(utils.JSpathFlag.Name),
-		Client:  client,
-		Preload: utils.MakeConsolePreloads(cmd),
+		DataDir:          utils.MakeDataDir(cmd),
+		WorkingDirectory: cmd.String(utils.JavascriptDirectoryFlag.Name),
+		Client:           client,
+		Preload:          utils.MakeConsolePreloads(cmd),
 	}
 
 	console, err := console.New(config)
@@ -144,40 +153,53 @@ func localConsole(ctx context.Context, cmd *cli.Command) error {
 	return nil
 }
 
+func assumeEndpoint(ctx context.Context, cmd *cli.Command) string {
+
+	chaincfg := params.GetChainConfig(cmd.String(utils.ChainFlag.Name))
+	path := node.DefaultDatadirByChain(chaincfg)
+	if cmd.IsSet(utils.DataDirFlag.Name) {
+		path = cmd.String(utils.DataDirFlag.Name)
+	}
+	if path != "" {
+		if cmd.Bool(utils.TestnetFlag.Name) {
+			path = filepath.Join(path, "testnet")
+		} else if cmd.Bool(utils.Testnet2Flag.Name) {
+			path = filepath.Join(path, "testnet2")
+		} else if cmd.Bool(utils.Testnet3Flag.Name) {
+			path = filepath.Join(path, "testnet3")
+		} else if cmd.Bool(utils.NetworkEthFlag.Name) {
+			path = filepath.Join(path, "ethereum")
+		} else if cmd.Bool(utils.DeveloperFlag.Name) {
+			path = filepath.Join(path, "develop")
+		}
+	}
+	if path == "" {
+		return ""
+	}
+	return fmt.Sprintf("%s/aquachain.ipc", path)
+}
+
 // remoteConsole will connect to a remote aquachain instance, attaching a JavaScript
 // console to it.
 func remoteConsole(ctx context.Context, cmd *cli.Command) error {
 	// Attach to a remotely running aquachain instance and start the JavaScript console
 	endpoint := cmd.Args().First()
 	if endpoint == "" {
-		chaincfg := params.GetChainConfig(cmd.String(utils.ChainFlag.Name))
-		path := node.DefaultDatadirByChain(chaincfg)
-		if cmd.IsSet(utils.DataDirFlag.Name) {
-			path = cmd.String(utils.DataDirFlag.Name)
-		}
-		if path != "" {
-			if cmd.Bool(utils.TestnetFlag.Name) {
-				path = filepath.Join(path, "testnet")
-			} else if cmd.Bool(utils.Testnet2Flag.Name) {
-				path = filepath.Join(path, "testnet2")
-			} else if cmd.Bool(utils.NetworkEthFlag.Name) {
-				path = filepath.Join(path, "ethereum")
-			} else if cmd.Bool(utils.DeveloperFlag.Name) {
-				path = filepath.Join(path, "develop")
-			}
-		}
-		endpoint = fmt.Sprintf("%s/aquachain.ipc", path)
+		endpoint = assumeEndpoint(ctx, cmd)
 	}
-	socks := cmd.String("socks")
+	if endpoint == "" {
+		return fmt.Errorf("no endpoint specified")
+	}
+	socks := cmd.String("socks") // ignored if IPC endpoint is the endpoint, maybe ignored if 127
 	client, err := dialRPC(endpoint, socks, clientIdentifier)
 	if err != nil {
 		utils.Fatalf("Unable to attach to remote aquachain: %v", err)
 	}
 	config := console.Config{
-		DataDir: utils.MakeDataDir(cmd),
-		DocRoot: cmd.String(utils.JSpathFlag.Name),
-		Client:  client,
-		Preload: utils.MakeConsolePreloads(cmd),
+		DataDir:          utils.MakeDataDir(cmd),
+		WorkingDirectory: cmd.String(utils.JavascriptDirectoryFlag.Name),
+		Client:           client,
+		Preload:          utils.MakeConsolePreloads(cmd),
 	}
 
 	console, err := console.New(config)
@@ -236,10 +258,10 @@ func ephemeralConsole(ctx context.Context, cmd *cli.Command) error {
 		utils.Fatalf("Failed to attach to the inproc aquachain: %v", err)
 	}
 	config := console.Config{
-		DataDir: utils.MakeDataDir(cmd),
-		DocRoot: cmd.String(utils.JSpathFlag.Name),
-		Client:  client,
-		Preload: utils.MakeConsolePreloads(cmd),
+		DataDir:          utils.MakeDataDir(cmd),
+		WorkingDirectory: cmd.String(utils.JavascriptDirectoryFlag.Name),
+		Client:           client,
+		Preload:          utils.MakeConsolePreloads(cmd),
 	}
 
 	console, err := console.New(config)

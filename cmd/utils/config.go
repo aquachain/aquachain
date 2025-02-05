@@ -73,6 +73,7 @@ var tomlSettings = toml.Config{
 	},
 }
 
+// MakeConfigNode created a Node and Config, and is called by a subcommand at startup.
 func MakeConfigNode(cmd *cli.Command, gitCommit string, clientIdentifier string, s ...cfgopt) (*node.Node, *AquachainConfig) {
 	// Load defaults.
 	useprev := true
@@ -138,21 +139,22 @@ func Mkconfig(chainName string, configFileOptional string, checkDefaultConfigFil
 		}
 		var slug string // eg: "_testnet" for testnet, "" for mainnet
 		if params.MainnetChainConfig == chainCfg {
-			userdatadir = node.DefaultDataDir()
+			userdatadir = node.DefaultConfig.DataDir
 		} else {
-			userdatadir = filepath.Join(node.DefaultDataDir(), chainName)
+			userdatadir = node.DefaultDatadirByChain(chainCfg)
 		}
 		if chainName != "aquachain" && chainName != "mainnet" && chainName != "aqua" {
 			slug = "_" + chainName
 		}
 
 		fn := "aquachain" + slug + ".toml" // eg: aquachain_testnet.toml or aquachain.toml
-		for _, file := range []string{fn, filepath.Join(userdatadir, fn), "/etc/aquachain/" + fn} {
+		for _, file := range []string{"./"+fn, filepath.Join(userdatadir, fn), "/etc/aquachain/" + fn} {
+			log.Debug("Looking for autoconfig file", "file", file)
 			if err := LoadConfigFromFile(file, cfgptr); err == nil {
-				log.Info("Loaded config", "file", file)
+				log.Info("Loaded autoconfig", "file", file)
 				break
 			} else if !errors.Is(err, fs.ErrNotExist) { // error loading an existing config file
-				Fatalf("error loading config file: %v", err)
+				Fatalf("error loading autoconfig file: %v", err)
 			}
 		}
 	}

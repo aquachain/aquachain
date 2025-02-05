@@ -34,15 +34,38 @@ func (f ForkMap) String() (s string) {
 	return strings.TrimSpace(s)
 }
 
-// HeaderVersion is not stored in db, or rlp encoded, or sent over the network.
+// HeaderVersion is not stored in db, or rlp encoded, or sent over the network other than JSON-RPC block headers
 type HeaderVersion byte
+
+const (
+	// HashVersionEthash is the original PoW algorithm
+	HashVersionEthash HeaderVersion = 1
+	// HashVersionArgon2id is the first hard fork
+	HashVersionArgon2id HeaderVersion = 2
+	// HashVersionArgon2idB is the second hard fork
+	HashVersionArgon2idB HeaderVersion = 3
+	// HashVersionArgon2idC is the third hard fork
+	HashVersionArgon2idC HeaderVersion = 4
+)
+
+func (v HeaderVersion) String() string {
+	switch v {
+	case 1:
+		return "ethash"
+	case 2:
+		return "argon2id"
+	case 3:
+		return "argon2id-B"
+	case 4:
+		return "argon2id-C"
+	default:
+		return "unknown"
+	}
+}
 
 func (c *ChainConfig) GetBlockVersion(height *big.Int) HeaderVersion {
 	if height == nil {
 		panic("GetBlockVersion: got nil height")
-	}
-	if c == EthnetChainConfig {
-		return 1
 	}
 	if c.IsHF(9, height) {
 		return 4 // argon2id-C

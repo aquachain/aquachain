@@ -175,7 +175,7 @@ func main() {
 		}
 		return
 	case writeAddr:
-		fmt.Printf("%v\n", discover.PubkeyID(nodeKey.PubKey()))
+		fmt.Printf("%v\n", discover.PubkeyID(nodeKey.PubKey().ToECDSA()))
 		os.Exit(0)
 	}
 

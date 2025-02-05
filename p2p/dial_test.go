@@ -628,12 +628,18 @@ func TestDialStateCache(t *testing.T) {
 }
 
 func TestDialResolve(t *testing.T) {
-	resolved := discover.NewNode(uintID(1), net.IP{127, 0, 55, 234}, 3333, 4444)
+	resolved, err := discover.NewNode(uintID(1), net.IP{127, 0, 55, 234}, 3333, 4444)
+	if err != nil {
+		t.Fatal(err)
+	}
 	table := &resolveMock{answer: resolved}
 	state := newDialState(nil, nil, table, 0, nil)
 
 	// Check that the task is generated with an incomplete ID.
-	dest := discover.NewNode(uintID(1), nil, 0, 0)
+	dest, err := discover.NewNode(uintID(1), nil, 0, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
 	state.addStatic(dest)
 	tasks := state.newTasks(0, nil, time.Time{})
 	if !reflect.DeepEqual(tasks, []task{&dialTask{flags: staticDialedConn, dest: dest}}) {

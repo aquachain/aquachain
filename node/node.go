@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/big"
 	"net"
 	"os"
 	"path/filepath"
@@ -37,6 +38,7 @@ import (
 	"gitlab.com/aquachain/aquachain/internal/flock"
 	"gitlab.com/aquachain/aquachain/p2p"
 	"gitlab.com/aquachain/aquachain/p2p/netutil"
+	"gitlab.com/aquachain/aquachain/params"
 	"gitlab.com/aquachain/aquachain/rpc"
 	rpcclient "gitlab.com/aquachain/aquachain/rpc/rpcclient"
 )
@@ -73,14 +75,21 @@ type Node struct {
 	wsListener net.Listener // Websocket RPC listener socket to server API requests
 	wsHandler  *rpc.Server  // Websocket RPC request handler to process the API requests
 
-	stop chan struct{} // Channel to wait for termination notifications
-	lock sync.RWMutex
+	stop     chan struct{} // Channel to wait for termination notifications
+	lock     sync.RWMutex
+	chaincfg *params.ChainConfig
 
-	log log.Logger
+	log log.LoggerI
 }
 
 // New creates a new P2P node, ready for protocol registration.
 func New(conf *Config) (*Node, error) {
+	chaincfg := params.GetChainConfigByChainId(big.NewInt(int64(conf.P2P.ChainId))) // TODO pass chaincfg in config?
+
+	if chaincfg == nil && conf.P2P.ChainConfig() == nil {
+		return nil, fmt.Errorf("unknown chain id %d", conf.P2P.ChainId)
+	}
+
 	// Copy config and resolve the datadir so future changes to the current
 	// working directory don't affect the node.
 	confCopy := *conf
@@ -124,6 +133,7 @@ func New(conf *Config) (*Node, error) {
 		wsEndpoint:        conf.WSEndpoint(),
 		eventmux:          new(event.TypeMux),
 		log:               conf.Logger,
+		chaincfg:          chaincfg,
 	}, nil
 }
 
@@ -163,7 +173,7 @@ func (n *Node) Start(ctx context.Context) error {
 	// discovery databases.
 	n.serverConfig = n.config.P2P
 	n.serverConfig.PrivateKey = n.config.NodeKey()
-	n.serverConfig.Name = n.config.Name
+	n.serverConfig.Name = n.config.NodeName()
 	if n.serverConfig.Name == "" {
 		return errors.New("node name must be non-empty")
 	}
@@ -267,7 +277,7 @@ func (n *Node) openDataDir() error {
 		return nil // ephemeral
 	}
 
-	instdir := filepath.Join(n.config.DataDir, n.config.name())
+	instdir := DefaultDatadirByChain(n.chaincfg)
 	if err := os.MkdirAll(instdir, 0700); err != nil {
 		return err
 	}

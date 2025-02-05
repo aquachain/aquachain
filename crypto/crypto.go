@@ -22,13 +22,14 @@ import (
 	"crypto/elliptic"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
-	"log"
 	"math/big"
 	"os"
 
 	"github.com/btcsuite/btcd/btcec/v2"
 	"gitlab.com/aquachain/aquachain/common"
+	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/common/math"
 	"gitlab.com/aquachain/aquachain/crypto/sha3"
 	"gitlab.com/aquachain/aquachain/rlp"
@@ -197,31 +198,29 @@ func ToECDSAPub(pub []byte) *btcec.PublicKey {
 }
 
 func FromECDSAPub(pub *ecdsa.PublicKey) []byte {
-	if pub == nil || pub.X == nil || pub.Y == nil {
-		return nil
-	}
 	return elliptic.Marshal(S256(), pub.X, pub.Y)
 }
 func Ecdsa2Btcec(priv *ecdsa.PrivateKey) *btcec.PrivateKey {
-	pk, _ := btcec.PrivKeyFromBytes(priv.D.Bytes())
+	var pk *btcec.PrivateKey
+	pk.ToECDSA()
 	return pk
 }
 func Ecdsa2BtcecPub(pub *ecdsa.PublicKey) *btcec.PublicKey {
 	pubk, err := btcec.ParsePubKey(FromECDSAPub(pub))
 	if err != nil {
-		log.Printf("error parsing pub key: %v", err)
+		log.Error("error parsing pub key", "err", err)
+		panic(err.Error())
 	}
 	return pubk
 }
 
 // HexToECDSA parses a secp256k1 private key.
-func HexToECDSA(hexkey string) (*btcec.PrivateKey, error) {
-	b, err := hex.DecodeString(hexkey)
+func HexToECDSA(hexkey string) (*ecdsa.PrivateKey, error) {
+	k, err := HexToBtcec(hexkey)
 	if err != nil {
-		return nil, errors.New("invalid hex string")
+		return nil, err
 	}
-	return BytesToKey(b)
-
+	return k.ToECDSA(), nil
 }
 
 // HexToBtcec parses a secp256k1 private key.
@@ -253,6 +252,9 @@ func BytesToKey(b []byte) (*btcec.PrivateKey, error) {
 	}
 	if priv.ToECDSA().D.Cmp(common.Big1) == 0 {
 		return nil, errors.New("private key is 1")
+	}
+	if !pub.IsOnCurve() {
+		return nil, errors.New("public key is not on curve")
 	}
 	return priv, nil
 }
@@ -288,7 +290,25 @@ func SaveECDSA(file string, key *btcec.PrivateKey) error {
 // }
 
 func GenerateKey() (*btcec.PrivateKey, error) {
-	return btcec.NewPrivateKey()
+	for i := 0; i < 1000; i++ {
+		k, err := btcec.NewPrivateKey()
+		if err != nil {
+			log.Error("failed to generate key", "err", err)
+			return nil, err
+		}
+		ke := k.ToECDSA()
+		if !ke.IsOnCurve(ke.X, ke.Y) {
+			log.Info("retrying key generation (invalid curve point)")
+			continue
+		}
+		if err == nil && k.PubKey().IsOnCurve() {
+			log.Trace("generated key", "pub", fmt.Sprintf("%02x", k.PubKey().SerializeCompressed()), "onpoint", k.PubKey().IsOnCurve())
+			return k, nil
+		}
+		log.Info("retrying key generation (invalid curve point)")
+	}
+	log.Error("failed to generate key")
+	return nil, errors.New("failed to generate key")
 }
 
 // ValidateSignatureValues verifies whether the signature values are valid with
@@ -309,7 +329,24 @@ func ValidateSignatureValues(v byte, r, s *big.Int, homestead bool) bool {
 	return r.Cmp(secp256k1_N) < 0 && s.Cmp(secp256k1_N) < 0 // && (v == 0 || v == 1)
 }
 
-func PubkeyToAddress(p *btcec.PublicKey) common.Address {
+type HasSerializeUncompressed interface {
+	SerializeUncompressed() []byte
+}
+
+func PubkeyToAddress(p HasSerializeUncompressed) common.Address {
 	pubBytes := p.SerializeUncompressed()
 	return common.BytesToAddress(Keccak256(pubBytes[1:])[12:])
+}
+
+type EllipticCurve interface {
+	IsOnCurve(x, y *big.Int) bool
+	Add(x1, y1, x2, y2 *big.Int) (*big.Int, *big.Int)
+	ScalarMult(Bx, By *big.Int, k []byte) (*big.Int, *big.Int)
+	ScalarBaseMult(k []byte) (*big.Int, *big.Int)
+}
+
+type EllipticCurveMarshal interface {
+	IsOnCurve(x, y *big.Int) bool
+	Marshal(x, y *big.Int) []byte
+	Unmarshal(data []byte) (*big.Int, *big.Int)
 }

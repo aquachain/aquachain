@@ -67,3 +67,5 @@ profile.cov
 /.v*
 *~
 *.swp
+*.crt
+*.key

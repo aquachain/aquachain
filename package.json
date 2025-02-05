@@ -3,8 +3,6 @@
   "bugs": {
     "url": "https://gitlab.com/aquachain/aquachain"
   },
-  "gx": {},
-  "gxVersion": "0.12.1",
   "language": "go",
   "license": "LGPL3",
   "name": "aquachain",

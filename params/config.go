@@ -19,7 +19,9 @@ package params
 import (
 	"fmt"
 	"math/big"
+	"os"
 
+	"github.com/naoina/toml"
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/log"
 )
@@ -28,6 +30,7 @@ var (
 	MainnetGenesisHash  = common.HexToHash("0x381c8d2c3e3bc702533ee504d7621d510339cafd830028337a4b532ff27cd505") // Mainnet genesis hash to enforce below configs on
 	TestnetGenesisHash  = common.HexToHash("0xa8773cb7d32b8f7e1b32b0c2c8b735c293b8936dd3760c15afc291a23eb0cf88") // Testnet genesis hash to enforce below configs on
 	Testnet2GenesisHash = common.HexToHash("0xde434983d3ada19cd43c44d8ad5511bad01ed12b3cc9a99b1717449a245120df") // Testnet2 genesis hash to enforce below configs on
+	Testnet3GenesisHash = common.HexToHash("0xacce4d644001486af14d4848c331d43c429167f5879e71fa22d16837d280832b") // Testnet3 genesis hash to enforce below configs on
 	EthnetGenesisHash   = common.HexToHash("0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3")
 )
 
@@ -56,7 +59,7 @@ var (
 		5: big.NewInt(5),   // HF5
 		6: big.NewInt(6),   // noop in testnet
 		7: big.NewInt(25),  // eip 155, 158
-		8: big.NewInt(650), // HF8
+		8: big.NewInt(650), // HF8 (m_cost=16, diff algo, jump diff)
 	}
 
 	// Testnet2HF is the map of hard forks (testnet2 private network)
@@ -70,9 +73,9 @@ var (
 
 	// Testnet3HF is the map of hard forks (testnet3 private network)
 	Testnet3HF = ForkMap{
-		5: big.NewInt(1),
-		6: big.NewInt(0),
-		7: big.NewInt(0),
+		5: big.NewInt(0), // argonated block hashes
+		6: nil,
+		7: big.NewInt(0), // eip 155, 158
 		8: nil,
 		9: nil,
 	}
@@ -139,13 +142,14 @@ var (
 	}
 	// Testnet3ChainConfig contains the chain parameters to run a node on the Testnet2 test network.
 	Testnet3ChainConfig = &ChainConfig{
-		ChainId:              big.NewInt(617175613),
-		HomesteadBlock:       big.NewInt(0),
-		EIP150Block:          big.NewInt(0),
-		EIP155Block:          Testnet3HF[7],
-		EIP158Block:          Testnet3HF[7],
-		ByzantiumBlock:       Testnet3HF[7],
-		Aquahash:             new(AquahashConfig),
+		ChainId:        big.NewInt(617175613),
+		HomesteadBlock: big.NewInt(0),
+		EIP150Block:    big.NewInt(0),
+		EIP155Block:    Testnet3HF[7],
+		EIP158Block:    Testnet3HF[7],
+		ByzantiumBlock: Testnet3HF[7],
+		// Aquahash:             new(AquahashConfig),
+		Clique:               &CliqueConfig{Period: 15, Epoch: 30000},
 		HF:                   Testnet3HF,
 		DefaultPortNumber:    21306,
 		DefaultBootstrapPort: 21003,
@@ -170,9 +174,10 @@ var (
 	//
 	// This configuration is intentionally not using keyed fields to force anyone
 	// adding flags to the config to also have to set these fields.
-	AllAquahashProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, new(AquahashConfig), TestHF, 0, 0}
+	AllAquahashProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, new(AquahashConfig), nil, TestHF, 21398, 21099}
+	AllCliqueProtocolChanges   = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, nil, &CliqueConfig{Period: 0, Epoch: 30000}, TestHF, 21398, 21098}
 
-	TestChainConfig = &ChainConfig{big.NewInt(3), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, new(AquahashConfig), TestHF, 0, 0}
+	TestChainConfig = &ChainConfig{big.NewInt(3), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, new(AquahashConfig), nil, TestHF, 21397, 21097}
 	TestRules       = TestChainConfig.Rules(new(big.Int))
 )
 
@@ -194,14 +199,15 @@ type ChainConfig struct {
 	EIP150Block *big.Int    `json:"eip150Block,omitempty"` // EIP150 HF block (nil = no fork)
 	EIP150Hash  common.Hash `json:"eip150Hash,omitempty"`  // EIP150 HF hash (needed for header only clients as only gas pricing changed)
 
-	EIP155Block *big.Int `json:"eip155Block,omitempty"` // EIP155 HF block
-	EIP158Block *big.Int `json:"eip158Block,omitempty"` // EIP158 HF block
+	EIP155Block *big.Int `json:"eip155Block,omitempty"` // EIP155 HF block (replay protect)
+	EIP158Block *big.Int `json:"eip158Block,omitempty"` // EIP158 HF block (state clearing)
 
 	ByzantiumBlock      *big.Int `json:"byzantiumBlock,omitempty"`      // Byzantium switch block (nil = no fork, 0 = already on byzantium)
 	ConstantinopleBlock *big.Int `json:"constantinopleBlock,omitempty"` // Constantinople switch block (nil = no fork, 0 = already activated)
 
 	// Various consensus engines
 	Aquahash *AquahashConfig `json:"aquahash,omitempty"`
+	Clique   *CliqueConfig   `json:"clique,omitempty"`
 
 	// HF Scheduled Maintenance Hardforks
 	HF ForkMap `json:"hf,omitempty"`
@@ -209,6 +215,46 @@ type ChainConfig struct {
 	// DefaultPortNumber used by p2p package if nonzero
 	DefaultPortNumber    int `json:"portNumber,omitempty"`    // eg. 21303, udp and tcp
 	DefaultBootstrapPort int `json:"bootstrapPort,omitempty"` // eg. 21000, udp
+}
+
+func LoadChainConfigFile(path string) (*ChainConfig, error) {
+	cfg := new(ChainConfig)
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	err = toml.NewDecoder(f).Decode(cfg)
+	f.Close()
+	if err != nil {
+		return nil, err
+	}
+	if cfg.ChainId == nil {
+		return nil, fmt.Errorf("chainId is required")
+	}
+	name := cfg.Name()
+	if name == "" || name == "mainnet" || name == "aqua" {
+		return nil, fmt.Errorf("name is required")
+	}
+	return cfg, nil
+}
+
+func SaveChainConfig(cfg *ChainConfig, path string) error {
+	if _, err := os.Stat(path); err == nil {
+		return fmt.Errorf("file already exists")
+	}
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	return toml.NewEncoder(f).Encode(cfg)
+}
+
+// GetGenesisVersion returns the genesis version of the chain
+//
+// If 0/1, a DAG is generated for ethash
+func (chainConfig *ChainConfig) GetGenesisVersion() HeaderVersion {
+	return chainConfig.GetBlockVersion(common.Big0)
 }
 
 func GetChainConfig(name string) *ChainConfig {
@@ -305,12 +351,26 @@ func (c *AquahashConfig) String() string {
 	return "aquahash"
 }
 
+// CliqueConfig is the consensus engine configs for proof-of-authority based sealing.
+type CliqueConfig struct {
+	Period      uint64 `json:"period"`      // Number of seconds between blocks to enforce
+	Epoch       uint64 `json:"epoch"`       // Epoch length to reset votes and checkpoint
+	StartNumber uint64 `json:"startNumber"` // Block number to start clique engine (0 = genesis)
+}
+
+// String implements the stringer interface, returning the consensus engine details.
+func (c *CliqueConfig) String() string {
+	return "clique"
+}
+
 // String implements the fmt.Stringer interface.
 func (c *ChainConfig) String() string {
 	var engine interface{}
 	switch {
 	case c.Aquahash != nil:
 		engine = c.Aquahash
+	case c.Clique != nil:
+		engine = c.Clique
 	default:
 		engine = "unknown"
 	}
@@ -339,6 +399,8 @@ func (c *ChainConfig) EngineName() string {
 	switch {
 	case c.Aquahash != nil:
 		engine = c.Aquahash.String()
+	case c.Clique != nil:
+		engine = c.Clique.String()
 	default:
 		engine = "unknown"
 	}

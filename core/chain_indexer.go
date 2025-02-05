@@ -83,7 +83,7 @@ type ChainIndexer struct {
 
 	throttling time.Duration // Disk throttling to prevent a heavy upgrade from hogging resources
 
-	log  log.Logger
+	log  log.LoggerI
 	lock sync.RWMutex
 }
 

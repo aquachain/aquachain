@@ -18,6 +18,7 @@ package discover
 
 import (
 	"crypto/ecdsa"
+	"crypto/elliptic"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -26,11 +27,10 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
-	"strings"
 	"time"
 
-	"github.com/btcsuite/btcd/btcec/v2"
 	"gitlab.com/aquachain/aquachain/common"
+	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/crypto"
 )
 
@@ -54,11 +54,25 @@ type Node struct {
 	addedAt time.Time
 }
 
+func MustNewNode(id NodeID, ip net.IP, udpPort, tcpPort uint16) *Node {
+	n, err := NewNode(id, ip, udpPort, tcpPort)
+	if err != nil {
+		panic(err)
+	}
+	return n
+}
+
 // NewNode creates a new node. It is mostly meant to be used for
 // testing purposes.
-func NewNode(id NodeID, ip net.IP, udpPort, tcpPort uint16) *Node {
-	if ipv4 := ip.To4(); ipv4 == nil {
-		panic("only IPv4 addresses are supported")
+func NewNode(id NodeID, ip net.IP, udpPort, tcpPort uint16) (*Node, error) {
+	var err error
+	if len(ip) != 0 {
+		if ip.Equal(net.IPv6unspecified) {
+			ip = net.IPv4zero
+		}
+		if len(ip.To4()) != net.IPv4len {
+			return nil, fmt.Errorf("invalid IPv4 length %d", len(ip))
+		}
 	}
 	return &Node{
 		IP:  ip,
@@ -66,7 +80,7 @@ func NewNode(id NodeID, ip net.IP, udpPort, tcpPort uint16) *Node {
 		TCP: tcpPort,
 		ID:  id,
 		sha: crypto.Keccak256Hash(id[:]),
-	}
+	}, err
 }
 
 func (n *Node) addr() *net.UDPAddr {
@@ -144,7 +158,7 @@ func ParseNode(rawurl string) (*Node, error) {
 		if err != nil {
 			return nil, fmt.Errorf("invalid node ID (%v)", err)
 		}
-		return NewNode(id, nil, 0, 0), nil
+		return NewNode(id, nil, 0, 0)
 	}
 	return parseComplete(rawurl)
 }
@@ -193,7 +207,7 @@ func parseComplete(rawurl string) (*Node, error) {
 			return nil, errors.New("invalid discport in query")
 		}
 	}
-	return NewNode(id, ip, uint16(udpPort), uint16(tcpPort)), nil
+	return NewNode(id, ip, uint16(udpPort), uint16(tcpPort))
 }
 
 type BootnodeStringList []string
@@ -291,14 +305,34 @@ func MustBytesID(b []byte) NodeID {
 // HexID converts a hex string to a NodeID.
 // The string may be prefixed with 0x.
 func HexID(in string) (NodeID, error) {
-	var id NodeID
-	b, err := hex.DecodeString(strings.TrimPrefix(in, "0x"))
+	if in[:2] == "0x" {
+		in = in[2:]
+	}
+	if l := len(in); l != NodeIDBits/4 {
+		return NodeID{}, fmt.Errorf("wrong length, want 128 hex chars")
+	}
+
+	id := NodeID{}
+	dehex, err := hex.Decode(id[:], []byte(in))
 	if err != nil {
 		return id, err
-	} else if len(b) != len(id) {
-		return id, fmt.Errorf("wrong length, want %d hex chars", len(id)*2)
+
 	}
-	copy(id[:], b)
+	if dehex != len(id) {
+		return id, fmt.Errorf("invalid hex public key len %d", dehex)
+	}
+	copy(id[:], id[:dehex])
+	pubk := &ecdsa.PublicKey{
+		Curve: crypto.S256(),
+		X:     new(big.Int).SetBytes(id[:]),
+		Y:     new(big.Int),
+	}
+
+	if !crypto.S256().IsOnCurve(pubk.X, pubk.Y) {
+		// log.Warn("invalid hex public key", "id", id)
+		// return id, errors.New("invalid hex public key")
+	}
+
 	return id, nil
 }
 
@@ -313,15 +347,24 @@ func MustHexID(in string) NodeID {
 }
 
 // PubkeyID returns a marshaled representation of the given public key.
-func PubkeyID(pub *btcec.PublicKey) NodeID {
+func PubkeyID(pub *ecdsa.PublicKey) NodeID {
+	if pub == nil {
+		panic("nil public key")
+	}
+	if !pub.IsOnCurve(pub.X, pub.Y) {
+		panic("invalid public key wtf")
+	}
 	var id NodeID
-	pbytes := pub.SerializeUncompressed()
+	pbytes := elliptic.Marshal(pub.Curve, pub.X, pub.Y)
 	if len(pbytes)-1 != len(id) {
 		panic(fmt.Errorf("need %d bit pubkey, got %d bits", (len(id)+1)*8, len(pbytes)))
 	}
+	log.Debug("pubkey", "version", pbytes[0], "len", len(pbytes))
 	copy(id[:], pbytes[1:])
 	return id
 }
+
+var curve = crypto.S256
 
 // Pubkey returns the public key represented by the node ID.
 // It returns an error if the ID is not a point on the curve.
@@ -330,8 +373,9 @@ func (id NodeID) Pubkey() (*ecdsa.PublicKey, error) {
 	half := len(id) / 2
 	p.X.SetBytes(id[:half])
 	p.Y.SetBytes(id[half:])
-	if !p.Curve.IsOnCurve(p.X, p.Y) {
-		return nil, errors.New("id is invalid secp256k1 curve point")
+	if !curve().IsOnCurve(p.X, p.Y) {
+		log.Error("invalid secp256k1 curve point", "id", id)
+		return nil, fmt.Errorf("id is invalid secp256k1 curve point: %s", id)
 	}
 	return p, nil
 }

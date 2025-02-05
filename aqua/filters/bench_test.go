@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -64,7 +65,7 @@ func BenchmarkBloomBits32k(b *testing.B) {
 const benchFilterCnt = 2000
 
 func benchmarkBloomBits(b *testing.B, sectionSize uint64) {
-	benchDataDir := node.DefaultConfig.DataDir + "/aquachain/chaindata"
+	benchDataDir := filepath.Join(node.DefaultConfig.DataDir, "aquachain", "chaindata")
 	fmt.Println("Running bloombits benchmark   section size:", sectionSize)
 
 	db, err := aquadb.NewLDBDatabase(benchDataDir, 128, 1024)

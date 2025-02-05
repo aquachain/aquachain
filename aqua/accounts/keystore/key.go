@@ -114,7 +114,7 @@ func (k *Key) UnmarshalJSON(j []byte) (err error) {
 	if err != nil {
 		return err
 	}
-	privkey, err := crypto.HexToECDSA(keyJSON.PrivateKey)
+	privkey, err := crypto.HexToBtcec(keyJSON.PrivateKey)
 	if err != nil {
 		return err
 	}

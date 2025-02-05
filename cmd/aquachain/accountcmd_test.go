@@ -18,6 +18,7 @@ package main
 
 import (
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -32,14 +33,21 @@ import (
 // For most tests, the test files from package accounts
 // are copied into a temporary keystore directory.
 
-func tmpDatadirWithKeystore(t *testing.T) string {
+func tmpDatadirWithKeystore(t *testing.T) (string, func(t *testing.T)) {
 	datadir := tmpdir(t)
+	rm := func(t *testing.T) {
+		if err := os.RemoveAll(datadir); err != nil {
+			t.Fatal(err)
+		}
+	}
+
 	keystore := filepath.Join(datadir, "keystore")
 	source := filepath.Join("..", "..", "aqua", "accounts", "keystore", "testdata", "keystore")
 	if err := cp.CopyAll(keystore, source); err != nil {
 		t.Fatal(err)
 	}
-	return datadir
+	return datadir, rm
+
 }
 
 func TestAccountListEmpty(t *testing.T) {
@@ -48,7 +56,8 @@ func TestAccountListEmpty(t *testing.T) {
 }
 
 func TestAccountList(t *testing.T) {
-	datadir := tmpDatadirWithKeystore(t)
+	datadir, rm := tmpDatadirWithKeystore(t)
+	defer rm(t)
 	aquachain := runAquachain(t, "account", "list", "--datadir", datadir)
 	defer aquachain.ExpectExit()
 	if runtime.GOOS == "windows" {
@@ -91,7 +100,8 @@ Fatal: Passphrases do not match
 }
 
 func TestAccountUpdate(t *testing.T) {
-	datadir := tmpDatadirWithKeystore(t)
+	datadir, rm := tmpDatadirWithKeystore(t)
+	defer rm(t)
 	aquachain := runAquachain(t, "account", "update",
 		"--datadir", datadir,
 		"f466859ead1932d743d622cb74fc058882e8648a")
@@ -134,7 +144,8 @@ Fatal: could not decrypt key with given passphrase
 }
 
 func TestUnlockFlag(t *testing.T) {
-	datadir := tmpDatadirWithKeystore(t)
+	datadir, rm := tmpDatadirWithKeystore(t)
+	defer rm(t)
 	aquachain := runAquachain(t,
 		"--datadir", datadir, "--nat", "none", "--nodiscover", "--maxpeers", "0", "--port", "0",
 		"--unlock", "f466859ead1932d743d622cb74fc058882e8648a",
@@ -158,7 +169,8 @@ Passphrase: {{.InputLine "foobar"}}
 }
 
 func TestUnlockFlagWrongPassword(t *testing.T) {
-	datadir := tmpDatadirWithKeystore(t)
+	datadir, rm := tmpDatadirWithKeystore(t)
+	defer rm(t)
 	aquachain := runAquachain(t,
 		"--datadir", datadir, "--nat", "none", "--nodiscover", "--maxpeers", "0", "--port", "0",
 		"--unlock", "f466859ead1932d743d622cb74fc058882e8648a")
@@ -177,7 +189,8 @@ Fatal: Failed to unlock account f466859ead1932d743d622cb74fc058882e8648a (could 
 
 // https://gitlab.com/aquachain/aquachain/issues/1785
 func TestUnlockFlagMultiIndex(t *testing.T) {
-	datadir := tmpDatadirWithKeystore(t)
+	datadir, rm := tmpDatadirWithKeystore(t)
+	defer rm(t)
 	aquachain := runAquachain(t,
 		"--datadir", datadir, "--nat", "none", "--nodiscover", "--maxpeers", "0", "--port", "0",
 		"--unlock", "0,2",
@@ -204,7 +217,8 @@ Passphrase: {{.InputLine "foobar"}}
 }
 
 func TestUnlockFlagPasswordFile(t *testing.T) {
-	datadir := tmpDatadirWithKeystore(t)
+	datadir, rm := tmpDatadirWithKeystore(t)
+	defer rm(t)
 	aquachain := runAquachain(t,
 		"--datadir", datadir, "--nat", "none", "--nodiscover", "--maxpeers", "0", "--port", "0",
 		"--password", "testdata/passwords.txt", "--unlock", "0,2",
@@ -224,7 +238,8 @@ func TestUnlockFlagPasswordFile(t *testing.T) {
 }
 
 func TestUnlockFlagPasswordFileWrongPassword(t *testing.T) {
-	datadir := tmpDatadirWithKeystore(t)
+	datadir, rm := tmpDatadirWithKeystore(t)
+	defer rm(t)
 	aquachain := runAquachain(t,
 		"--datadir", datadir, "--nat", "none", "--nodiscover", "--maxpeers", "0", "--port", "0",
 		"--password", "testdata/wrong-passwords.txt", "--unlock", "0,2")

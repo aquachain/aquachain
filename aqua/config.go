@@ -43,7 +43,7 @@ var DefaultConfig = Config{
 		DatasetsInMem:  0,
 		DatasetsOnDisk: 0,
 	},
-	NetworkId:     61717561,
+	ChainId:       61717561,
 	DatabaseCache: 768,
 	TrieCache:     256,
 	TrieTimeout:   5 * time.Minute,
@@ -70,7 +70,7 @@ func init() {
 	}
 }
 
-//go:generate gencodec -type Config -field-override configMarshaling -formats toml -out gen_config.go
+// was go:generate gencodec -type Config -field-override configMarshaling -formats toml -out gen_config.go
 
 type Config struct {
 	// The genesis block, which is inserted if the database is empty.
@@ -78,7 +78,7 @@ type Config struct {
 	Genesis *core.Genesis `toml:",omitempty"`
 
 	// Protocol options
-	NetworkId uint64 // Network ID to use for selecting peers to connect to
+	ChainId   uint64 // Network ID to use for selecting peers to connect to
 	SyncMode  downloader.SyncMode
 	NoPruning bool `toml:"NoPruning"`
 
@@ -108,7 +108,8 @@ type Config struct {
 	EnablePreimageRecording bool
 
 	// Miscellaneous options
-	DocRoot string `toml:"-"`
+
+	JavascriptDirectory string `toml:"-"` // for console/attach only
 
 	// Alert options
 	Alerts alerts.AlertConfig

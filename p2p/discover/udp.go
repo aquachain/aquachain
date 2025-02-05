@@ -51,7 +51,7 @@ func newExpiredErr(ago time.Duration) error {
 
 // Timeouts
 const (
-	respTimeout = 2000 * time.Millisecond
+	respTimeout = 4 * time.Second
 	sendTimeout = 4 * time.Second // errExpired
 
 	ntpFailureThreshold = 32               // Continuous timeouts after which to check NTP
@@ -153,8 +153,11 @@ func (t *udp) nodeFromRPC(sender *net.UDPAddr, rn rpcNode) (*Node, error) {
 	if t.netrestrict != nil && !t.netrestrict.Contains(rn.IP) {
 		return nil, errors.New("not contained in netrestrict whitelist")
 	}
-	n := NewNode(rn.ID, rn.IP, rn.UDP, rn.TCP)
-	err := n.validateComplete()
+	n, err := NewNode(rn.ID, rn.IP, rn.UDP, rn.TCP)
+	if err != nil {
+		return nil, err
+	}
+	err = n.validateComplete()
 	return n, err
 }
 
@@ -280,7 +283,7 @@ func newUDP(c conn, cfg Config) (*Table, *udp, error) {
 	}
 	// TODO: separate TCP port
 	udp.ourEndpoint = makeEndpoint(realaddr, uint16(realaddr.Port))
-	tab, err := newTable(udp, PubkeyID(cfg.PrivateKey.PubKey()), realaddr, cfg.NodeDBPath, cfg.Bootnodes)
+	tab, err := newTable(udp, PubkeyID(cfg.PrivateKey.PubKey().ToECDSA()), realaddr, cfg.NodeDBPath, cfg.Bootnodes)
 	if err != nil {
 		return nil, nil, err
 	}

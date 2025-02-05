@@ -17,8 +17,8 @@
 package main
 
 import (
-	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"gitlab.com/aquachain/aquachain/internal/cmdtest"
@@ -26,7 +26,11 @@ import (
 )
 
 func tmpdir(t *testing.T) string {
-	dir, err := ioutil.TempDir("", "aquachain-test")
+	basetmp := filepath.Join(os.TempDir(), "aquachain-tests")
+	if err := os.MkdirAll(basetmp, 0755); err != nil {
+		t.Fatal(err)
+	}
+	dir, err := os.MkdirTemp(basetmp, "datadir")
 	if err != nil {
 		t.Fatal(err)
 	}

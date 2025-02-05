@@ -126,6 +126,7 @@ func TerminalFormat(usecolor bool) Format {
 			for _, prefix := range locationTrims {
 				location = strings.TrimPrefix(location, prefix)
 			}
+			location = " " + location
 			// Maintain the maximum location length for fancyer alignment
 			align := int(atomic.LoadUint32(&locationLength))
 			if align < len(location) {

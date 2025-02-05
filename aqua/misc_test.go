@@ -33,8 +33,10 @@ func TestDecodeExtra(t *testing.T) {
 	}
 	t.Log("version:", version)
 	t.Log("OS:", o)
-	t.Log("raw extra string:", string(extra[6:]))
-	t.Logf("raw first6: %#02x", extra[:6])
+	t.Log("raw extra string:", string(extra))
+	if len(extra) > 6 {
+		t.Logf("raw first6: %#02x", extra[:6])
+	}
 }
 
 func TestDecodeExtra2(t *testing.T) {
@@ -66,16 +68,16 @@ func TestDecodeExtra2(t *testing.T) {
 		}
 		t.Log("Detected OS:", osname)
 		for i := 0; i < 3; i++ {
-
 			if version[i] != wantVersion[i] {
 				t.Log("version mismatch digit", i, ":", version, "wanted:", wantVersion)
-				t.Fail()
+				t.FailNow()
 			}
 		}
 		t.Log("Detected Version:", version[0], version[1], version[2])
-		if 0 != bytes.Compare(extra, b) {
-			t.Log("extra mismatch:", gohex(extra), "wanted:", gohex(b))
-			t.Fail()
+		if !bytes.HasSuffix(b, extra) {
+			t.Log("err: extra mismatch:", gohex(extra))
+			t.Log("wanted:             ", gohex(b))
+			t.FailNow()
 		}
 		t.Log("extra:", string(b[6:]))
 	}

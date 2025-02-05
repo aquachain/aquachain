@@ -26,6 +26,7 @@ import (
 
 	"github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/cmd/utils"
+	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/internal/debug"
 )
 
@@ -79,12 +80,15 @@ var AppHelpFlagGroups = []flagGroup{
 			utils.DataDirFlag,
 			utils.KeyStoreDirFlag,
 			utils.UseUSBFlag,
-			utils.NetworkIdFlag,
+
 			utils.SyncModeFlag,
 			utils.ChainFlag,
 			utils.GCModeFlag,
 			utils.AquaStatsURLFlag,
 			utils.IdentityFlag,
+			utils.HF8MainnetFlag,
+			utils.AlertModeFlag,
+			utils.DoitNowFlag,
 		},
 	},
 	{Name: "DEVELOPER CHAIN",
@@ -151,7 +155,7 @@ var AppHelpFlagGroups = []flagGroup{
 			utils.IPCPathFlag,
 			utils.RPCCORSDomainFlag,
 			utils.RPCVirtualHostsFlag,
-			utils.JSpathFlag,
+			utils.JavascriptDirectoryFlag,
 			utils.ExecFlag,
 			utils.PreloadJSFlag,
 		},
@@ -260,7 +264,7 @@ func flagCategory(flag cli.Flag) string {
 
 func init() {
 	// Override the default app help template
-	// cli.AppHelpTemplate = AppHelpTemplate
+	cli.RootCommandHelpTemplate = AppHelpTemplate
 
 	// Define a one shot struct to pass to the usage template
 	type helpData struct {
@@ -271,11 +275,13 @@ func init() {
 	// Override the default app help printer, but only for the global app help
 	originalHelpPrinter := cli.HelpPrinter
 	cli.HelpPrinter = func(w io.Writer, tmpl string, data interface{}) {
+		println("help template: ", tmpl)
 		if tmpl == AppHelpTemplate {
 			// Iterate over all the flags and add any uncategorized ones
 			categorized := make(map[string]struct{})
 			for _, group := range AppHelpFlagGroups {
 				for _, flag := range group.Flags {
+					log.Info("flag", flag.Names()[0], "cat", group.Name, "is", flag.String())
 					categorized[flag.String()] = struct{}{}
 				}
 			}

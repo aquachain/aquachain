@@ -28,7 +28,7 @@ import (
 // 		TxPool                  core.TxPoolConfig
 // 		GPO                     gasprice.Config
 // 		EnablePreimageRecording bool
-// 		DocRoot                 string `toml:"-"`
+// 		WorkingDirectory                 string `toml:"-"`
 // 		Alerts                  alerts.AlertConfig
 // 	}
 // 	var enc Config
@@ -49,7 +49,7 @@ import (
 // 	enc.TxPool = c.TxPool
 // 	enc.GPO = c.GPO
 // 	enc.EnablePreimageRecording = c.EnablePreimageRecording
-// 	enc.DocRoot = c.DocRoot
+// 	enc.WorkingDirectory = c.WorkingDirectory
 // 	enc.Alerts = c.Alerts
 // 	return json.Marshal(&enc)
 // }
@@ -74,7 +74,7 @@ import (
 // 		TxPool                  *core.TxPoolConfig
 // 		GPO                     *gasprice.Config
 // 		EnablePreimageRecording *bool
-// 		DocRoot                 *string `toml:"-"`
+// 		WorkingDirectory                 *string `toml:"-"`
 // 		Alerts                  *alerts.AlertConfig
 // 	}
 // 	var dec Config
@@ -132,8 +132,8 @@ import (
 // 	if dec.EnablePreimageRecording != nil {
 // 		c.EnablePreimageRecording = *dec.EnablePreimageRecording
 // 	}
-// 	if dec.DocRoot != nil {
-// 		c.DocRoot = *dec.DocRoot
+// 	if dec.WorkingDirectory != nil {
+// 		c.WorkingDirectory = *dec.WorkingDirectory
 // 	}
 // 	if dec.Alerts != nil {
 // 		c.Alerts = *dec.Alerts
@@ -161,7 +161,7 @@ import (
 // 		TxPool                  core.TxPoolConfig
 // 		GPO                     gasprice.Config
 // 		EnablePreimageRecording bool
-// 		DocRoot                 string `toml:"-"`
+// 		WorkingDirectory                 string `toml:"-"`
 // 		Alerts                  alerts.AlertConfig
 // 	}
 // 	var enc Config
@@ -182,7 +182,7 @@ import (
 // 	enc.TxPool = c.TxPool
 // 	enc.GPO = c.GPO
 // 	enc.EnablePreimageRecording = c.EnablePreimageRecording
-// 	enc.DocRoot = c.DocRoot
+// 	enc.WorkingDirectory = c.WorkingDirectory
 // 	enc.Alerts = c.Alerts
 // 	return &enc, nil
 // }
@@ -207,7 +207,7 @@ import (
 // 		TxPool                  *core.TxPoolConfig
 // 		GPO                     *gasprice.Config
 // 		EnablePreimageRecording *bool
-// 		DocRoot                 *string `toml:"-"`
+// 		WorkingDirectory                 *string `toml:"-"`
 // 		Alerts                  *alerts.AlertConfig
 // 	}
 // 	var dec Config
@@ -265,8 +265,8 @@ import (
 // 	if dec.EnablePreimageRecording != nil {
 // 		c.EnablePreimageRecording = *dec.EnablePreimageRecording
 // 	}
-// 	if dec.DocRoot != nil {
-// 		c.DocRoot = *dec.DocRoot
+// 	if dec.WorkingDirectory != nil {
+// 		c.WorkingDirectory = *dec.WorkingDirectory
 // 	}
 // 	if dec.Alerts != nil {
 // 		c.Alerts = *dec.Alerts
@@ -294,7 +294,7 @@ import (
 // 		TxPool                  core.TxPoolConfig
 // 		GPO                     gasprice.Config
 // 		EnablePreimageRecording bool
-// 		DocRoot                 string `toml:"-"`
+// 		WorkingDirectory                 string `toml:"-"`
 // 		Alerts                  alerts.AlertConfig
 // 	}
 // 	var enc Config
@@ -315,7 +315,7 @@ import (
 // 	enc.TxPool = c.TxPool
 // 	enc.GPO = c.GPO
 // 	enc.EnablePreimageRecording = c.EnablePreimageRecording
-// 	enc.DocRoot = c.DocRoot
+// 	enc.WorkingDirectory = c.WorkingDirectory
 // 	enc.Alerts = c.Alerts
 // 	return &enc, nil
 // }
@@ -340,7 +340,7 @@ import (
 // 		TxPool                  *core.TxPoolConfig
 // 		GPO                     *gasprice.Config
 // 		EnablePreimageRecording *bool
-// 		DocRoot                 *string `toml:"-"`
+// 		WorkingDirectory                 *string `toml:"-"`
 // 		Alerts                  *alerts.AlertConfig
 // 	}
 // 	var dec Config
@@ -398,8 +398,8 @@ import (
 // 	if dec.EnablePreimageRecording != nil {
 // 		c.EnablePreimageRecording = *dec.EnablePreimageRecording
 // 	}
-// 	if dec.DocRoot != nil {
-// 		c.DocRoot = *dec.DocRoot
+// 	if dec.WorkingDirectory != nil {
+// 		c.WorkingDirectory = *dec.WorkingDirectory
 // 	}
 // 	if dec.Alerts != nil {
 // 		c.Alerts = *dec.Alerts

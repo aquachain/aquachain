@@ -294,3 +294,11 @@ func homeDir() string {
 	}
 	return ""
 }
+
+func workingDir() string {
+	dir, err := os.Getwd()
+	if err != nil {
+		return ""
+	}
+	return dir
+}

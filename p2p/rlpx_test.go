@@ -18,13 +18,14 @@ package p2p
 
 import (
 	"bytes"
+	"crypto/ecdsa"
 	"crypto/rand"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net"
+	"os"
 	"reflect"
 	"strings"
 	"sync"
@@ -32,6 +33,7 @@ import (
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
+	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/crypto"
 	"gitlab.com/aquachain/aquachain/crypto/ecies"
 	"gitlab.com/aquachain/aquachain/crypto/sha3"
@@ -59,26 +61,33 @@ func TestSharedSecret(t *testing.T) {
 	}
 }
 
+func init() {
+	if true {
+		log.Root().SetHandler(log.LvlFilterHandler(log.LvlTrace, log.StreamHandler(os.Stderr, log.TerminalFormat(true))))
+		log.PrintOrigins(true)
+	}
+}
+
 func TestEncHandshake(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		start := time.Now()
 		if err := testEncHandshake(nil); err != nil {
 			t.Fatalf("i=%d %v", i, err)
 		}
-		log.Printf("(without token) %d %v\n", i+1, time.Since(start))
+		log.Info("no token", "i", i, "time", time.Since(start))
 	}
-	if true {
-		return
-	}
-	for i := 0; i < 10; i++ {
-		tok := make([]byte, shaLen)
-		rand.Reader.Read(tok)
-		start := time.Now()
-		if err := testEncHandshake(tok); err != nil {
-			t.Fatalf("i=%d %v", i, err)
-		}
-		log.Printf("(with token) %d %v\n", i+1, time.Since(start))
-	}
+	// if true {
+	// 	return
+	// }
+	// for i := 0; i < 10; i++ {
+	// 	tok := make([]byte, shaLen)
+	// 	rand.Reader.Read(tok)
+	// 	start := time.Now()
+	// 	if err := testEncHandshake(tok); err != nil {
+	// 		t.Fatalf("i=%d %v", i, err)
+	// 	}
+	// 	log.Info("with token", "i", i, "time", time.Since(start))
+	// }
 }
 
 func testEncHandshake(token []byte) error {
@@ -87,9 +96,16 @@ func testEncHandshake(token []byte) error {
 		id   discover.NodeID
 		err  error
 	}
+	prv0, err := crypto.GenerateKey()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	prv1, err := crypto.GenerateKey()
+	if err != nil {
+		panic(err.Error())
+	}
 	var (
-		prv0, _  = crypto.GenerateKey()
-		prv1, _  = crypto.GenerateKey()
 		fd0, fd1 = net.Pipe()
 		c0, c1   = newRLPX(fd0).(*rlpx), newRLPX(fd1).(*rlpx)
 		output   = make(chan result)
@@ -100,12 +116,13 @@ func testEncHandshake(token []byte) error {
 		defer func() { output <- r }()
 		defer fd0.Close()
 
-		dest := &discover.Node{ID: discover.PubkeyID(prv1.PubKey())}
-		r.id, r.err = c0.doEncHandshake(prv0, dest)
+		dest := &discover.Node{ID: discover.PubkeyID(prv1.PubKey().ToECDSA())}
+		r.id, r.err = c0.doEncHandshake(prv0.ToECDSA(), dest)
 		if r.err != nil {
+			r.err = fmt.Errorf("enc handshake failed: %v", r.err)
 			return
 		}
-		id1 := discover.PubkeyID(prv1.PubKey())
+		id1 := discover.PubkeyID(prv1.PubKey().ToECDSA())
 		if r.id != id1 {
 			r.err = fmt.Errorf("remote ID mismatch: got %v, want: %v", r.id, id1)
 		}
@@ -115,11 +132,11 @@ func testEncHandshake(token []byte) error {
 		defer func() { output <- r }()
 		defer fd1.Close()
 
-		r.id, r.err = c1.doEncHandshake(prv1, nil)
+		r.id, r.err = c1.doEncHandshake(prv1.ToECDSA(), nil)
 		if r.err != nil {
 			return
 		}
-		id0 := discover.PubkeyID(prv0.PubKey())
+		id0 := discover.PubkeyID(prv0.PubKey().ToECDSA())
 		if r.id != id0 {
 			r.err = fmt.Errorf("remote ID mismatch: got %v, want: %v", r.id, id0)
 		}
@@ -153,15 +170,22 @@ func testEncHandshake(token []byte) error {
 func TestProtocolHandshake(t *testing.T) {
 	var (
 		prv0, _ = crypto.GenerateKey()
-		node0   = &discover.Node{ID: discover.PubkeyID(prv0.PubKey()), IP: net.IP{1, 2, 3, 4}, TCP: 33}
+		node0   = &discover.Node{ID: discover.PubkeyID(prv0.PubKey().ToECDSA()), IP: net.IP{1, 2, 3, 4}, TCP: 33}
 		hs0     = &protoHandshake{Version: 3, ID: node0.ID, Caps: []Cap{{"a", 0}, {"b", 2}}}
 
 		prv1, _ = crypto.GenerateKey()
-		node1   = &discover.Node{ID: discover.PubkeyID(prv1.PubKey()), IP: net.IP{5, 6, 7, 8}, TCP: 44}
+		node1   = &discover.Node{ID: discover.PubkeyID(prv1.PubKey().ToECDSA()), IP: net.IP{5, 6, 7, 8}, TCP: 44}
 		hs1     = &protoHandshake{Version: 3, ID: node1.ID, Caps: []Cap{{"c", 1}, {"d", 3}}}
 
 		wg sync.WaitGroup
 	)
+
+	if prv0.ToECDSA().PublicKey.Curve != crypto.S256() {
+		t.Fatalf("invalid curve for prv0")
+	}
+	if prv1.ToECDSA().PublicKey.Curve != crypto.S256() {
+		t.Fatalf("invalid curve for prv1")
+	}
 
 	fd0, fd1, err := tcpPipe()
 	if err != nil {
@@ -173,7 +197,7 @@ func TestProtocolHandshake(t *testing.T) {
 		defer wg.Done()
 		defer fd0.Close()
 		rlpx := newRLPX(fd0)
-		remid, err := rlpx.doEncHandshake(prv0, node1)
+		remid, err := rlpx.doEncHandshake(prv0.ToECDSA(), node1)
 		if err != nil {
 			t.Errorf("dial side enc handshake failed: %v", err)
 			return
@@ -199,7 +223,7 @@ func TestProtocolHandshake(t *testing.T) {
 		defer wg.Done()
 		defer fd1.Close()
 		rlpx := newRLPX(fd1)
-		remid, err := rlpx.doEncHandshake(prv1, nil)
+		remid, err := rlpx.doEncHandshake(prv1.ToECDSA(), nil)
 		if err != nil {
 			t.Errorf("listen side enc handshake failed: %v", err)
 			return
@@ -509,18 +533,28 @@ func TestHandshakeForwardCompatibility(t *testing.T) {
 	var (
 		keyA, _       = crypto.HexToECDSA("49a7b37aa6f6645917e7b807e9d1c00d4fa71f18343b0d4122a4d2df64dd6fee")
 		keyB, _       = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
-		pubA          = crypto.FromECDSAPub(keyA.PubKey().ToECDSA())[1:]
-		pubB          = crypto.FromECDSAPub(keyB.PubKey().ToECDSA())[1:]
+		pubA          = crypto.FromECDSAPub(&keyA.PublicKey)[1:]
+		pubB          = crypto.FromECDSAPub(&keyB.PublicKey)[1:]
 		ephA, _       = crypto.HexToECDSA("869d6ecf5211f1cc60418a13b9d870b22959d0c16f02bec714c960dd2298a32d")
 		ephB, _       = crypto.HexToECDSA("e238eb8e04fee6511ab04c6dd3c89ce097b11f25d584863ac2b6d5b35b1847e4")
-		ephPubA       = crypto.FromECDSAPub(ephA.PubKey().ToECDSA())[1:]
-		ephPubB       = crypto.FromECDSAPub(ephB.PubKey().ToECDSA())[1:]
+		ephPubA       = crypto.FromECDSAPub(&ephA.PublicKey)[1:]
+		ephPubB       = crypto.FromECDSAPub(&ephB.PublicKey)[1:]
 		nonceA        = unhex("7e968bba13b6c50e2c4cd7f241cc0d64d1ac25c7f5952df231ac6a2bda8ee5d6")
 		nonceB        = unhex("559aead08264d5795d3909718cdd05abd49572e84fe55590eef31a88a08fdffd")
 		_, _, _, _    = pubA, pubB, ephPubA, ephPubB
 		authSignature = unhex("299ca6acfd35e3d72d8ba3d1e2b60b5561d5af5218eb5bc182045769eb4226910a301acae3b369fffc4a4899d6b02531e89fd4fe36a2cf0d93607ba470b50f7800")
 		_             = authSignature
 	)
+
+	for _, key := range []ecdsa.PublicKey{keyA.PublicKey, keyB.PublicKey, ephA.PublicKey, ephB.PublicKey} {
+		if key.Curve != crypto.S256() {
+			t.Fatalf("invalid curve for key: %v", key)
+		}
+		if !crypto.S256().IsOnCurve(key.X, key.Y) {
+			t.Fatalf("invalid key: %v", key)
+		}
+	}
+
 	makeAuth := func(test handshakeAuthTest) *authMsgV4 {
 		msg := &authMsgV4{Version: test.wantVersion, Rest: test.wantRest, gotPlain: test.isPlain}
 		copy(msg.Signature[:], authSignature)
@@ -539,9 +573,9 @@ func TestHandshakeForwardCompatibility(t *testing.T) {
 	for _, test := range eip8HandshakeAuthTests {
 		r := bytes.NewReader(unhex(test.input))
 		msg := new(authMsgV4)
-		ciphertext, err := readHandshakeMsg(msg, encAuthMsgLen, keyB.ToECDSA(), r)
+		ciphertext, err := readHandshakeMsg(msg, encAuthMsgLen, keyB, r)
 		if err != nil {
-			t.Errorf("error for input %x:\n  %v", unhex(test.input), err)
+			t.Errorf("error for input %s:\n  %v", test.input, err)
 			continue
 		}
 		if !bytes.Equal(ciphertext, unhex(test.input)) {
@@ -558,7 +592,7 @@ func TestHandshakeForwardCompatibility(t *testing.T) {
 		input := unhex(test.input)
 		r := bytes.NewReader(input)
 		msg := new(authRespV4)
-		ciphertext, err := readHandshakeMsg(msg, encAuthRespLen, keyA.ToECDSA(), r)
+		ciphertext, err := readHandshakeMsg(msg, encAuthRespLen, keyA, r)
 		if err != nil {
 			t.Errorf("error for input %x:\n  %v", input, err)
 			continue
@@ -577,7 +611,7 @@ func TestHandshakeForwardCompatibility(t *testing.T) {
 		hs = &encHandshake{
 			initiator:     false,
 			respNonce:     nonceB,
-			randomPrivKey: ecies.ImportECDSA(ephB.ToECDSA()),
+			randomPrivKey: ecies.ImportECDSA(ephB),
 		}
 		authCiphertext     = unhex(eip8HandshakeAuthTests[1].input)
 		authRespCiphertext = unhex(eip8HandshakeRespTests[1].input)
@@ -586,7 +620,7 @@ func TestHandshakeForwardCompatibility(t *testing.T) {
 		wantMAC            = unhex("2ea74ec5dae199227dff1af715362700e989d889d7a493cb0639691efb8e5f98")
 		wantFooIngressHash = unhex("0c7ec6340062cc46f5e9f1e3cf86f8c8c403c5a0964f5df0ebd34a75ddc86db5")
 	)
-	if err := hs.handleAuthMsg(authMsg, keyB.ToECDSA()); err != nil {
+	if err := hs.handleAuthMsg(authMsg, keyB); err != nil {
 		t.Fatalf("handleAuthMsg: %v", err)
 	}
 	derived, err := hs.secrets(authCiphertext, authRespCiphertext)
@@ -632,4 +666,74 @@ func tcpPipe() (net.Conn, net.Conn, error) {
 		return nil, nil, err
 	}
 	return aconn, dconn, nil
+}
+
+func TestNewEciesPubkey(t *testing.T) {
+	for i := 0; i < 100; i++ {
+		priv, err := NewEciesKey()
+		if err != nil {
+			t.Fatalf("NewEciesKey: %v", err)
+		}
+		pub := priv.PublicKey
+		if !pub.IsOnCurve(pub.X, pub.Y) {
+			t.Fatalf("public key not on curve: %x %x", pub.X, pub.Y)
+		}
+
+		// check that the public key can be used to encrypt and decrypt
+		plaintext := []byte("hello world")
+		ciphertext, err := ecies.Encrypt(rand.Reader, &pub, plaintext, nil, nil)
+		if err != nil {
+			t.Fatalf("Encrypt: %v", err)
+		}
+		decrypted, err := priv.Decrypt(ciphertext, nil, nil)
+		if err != nil {
+			t.Fatalf("Decrypt: %v", err)
+		}
+		if !bytes.Equal(plaintext, decrypted) {
+			t.Fatalf("decrypted plaintext mismatch: %q %q", plaintext, decrypted)
+		}
+
+	}
+}
+
+func TestPubFrombtcec(t *testing.T) {
+	for i := 0; i < 100; i++ {
+		priv0, err := crypto.GenerateKey()
+		if err != nil {
+			t.Fatalf("NewEciesKey: %v", err)
+		}
+		priv := ecies.PrivateKeyFromBtcec(priv0)
+		pub := priv.PublicKey
+		if !pub.IsOnCurve(pub.X, pub.Y) {
+			t.Fatalf("public key not on curve: %x %x", pub.X, pub.Y)
+		}
+
+		// check that the public key can be used to encrypt and decrypt
+		plaintext := []byte("hello world")
+		ciphertext, err := ecies.Encrypt(rand.Reader, &pub, plaintext, nil, nil)
+		if err != nil {
+			t.Fatalf("Encrypt: %v", err)
+		}
+		decrypted, err := priv.Decrypt(ciphertext, nil, nil)
+		if err != nil {
+			t.Fatalf("Decrypt: %v", err)
+		}
+		if !bytes.Equal(plaintext, decrypted) {
+			t.Fatalf("decrypted plaintext mismatch: %q %q", plaintext, decrypted)
+		}
+
+	}
+}
+
+func TestPub2(t *testing.T) {
+	priv0, err := crypto.GenerateKey()
+	if err != nil {
+		t.Fatalf("NewEciesKey: %v", err)
+	}
+	priv := ecies.PrivateKeyFromBtcec(priv0)
+	pub := priv.PublicKey
+	if !pub.IsOnCurve(pub.X, pub.Y) {
+		t.Fatalf("public key not on curve: %x %x", pub.X, pub.Y)
+	}
+
 }

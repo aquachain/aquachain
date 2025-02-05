@@ -27,12 +27,12 @@ var (
 )
 
 func init() {
-	root.SetHandler(DiscardHandler())
+	root.SetHandler(StderrHandler)
 }
 
 // New returns a new logger with the given context.
 // New is a convenient alias for Root().New
-func New(ctx ...interface{}) Logger {
+func New(ctx ...interface{}) LoggerI {
 	logger := root.New(ctx...)
 	// logger.Error("New Logger Created")
 	return logger

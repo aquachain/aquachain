@@ -48,6 +48,9 @@ func SigToPub(hash, sig []byte) (*btcec.PublicKey, error) {
 	if err != nil {
 		return nil, fmt.Errorf("SigToPub failed to recover public key: %v", err)
 	}
+	if !pub.IsOnCurve() {
+		return nil, errors.New("recovered public key is not on the curve")
+	}
 	return pub, nil
 
 }

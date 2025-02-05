@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"errors"
 	"math/big"
+	"reflect"
 	"testing"
 )
 
@@ -370,5 +371,66 @@ func TestUnmarshalFixedUnprefixedText(t *testing.T) {
 		if test.want != nil && !bytes.Equal(out, test.want) {
 			t.Errorf("%q: output mismatch: got %x, want %x", test.input, out, test.want)
 		}
+	}
+}
+
+func TestByte_MarshalText(t *testing.T) {
+	tests := []struct {
+		name    string
+		b       Byte
+		want    []byte
+		wantErr bool
+	}{
+		{"zero", 0, []byte("0x00"), false},
+		{"one", 1, []byte("0x01"), false},
+		{"ten", 10, []byte("0x0a"), false},
+		{"fifteen", 15, []byte("0x0f"), false},
+		{"sixteen", 16, []byte("0x10"), false},
+		{"255", 255, []byte("0xff"), false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.b.MarshalText()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Byte.MarshalText() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Byte.MarshalText() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestByte_UnmarshalText(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   []byte
+		want    Byte
+		wantErr bool
+	}{
+		{"zero", []byte("0x00"), 0, false},
+		{"one", []byte("0x01"), 1, false},
+		{"ten", []byte("0x0a"), 10, false},
+		{"fifteen", []byte("0x0f"), 15, false},
+		{"sixteen", []byte("0x10"), 16, false},
+		{"255", []byte("0xff"), 255, false},
+		{"invalid", []byte("0xzz"), 0, true},
+		{"empty", []byte(""), 0, true},
+		{"short", []byte("0x"), 0, true},
+		{"long", []byte("0x100"), 0, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var b Byte
+			err := b.UnmarshalText(tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Byte.UnmarshalText() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if b != tt.want {
+				t.Errorf("Byte.UnmarshalText() = %v, want %v", b, tt.want)
+			}
+		})
 	}
 }

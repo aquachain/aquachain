@@ -43,6 +43,7 @@ import (
 	"gitlab.com/aquachain/aquachain/core/vm"
 	"gitlab.com/aquachain/aquachain/internal/aquaapi"
 	"gitlab.com/aquachain/aquachain/node"
+
 	"gitlab.com/aquachain/aquachain/opt/miner"
 	"gitlab.com/aquachain/aquachain/p2p"
 	"gitlab.com/aquachain/aquachain/params"
@@ -80,7 +81,6 @@ type Aquachain struct {
 	gasPrice *big.Int
 	aquabase common.Address
 
-	networkId     uint64
 	netRPCService *aquaapi.PublicNetAPI
 
 	lock sync.RWMutex // Protects the variadic fields (e.g. gas price and aquabase)
@@ -103,6 +103,10 @@ func New(ctx *node.ServiceContext, config *Config) (*Aquachain, error) {
 	}
 	log.Info("Initialised chain configuration", "HF-Ready", chainConfig.HF, "config", chainConfig)
 
+	if config.ChainId != chainConfig.ChainId.Uint64() {
+		return nil, fmt.Errorf("ChainID mismatch: configured %d, chain %d", config.ChainId, chainConfig.ChainId)
+	}
+
 	aqua := &Aquachain{
 		config:         config,
 		chainDb:        chainDb,
@@ -112,7 +116,6 @@ func New(ctx *node.ServiceContext, config *Config) (*Aquachain, error) {
 		engine:         CreateConsensusEngine(ctx, &config.Aquahash, chainConfig, chainDb),
 		shutdownChan:   make(chan bool),
 		stopDbUpgrade:  stopDbUpgrade,
-		networkId:      config.NetworkId,
 		gasPrice:       config.GasPrice,
 		aquabase:       config.Aquabase,
 		bloomRequests:  make(chan chan *bloombits.Retrieval),
@@ -125,7 +128,7 @@ func New(ctx *node.ServiceContext, config *Config) (*Aquachain, error) {
 		ProtocolLengths = []uint64{17, 8}
 	}
 
-	log.Info("Initialising Aquachain protocol", "versions", ProtocolVersions, "network", config.NetworkId)
+	log.Info("Initialising Aquachain protocol", "versions", ProtocolVersions, "network", config.ChainId)
 
 	//if !config.SkipBcVersionCheck {
 	bcVersion := core.GetBlockChainVersion(chainDb)
@@ -155,7 +158,7 @@ func New(ctx *node.ServiceContext, config *Config) (*Aquachain, error) {
 	}
 	aqua.txPool = core.NewTxPool(config.TxPool, aqua.chainConfig, aqua.blockchain)
 
-	if aqua.protocolManager, err = NewProtocolManager(aqua.chainConfig, config.SyncMode, config.NetworkId, aqua.eventMux, aqua.txPool, aqua.engine, aqua.blockchain, chainDb); err != nil {
+	if aqua.protocolManager, err = NewProtocolManager(aqua.chainConfig, config.SyncMode, config.ChainId, aqua.eventMux, aqua.txPool, aqua.engine, aqua.blockchain, chainDb); err != nil {
 		return nil, err
 	}
 	aqua.miner = miner.New(aqua, aqua.chainConfig, aqua.EventMux(), aqua.engine)
@@ -215,7 +218,8 @@ func DecodeExtraData(extra []byte) (version [3]uint8, osname string, extradata [
 	if err != nil {
 		return version, osname, extra, err
 	}
-	if len(v) != 3 {
+	if len(v) < 3 {
+		log.Info("Extra data invalid", "len", len(v))
 		return version, osname, extra, nil
 	}
 	// extract version
@@ -230,8 +234,11 @@ func DecodeExtraData(extra []byte) (version [3]uint8, osname string, extradata [
 	if osnameBytes, ok := v[2].([]byte); ok {
 		osname = string(osnameBytes)
 	}
-	if extradataBytes, ok := v[3].([]byte); ok {
-		extradata = extradataBytes
+
+	if len(v) > 3 {
+		if extradataBytes, ok := v[3].([]byte); ok {
+			extradata = extradataBytes
+		}
 	}
 	return version, osname, extradata, nil
 }
@@ -434,7 +441,7 @@ func (s *Aquachain) AquaVersion() int {
 	}
 	return 0
 }
-func (s *Aquachain) NetVersion() uint64 { return s.networkId }
+func (s *Aquachain) NetVersion() uint64 { return s.config.ChainId }
 func (s *Aquachain) Downloader() *downloader.Downloader {
 	if s.protocolManager == nil {
 		return nil

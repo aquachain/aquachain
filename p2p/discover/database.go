@@ -280,11 +280,7 @@ func (db *nodeDB) updateLastPing(id NodeID, instance time.Time) error {
 
 // bondTime retrieves the time of the last successful pong from remote node.
 func (db *nodeDB) bondTime(id NodeID) time.Time {
-	x := db.fetchInt64(makeKey(id, nodeDBDiscoverPong))
-	if x == 0 {
-		return time.Time{}
-	}
-	return time.Unix(x, 0)
+	return time.Unix(db.fetchInt64(makeKey(id, nodeDBDiscoverPong)), 0)
 }
 
 // hasBond reports whether the given node is considered bonded.

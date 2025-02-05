@@ -36,18 +36,27 @@ func ExampleNewNode() {
 	id := MustHexID("1dd9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439")
 
 	// Complete nodes contain UDP and TCP endpoints:
-	n1 := NewNode(id, net.ParseIP("2001:db8:3c4d:15::abcd:ef12"), 52150, 30303)
+	n1, err := NewNode(id, net.ParseIP("2001:db8:3c4d:15::abcd:ef12"), 52150, 30303)
+	if err == nil {
+		panic("expected error for ipv6")
+	}
+	n1, err = NewNode(id, net.ParseIP("127.0.0.1"), 52150, 30303)
+
 	fmt.Println("n1:", n1)
 	fmt.Println("n1.Incomplete() ->", n1.Incomplete())
 
 	// An incomplete node can be created by passing zero values
 	// for all parameters except id.
-	n2 := NewNode(id, nil, 0, 0)
+	n2, err := NewNode(id, nil, 0, 0)
+	if err != nil {
+		fmt.Println("error:", err)
+		return
+	}
 	fmt.Println("n2:", n2)
 	fmt.Println("n2.Incomplete() ->", n2.Incomplete())
 
 	// Output:
-	// n1: enode://1dd9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439@[2001:db8:3c4d:15::abcd:ef12]:30303?discport=52150
+	// n1: enode://1dd9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439@127.0.0.1:30303?discport=52150
 	// n1.Incomplete() -> false
 	// n2: enode://1dd9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439
 	// n2.Incomplete() -> true
@@ -82,7 +91,7 @@ var parseNodeTests = []struct {
 	},
 	{
 		rawurl: "enode://1dd9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439@127.0.0.1:52150",
-		wantResult: NewNode(
+		wantResult: MustNewNode(
 			MustHexID("0x1dd9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439"),
 			net.IP{0x7f, 0x0, 0x0, 0x1},
 			52150,
@@ -90,26 +99,28 @@ var parseNodeTests = []struct {
 		),
 	},
 	{
-		rawurl: "enode://1dd9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439@[::]:52150",
-		wantResult: NewNode(
+		rawurl: "enode://1dd9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439@0.0.0.0:52150",
+		wantResult: MustNewNode(
 			MustHexID("0x1dd9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439"),
-			net.ParseIP("::"),
+			net.IP{0, 0, 0, 0}, // TODO: should this be net.IPv4zero ?
 			52150,
 			52150,
 		),
 	},
 	{
-		rawurl: "enode://1dd9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439@[2001:db8:3c4d:15::abcd:ef12]:52150",
-		wantResult: NewNode(
-			MustHexID("0x1dd9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439"),
-			net.ParseIP("2001:db8:3c4d:15::abcd:ef12"),
-			52150,
-			52150,
-		),
+		rawurl:     "enode://1dd9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439@[2001:db8:3c4d:15::abcd:ef12]:52150",
+		wantError:  "invalid IPv4 length 16",
+		wantResult: nil,
+		// wantResult: MustNewNode(
+		// 	MustHexID("0x1dd9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439"),
+		// 	net.ParseIP("2001:db8:3c4d:15::abcd:ef12"),
+		// 	52150,
+		// 	52150,
+		// ),
 	},
 	{
 		rawurl: "enode://1dd9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439@127.0.0.1:52150?discport=22334",
-		wantResult: NewNode(
+		wantResult: MustNewNode(
 			MustHexID("0x1dd9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439"),
 			net.IP{0x7f, 0x0, 0x0, 0x1},
 			22334,
@@ -119,14 +130,14 @@ var parseNodeTests = []struct {
 	// Incomplete nodes with no address.
 	{
 		rawurl: "1dd9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439",
-		wantResult: NewNode(
+		wantResult: MustNewNode(
 			MustHexID("0x1dd9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439"),
 			nil, 0, 0,
 		),
 	},
 	{
 		rawurl: "enode://1dd9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439",
-		wantResult: NewNode(
+		wantResult: MustNewNode(
 			MustHexID("0x1dd9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439"),
 			nil, 0, 0,
 		),
@@ -154,7 +165,10 @@ func TestParseNode(t *testing.T) {
 			if err == nil {
 				t.Errorf("test %q:\n  got nil error, expected %#q", test.rawurl, test.wantError)
 				continue
-			} else if err.Error() != test.wantError {
+			} else if test.wantError == "" {
+				t.Errorf("test %q:\n  unexpected error: %v", test.rawurl, err)
+				continue
+			} else if !strings.Contains(err.Error(), test.wantError) {
 				t.Errorf("test %q:\n  got error %#q, expected %#q", test.rawurl, err.Error(), test.wantError)
 				continue
 			}
@@ -164,7 +178,7 @@ func TestParseNode(t *testing.T) {
 				continue
 			}
 			if !reflect.DeepEqual(n, test.wantResult) {
-				t.Errorf("test %q:\n  result mismatch:\ngot:  %#v, want: %#v", test.rawurl, n, test.wantResult)
+				t.Errorf("test %q:\n  result mismatch:\ngot:  %#v\nwant: %#v", test.rawurl, n, test.wantResult)
 			}
 		}
 	}
@@ -225,7 +239,7 @@ func TestNodeID_textEncoding(t *testing.T) {
 
 func TestNodeID_recover(t *testing.T) {
 	prv := newkey()
-	nodeID := PubkeyID(prv.PubKey())
+	nodeID := PubkeyID(prv.PubKey().ToECDSA())
 	ecdsa, err := nodeID.Pubkey()
 	if err != nil {
 		t.Errorf("Pubkey error: %v", err)

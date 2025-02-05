@@ -97,7 +97,7 @@ func main() {
 // return
 type pingPongService struct {
 	id       discover.NodeID
-	log      log.Logger
+	log      log.LoggerI
 	received int64
 }
 

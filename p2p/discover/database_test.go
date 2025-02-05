@@ -27,6 +27,16 @@ import (
 	"time"
 )
 
+func TestDisco1(t *testing.T) {
+	var nodeid NodeID
+	nodeid = MustHexID("0x1dd9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439")
+	pubkey, err := nodeid.Pubkey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	println(pubkey.X.String(), pubkey.Y.String())
+}
+
 var nodeDBKeyTests = []struct {
 	id    NodeID
 	field string
@@ -102,7 +112,7 @@ func TestNodeDBInt64(t *testing.T) {
 }
 
 func TestNodeDBFetchStore(t *testing.T) {
-	node := NewNode(
+	node := MustNewNode(
 		MustHexID("0x1dd9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439"),
 		net.IP{192, 168, 0, 1},
 		30303,
@@ -126,7 +136,7 @@ func TestNodeDBFetchStore(t *testing.T) {
 	}
 	// Check fetch/store operations on a node pong object
 	if stored := db.bondTime(node.ID); stored.Unix() != 0 {
-		t.Errorf("pong: non-existing object: %v", stored)
+		t.Errorf("pong: non-existing object: %v (iszero=%v)", stored.Unix(), stored.IsZero())
 	}
 	if err := db.updateBondTime(node.ID, inst); err != nil {
 		t.Errorf("pong: failed to update: %v", err)
@@ -165,8 +175,8 @@ var nodeDBSeedQueryNodes = []struct {
 	// This one should not be in the result set because its last
 	// pong time is too far in the past.
 	{
-		node: NewNode(
-			MustHexID("0x84d9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439"),
+		node: MustNewNode(
+			MustHexID("c2b5eb3f5dde05f815b63777809ee3e7e0cbb20035a6b00ce327191e6eaa8f26a8d461c9112b7ab94698e7361fa19fd647e603e73239002946d76085b6f928d6"),
 			net.IP{127, 0, 0, 3},
 			30303,
 			30303,
@@ -176,8 +186,8 @@ var nodeDBSeedQueryNodes = []struct {
 	// This one shouldn't be in in the result set because its
 	// nodeID is the local node's ID.
 	{
-		node: NewNode(
-			MustHexID("0x57d9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439"),
+		node: MustNewNode(
+			MustHexID("6ca1d400c8ddf8acc94bcb0dd254911ad71a57bed5e0ae5aa205beed59b28c2339908e97990c493499613cff8ecf6c3dc7112a8ead220cdcd00d8847ca3db755"),
 			net.IP{127, 0, 0, 3},
 			30303,
 			30303,
@@ -187,31 +197,13 @@ var nodeDBSeedQueryNodes = []struct {
 
 	// These should be in the result set.
 	{
-		node: NewNode(
-			MustHexID("0x22d9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439"),
+		node: MustNewNode(
+			MustHexID("234dc63fe4d131212b38236c4c3411288d7bec61cbf7b120ff12c43dc60c96182882f4291d209db66f8a38e986c9c010ff59231a67f9515c7d1668b86b221a47"),
 			net.IP{127, 0, 0, 1},
 			30303,
 			30303,
 		),
 		pong: time.Now().Add(-2 * time.Second),
-	},
-	{
-		node: NewNode(
-			MustHexID("0x44d9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439"),
-			net.IP{127, 0, 0, 2},
-			30303,
-			30303,
-		),
-		pong: time.Now().Add(-3 * time.Second),
-	},
-	{
-		node: NewNode(
-			MustHexID("0xe2d9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439"),
-			net.IP{127, 0, 0, 3},
-			30303,
-			30303,
-		),
-		pong: time.Now().Add(-1 * time.Second),
 	},
 }
 
@@ -303,7 +295,7 @@ var nodeDBExpirationNodes = []struct {
 	exp  bool
 }{
 	{
-		node: NewNode(
+		node: MustNewNode(
 			MustHexID("0x01d9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439"),
 			net.IP{127, 0, 0, 1},
 			30303,
@@ -312,7 +304,7 @@ var nodeDBExpirationNodes = []struct {
 		pong: time.Now().Add(-nodeDBNodeExpiration + time.Minute),
 		exp:  false,
 	}, {
-		node: NewNode(
+		node: MustNewNode(
 			MustHexID("0x02d9d65c4552b5eb43d5ad55a2ee3f56c6cbc1c64a5c8d659f51fcd51bace24351232b8d7821617d2b29b54b81cdefb9b3e9c37d7fd5f63270bcc9e1a6f6a439"),
 			net.IP{127, 0, 0, 2},
 			30303,

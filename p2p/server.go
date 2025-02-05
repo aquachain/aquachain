@@ -19,8 +19,10 @@ package p2p
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"errors"
 	"fmt"
+	"math/big"
 	"net"
 	"sync"
 	"time"
@@ -33,6 +35,7 @@ import (
 	"gitlab.com/aquachain/aquachain/p2p/discover"
 	"gitlab.com/aquachain/aquachain/p2p/nat"
 	"gitlab.com/aquachain/aquachain/p2p/netutil"
+	"gitlab.com/aquachain/aquachain/params"
 )
 
 const (
@@ -131,13 +134,17 @@ type Config struct {
 	EnableMsgEvents bool
 
 	// Logger is a custom logger to use with the p2p.Server.
-	Logger log.Logger `toml:",omitempty"`
+	Logger log.LoggerI `toml:",omitempty"`
 
 	// Offline
 	Offline bool
 
 	// ChainID is required
 	ChainId uint64
+}
+
+func (c Config) ChainConfig() *params.ChainConfig {
+	return params.GetChainConfigByChainId(big.NewInt(int64(c.ChainId))) // TODO
 }
 
 // Server manages all peer connections.
@@ -169,7 +176,7 @@ type Server struct {
 	delpeer       chan peerDrop
 	loopWG        sync.WaitGroup // loop, listenLoop
 	peerFeed      event.Feed
-	log           log.Logger
+	log           log.LoggerI
 }
 
 type peerOpFunc func(map[discover.NodeID]*Peer)
@@ -203,7 +210,7 @@ type conn struct {
 
 type transport interface {
 	// The two handshakes.
-	doEncHandshake(prv *btcec.PrivateKey, dialDest *discover.Node) (discover.NodeID, error)
+	doEncHandshake(prv *ecdsa.PrivateKey, dialDest *discover.Node) (discover.NodeID, error)
 	doProtoHandshake(our *protoHandshake) (*protoHandshake, error)
 	// The MsgReadWriter can only be used after the encryption
 	// handshake has completed. The code uses conn.id to track this
@@ -312,7 +319,8 @@ func (srv *Server) Self() *discover.Node {
 	defer srv.lock.Unlock()
 
 	if !srv.running {
-		return &discover.Node{IP: net.ParseIP("0.0.0.0")}
+		log.Warn("Server not running, returning zero address")
+		return &discover.Node{IP: net.IPv4zero, UDP: 999, TCP: 999}
 	}
 	return srv.makeSelf(srv.listener, srv.ntab)
 }
@@ -323,12 +331,12 @@ func (srv *Server) makeSelf(listener net.Listener, ntab discoverTable) *discover
 	if ntab == nil {
 		// Inbound connections disabled, use zero address.
 		if listener == nil {
-			return &discover.Node{IP: net.ParseIP("0.0.0.0"), ID: discover.PubkeyID(srv.PrivateKey.PubKey())}
+			return &discover.Node{IP: net.IPv4zero, ID: discover.PubkeyID(srv.PrivateKey.PubKey().ToECDSA())}
 		}
 		// Otherwise inject the listener address too
 		addr := listener.Addr().(*net.TCPAddr)
 		return &discover.Node{
-			ID:  discover.PubkeyID(srv.PrivateKey.PubKey()),
+			ID:  discover.PubkeyID(srv.PrivateKey.PubKey().ToECDSA()),
 			IP:  addr.IP,
 			TCP: uint16(addr.Port),
 		}
@@ -386,12 +394,24 @@ func (srv *Server) Start(ctx context.Context) (err error) {
 	if srv.Config.Offline {
 		return nil
 	}
-	for i := 10; i > 0 && ctx.Err() == nil; i-- {
-		log.Info("Starting P2P networking", "in", i, "on", srv.ListenAddr, "chain", srv.Config.Name)
-		for i := 0; i < 10 && ctx.Err() == nil; i++ {
-			time.Sleep(time.Second / 10)
+	x := ctx.Value("doitnow")
+	if x == nil {
+		x = false
+	}
+	if x == nil && srv.Config.ChainConfig() == params.AllAquahashProtocolChanges {
+		x = true
+	} else if x == nil {
+		log.Debug("P2P server not starting", "offline", srv.Config.Offline, "chain", srv.Config.ChainConfig().Name())
+		x = false
+	}
+	now, _ := x.(bool)
+	if !now {
+		for i := 10; i > 0 && ctx.Err() == nil; i-- {
+			log.Info("Starting P2P networking", "in", i, "on", srv.ListenAddr, "chain", srv.Config.ChainConfig().Name())
+			for i := 0; i < 10 && ctx.Err() == nil; i++ {
+				time.Sleep(time.Second / 10)
+			}
 		}
-
 	}
 	srv.lock.Lock()
 	defer srv.lock.Unlock()
@@ -474,7 +494,7 @@ func (srv *Server) Start(ctx context.Context) (err error) {
 	dialer := newDialState(srv.StaticNodes, srv.BootstrapNodes, srv.ntab, dynPeers, srv.NetRestrict)
 
 	// handshake
-	srv.ourHandshake = &protoHandshake{Version: baseProtocolVersion, Name: srv.Name, ID: discover.PubkeyID(srv.PrivateKey.PubKey())}
+	srv.ourHandshake = &protoHandshake{Version: baseProtocolVersion, Name: srv.Name, ID: discover.PubkeyID(srv.PrivateKey.PubKey().ToECDSA())}
 	for _, p := range srv.Protocols {
 		srv.ourHandshake.Caps = append(srv.ourHandshake.Caps, p.cap())
 	}
@@ -805,11 +825,12 @@ func (srv *Server) setupConn(c *conn, flags connFlag, dialDest *discover.Node) e
 	}
 	// Run the encryption handshake.
 	var err error
-	if c.id, err = c.doEncHandshake(srv.PrivateKey, dialDest); err != nil {
+	if c.id, err = c.doEncHandshake(srv.PrivateKey.ToECDSA(), dialDest); err != nil {
 		srv.log.Trace("Failed RLPx handshake", "addr", c.fd.RemoteAddr(), "conn", c.flags, "err", err)
 		return err
 	}
 	clog := srv.log.New("id", c.id, "addr", c.fd.RemoteAddr(), "conn", c.flags)
+	clog.Info("RLPx handshake complete")
 	// For dialed connections, check that the remote public key matches.
 	if dialDest != nil && c.id != dialDest.ID {
 		clog.Trace("Dialed identity mismatch", "want", c, dialDest.ID)

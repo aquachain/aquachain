@@ -34,10 +34,15 @@ var (
 	testNodeKey, _ = crypto.GenerateKey()
 )
 
+func init() {
+
+}
+
 func testNodeConfig() *Config {
 	return &Config{
-		Name: "test node",
-		P2P:  p2p.Config{PrivateKey: testNodeKey, ChainId: 550},
+		Name:       "test node",
+		P2P:        p2p.Config{PrivateKey: testNodeKey, ChainId: 1337},
+		RPCAllowIP: []string{"127.0.0.1"},
 	}
 }
 

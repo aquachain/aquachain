@@ -101,7 +101,9 @@ func initglogger() *log.GlogHandler {
 	if usecolor {
 		output = colorable.NewColorableStderr()
 	}
-	return log.NewGlogHandler(log.StreamHandler(output, log.TerminalFormat(usecolor)))
+	x := log.NewGlogHandler(log.StreamHandler(output, log.TerminalFormat(usecolor)))
+	x.Verbosity(log.LvlInfo)
+	return x
 }
 
 // Setup initializes profiling and logging based on the CLI flags.

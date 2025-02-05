@@ -149,7 +149,7 @@ type Config struct {
 	WSExposeAll bool `toml:",omitempty"`
 
 	// Logger is a custom logger to use with the p2p.Server.
-	Logger log.Logger `toml:",omitempty"`
+	Logger log.LoggerI `toml:",omitempty"`
 
 	// NoKeys disables all signing and keystore functions
 	NoKeys bool
@@ -200,32 +200,32 @@ func DefaultIPCEndpoint(clientIdentifier string) string {
 			panic("empty executable name")
 		}
 	}
-	config := &Config{DataDir: DefaultDataDir(), IPCPath: clientIdentifier + ".ipc"}
+	config := &Config{DataDir: DefaultConfig.DataDir, IPCPath: clientIdentifier + ".ipc"}
 	return config.IPCEndpoint()
 }
 
 // HTTPEndpoint resolves an HTTP endpoint based on the configured host interface
 // and port parameters.
-func (c *Config) HTTPEndpoint() string {
-	if c.HTTPHost == "" {
-		return ""
-	}
-	return fmt.Sprintf("%s:%d", c.HTTPHost, c.HTTPPort)
+func (c Config) HTTPEndpoint() string {
+	return getEndpoint(c.HTTPHost, c.HTTPPort)
 }
 
 // DefaultHTTPEndpoint returns the HTTP endpoint used by default.
 func DefaultHTTPEndpoint() string {
-	config := &Config{HTTPHost: DefaultHTTPHost, HTTPPort: DefaultHTTPPort}
-	return config.HTTPEndpoint()
+	return (Config{HTTPHost: DefaultHTTPHost, HTTPPort: DefaultHTTPPort}).HTTPEndpoint()
 }
 
 // WSEndpoint resolves an websocket endpoint based on the configured host interface
 // and port parameters.
 func (c *Config) WSEndpoint() string {
-	if c.WSHost == "" {
+	return getEndpoint(c.WSHost, c.WSPort)
+}
+
+func getEndpoint(host string, port int) string {
+	if host == "" {
 		return ""
 	}
-	return fmt.Sprintf("%s:%d", c.WSHost, c.WSPort)
+	return fmt.Sprintf("%s:%d", host, port)
 }
 
 // DefaultWSEndpoint returns the websocket endpoint used by default.
@@ -234,12 +234,19 @@ func DefaultWSEndpoint() string {
 	return config.WSEndpoint()
 }
 
+func (c *Config) NodeName() string {
+	return GetNodeName(c)
+}
+
 // GetNodeName returns the devp2p node identifier.
 // eg: Aquachain/v1.7.17-dev-f09095/linux-amd64/go1.23.5
 func GetNodeName(c *Config) string {
 	name := c.Name // main name of program
-	if name == "" || name == "aquachain" {
-		panic("empty c.Name:" + name)
+	if name == "" {
+		panic("empty name")
+	}
+	if name == "aquachain" {
+		name = "Aquachain"
 	}
 	if c.UserIdent != "" {
 		name += "-" + c.UserIdent // e.g. Aquachain-supercoolpool
@@ -250,21 +257,6 @@ func GetNodeName(c *Config) string {
 	name += "/" + runtime.GOOS + "-" + runtime.GOARCH // eg: Aquachain-supercoolpool/v1.7.17-sometag/linux-amd64
 	name += "/" + common.ShortGoVersion()             // eg: Aquachain-supercoolpool/v1.7.17-sometag/linux-amd64/go1.23.5
 	return name
-}
-
-func GetShortName(codename string) {
-
-}
-
-func (c *Config) executablename() string {
-	if c.Name == "" {
-		progname := strings.TrimSuffix(filepath.Base(os.Args[0]), ".exe")
-		if progname == "" {
-			panic("empty executable name, set Config.Name")
-		}
-		return progname
-	}
-	return c.Name
 }
 
 // These resources are resolved differently for "aquachain" instances.
@@ -278,6 +270,7 @@ var isOldAquachainResource = map[string]bool{
 
 func (c *Config) name() string {
 	if c.Name == "" {
+		panic("empty name")
 		return "aquachain"
 	}
 	if strings.Contains(c.Name, "/") {

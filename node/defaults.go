@@ -36,23 +36,23 @@ const (
 
 // DefaultConfig contains reasonable default settings.
 var DefaultConfig = Config{
-	DataDir:     DefaultDataDir(),
+	DataDir:     defaultDataDir(),
 	HTTPPort:    DefaultHTTPPort,
 	HTTPModules: []string{"aqua", "eth", "net", "web3"},
 	WSPort:      DefaultWSPort,
 	WSModules:   []string{"aqua", "eth", "net", "web3"},
 	P2P: p2p.Config{
-		ListenAddr: "0.0.0.0:21303", // ipv4 only
+		ListenAddr: "0.0.0.0:21303", // tcp+udp, ipv4 only
 		MaxPeers:   20,
-		NAT:        nat.Any(),
+		NAT:        nat.Any(), // try UPnP or NAT-PMP
 	},
 }
 
 // DefaultDataDir is the default data directory to use for the databases and other
 // persistence requirements.
 //
-// Use this once!
-func DefaultDataDir() string {
+// Use this once in DefaultConfig!
+func defaultDataDir() string {
 	// Try to place the data folder in the user's home dir
 	home := homeDir()
 	if home != "" {
@@ -73,9 +73,13 @@ func DefaultDatadirByChain(cfg *params.ChainConfig) string {
 		cfg = params.MainnetChainConfig
 	}
 	if cfg == params.MainnetChainConfig {
-		return DefaultDataDir()
+		return DefaultConfig.DataDir
 	}
-	return filepath.Join(DefaultDataDir(), cfg.Name())
+	name := cfg.Name()
+	if name == "" {
+		panic("chain config has no name")
+	}
+	return filepath.Join(DefaultConfig.DataDir, name)
 }
 
 func homeDir() string {
