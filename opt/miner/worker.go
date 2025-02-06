@@ -448,15 +448,10 @@ func (w *worker) commitNewWork() {
 		if len(header.Extra) < 32 {
 			header.Extra = append(header.Extra, bytes.Repeat([]byte{0x00}, 32-len(header.Extra))...)
 		}
-
-	} else {
-		header.Coinbase = w.coinbase
 	}
 	// Only set the coinbase if we are mining (avoid spurious block rewards)
 	if atomic.LoadInt32(&w.mining) == 1 {
 		header.Coinbase = w.coinbase
-	} else if !isClique {
-		log.Warn("Not mining, skipping block reward calc")
 	}
 	// log.Info("Engine", "engine", fmt.Sprintf("%T", w.engine), "Extra", len(header.Extra), "Coinbase", header.Coinbase.Hex())
 	if err := w.engine.Prepare(w.chain, header); err != nil {
