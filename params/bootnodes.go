@@ -21,7 +21,7 @@ type BootnodeStringList []string
 // MainnetBootnodes are the enode URLs of the P2P bootstrap nodes running on
 // the main Aquachain network.
 var MainnetBootnodes = []string{
-	"enode://ef5a7f89789f9150e282c4a37d317596c1f29e0b51748269472395c45790784d585b253089ef87e579408de88961f1e43f15d5dbc271d612b676f1961792814f@168.235.107.40:21303", // c.onical.org (2020/12/05)
+	"enode://ef5a7f89789f9150e282c4a37d317596c1f29e0b51748269472395c45790784d585b253089ef87e579408de88961f1e43f15d5dbc271d612b676f1961792814f@168.235.107.40:21000", // c.onical.org (2020/12/05)
 	"enode://5b152d555ecd59d225a9cec9c002554fe1afc75a96ec6c4b021524029b3c683df31981f4e460cf02da8740dbae97b213d899a2c5464e21dfe0223633d00e2dd5@168.235.111.37:21000", // tf1
 	"enode://61cf6974b566caefc7238c3095692a3cac266a0eb76cb4c950034427a3112388d28db410412bc5d59d54789c6418b4aa59af797f34b39c1c08c2642fa60ddc90@168.235.85.77:21000",  // tf2
 }
@@ -43,7 +43,7 @@ var Testnet2Bootnodes = []string{
 }
 
 // Testnet3Bootnodes are the enode URLs of the P2P bootstrap nodes running on the
-// Testnet3 test network. (port 21002)
+// Testnet3 test network. (port 21003)
 var Testnet3Bootnodes = []string{
 	"enode://ef5a7f89789f9150e282c4a37d317596c1f29e0b51748269472395c45790784d585b253089ef87e579408de88961f1e43f15d5dbc271d612b676f1961792814f@168.235.107.40:21003", // c.onical.org
 	"enode://5b152d555ecd59d225a9cec9c002554fe1afc75a96ec6c4b021524029b3c683df31981f4e460cf02da8740dbae97b213d899a2c5464e21dfe0223633d00e2dd5@168.235.111.37:21003", // tf1
