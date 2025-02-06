@@ -31,9 +31,7 @@ import (
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/common/math"
-	"gitlab.com/aquachain/aquachain/crypto/sha3"
 	"gitlab.com/aquachain/aquachain/rlp"
-	"golang.org/x/crypto/argon2"
 )
 
 var (
@@ -41,6 +39,7 @@ var (
 	secp256k1_halfN = new(big.Int).Div(secp256k1_N, big.NewInt(2))
 )
 
+/*
 const (
 	argonThreads uint8  = 1
 	argonTime    uint32 = 1
@@ -141,6 +140,7 @@ func Keccak512(data ...[]byte) []byte {
 	}
 	return d.Sum(nil)
 }
+*/
 
 // Creates an ethereum address given the bytes and the nonce
 func CreateAddress(b common.Address, nonce uint64) common.Address {
@@ -197,12 +197,13 @@ func ToECDSAPub(pub []byte) *btcec.PublicKey {
 	return pubk
 }
 
+// FromECDSA serializes a public key to 65 bytes
 func FromECDSAPub(pub *ecdsa.PublicKey) []byte {
 	return elliptic.Marshal(S256(), pub.X, pub.Y)
 }
+
 func Ecdsa2Btcec(priv *ecdsa.PrivateKey) *btcec.PrivateKey {
-	var pk *btcec.PrivateKey
-	pk.ToECDSA()
+	pk, _ := btcec.PrivKeyFromBytes(priv.D.Bytes())
 	return pk
 }
 func Ecdsa2BtcecPub(pub *ecdsa.PublicKey) *btcec.PublicKey {
@@ -233,6 +234,7 @@ func HexToBtcec(hexkey string) (*btcec.PrivateKey, error) {
 
 }
 
+// BytesToKey used by HexToBtcec, HexToECDSA, LoadECDSA
 func BytesToKey(b []byte) (*btcec.PrivateKey, error) {
 	priv, pub := btcec.PrivKeyFromBytes(b)
 	if pub == nil {
@@ -289,6 +291,7 @@ func SaveECDSA(file string, key *btcec.PrivateKey) error {
 // 	return ecdsa.GenerateKey(S256(), rand.Reader)
 // }
 
+// GenerateKey generates a new private key and checks it is valid
 func GenerateKey() (*btcec.PrivateKey, error) {
 	for i := 0; i < 1000; i++ {
 		k, err := btcec.NewPrivateKey()
