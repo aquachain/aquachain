@@ -243,7 +243,7 @@ func (n *Node) UnmarshalText(text []byte) error {
 	return err
 }
 
-// NodeID is a unique identifier for each node.
+// NodeID is a unique identifier for each node. (64 bytes)
 // The node identifier is a marshaled elliptic curve public key.
 type NodeID [NodeIDBits / 8]byte
 

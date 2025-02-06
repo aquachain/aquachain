@@ -144,7 +144,7 @@ func (n *NodeConfig) UnmarshalJSON(data []byte) error {
 		}
 		privKey, err := crypto.BytesToKey(key)
 		if err != nil {
-			return err
+			return fmt.Errorf("invalid private key: %v", err)
 		}
 		n.PrivateKey = privKey
 	}
