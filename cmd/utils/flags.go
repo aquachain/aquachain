@@ -672,6 +672,9 @@ func getBootstrapNodes(cmd *cli.Command) []*discover.Node {
 	if cmd.IsSet(BootnodesFlag.Name) { // custom bootnodes flag
 		return StringToBootstraps(strings.Split(cmd.String(BootnodesFlag.Name), ","))
 	}
+	if cmd.IsSet(NoDiscoverFlag.Name) {
+		return []*discover.Node{}
+	}
 	chainName := cmd.String(ChainFlag.Name)
 	if chainName == "" {
 		panic("woops") // should be already set
