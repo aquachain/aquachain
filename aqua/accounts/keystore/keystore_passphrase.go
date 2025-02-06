@@ -102,8 +102,17 @@ func (ks keyStorePassphrase) StoreKey(filename string, key *Key, auth string) er
 	if err != nil {
 		return err
 	}
-	return writeKeyFile(filename, keyjson)
+	return writeKeyFile(filename, keyjson, false)
 }
+func (ks keyStorePassphrase) UpdateKey(filename string, key *Key, auth string) error {
+	keyjson, err := EncryptKey(key, auth, ks.scryptN, ks.scryptP)
+	if err != nil {
+		return err
+	}
+	return writeKeyFile(filename, keyjson, true)
+}
+
+var _ keyStore = keyStorePassphrase{}
 
 func (ks keyStorePassphrase) JoinPath(filename string) string {
 	if filepath.IsAbs(filename) {

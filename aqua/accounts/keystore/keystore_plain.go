@@ -50,8 +50,17 @@ func (ks keyStorePlain) StoreKey(filename string, key *Key, auth string) error {
 	if err != nil {
 		return err
 	}
-	return writeKeyFile(filename, content)
+	return writeKeyFile(filename, content, false)
 }
+func (ks keyStorePlain) UpdateKey(filename string, key *Key, auth string) error {
+	content, err := json.Marshal(key)
+	if err != nil {
+		return err
+	}
+	return writeKeyFile(filename, content, true)
+}
+
+var _ keyStore = keyStorePlain{}
 
 func (ks keyStorePlain) JoinPath(filename string) string {
 	if filepath.IsAbs(filename) {

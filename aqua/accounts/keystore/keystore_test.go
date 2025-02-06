@@ -35,7 +35,12 @@ var testSigData = make([]byte, 32)
 
 func TestKeyStore(t *testing.T) {
 	dir, ks := tmpKeyStore(t, true)
-	defer os.RemoveAll(dir)
+	t.Logf("tmpdir: %s", dir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(dir); err != nil {
+			panic(err.Error())
+		}
+	})
 
 	a, err := ks.NewAccount("foo")
 	if err != nil {
@@ -52,19 +57,19 @@ func TestKeyStore(t *testing.T) {
 		t.Fatalf("account file has wrong mode: got %o, want %o", stat.Mode(), 0600)
 	}
 	if !ks.HasAddress(a.Address) {
-		t.Errorf("HasAccount(%x) should've returned true", a.Address)
+		t.Fatalf("HasAccount(%x) should've returned true", a.Address)
 	}
 	if err := ks.Update(a, "foo", "bar"); err != nil {
-		t.Errorf("Update error: %v", err)
+		t.Fatalf("Update error: %v", err)
 	}
 	if err := ks.Delete(a, "bar"); err != nil {
-		t.Errorf("Delete error: %v", err)
+		t.Fatalf("Delete 'bar' error: %v", err)
 	}
 	if common.FileExist(a.URL.Path) {
-		t.Errorf("account file %s should be gone after Delete", a.URL)
+		t.Fatalf("account file %s should be gone after Delete", a.URL)
 	}
 	if ks.HasAddress(a.Address) {
-		t.Errorf("HasAccount(%x) should've returned true after Delete", a.Address)
+		t.Fatalf("HasAccount(%x) should've returned true after Delete", a.Address)
 	}
 }
 

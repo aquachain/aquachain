@@ -469,7 +469,7 @@ func (ks *KeyStore) Update(a accounts.Account, passphrase, newPassphrase string)
 	if err != nil {
 		return err
 	}
-	return ks.storage.StoreKey(a.URL.Path, key, newPassphrase)
+	return ks.storage.UpdateKey(a.URL.Path, key, newPassphrase)
 }
 
 // ImportPreSaleKey decrypts the given Aquachain presale wallet and stores

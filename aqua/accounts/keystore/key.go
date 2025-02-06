@@ -49,8 +49,10 @@ type Key struct {
 type keyStore interface {
 	// Loads and decrypts the key from disk.
 	GetKey(addr common.Address, filename string, auth string) (*Key, error)
-	// Writes and encrypts the key.
+	// Writes and encrypts the key, but does not overwrite
 	StoreKey(filename string, k *Key, auth string) error
+	// Updates the key, overwriting the file
+	UpdateKey(filename string, k *Key, auth string) error
 	// Joins filename with the key directory unless it is already absolute.
 	JoinPath(filename string) string
 }
@@ -150,7 +152,7 @@ func NewKeyForDirectICAP(rand io.Reader) *Key {
 }
 
 func newKey(_ io.Reader) (*Key, error) {
-	privateKeyECDSA, err := btcec.NewPrivateKey()
+	privateKeyECDSA, err := crypto.GenerateKey()
 	if err != nil {
 		return nil, err
 	}
@@ -170,9 +172,11 @@ func storeNewKey(ks keyStore, rand io.Reader, auth string) (*Key, accounts.Accou
 	return key, a, err
 }
 
-func writeKeyFile(file string, content []byte) error {
-	if _, err := os.Stat(file); err == nil {
-		return fmt.Errorf("file already exists: %s", file)
+func writeKeyFile(file string, content []byte, overwrite bool) error {
+	if !overwrite {
+		if _, err := os.Stat(file); err == nil {
+			return fmt.Errorf("file already exists: %s", file)
+		}
 	}
 	// Create the keystore directory with appropriate permissions
 	// in case it is not present yet.

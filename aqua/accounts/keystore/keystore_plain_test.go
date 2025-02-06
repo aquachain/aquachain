@@ -153,48 +153,48 @@ func skipIfSubmoduleMissing(t *testing.T) {
 func TestV3_PBKDF2_2(t *testing.T) {
 	skipIfSubmoduleMissing(t)
 	t.Parallel()
-	tests := loadKeyStoreTestV3(filepath.Join(testsSubmodule, "basic_tests.json"), t)
+	tests := loadKeyStoreTestV3(filepath.Join(basedir, "basic_tests.json"), t)
 	testDecryptV3(tests["test1"], t)
 }
 
 func TestV3_PBKDF2_3(t *testing.T) {
 	skipIfSubmoduleMissing(t)
 	t.Parallel()
-	tests := loadKeyStoreTestV3(filepath.Join(testsSubmodule, "basic_tests.json"), t)
+	tests := loadKeyStoreTestV3(filepath.Join(basedir, "basic_tests.json"), t)
 	testDecryptV3(tests["python_generated_test_with_odd_iv"], t)
 }
 
 func TestV3_PBKDF2_4(t *testing.T) {
 	skipIfSubmoduleMissing(t)
 	t.Parallel()
-	tests := loadKeyStoreTestV3(filepath.Join(testsSubmodule, "basic_tests.json"), t)
+	tests := loadKeyStoreTestV3(filepath.Join(basedir, "basic_tests.json"), t)
 	testDecryptV3(tests["evilnonce"], t)
 }
 
 func TestV3_Scrypt_1(t *testing.T) {
 	t.Parallel()
-	tests := loadKeyStoreTestV3("testdata/v3_test_vector.json", t)
+	tests := loadKeyStoreTestV3(filepath.Join(basedir, "v3_test_vector.json"), t)
 	testDecryptV3(tests["wikipage_test_vector_scrypt"], t)
 }
 
 func TestV3_Scrypt_2(t *testing.T) {
 	skipIfSubmoduleMissing(t)
 	t.Parallel()
-	tests := loadKeyStoreTestV3(filepath.Join(testsSubmodule, "basic_tests.json"), t)
+	tests := loadKeyStoreTestV3(filepath.Join(basedir, "basic_tests.json"), t)
 	testDecryptV3(tests["test2"], t)
 }
 
 func TestV1_1(t *testing.T) {
 	t.Parallel()
-	tests := loadKeyStoreTestV1("testdata/v1_test_vector.json", t)
+	tests := loadKeyStoreTestV1(filepath.Join(basedir, "v1_test_vector.json"), t)
 	testDecryptV1(tests["test1"], t)
 }
 
 func TestV1_2(t *testing.T) {
 	t.Parallel()
-	ks := &keyStorePassphrase{"testdata/v1", LightScryptN, LightScryptP}
+	ks := &keyStorePassphrase{"v1", LightScryptN, LightScryptP}
 	addr := common.HexToAddress("cb61d5a9c4896fb9658090b597ef0e7be6f7b67e")
-	file := "testdata/v1/cb61d5a9c4896fb9658090b597ef0e7be6f7b67e/cb61d5a9c4896fb9658090b597ef0e7be6f7b67e"
+	file := filepath.Join(basedir, "v1/cb61d5a9c4896fb9658090b597ef0e7be6f7b67e/cb61d5a9c4896fb9658090b597ef0e7be6f7b67e")
 	k, err := ks.GetKey(addr, file, "g")
 	if err != nil {
 		t.Fatal(err)
@@ -256,12 +256,12 @@ func TestKeyForDirectICAP(t *testing.T) {
 
 func TestV3_31_Byte_Key(t *testing.T) {
 	t.Parallel()
-	tests := loadKeyStoreTestV3("testdata/v3_test_vector.json", t)
+	tests := loadKeyStoreTestV3(filepath.Join(basedir, "v3_test_vector.json"), t)
 	testDecryptV3(tests["31_byte_key"], t)
 }
 
 func TestV3_30_Byte_Key(t *testing.T) {
 	t.Parallel()
-	tests := loadKeyStoreTestV3("testdata/v3_test_vector.json", t)
+	tests := loadKeyStoreTestV3(filepath.Join(basedir, "v3_test_vector.json"), t)
 	testDecryptV3(tests["30_byte_key"], t)
 }

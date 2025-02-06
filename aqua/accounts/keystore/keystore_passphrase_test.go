@@ -18,6 +18,7 @@ package keystore
 
 import (
 	"io/ioutil"
+	"path/filepath"
 	"testing"
 
 	"gitlab.com/aquachain/aquachain/common"
@@ -30,7 +31,7 @@ const (
 
 // Tests that a json key file can be decrypted and encrypted in multiple rounds.
 func TestKeyEncryptDecrypt(t *testing.T) {
-	keyjson, err := ioutil.ReadFile("testdata/very-light-scrypt.json")
+	keyjson, err := ioutil.ReadFile(filepath.Join(basedir, "very-light-scrypt.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
