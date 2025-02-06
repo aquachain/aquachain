@@ -19,8 +19,11 @@ define LOGO
 endef
 $(info $(LOGO))
 aquachain_cmd=./cmd/aquachain
-version != cat VERSION
 COMMITHASH := ${GITHUB_SHA}
+version  :=     $(shell git describe --tags --always --dirty)
+ifeq (,$(version))
+version := $(shell cat VERSION)
+endif
 ifeq (,$(COMMITHASH))
 COMMITHASH := $(shell git rev-parse --short HEAD)
 endif
@@ -68,7 +71,7 @@ GO_FLAGS += -installsuffix cgo
 LINKER_FLAGS += -linkmode external -extldflags -static
 endif
 
-LINKER_FLAGS = -X main.gitCommit=${COMMITHASH} -X main.buildDate=${shell date -u +%s} -s -w 
+LINKER_FLAGS = -X main.gitCommit=${COMMITHASH} -X main.gitTag=${version} -X main.buildDate=${shell date -u +%s} -s -w 
 LINKER_FLAGS += -X gitlab.com/aquachain/aquachain/params.buildtags=${TAGS64}
 
 ## if release=1, rebuild all sources

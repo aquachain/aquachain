@@ -111,6 +111,9 @@ func printVersion(_ context.Context, cmd *cli.Command) error {
 	if gitCommit != "" {
 		fmt.Println("Git Commit:", gitCommit)
 	}
+	if gitTag != "" {
+		fmt.Println("Git Tag:", gitTag)
+	}
 	if buildDate != "" {
 		ts, err := strconv.Atoi(buildDate)
 		if err == nil {

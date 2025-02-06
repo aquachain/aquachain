@@ -49,7 +49,7 @@ const (
 
 var (
 	// Git SHA1 commit hash and timestamp of the release (set via linker flags)
-	gitCommit, buildDate string
+	gitCommit, buildDate, gitTag string
 	// The app that holds all commands and flags.
 	// app = utils.NewApp(gitCommit, "the aquachain command line interface")
 	// flags that configure the node
