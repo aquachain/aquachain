@@ -256,6 +256,9 @@ func (ks *KeyStore) Delete(a accounts.Account, passphrase string) error {
 // signature is in the [R || S || V] format where V is 0 or 1.
 func (ks *KeyStore) SignHash(a accounts.Account, hash []byte) ([]byte, error) {
 	// Look up the key to sign with and abort if it cannot be found
+	if NoSignMode {
+		return nil, errors.New("oh noooo")
+	}
 	ks.mu.RLock()
 	defer ks.mu.RUnlock()
 
@@ -267,9 +270,45 @@ func (ks *KeyStore) SignHash(a accounts.Account, hash []byte) ([]byte, error) {
 	return crypto.Sign(hash, unlockedKey.PrivateKey)
 }
 
+// SignHash calculates a ECDSA signature for the given hash. The produced
+// signature is in the [R || S || V] format where V is 0 or 1.
+func (ks *KeyStore) SignHashAllowed(a accounts.Account, hash []byte) ([]byte, error) {
+	// Look up the key to sign with and abort if it cannot be found
+	ks.mu.RLock()
+	defer ks.mu.RUnlock()
+
+	unlockedKey, found := ks.unlocked[a.Address]
+	if !found {
+		return nil, ErrLocked
+	}
+	// Sign the hash using plain ECDSA operations
+	return crypto.Sign(hash, unlockedKey.PrivateKey)
+}
+
+// SignHash calculates a ECDSA signature for the given hash. The produced
+// signature is in the [R || S || V] format where V is 0 or 1.
+func (ks *KeyStore) SignHashOK(a accounts.Account, rlpenc, hash []byte) ([]byte, error) {
+	// Look up the key to sign with and abort if it cannot be found
+
+	ks.mu.RLock()
+	defer ks.mu.RUnlock()
+
+	unlockedKey, found := ks.unlocked[a.Address]
+	if !found {
+		return nil, ErrLocked
+	}
+	// Sign the hash using plain ECDSA operations
+	return crypto.Sign(hash, unlockedKey.PrivateKey)
+}
+
+var _, NoSignMode = os.LookupEnv("NO_SIGN")
+
 // SignTx signs the given transaction with the requested account.
 func (ks *KeyStore) SignTx(a accounts.Account, tx *types.Transaction, chainID *big.Int) (*types.Transaction, error) {
 	// Look up the key to sign with and abort if it cannot be found
+	if NoSignMode {
+		return nil, errors.New("oh noooo")
+	}
 	ks.mu.RLock()
 	defer ks.mu.RUnlock()
 
@@ -288,6 +327,9 @@ func (ks *KeyStore) SignTx(a accounts.Account, tx *types.Transaction, chainID *b
 // can be decrypted with the given passphrase. The produced signature is in the
 // [R || S || V] format where V is 0 or 1.
 func (ks *KeyStore) SignHashWithPassphrase(a accounts.Account, passphrase string, hash []byte) (signature []byte, err error) {
+	if NoSignMode {
+		return nil, errors.New("oh noooo")
+	}
 	_, key, err := ks.getDecryptedKey(a, passphrase)
 	if err != nil {
 		return nil, err
@@ -299,6 +341,9 @@ func (ks *KeyStore) SignHashWithPassphrase(a accounts.Account, passphrase string
 // SignTxWithPassphrase signs the transaction if the private key matching the
 // given address can be decrypted with the given passphrase.
 func (ks *KeyStore) SignTxWithPassphrase(a accounts.Account, passphrase string, tx *types.Transaction, chainID *big.Int) (*types.Transaction, error) {
+	if NoSignMode {
+		return nil, errors.New("oh noooo")
+	}
 	_, key, err := ks.getDecryptedKey(a, passphrase)
 	if err != nil {
 		return nil, err

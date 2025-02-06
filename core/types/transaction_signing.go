@@ -23,6 +23,7 @@ import (
 
 	"github.com/btcsuite/btcd/btcec/v2"
 	"gitlab.com/aquachain/aquachain/common"
+	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/crypto"
 	"gitlab.com/aquachain/aquachain/params"
 )
@@ -96,6 +97,8 @@ func Sender(signer Signer, tx *Transaction) (common.Address, error) {
 		}
 	}
 
+	// eg:
+	// EIP155Signer.Sender
 	addr, err := signer.Sender(tx)
 	if err != nil {
 		return common.Address{}, fmt.Errorf("could not recover sender from %T: %w", signer, err)
@@ -152,6 +155,7 @@ func (s EIP155Signer) Sender(tx *Transaction) (common.Address, error) {
 		return HomesteadSigner{}.Sender(tx)
 	}
 	if tx.ChainId().Cmp(s.chainId) != 0 {
+		log.Trace("EIP155Signer.Sender: invalid chainId", "tx", tx.Hash().Hex(), "theirs", tx.ChainId().String(), "ours", s.chainId)
 		return common.Address{}, ErrInvalidChainId
 	}
 	V := new(big.Int).Sub(tx.data.V, s.chainIdMul)

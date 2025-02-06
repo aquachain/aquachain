@@ -561,11 +561,11 @@ func (c *Clique) Finalize(chain consensus.ChainReader, header *types.Header, sta
 
 // Authorize injects a private key into the consensus engine to mint new blocks
 // with.
-func (c *Clique) Authorize(signer common.Address, signFn SignerFn) {
+func (c *Clique) Authorize(signerAddr common.Address, signFn SignerFn) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	c.signer = signer
+	c.signer = signerAddr
 	c.signFn = signFn
 }
 
@@ -588,7 +588,7 @@ func (c *Clique) Seal(chain consensus.ChainReader, block *types.Block, stop <-ch
 	signer, signFn := c.signer, c.signFn
 	c.lock.RUnlock()
 
-	log.Info("Sealing with signer", "addr", signer.Hex(), "number", number, "hash", header.Hash().Hex())
+	log.Debug("Sealing with signer", "addr", signer.Hex(), "number", number, "hash", header.Hash().Hex())
 
 	// Bail out if we're unauthorized to sign a block
 	snap, err := c.snapshot(chain, number-1, header.ParentHash, nil)

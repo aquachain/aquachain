@@ -101,7 +101,7 @@ out:
 
 func (miner *CpuAgent) mine(work *Work, stop <-chan struct{}) {
 	if result, err := miner.engine.Seal(miner.chain, work.Block, stop); result != nil {
-		log.Info("Successfully sealed new block", "number", result.Number(), "nonce", result.Nonce(), "version", result.Version())
+		log.Debug("Successfully sealed new block", "number", result.Number(), "nonce", result.Nonce(), "version", result.Version())
 		miner.returnCh <- &Result{work, result}
 	} else {
 		if err != nil {

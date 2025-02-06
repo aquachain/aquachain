@@ -402,13 +402,16 @@ func (s *Aquachain) StartMining(local bool) error {
 		log.Error("Cannot start mining without aquabase", "err", err)
 		return fmt.Errorf("aquabase missing: %v", err)
 	}
-	if clique, ok := s.engine.(*clique.Clique); ok {
+	if cliquecfg, ok := s.engine.(*clique.Clique); ok {
 		wallet, err := s.accountManager.Find(accounts.Account{Address: eb})
 		if wallet == nil || err != nil {
 			log.Error("Aquabase account unavailable locally", "err", err)
 			return fmt.Errorf("signer missing: %v", err)
 		}
-		clique.Authorize(eb, wallet.SignHash)
+		type xt interface {
+			CliqueSigner() clique.SignerFn
+		}
+		cliquecfg.Authorize(eb, wallet.(xt).CliqueSigner())
 	}
 	if local {
 		// If local (CPU) mining is started, we can disable the transaction rejection

@@ -826,6 +826,10 @@ func setHTTP(cmd *cli.Command, cfg *node.Config) {
 				"If you really know what you are doing and would like to unlock a wallet while" +
 				"hosting a public HTTP RPC node, use the -UNSAFE_RPC_UNLOCK flag. See -allowip flag to restrict access")
 		}
+		if cmd.IsSet(RPCListenAddrFlag.Name) && cmd.IsSet(UnlockedAccountFlag.Name) {
+			// allow public rpc with unlocked account, exposed only via 'private' api namespace (aqua.sendTransaction and aqua.sign are disabled)
+			keystore.NoSignMode = true
+		}
 		if cmd.IsSet(RPCListenAddrFlag.Name) {
 			cfg.HTTPHost = cmd.String(RPCListenAddrFlag.Name)
 		}

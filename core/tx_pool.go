@@ -575,6 +575,7 @@ func (pool *TxPool) validateTx(tx *types.Transaction, local bool) error {
 	// Make sure the transaction is signed properly
 	from, err := types.Sender(pool.signer, tx)
 	if err != nil {
+		//log.Debug("Failed to recover sender", "err", err, "tx", tx.Hash().Hex())
 		return ErrInvalidSender
 	}
 	// Drop non-local transactions under our own minimal accepted gas price

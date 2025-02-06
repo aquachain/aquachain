@@ -87,7 +87,7 @@ func GetAPIs(apiBackend Backend) []rpc.API {
 		}, {
 			Namespace: "aqua",
 			Version:   "1.0",
-			Service:   NewPublicTransactionPoolAPI(apiBackend, nonceLock),
+			Service:   NewPublicTransactionPoolAPI(apiBackend, nonceLock, false),
 			Public:    true,
 		}, {
 			Namespace: "txpool",
@@ -106,33 +106,33 @@ func GetAPIs(apiBackend Backend) []rpc.API {
 		}, {
 			Namespace: "aqua",
 			Version:   "1.0",
-			Service:   NewPublicAccountAPI(apiBackend.AccountManager()),
+			Service:   NewPublicAccountAPI(apiBackend.AccountManager()), // "aqua.accounts"
 			Public:    true,
 		}, {
 			Namespace: "personal",
 			Version:   "1.0",
 			Service:   NewPrivateAccountAPI(apiBackend, nonceLock),
 			Public:    false,
-		}, { // eth alias
-			Namespace: "eth",
-			Version:   "1.0",
-			Service:   NewPublicAquachainAPI(apiBackend),
-			Public:    true,
-		}, {
-			Namespace: "eth",
-			Version:   "1.0",
-			Service:   NewPublicBlockChainAPI(apiBackend),
-			Public:    true,
-		}, {
-			Namespace: "eth",
-			Version:   "1.0",
-			Service:   NewPublicTransactionPoolAPI(apiBackend, nonceLock),
-			Public:    true,
-		}, {
-			Namespace: "eth",
-			Version:   "1.0",
-			Service:   NewPublicAccountAPI(apiBackend.AccountManager()),
-			Public:    true,
+			// }, { // eth alias
+			// 	Namespace: "eth",
+			// 	Version:   "1.0",
+			// 	Service:   NewPublicAquachainAPI(apiBackend),
+			// 	Public:    true,
+			// }, {
+			// 	Namespace: "eth",
+			// 	Version:   "1.0",
+			// 	Service:   NewPublicBlockChainAPI(apiBackend),
+			// 	Public:    true,
+			// }, {
+			// 	Namespace: "eth",
+			// 	Version:   "1.0",
+			// 	Service:   NewPublicTransactionPoolAPI(apiBackend, nonceLock, false),
+			// 	Public:    true,
+			// }, {
+			// 	Namespace: "eth",
+			// 	Version:   "1.0",
+			// 	Service:   NewPublicAccountAPI(apiBackend.AccountManager()),
+			// 	Public:    true,
 		}, { // btcrpc
 			Namespace: "btc",
 			Version:   "1.0",
