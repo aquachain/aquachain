@@ -22,7 +22,6 @@ import (
 	"crypto/elliptic"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"io"
 	"math/big"
 	"os"
@@ -304,8 +303,7 @@ func GenerateKey() (*btcec.PrivateKey, error) {
 			log.Info("retrying key generation (invalid curve point)")
 			continue
 		}
-		if err == nil && k.PubKey().IsOnCurve() {
-			log.Trace("generated key", "pub", fmt.Sprintf("%02x", k.PubKey().SerializeCompressed()), "onpoint", k.PubKey().IsOnCurve())
+		if k.PubKey().IsOnCurve() {
 			return k, nil
 		}
 		log.Info("retrying key generation (invalid curve point)")
