@@ -126,8 +126,8 @@ func (aquahash *Aquahash) mine(version params.HeaderVersion, block *types.Block,
 
 	// Start generating random nonces until we abort or find a good one
 	var (
-		attempts = int64(0)
-		nonce    = seed
+		// attempts = int64(0)
+		nonce = seed
 	)
 	logger := log.New("miner", id)
 	logger.Trace("Started aquahash search for new nonces", "seed", seed, "algo", version)
@@ -138,16 +138,16 @@ search:
 		case <-abort:
 			// Mining terminated, update stats and abort
 			logger.Trace("Aquahash nonce search aborted", "attempts", nonce-seed)
-			aquahash.hashrate.Mark(attempts)
+			// aquahash.hashrate.Mark(attempts)
 			break search
 
 		default:
-			// We don't have to update hash rate on every nonce, so update after after 2^X nonces
-			attempts++
-			if (attempts % (1 << 15)) == 0 {
-				aquahash.hashrate.Mark(attempts)
-				attempts = 0
-			}
+			// // We don't have to update hash rate on every nonce, so update after after 2^X nonces
+			// attempts++
+			// if (attempts % (1 << 15)) == 0 {
+			// 	// aquahash.hashrate.Mark(attempts)
+			// 	attempts = 0
+			// }
 
 			// Compute the PoW value of this nonce
 			var (

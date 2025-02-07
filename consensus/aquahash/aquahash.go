@@ -35,7 +35,6 @@ import (
 	mmap "github.com/edsrzf/mmap-go"
 	"github.com/hashicorp/golang-lru/simplelru"
 	"gitlab.com/aquachain/aquachain/common/log"
-	"gitlab.com/aquachain/aquachain/common/metrics"
 	"gitlab.com/aquachain/aquachain/consensus"
 	"gitlab.com/aquachain/aquachain/params"
 	"gitlab.com/aquachain/aquachain/rpc"
@@ -400,10 +399,10 @@ type Aquahash struct {
 	datasets *lru // In memory datasets to avoid regenerating too often
 
 	// Mining related fields
-	rand     *rand.Rand    // Properly seeded random source for nonces
-	threads  int           // Number of threads to mine on if mining
-	update   chan struct{} // Notification channel to update mining parameters
-	hashrate metrics.Meter // Meter tracking the average hashrate
+	rand    *rand.Rand    // Properly seeded random source for nonces
+	threads int           // Number of threads to mine on if mining
+	update  chan struct{} // Notification channel to update mining parameters
+	// hashrate metrics.Meter // Meter tracking the average hashrate
 
 	// The fields below are hooks for testing
 	shared    *Aquahash     // Shared PoW verifier to avoid cache regeneration
@@ -419,12 +418,11 @@ func (aquahash *Aquahash) Name() string {
 
 // New creates a full sized aquahash PoW scheme.
 func New(config Config) *Aquahash {
-	log.Info("Starting new Aquahash engine", "startVersion", config.StartVersion)
 	if config.StartVersion > 1 {
 		return &Aquahash{
-			config:   config,
-			update:   make(chan struct{}),
-			hashrate: metrics.NewMeter(),
+			config: config,
+			update: make(chan struct{}),
+			// hashrate: metrics.NewMeter(),
 		}
 	}
 	//	if config.CachesInMem <= 0 {
@@ -442,7 +440,7 @@ func New(config Config) *Aquahash {
 		caches:   newlru("cache", config.CachesInMem, newCache),
 		datasets: newlru("dataset", config.DatasetsInMem, newDataset),
 		update:   make(chan struct{}),
-		hashrate: metrics.NewMeter(),
+		// hashrate: metrics.NewMeter(),
 	}
 }
 
@@ -582,7 +580,8 @@ func (aquahash *Aquahash) SetThreads(threads int) {
 // Hashrate implements PoW, returning the measured rate of the search invocations
 // per second over the last minute.
 func (aquahash *Aquahash) Hashrate() float64 {
-	return aquahash.hashrate.Rate1()
+	return 9999.0
+	// return aquahash.hashrate.Rate1()
 }
 
 // APIs implements consensus.Engine, returning the user facing RPC APIs. Currently
