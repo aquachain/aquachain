@@ -174,7 +174,7 @@ func (gpo *Oracle) getBlockPrices(ctx context.Context, signer types.Signer, bloc
 
 	for _, tx := range txs {
 		sender, err := types.Sender(signer, tx)
-		if err == nil && sender != block.Coinbase() {
+		if err == nil && sender != block.Coinbase() && tx.GasPrice().BitLen() != 0 { // ignore free txs
 			ch <- getBlockPricesResult{tx.GasPrice(), nil}
 			return
 		}
