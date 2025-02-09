@@ -154,6 +154,9 @@ func (am *Manager) Wallet(url string) (Wallet, error) {
 // accounts can be dynamically added to and removed from wallets, this method has
 // a linear runtime in the number of wallets.
 func (am *Manager) Find(account Account) (Wallet, error) {
+	if am == nil {
+		panic("account manager is nil")
+	}
 	am.lock.RLock()
 	defer am.lock.RUnlock()
 

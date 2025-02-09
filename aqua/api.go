@@ -38,14 +38,14 @@ import (
 	"gitlab.com/aquachain/aquachain/rpc"
 )
 
-// PublicTestingAPI provides an API to access new features
+// PublicTestingAPI provides a public API to access unstable features (not exposed by default, use '--rpcapi +testing' to enable)
 type PublicTestingAPI struct {
 	cfg   *params.ChainConfig
 	agent *miner.RemoteAgent
 	e     *Aquachain
 }
 
-// NewPublicAquachainAPI creates a new Aquachain protocol API for full nodes.
+// NewPublicTestingAPI provides SubmitBlock and GetBlockTemplate
 func NewPublicTestingAPI(cfg *params.ChainConfig, e *Aquachain) *PublicTestingAPI {
 	agent := miner.NewRemoteAgent(e.BlockChain(), e.Engine())
 	e.Miner().Register(agent)
