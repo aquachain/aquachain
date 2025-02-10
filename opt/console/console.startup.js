@@ -9,7 +9,45 @@ function algoname(version) {
     }
 }
 
+function getinfo() {
+    var head = aqua.getBlock('latest');
+    var info = {
+        "instance": web3.version.node,
+        "block": head.number,
+        "timestamp": head.timestamp,
+        "hash": head.hash,
+        "coinbase": aqua.coinbase,
+        "gasPrice": web3.fromWei(aqua.gasPrice, 'gwei'),
+        "gasLimit": head.gasLimit,
+        "difficulty": head.difficulty,
+        "chainId": Number(aqua.chainId(), 16), // hex->dec
+        "algo": head.version,
+        "algoname": algoname(head.version)
+    };
+    return info;
+}
+
+
 function welcome() {
+    var info = getinfo();
+    console.log("instance: " + info.instance);
+    console.log("at block: " + info.block + " (" + new Date(1000 * info.timestamp) + ")");
+    console.log("  head: " + info.hash);
+    console.log("coinbase:  " + info.coinbase);
+    console.log("  gasPrice: " + info.gasPrice + " gigawei");
+    console.log("  gasLimit: " + info.gasLimit + " units");
+    console.log("  difficulty: " + (info.difficulty / 1000000.0).toFixed(2) + " MH");
+    console.log("  chainId: " + info.chainId);
+    console.log("    algo: " + info.algo + " (" + info.algoname + ")");
+    try {
+        this.admin && console.log(" datadir: " + admin.datadir);
+    } catch (e) { }
+    try {
+        this.admin && console.log("  client: " + admin.clientVersion);
+    } catch (e) { }
+}
+
+function oldwelcome() {
     var head = aqua.getBlock('latest');
     version = head.version
     console.log("instance: " + web3.version.node);
@@ -31,5 +69,6 @@ function welcome() {
     } catch (e) { }
 }
 
-
-welcome();
+if (false) {
+    welcome();
+}

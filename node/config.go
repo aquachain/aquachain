@@ -17,6 +17,7 @@
 package node
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -158,6 +159,9 @@ type Config struct {
 	// RPCBehindProxy if true, tried X-FORWARDED-FOR and X-REAL-IP headers to
 	// fetch client's remote IP
 	RPCBehindProxy bool
+
+	CloseMain func() `toml:"-"`
+	Context   context.Context
 }
 
 // IPCEndpoint resolves an IPC endpoint based on a configured value, taking into

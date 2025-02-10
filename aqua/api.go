@@ -32,13 +32,16 @@ import (
 	"gitlab.com/aquachain/aquachain/core"
 	"gitlab.com/aquachain/aquachain/core/state"
 	"gitlab.com/aquachain/aquachain/core/types"
+	"gitlab.com/aquachain/aquachain/internal/aquaapi"
 	"gitlab.com/aquachain/aquachain/opt/miner"
 	"gitlab.com/aquachain/aquachain/params"
 	"gitlab.com/aquachain/aquachain/rlp"
 	"gitlab.com/aquachain/aquachain/rpc"
 )
 
-// PublicTestingAPI provides a public API to access unstable features (not exposed by default, use '--rpcapi +testing' to enable)
+// PublicTestingAPI provides a public API to access unstable features
+//
+// (not exposed by default, use '--rpcapi +testing' to enable)
 type PublicTestingAPI struct {
 	cfg   *params.ChainConfig
 	agent *miner.RemoteAgent
@@ -142,6 +145,12 @@ func (api *PublicTestingAPI) GetBlockTemplate(addr common.Address) ([]byte, erro
 		}
 	}
 	return api.agent.GetBlockTemplate(addr)
+}
+
+func (api *PublicTestingAPI) MessageHash(msg string) (common.Hash, error) {
+	got := common.Hash(aquaapi.GetMessageHash(msg))
+	log.Info("message hash", "msg", len(msg), "message", msg, "hash", got.Hex())
+	return got, nil
 }
 
 // GetWork returns a work package for external miner. The work package consists of 3 strings

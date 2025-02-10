@@ -45,10 +45,11 @@ import (
 
 // Node is a container on which services can be registered.
 type Node struct {
-	ctx      context.Context
-	eventmux *event.TypeMux // Event multiplexer used between the services of a stack
-	config   *Config
-	accman   *accounts.Manager
+	closemain func()
+	ctx       context.Context
+	eventmux  *event.TypeMux // Event multiplexer used between the services of a stack
+	config    *Config
+	accman    *accounts.Manager
 
 	ephemeralKeystore string         // if non-empty, the key directory that will be removed by Stop
 	instanceDirLock   flock.Releaser // prevents concurrent use of instance directory
@@ -82,8 +83,19 @@ type Node struct {
 	log log.LoggerI
 }
 
+func (n *Node) Context() context.Context {
+	return n.ctx
+}
+
 // New creates a new P2P node, ready for protocol registration.
 func New(conf *Config) (*Node, error) {
+	if conf.Context == nil {
+		panic("Context not set")
+	}
+	if conf.CloseMain == nil {
+		panic("CloseMain not set")
+		return nil, errors.New("CloseMain not set")
+	}
 	chaincfg := params.GetChainConfigByChainId(big.NewInt(int64(conf.P2P.ChainId))) // TODO pass chaincfg in config?
 
 	if chaincfg == nil && conf.P2P.ChainConfig() == nil {
@@ -124,6 +136,7 @@ func New(conf *Config) (*Node, error) {
 	// Note: any interaction with Config that would create/touch files
 	// in the data directory or instance directory is delayed until Start.
 	return &Node{
+		ctx:               conf.Context,
 		accman:            am,
 		ephemeralKeystore: ephemeralKeystore,
 		config:            conf,
@@ -547,6 +560,12 @@ func (n *Node) stopWS() {
 func (n *Node) Stop() error {
 	n.lock.Lock()
 	defer n.lock.Unlock()
+	if n.closemain != nil {
+		log.Info("got closemain signal")
+		n.closemain()
+	} else {
+		log.Warn("no closemain signal")
+	}
 
 	// Short circuit if the node's not running
 	if n.server == nil {
@@ -556,7 +575,6 @@ func (n *Node) Stop() error {
 	// Terminate the API, services and the p2p server.
 	n.stopWS()
 	n.stopHTTP()
-	n.stopIPC()
 	n.rpcAPIs = nil
 	failure := &StopError{
 		Services: make(map[reflect.Type]error),
@@ -593,6 +611,7 @@ func (n *Node) Stop() error {
 	if keystoreErr != nil {
 		return keystoreErr
 	}
+	n.stopIPC()
 	return nil
 }
 
@@ -624,8 +643,8 @@ func (n *Node) Restart() error {
 }
 
 // Attach creates an RPC client attached to an in-process API handler.
-func (n *Node) Attach() (*rpcclient.Client, error) {
-	n.log.Trace("Attaching new client")
+func (n *Node) Attach(name string) (*rpcclient.Client, error) {
+	n.log.Trace("Attaching new client", "name", name)
 	n.lock.RLock()
 	defer n.lock.RUnlock()
 

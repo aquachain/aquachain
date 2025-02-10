@@ -23,6 +23,7 @@ import (
 	"os"
 	"runtime"
 	"strconv"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -154,7 +155,7 @@ Use "aquachain dump 0" to dump the genesis block.`,
 
 // initGenesis will initialise the given JSON format genesis file and writes it as
 // the zero'd block (i.e. genesis) or will fail hard if it can't succeed.
-func initGenesis(_ context.Context, cmd *cli.Command) error {
+func initGenesis(ctx context.Context, cmd *cli.Command) error {
 	// Make sure we have a valid genesis JSON
 	genesisPath := cmd.Args().First()
 	if len(genesisPath) == 0 {
@@ -176,7 +177,7 @@ func initGenesis(_ context.Context, cmd *cli.Command) error {
 	}
 
 	// Open an initialise db
-	stack := makeFullNode(cmd)
+	stack := makeFullNode(ctx, cmd)
 	for _, name := range []string{"chaindata"} {
 		chaindb, err := stack.OpenDatabase(name, 0, 0)
 		if err != nil {
@@ -191,11 +192,11 @@ func initGenesis(_ context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func importChain(_ context.Context, cmd *cli.Command) error {
+func importChain(ctx context.Context, cmd *cli.Command) error {
 	if cmd.Args().Len() < 1 {
 		utils.Fatalf("This command requires an argument.")
 	}
-	stack := makeFullNode(cmd)
+	stack := makeFullNode(ctx, cmd)
 	chain, chainDb := utils.MakeChain(cmd, stack)
 	defer chainDb.Close()
 
@@ -272,16 +273,17 @@ func importChain(_ context.Context, cmd *cli.Command) error {
 	fmt.Println(stats)
 
 	if exitcode != 0 {
-		utils.Fatalf("Exiting with error code: %v", exitcode)
+		log.Error("Import failed", "exitcode", exitcode)
+		os.Exit(exitcode)
 	}
 	return nil
 }
 
-func exportChain(_ context.Context, cmd *cli.Command) error {
+func exportChain(ctx context.Context, cmd *cli.Command) error {
 	if cmd.Args().Len() < 1 {
 		utils.Fatalf("This command requires an argument.")
 	}
-	stack := makeFullNode(cmd)
+	stack := makeFullNode(ctx, cmd)
 	chain, _ := utils.MakeChain(cmd, stack)
 	start := time.Now()
 
@@ -309,13 +311,13 @@ func exportChain(_ context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func copyDb(_ context.Context, cmd *cli.Command) error {
+func copyDb(ctx context.Context, cmd *cli.Command) error {
 	// Ensure we have a source chain directory to copy
 	if cmd.Args().Len() != 1 {
 		utils.Fatalf("Source chaindata directory path argument missing")
 	}
 	// Initialize a new chain for the running node to sync into
-	stack := makeFullNode(cmd)
+	stack := makeFullNode(ctx, cmd)
 	chain, chainDb := utils.MakeChain(cmd, stack)
 
 	var syncmode downloader.SyncMode
@@ -362,18 +364,19 @@ func copyDb(_ context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func removeDB(_ context.Context, cmd *cli.Command) error {
-	stack, _ := utils.MakeConfigNode(cmd, gitCommit, clientIdentifier)
+func removeDB(ctx context.Context, cmd *cli.Command) error {
+	stack, _ := utils.MakeConfigNode(ctx, cmd, gitCommit, clientIdentifier, closeMain)
 
 	name := "chaindata"
 	// Ensure the database exists in the first place
 	logger := log.New("database", name)
 
 	dbdir := stack.ResolvePath(name)
-	if !common.FileExist(dbdir) {
-		logger.Info("Database doesn't exist, skipping", "path", dbdir)
-		return nil
+
+	if dbdir2, err := os.Readlink(dbdir); err == nil {
+		dbdir = dbdir2 // resolve symlink
 	}
+
 	// Confirm removal and execute
 	fmt.Println(dbdir)
 	confirm, err := console.Stdin.PromptConfirm("Remove this database?")
@@ -384,15 +387,57 @@ func removeDB(_ context.Context, cmd *cli.Command) error {
 		logger.Warn("Database deletion aborted")
 	default:
 		start := time.Now()
-		os.RemoveAll(dbdir)
+		// if err := os.RemoveAll(dbdir); err != nil {
+		// 	utils.Fatalf("Failed to remove database: %v", err)
+		// 	return nil
+		// }
+		if err := removeExtensions(dbdir, []string{".ldb", "LOG", ".bak", ".log", ""}, []string{"MANIFEST-", "CURRENT"}); err != nil {
+			utils.Fatalf("Failed to remove database: %v", err)
+			return nil
+		}
 		logger.Info("Database successfully deleted", "elapsed", common.PrettyDuration(time.Since(start)))
 	}
 
 	return nil
 }
 
-func dump(_ context.Context, cmd *cli.Command) error {
-	stack := makeFullNode(cmd)
+func removeExtensions(dir string, ext []string, prefix []string) error {
+	removeFunc := func(path string) error {
+		log.Trace("removedb removing file", "path", path)
+		return os.Remove(path)
+	}
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+Files:
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+		for _, e := range ext {
+			if strings.HasSuffix(file.Name(), e) {
+				if err := removeFunc(dir + "/" + file.Name()); err != nil {
+					return err
+				}
+				continue Files
+			}
+		}
+		for _, prefix := range prefix {
+			if strings.HasPrefix(file.Name(), prefix) {
+				if err := removeFunc(dir + "/" + file.Name()); err != nil {
+					return err
+				}
+				continue Files
+			}
+		}
+		log.Info("Skipping", "file", file.Name())
+	}
+	return nil
+}
+
+func dump(ctx context.Context, cmd *cli.Command) error {
+	stack := makeFullNode(ctx, cmd)
 	chain, chainDb := utils.MakeChain(cmd, stack)
 	for _, arg := range cmd.Args().Slice() {
 		var block *types.Block

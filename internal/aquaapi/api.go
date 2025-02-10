@@ -453,7 +453,7 @@ func (s *PrivateAccountAPI) SignTransaction(ctx context.Context, args SendTxArgs
 }
 
 // signHash is a helper function that calculates a hash for the given message that can be
-// safely used to calculate a signature from.
+// safely used to calculate a signature from. (ie. not a transaction)
 //
 // The hash is calculated as
 //
@@ -461,9 +461,15 @@ func (s *PrivateAccountAPI) SignTransaction(ctx context.Context, args SendTxArgs
 //
 // This gives context to the signed message and prevents signing of transactions.
 // TODO: changeme
-func signHash(data []byte) []byte {
+func signHash(data []byte) common.Hash {
 	msg := fmt.Sprintf("\x19Aquachain Signed Message:\n%d%s", len(data), data)
-	return crypto.Keccak256([]byte(msg))
+	hash := common.Hash(crypto.Keccak256([]byte(msg)))
+	log.Info("signHash called", "hash", hash.Hex())
+	return hash
+}
+
+func GetMessageHash(msg string) common.Hash {
+	return signHash([]byte(msg))
 }
 
 // Sign calculates an Aquachain ECDSA signature for:
@@ -476,6 +482,7 @@ func signHash(data []byte) []byte {
 //
 // https://gitlab.com/aquachain/aquachain/wiki/Management-APIs#personal_sign
 func (s *PrivateAccountAPI) Sign(ctx context.Context, data hexutil.Bytes, addr common.Address, passwd string) (hexutil.Bytes, error) {
+	log.Warn("method called: personal_sign", "data", data, "addr", addr)
 	if s.am == nil { // -nokeys flag
 		return nil, ErrKeystoreDisabled
 	}
@@ -487,7 +494,7 @@ func (s *PrivateAccountAPI) Sign(ctx context.Context, data hexutil.Bytes, addr c
 		return nil, err
 	}
 	// Assemble sign the data with the wallet
-	signature, err := wallet.SignHashWithPassphrase(account, passwd, signHash(data))
+	signature, err := wallet.SignHashWithPassphrase(account, passwd, signHash(data).Bytes())
 	if err != nil {
 		return nil, err
 	}
@@ -514,7 +521,24 @@ func (s *PrivateAccountAPI) EcRecover(ctx context.Context, data, sig hexutil.Byt
 	}
 	sig[64] -= 27 // Transform yellow paper V from 27/28 to 0/1
 
-	rpk, err := crypto.Ecrecover(signHash(data), sig)
+	rpk, err := crypto.Ecrecover(signHash(data).Bytes(), sig)
+	if err != nil {
+		return common.Address{}, err
+	}
+	pubKey := crypto.ToECDSAPub(rpk)
+	recoveredAddr := crypto.PubkeyToAddress(pubKey)
+	return recoveredAddr, nil
+}
+func (s *PrivateAccountAPI) EcRecoverHash(ctx context.Context, dataHASH, sig hexutil.Bytes) (common.Address, error) {
+	if len(sig) != 65 {
+		return common.Address{}, fmt.Errorf("signature must be 65 bytes long")
+	}
+	if sig[64] != 27 && sig[64] != 28 {
+		return common.Address{}, fmt.Errorf("invalid Aquachain signature (V is not 27 or 28)")
+	}
+	sig[64] -= 27 // Transform yellow paper V from 27/28 to 0/1
+
+	rpk, err := crypto.Ecrecover(dataHASH, sig)
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -1322,15 +1346,19 @@ func (s *PublicTransactionPoolAPI) SendRawTransaction(ctx context.Context, encod
 //
 // https://github.com/aquanetwork/wiki/wiki/JSON-RPC#aqua_sign
 func (s *PublicTransactionPoolAPI) Sign(addr common.Address, data hexutil.Bytes) (hexutil.Bytes, error) {
+	log.Warn("method called: aqua_sign", "data", data, "addr", addr)
 	// Look up the wallet containing the requested signer
 	account := accounts.Account{Address: addr}
-
-	wallet, err := s.b.AccountManager().Find(account)
+	am := s.b.AccountManager()
+	if am == nil {
+		return nil, ErrKeystoreDisabled
+	}
+	wallet, err := am.Find(account)
 	if err != nil {
 		return nil, err
 	}
 	// Sign the requested hash with the wallet
-	signature, err := wallet.SignHash(account, signHash(data))
+	signature, err := wallet.SignHash(account, signHash(data).Bytes())
 	if err == nil {
 		signature[64] += 27 // Transform V from 0/1 to 27/28 according to the yellow paper
 	}
@@ -1380,7 +1408,10 @@ func (s *PublicTransactionPoolAPI) PendingTransactions() ([]*RPCTransaction, err
 	if err != nil {
 		return nil, err
 	}
-
+	am := s.b.AccountManager()
+	if am == nil {
+		return nil, ErrKeystoreDisabled
+	}
 	transactions := make([]*RPCTransaction, 0, len(pending))
 	for _, tx := range pending {
 		var signer types.Signer = types.HomesteadSigner{}
@@ -1388,7 +1419,7 @@ func (s *PublicTransactionPoolAPI) PendingTransactions() ([]*RPCTransaction, err
 			signer = types.NewEIP155Signer(tx.ChainId())
 		}
 		from, _ := types.Sender(signer, tx)
-		if _, err := s.b.AccountManager().Find(accounts.Account{Address: from}); err == nil {
+		if _, err := am.Find(accounts.Account{Address: from}); err == nil {
 			transactions = append(transactions, newRPCPendingTransaction(tx))
 		}
 	}

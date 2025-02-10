@@ -28,6 +28,7 @@ import (
 
 	"github.com/naoina/toml"
 	"gitlab.com/aquachain/aquachain/cmd/utils"
+	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/node"
 )
 
@@ -60,10 +61,13 @@ var tomlSettings = toml.Config{
 	},
 }
 
-func makeFullNode(cmd *cli.Command) *node.Node {
-	stack, cfg := utils.MakeConfigNode(cmd, gitCommit, clientIdentifier)
-
-	utils.RegisterAquaService(stack, &cfg.Aqua)
+func closeMain() {
+	log.Warn("got closemain signal")
+	maincancel()
+}
+func makeFullNode(ctx context.Context, cmd *cli.Command) *node.Node {
+	stack, cfg := utils.MakeConfigNode(ctx, cmd, gitCommit, clientIdentifier, closeMain)
+	utils.RegisterAquaService(mainctx, stack, &cfg.Aqua)
 
 	// Add the Aquachain Stats daemon if requested.
 	if cfg.Aquastats.URL != "" {
@@ -73,8 +77,8 @@ func makeFullNode(cmd *cli.Command) *node.Node {
 }
 
 // dumpConfig is the dumpconfig command.
-func dumpConfig(_ context.Context, cmd *cli.Command) error {
-	_, cfg := utils.MakeConfigNode(cmd, gitCommit, clientIdentifier, utils.NoPreviousConfig)
+func dumpConfig(ctx context.Context, cmd *cli.Command) error {
+	_, cfg := utils.MakeConfigNode(ctx, cmd, gitCommit, clientIdentifier, closeMain, utils.NoPreviousConfig)
 	comment := ""
 
 	if cfg.Aqua.Genesis != nil {

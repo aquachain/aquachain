@@ -210,9 +210,7 @@ func New(mode SyncMode, stateDb aquadb.Database, mux *event.TypeMux, chain Block
 		lightchain = chain
 	}
 
-	if chain.Config() == params.EthnetChainConfig {
-		log.Info("Connecting to Ethereum network")
-	}
+	log.Info("Connected", "network", chain.Config().Name(), "chain", chain.Config().ChainId)
 	dl := &Downloader{
 		mode:           mode,
 		stateDB:        stateDb,

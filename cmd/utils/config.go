@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -74,7 +75,7 @@ var tomlSettings = toml.Config{
 }
 
 // MakeConfigNode created a Node and Config, and is called by a subcommand at startup.
-func MakeConfigNode(cmd *cli.Command, gitCommit string, clientIdentifier string, s ...cfgopt) (*node.Node, *AquachainConfig) {
+func MakeConfigNode(ctx context.Context, cmd *cli.Command, gitCommit string, clientIdentifier string, closemain func(), s ...cfgopt) (*node.Node, *AquachainConfig) {
 	// Load defaults.
 	useprev := true
 	for _, v := range s {
@@ -87,6 +88,8 @@ func MakeConfigNode(cmd *cli.Command, gitCommit string, clientIdentifier string,
 	if err := SetNodeConfig(cmd, &cfgptr.Node); err != nil {
 		Fatalf("Fatal: could not set node config %+v", err)
 	}
+	cfgptr.Node.Context = ctx
+	cfgptr.Node.CloseMain = closemain
 	stack, err := node.New(&cfgptr.Node)
 	if err != nil {
 		Fatalf("Failed to create the protocol stack: %v", err)
@@ -148,7 +151,7 @@ func Mkconfig(chainName string, configFileOptional string, checkDefaultConfigFil
 		}
 
 		fn := "aquachain" + slug + ".toml" // eg: aquachain_testnet.toml or aquachain.toml
-		for _, file := range []string{"./"+fn, filepath.Join(userdatadir, fn), "/etc/aquachain/" + fn} {
+		for _, file := range []string{"./" + fn, filepath.Join(userdatadir, fn), "/etc/aquachain/" + fn} {
 			log.Debug("Looking for autoconfig file", "file", file)
 			if err := LoadConfigFromFile(file, cfgptr); err == nil {
 				log.Info("Loaded autoconfig", "file", file)

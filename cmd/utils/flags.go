@@ -20,7 +20,6 @@ package utils
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"math/big"
 	"os"
 	"path/filepath"
@@ -828,7 +827,7 @@ func setHTTP(cmd *cli.Command, cfg *node.Config) {
 		}
 		if cmd.IsSet(RPCListenAddrFlag.Name) && cmd.IsSet(UnlockedAccountFlag.Name) {
 			// allow public rpc with unlocked account, exposed only via 'private' api namespace (aqua.sendTransaction and aqua.sign are disabled)
-			keystore.NoSignMode = true
+			keystore.SetNoSignMode()
 		}
 		if cmd.IsSet(RPCListenAddrFlag.Name) {
 			cfg.HTTPHost = cmd.String(RPCListenAddrFlag.Name)
@@ -842,11 +841,36 @@ func setHTTP(cmd *cli.Command, cfg *node.Config) {
 		cfg.HTTPCors = splitAndTrim(cmd.String(RPCCORSDomainFlag.Name))
 	}
 	if cmd.IsSet(RPCApiFlag.Name) {
-		cfg.HTTPModules = splitAndTrim(cmd.String(RPCApiFlag.Name))
+		cfg.HTTPModules = parseRpcFlags(cfg.HTTPModules, splitAndTrim(cmd.String(RPCApiFlag.Name)))
 	}
 
 	cfg.HTTPVirtualHosts = splitAndTrim(cmd.String(RPCVirtualHostsFlag.Name))
 	cfg.RPCAllowIP = splitAndTrim(cmd.String(RPCAllowIPFlag.Name))
+}
+
+// allow '+' prefixed flags to append to the default modules
+// eg: --rpcapi +testing  (adds 'testing' to the default modules)
+func parseRpcFlags(defaultModules, maybe []string) []string {
+	if len(defaultModules) == 0 {
+		defaultModules = node.DefaultConfig.HTTPModules
+	}
+	if len(defaultModules) == 0 {
+		Fatalf("No default modules set")
+	}
+	if len(maybe) == 0 {
+		return defaultModules
+	}
+	shouldAppend := false
+	for i := range maybe {
+		if maybe[i][0] == '+' {
+			maybe[i] = maybe[i][1:]
+			shouldAppend = true
+		}
+	}
+	if shouldAppend {
+		return append(defaultModules, maybe...)
+	}
+	return maybe
 }
 
 // setWS creates the WebSocket RPC listener interface string from the set
@@ -938,12 +962,21 @@ func setAquabase(cmd *cli.Command, ks *keystore.KeyStore, cfg *aqua.Config) {
 }
 
 // MakePasswordList reads password lines from the file specified by the global --password flag.
+//
+// If using a password file, the file should contain one password per line.
+// Using env example: `aquachain --password '$PASSWORD'` (use single quotes to prevent shell expansion)
+//
+// eg: -unlock 0,1 -password ',$PASSWORD'  (use empty pw for first, use env var for second)
 func MakePasswordList(cmd *cli.Command) []string {
-	path := cmd.String(PasswordFileFlag.Name)
+	path := strings.TrimSpace(cmd.String(PasswordFileFlag.Name))
 	if path == "" {
 		return nil
 	}
-	text, err := ioutil.ReadFile(path)
+	// only treat unexpanded env vars as passwords. otherwise, read the file.
+	if path[0] == '$' || strings.Contains(path, ",$") {
+		return strings.Split(os.ExpandEnv(path), ",") // skip file read, use env pw
+	}
+	text, err := os.ReadFile(path)
 	if err != nil {
 		Fatalf("Failed to read password file: %v", err)
 	}
@@ -1260,8 +1293,11 @@ func SetAquaConfig(cmd *cli.Command, stack *node.Node, cfg *aqua.Config) {
 	checkExclusive(cmd, DeveloperFlag, NoKeysFlag)
 	checkExclusive(cmd, FastSyncFlag, SyncModeFlag, OfflineFlag)
 	if cmd.Bool(AlertModeFlag.Name) {
-		cfg.Alerts = alerts.MustParseAlertConfig()
-		log.Info("Alerts enabled")
+		cfgAlerts, err := alerts.ParseAlertConfig()
+		if err != nil {
+			Fatalf("Failed to parse alert config: %v", err)
+		}
+		log.Info("alert config", "platform", cfgAlerts.Platform, "channel", cfgAlerts.Channel)
 	}
 	chaincfg := SetChainId(cmd, cfg)
 	setHardforkFlagParams(cmd, chaincfg) // modify HF map
@@ -1381,9 +1417,9 @@ func SetChainId(cmd *cli.Command, cfg *aqua.Config) *params.ChainConfig {
 }
 
 // RegisterAquaService adds an Aquachain client to the stack.
-func RegisterAquaService(stack *node.Node, cfg *aqua.Config) {
-	err := stack.Register(func(ctx *node.ServiceContext) (node.Service, error) {
-		return aqua.New(ctx, cfg)
+func RegisterAquaService(ctx context.Context, stack *node.Node, cfg *aqua.Config) {
+	err := stack.Register(func(nodectx *node.ServiceContext) (node.Service, error) {
+		return aqua.New(ctx, nodectx, cfg)
 	})
 	if err != nil {
 		Fatalf("Failed to register the Aquachain service: %v", err)
@@ -1477,7 +1513,7 @@ func MakeChain(cmd *cli.Command, stack *node.Node) (chain *core.BlockChain, chai
 		cache.TrieNodeLimit = int(cmd.Int(CacheFlag.Name) * cmd.Int(CacheGCFlag.Name) / 100)
 	}
 	vmcfg := vm.Config{EnablePreimageRecording: cmd.Bool(VMEnableDebugFlag.Name)}
-	chain, err = core.NewBlockChain(chainDb, cache, config, engine, vmcfg)
+	chain, err = core.NewBlockChain(stack.Context(), chainDb, cache, config, engine, vmcfg)
 	if err != nil {
 		Fatalf("Can't create BlockChain: %v", err)
 	}

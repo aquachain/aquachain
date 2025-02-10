@@ -572,11 +572,17 @@ func (api *PrivateDebugAPI) traceTx(ctx context.Context, message core.Message, v
 		if tracer, err = tracers.New(*config.Tracer); err != nil {
 			return nil, err
 		}
+		log.Info(fmt.Sprintf("Got tracer: %T", tracer))
 		// Handle timeouts and RPC cancellations
 		deadlineCtx, cancel := context.WithTimeout(ctx, timeout)
 		go func() {
 			<-deadlineCtx.Done()
-			tracer.(*tracers.Tracer).Stop(errors.New("execution timeout"))
+			type Stopper interface{ Stop(error) }
+			if stopper, ok := tracer.(Stopper); ok {
+				stopper.Stop(errors.New("execution timeout"))
+			} else {
+				log.Info("Tracer does not support stopping", "tracer", fmt.Sprintf("%T", tracer))
+			}
 		}()
 		defer cancel()
 

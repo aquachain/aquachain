@@ -120,12 +120,12 @@ func localConsole(ctx context.Context, cmd *cli.Command) error {
 	if args := cmd.Args(); args.Len() != 0 && args.First() != "console" {
 		return fmt.Errorf("invalid command: %q", args.First())
 	}
-	node := makeFullNode(cmd)
+	node := makeFullNode(ctx, cmd)
 	startNode(ctx, cmd, node)
 	defer node.Stop()
 
 	// Attach to the newly started node and start the JavaScript console
-	client, err := node.Attach()
+	client, err := node.Attach("localConsole")
 	if err != nil {
 		utils.Fatalf("Failed to attach to the inproc aquachain: %v", err)
 	}
@@ -248,12 +248,12 @@ func dialRPC(endpoint string, socks string, clientIdentifier string) (*rpc.Clien
 // everything down.
 func ephemeralConsole(ctx context.Context, cmd *cli.Command) error {
 	// Create and start the node based on the CLI flags
-	node := makeFullNode(cmd)
+	node := makeFullNode(ctx, cmd)
 	startNode(ctx, cmd, node)
 	defer node.Stop()
 
 	// Attach to the newly started node and start the JavaScript console
-	client, err := node.Attach()
+	client, err := node.Attach("ephemeralConsole")
 	if err != nil {
 		utils.Fatalf("Failed to attach to the inproc aquachain: %v", err)
 	}

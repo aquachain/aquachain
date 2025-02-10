@@ -38,7 +38,7 @@ func Infof(f string, i ...any) {
 }
 
 func Warnf(f string, i ...any) {
-	if true || !mainCfg.Enabled() {
+	if !mainCfg.Enabled() {
 		log.Warn("alerts not configured:", "msg", fmt.Sprintf(f, i...))
 		return
 	}
@@ -77,6 +77,13 @@ func ParseAlertConfig() (AlertConfig, error) {
 		ac.Platform = ""
 	default:
 		return ac, fmt.Errorf("unsupported ALERT_PLATFORM: %q", ac.Platform)
+	}
+	if ac.Token == "" {
+		return ac, fmt.Errorf("missing ALERT_TOKEN")
+	}
+	if !ac.Enabled() {
+		log.Warn("alerts not configured")
+		return ac, fmt.Errorf("alerts not configured")
 	}
 	mainCfg = ac
 	return ac, nil

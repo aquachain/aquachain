@@ -166,11 +166,11 @@ nodes.
 	}
 )
 
-func accountList(_ context.Context, cmd *cli.Command) error {
+func accountList(ctx context.Context, cmd *cli.Command) error {
 	if cmd.Bool(utils.NoKeysFlag.Name) {
 		utils.Fatalf("Listing accounts is disabled (-nokeys)")
 	}
-	stack, _ := utils.MakeConfigNode(cmd, gitCommit, clientIdentifier)
+	stack, _ := utils.MakeConfigNode(ctx, cmd, gitCommit, clientIdentifier, closeMain)
 	var index int
 	for _, wallet := range stack.AccountManager().Wallets() {
 		for _, account := range wallet.Accounts() {
@@ -298,11 +298,11 @@ func accountCreate(_ context.Context, cmd *cli.Command) error {
 
 // accountUpdate transitions an account from a previous format to the current
 // one, also providing the possibility to change the pass-phrase.
-func accountUpdate(_ context.Context, cmd *cli.Command) error {
+func accountUpdate(ctx context.Context, cmd *cli.Command) error {
 	if cmd.Args().Len() == 0 {
 		utils.Fatalf("No accounts specified to update")
 	}
-	stack, _ := utils.MakeConfigNode(cmd, gitCommit, clientIdentifier)
+	stack, _ := utils.MakeConfigNode(ctx, cmd, gitCommit, clientIdentifier, closeMain)
 	ks := stack.AccountManager().Backends(keystore.KeyStoreType)[0].(*keystore.KeyStore)
 
 	for _, addr := range cmd.Args().Slice() {
@@ -315,7 +315,7 @@ func accountUpdate(_ context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func accountImport(_ context.Context, cmd *cli.Command) error {
+func accountImport(ctx context.Context, cmd *cli.Command) error {
 	keyfile := cmd.Args().First()
 	if len(keyfile) == 0 {
 		utils.Fatalf("keyfile must be given as argument")
@@ -324,7 +324,7 @@ func accountImport(_ context.Context, cmd *cli.Command) error {
 	if err != nil {
 		utils.Fatalf("Failed to load the private key: %v", err)
 	}
-	stack, _ := utils.MakeConfigNode(cmd, gitCommit, clientIdentifier)
+	stack, _ := utils.MakeConfigNode(ctx, cmd, gitCommit, clientIdentifier, closeMain)
 	passphrase := getPassPhrase("Your new account is locked with a password. Please give a password. Do not forget this password.", true, 0, utils.MakePasswordList(cmd))
 
 	ks := stack.AccountManager().Backends(keystore.KeyStoreType)[0].(*keystore.KeyStore)

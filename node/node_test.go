@@ -550,7 +550,7 @@ func TestAPIGather(t *testing.T) {
 	defer stack.Stop()
 
 	// Connect to the RPC server and verify the various registered endpoints
-	client, err := stack.Attach()
+	client, err := stack.Attach("TestApiGather")
 	if err != nil {
 		t.Fatalf("failed to connect to the inproc API server: %v", err)
 	}

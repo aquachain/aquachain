@@ -18,6 +18,7 @@
 package core
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -88,6 +89,7 @@ type CacheConfig struct {
 // included in the canonical one where as GetBlockByNumber always represents the
 // canonical chain.
 type BlockChain struct {
+	ctx         context.Context
 	chainConfig *params.ChainConfig // Chain & network configuration
 	cacheConfig *CacheConfig        // Cache configuration for pruning
 
@@ -134,7 +136,7 @@ type BlockChain struct {
 // NewBlockChain returns a fully initialised block chain using information
 // available in the database. It initialises the default Aquachain Validator and
 // Processor.
-func NewBlockChain(db aquadb.Database, cacheConfig *CacheConfig, chainConfig *params.ChainConfig, engine consensus.Engine, vmConfig vm.Config) (*BlockChain, error) {
+func NewBlockChain(ctx context.Context, db aquadb.Database, cacheConfig *CacheConfig, chainConfig *params.ChainConfig, engine consensus.Engine, vmConfig vm.Config) (*BlockChain, error) {
 	if cacheConfig == nil {
 		cacheConfig = &CacheConfig{
 			TrieNodeLimit: 256 * 1024 * 1024,
@@ -151,6 +153,7 @@ func NewBlockChain(db aquadb.Database, cacheConfig *CacheConfig, chainConfig *pa
 	badBlocks, _ := lru.New(badBlockLimit)
 
 	bc := &BlockChain{
+		ctx:          ctx,
 		chainConfig:  chainConfig,
 		cacheConfig:  cacheConfig,
 		db:           db,
@@ -456,8 +459,10 @@ func (bc *BlockChain) ExportN(w io.Writer, first uint64, last uint64) error {
 		return fmt.Errorf("export failed: first (%d) is greater than last (%d)", first, last)
 	}
 	log.Info("Exporting batch of blocks", "count", last-first+1)
-
 	for nr := first; nr <= last; nr++ {
+		if bc.ctx.Err() != nil {
+			return bc.ctx.Err()
+		}
 		block := bc.GetBlockByNumber(nr)
 		if block == nil {
 			return fmt.Errorf("export failed on #%d: not found", nr)

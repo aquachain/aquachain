@@ -27,20 +27,41 @@ var Modules = map[string]string{
 	"personal": Personal_JS,
 	"rpc":      RPC_JS,
 	"txpool":   TxPool_JS,
+	"testing":  Testing_JS,
 }
+
+const Testing_JS = `
+
+web3._extend({
+	property: 'testing',
+	methods: [
+		new web3._extend.Method({
+			name: 'messageHash',
+			call: 'testing_messageHash',
+			params: 1
+		})
+	],
+	properties: []
+});	
+`
 
 const Admin_JS = `
 web3._extend({
 	property: 'admin',
 	methods: [
 		new web3._extend.Method({
+			name: 'shutdown',	
+			call: 'admin_shutdown',
+			params: 0
+		}),
+		new web3._extend.Method({
 			name: 'addPeer',
 			call: 'admin_addPeer',
 			params: 1
 		}),
 		new web3._extend.Method({
-			name: 'shutdownEverything',
-			call: 'admin_shutdownEverything',
+			name: 'shutdownRPC',
+			call: 'admin_shutdownRPC',
 			params: 0
 		}),
 		new web3._extend.Method({

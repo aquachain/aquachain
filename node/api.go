@@ -37,6 +37,7 @@ import (
 // over a secure RPC channel.
 type PrivateAdminAPI struct {
 	node *Node // Node interfaced by this API
+
 }
 
 // NewPrivateAdminAPI creates a new API definition for the private admin methods
@@ -45,9 +46,14 @@ func NewPrivateAdminAPI(node *Node) *PrivateAdminAPI {
 	return &PrivateAdminAPI{node: node}
 }
 
-func (api *PrivateAdminAPI) ShutdownEverything() {
+func (api *PrivateAdminAPI) Shutdown() (string, error) {
 	log.Warn("Shutting down everything (RPC request from admin)")
+	if err := api.node.Stop(); err != nil {
+		log.Error("Failed to stop node", "err", err)
+		return "Failed to stop node", nil
+	}
 
+	return "Node stopped", nil
 }
 
 // AddPeer requests connecting to a remote node, and also maintaining the new

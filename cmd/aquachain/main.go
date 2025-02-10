@@ -244,7 +244,7 @@ func main() {
 // is ran. It creates a default node based on the command line arguments
 // and runs it in blocking mode, waiting for it to be shut down.
 func daemonStart(ctx context.Context, cmd *cli.Command) error {
-	node := makeFullNode(cmd)
+	node := makeFullNode(ctx, cmd)
 	startNode(ctx, cmd, node)
 	node.Wait()
 	return nil
@@ -254,11 +254,18 @@ func daemonStart(ctx context.Context, cmd *cli.Command) error {
 // it unlocks any requested accounts, and starts the RPC/IPC interfaces and the
 // miner.
 func startNode(ctx context.Context, cmd *cli.Command, stack *node.Node) {
+	unlocks := strings.Split(cmd.String(utils.UnlockedAccountFlag.Name), ",")
+	if len(unlocks) > 0 && stack.Config().NoKeys {
+		utils.Fatalf("Unlocking accounts is not supported with --%s", utils.NoKeysFlag.Name)
+	}
 	if !stack.Config().NoKeys {
-		unlocks := strings.Split(cmd.String(utils.UnlockedAccountFlag.Name), ",")
 		if len(unlocks) > 0 && unlocks[0] != "" {
 			log.Warn("Unlocking account", "unlocks", unlocks)
 			passwords := utils.MakePasswordList(cmd)
+			if len(passwords) == 0 && cmd.IsSet(utils.PasswordFileFlag.Name) && cmd.String(utils.PasswordFileFlag.Name) == "" {
+				// empty password "" means no password
+				passwords = append(passwords, "")
+			}
 			// Unlock any account specifically requested
 			ks := stack.AccountManager().Backends(keystore.KeyStoreType)[0].(*keystore.KeyStore)
 			for i, account := range unlocks {
@@ -279,12 +286,12 @@ func startNode(ctx context.Context, cmd *cli.Command, stack *node.Node) {
 		log.Info("Starting Account Manager")
 		go func() {
 			// Create an chain state reader for self-derivation
-			rpcClient, err := stack.Attach()
+			rpcClient, err := stack.Attach("accountManager")
 			if err != nil {
 				utils.Fatalf("Failed to attach to self: %v", err)
 			}
 			stateReader := aquaclient.NewClient(rpcClient)
-
+			defer rpcClient.Close()
 			// Open any wallets already attached
 			for _, wallet := range stack.AccountManager().Wallets() {
 				if err := wallet.Open(""); err != nil {

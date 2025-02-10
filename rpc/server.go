@@ -228,7 +228,7 @@ func (s *Server) ServeSingleRequest(codec ServerCodec, options CodecOption) {
 // close all codecs which will cancel pending requests/subscriptions.
 func (s *Server) Stop() {
 	if atomic.CompareAndSwapInt32(&s.run, 1, 0) {
-		log.Debug("RPC Server shutdown initiatied")
+		log.Warn("RPC Server shutdown initiatied")
 		s.codecsMu.Lock()
 		defer s.codecsMu.Unlock()
 		s.codecs.Each(func(c interface{}) bool {
@@ -333,7 +333,9 @@ func (s *Server) exec(ctx context.Context, codec ServerCodec, req *serverRequest
 	}
 
 	if err := codec.Write(response); err != nil {
-		log.Error(fmt.Sprintf("%v\n", err))
+		if ctx.Err() == nil {
+			log.Error(fmt.Sprintf("%v\n", err))
+		}
 		codec.Close()
 	}
 

@@ -433,6 +433,9 @@ func (c *Console) Interactive(ctx context.Context, donefn func()) {
 	)
 	// Start a goroutine to listen for promt requests and send back inputs
 	go func() {
+		defer func() {
+			log.Info("console scheduler closed")
+		}()
 		for ctx.Err() == nil {
 			// Read the next user input
 			line, err := c.prompter.PromptInput(<-scheduler)
@@ -456,6 +459,12 @@ func (c *Console) Interactive(ctx context.Context, donefn func()) {
 	// signal.Notify(abort, syscall.SIGINT, syscall.SIGTERM)
 
 	// Start sending prompts to the user and reading back inputs
+	defer func() {
+		if err := recover(); err != nil {
+			log.Error("console panic", "err", fmt.Sprintf("%#v", err))
+		}
+		log.Info("console linereader closed")
+	}()
 	for {
 		// Send the next prompt, triggering an input read and process the result
 		scheduler <- prompt
@@ -515,7 +524,6 @@ func (c *Console) Interactive(ctx context.Context, donefn func()) {
 }
 
 func handleSend(c *Console) error {
-
 	cont, err := c.prompter.PromptConfirm("You are about to create a transaction from your Aquabase. Right?")
 	if err != nil {
 		return fmt.Errorf("input error: %v", err)
@@ -528,14 +536,14 @@ func handleSend(c *Console) error {
 		return fmt.Errorf("error: %v", err)
 	}
 
-	amount, err := c.prompter.PromptInput("How much AQUA to send? For example: 0.1: ")
+	amount, err := c.prompter.PromptInput("How much AQUA to send? (For example: 0.1): ")
 	if err != nil {
 		return fmt.Errorf("input error: %v", err)
 	}
 
 	fmt.Fprintf(c.printer, "Send %q to whom?", amount)
 
-	destination, err := c.prompter.PromptInput("Where to send? With 0x prefix: ")
+	destination, err := c.prompter.PromptInput("Where to send? (With 0x prefix): ")
 	if err != nil {
 		return fmt.Errorf("input error: %v", err)
 	}

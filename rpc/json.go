@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -36,6 +37,12 @@ const (
 	UnsubscribeMethodSuffix  = "_unsubscribe"
 	NotificationMethodSuffix = "_subscription"
 )
+
+type JsonRequest = jsonRequest
+type JsonSuccessResponse = jsonSuccessResponse
+type JsonErrResponse = jsonErrResponse
+type JsonSubscription = jsonSubscription
+type JsonNotification = jsonNotification
 
 type jsonRequest struct {
 	Method  string          `json:"method"`
@@ -74,6 +81,8 @@ type jsonNotification struct {
 	Params  jsonSubscription `json:"params"`
 }
 
+type JsonCodec = jsonCodec
+
 // jsonCodec reads and writes JSON-RPC messages to the underlying connection. It
 // also has support for parsing arguments and serializing (result) objects.
 type jsonCodec struct {
@@ -97,9 +106,11 @@ func (err *jsonError) ErrorCode() int {
 	return err.Code
 }
 
+var _ ServerCodec = (*JsonCodec)(nil)
+
 // NewCodec creates a new RPC server codec with support for JSON-RPC 2.0 based
 // on explicitly given encoding and decoding methods.
-func NewCodec(rwc io.ReadWriteCloser, encode, decode func(v interface{}) error) ServerCodec {
+func NewCodec(rwc io.ReadWriteCloser, encode, decode func(v interface{}) error) *JsonCodec {
 	return &jsonCodec{
 		closed: make(chan interface{}),
 		encode: encode,
@@ -108,9 +119,15 @@ func NewCodec(rwc io.ReadWriteCloser, encode, decode func(v interface{}) error) 
 	}
 }
 
+var DEBUG_RPC = os.Getenv("DEBUG_RPC") == "1"
+
 // NewJSONCodec creates a new RPC server codec with support for JSON-RPC 2.0
 func NewJSONCodec(rwc io.ReadWriteCloser) ServerCodec {
-	enc := json.NewEncoder(rwc)
+	var w io.Writer = rwc
+	if DEBUG_RPC {
+		w = io.MultiWriter(rwc, os.Stdout) // also log responses to stdout
+	}
+	enc := json.NewEncoder(w)
 	dec := json.NewDecoder(rwc)
 	dec.UseNumber()
 
@@ -172,8 +189,11 @@ func checkReqId(reqId json.RawMessage) error {
 // parseRequest will parse a single request from the given RawMessage. It will return
 // the parsed request, an indication if the request was a batch or an error when
 // the request could not be parsed.
+func ParseRequest(incomingMsg json.RawMessage) ([]rpcRequest, bool, Error) {
+	return parseRequest(incomingMsg)
+}
 func parseRequest(incomingMsg json.RawMessage) ([]rpcRequest, bool, Error) {
-	var in jsonRequest
+	var in JsonRequest
 	if err := json.Unmarshal(incomingMsg, &in); err != nil {
 		return nil, false, &invalidMessageError{err.Error()}
 	}
@@ -182,8 +202,7 @@ func parseRequest(incomingMsg json.RawMessage) ([]rpcRequest, bool, Error) {
 		return nil, false, &invalidMessageError{err.Error()}
 	}
 
-	log.Debug("handling rpc request", "method", in.Method, "params", string(in.Payload))
-
+	println("incoming", in.Method, string(incomingMsg))
 	// try keeping eth compatibility
 	if strings.HasPrefix(in.Method, "eth_") {
 		in.Method = "aqua_" + in.Method[4:]

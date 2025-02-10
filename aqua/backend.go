@@ -18,6 +18,7 @@
 package aqua
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -53,6 +54,7 @@ import (
 
 // Aquachain implements the Aquachain full node service.
 type Aquachain struct {
+	ctx         context.Context // TODO use
 	config      *Config
 	chainConfig *params.ChainConfig
 
@@ -88,11 +90,11 @@ type Aquachain struct {
 
 // New creates a new Aquachain object (including the
 // initialisation of the common Aquachain object)
-func New(ctx *node.ServiceContext, config *Config) (*Aquachain, error) {
+func New(ctx context.Context, nodectx *node.ServiceContext, config *Config) (*Aquachain, error) {
 	if !config.SyncMode.IsValid() {
 		return nil, fmt.Errorf("invalid sync mode %d", config.SyncMode)
 	}
-	chainDb, err := CreateDB(ctx, config, "chaindata")
+	chainDb, err := CreateDB(nodectx, config, "chaindata")
 	if err != nil {
 		return nil, err
 	}
@@ -108,12 +110,13 @@ func New(ctx *node.ServiceContext, config *Config) (*Aquachain, error) {
 	}
 
 	aqua := &Aquachain{
+		ctx:            ctx,
 		config:         config,
 		chainDb:        chainDb,
 		chainConfig:    chainConfig,
-		eventMux:       ctx.EventMux,
-		accountManager: ctx.AccountManager,
-		engine:         CreateConsensusEngine(ctx, &config.Aquahash, chainConfig, chainDb),
+		eventMux:       nodectx.EventMux,
+		accountManager: nodectx.AccountManager,
+		engine:         CreateConsensusEngine(nodectx, &config.Aquahash, chainConfig, chainDb),
 		shutdownChan:   make(chan bool),
 		stopDbUpgrade:  stopDbUpgrade,
 		gasPrice:       config.GasPrice,
@@ -133,7 +136,7 @@ func New(ctx *node.ServiceContext, config *Config) (*Aquachain, error) {
 	//if !config.SkipBcVersionCheck {
 	bcVersion := core.GetBlockChainVersion(chainDb)
 	if bcVersion != core.BlockChainVersion && bcVersion != 0 {
-		return nil, fmt.Errorf("Blockchain DB version mismatch (%d / %d). Run aquachain upgradedb.\n", bcVersion, core.BlockChainVersion)
+		return nil, fmt.Errorf("blockchain DB version mismatch (%d / %d). Run aquachain upgradedb", bcVersion, core.BlockChainVersion)
 	}
 	core.WriteBlockChainVersion(chainDb, core.BlockChainVersion)
 	//}
@@ -141,7 +144,7 @@ func New(ctx *node.ServiceContext, config *Config) (*Aquachain, error) {
 		vmConfig    = vm.Config{EnablePreimageRecording: config.EnablePreimageRecording}
 		cacheConfig = &core.CacheConfig{Disabled: config.NoPruning, TrieNodeLimit: config.TrieCache, TrieTimeLimit: config.TrieTimeout}
 	)
-	aqua.blockchain, err = core.NewBlockChain(chainDb, cacheConfig, aqua.chainConfig, aqua.engine, vmConfig)
+	aqua.blockchain, err = core.NewBlockChain(ctx, chainDb, cacheConfig, aqua.chainConfig, aqua.engine, vmConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +157,7 @@ func New(ctx *node.ServiceContext, config *Config) (*Aquachain, error) {
 	aqua.bloomIndexer.Start(aqua.blockchain)
 
 	if config.TxPool.Journal != "" {
-		config.TxPool.Journal = ctx.ResolvePath(config.TxPool.Journal)
+		config.TxPool.Journal = nodectx.ResolvePath(config.TxPool.Journal)
 	}
 	aqua.txPool = core.NewTxPool(config.TxPool, aqua.chainConfig, aqua.blockchain)
 
@@ -482,6 +485,14 @@ func (s *Aquachain) Start(srvr *p2p.Server) error {
 // Stop implements node.Service, terminating all internal goroutines used by the
 // Aquachain protocol.
 func (s *Aquachain) Stop() error {
+	log.Info("Shutdown: Aquachain backend service stopping")
+	defer func() {
+		if err := recover(); err != nil {
+			log.Error("Aquachain backend service stopped with panic", "err", err)
+			return
+		}
+		log.Info("Shutdown: Aquachain backend service stopped")
+	}()
 	if s.stopDbUpgrade != nil {
 		s.stopDbUpgrade()
 	}

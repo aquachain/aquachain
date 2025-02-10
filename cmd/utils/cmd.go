@@ -66,7 +66,7 @@ func Fatalf(format string, args ...interface{}) {
 	fmt.Fprintf(w, "Fatal: "+format+"\n", args...)
 
 	// small traceback
-	if debug := os.Getenv("DEBUG"); debug != "" || time.Since(start_time) > 5*time.Second {
+	if debug := os.Getenv("DEBUG"); debug != "" || time.Since(start_time) > 10*time.Second {
 		pc := make([]uintptr, 8)
 		n := runtime.Callers(1, pc)
 		if n != 0 {
@@ -93,14 +93,18 @@ func StartNode(ctx context.Context, stack *node.Node) {
 	go func() {
 		log.Info("node.Node waiting for interrupt")
 		sigc := make(chan os.Signal, 1)
+		reason := ""
+		<-ctx.Done()
+		reason = context.Cause(ctx).Error()
+		// for force-panic on multiple interrupts
 		signal.Notify(sigc, syscall.SIGINT, syscall.SIGTERM)
 		defer signal.Stop(sigc)
-		<-sigc
-		go alerts.Warnf("Got interrupt, shutting down...") // might not make it
-		log.Info("Got interrupt, shutting down...")
+		go alerts.Warnf("Got %s, shutting down...", reason) // might not make it
+		log.Info("Got interrupt, shutting down...", "reason", reason)
 		go stack.Stop()
+
 		for i := 10; i > 0; i-- {
-			<-sigc
+			<-sigc // blocks, something should os.Exit(1) in the background
 			if i > 1 {
 				log.Warn("Already shutting down, interrupt more to panic.", "times", i-1)
 			}
