@@ -167,10 +167,13 @@ func (n *Node) Register(constructor ServiceConstructor) error {
 func (n *Node) Start(ctx context.Context) error {
 	n.lock.Lock()
 	defer n.lock.Unlock()
-	if n.ctx != nil && n.ctx != ctx {
-		return ErrNodeRunning
+	if n.ctx == nil {
+		return fmt.Errorf("no context")
 	}
-	n.ctx = ctx
+	if ctx != n.ctx {
+		return fmt.Errorf("context mismatch")
+	}
+	// n.ctx = ctx
 	if n.config.P2P.ChainId == 0 {
 		return fmt.Errorf("no chain id")
 	}
