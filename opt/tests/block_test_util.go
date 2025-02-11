@@ -19,6 +19,7 @@ package tests
 
 import (
 	"bytes"
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -110,7 +111,7 @@ func (t *BlockTest) Run() error {
 		return fmt.Errorf("genesis block state root does not match test: computed=%x, test=%x", gblock.Root().Bytes()[:6], t.json.Genesis.StateRoot[:6])
 	}
 
-	chain, err := core.NewBlockChain(db, nil, config, aquahash.NewShared(), vm.Config{})
+	chain, err := core.NewBlockChain(context.TODO(), db, nil, config, aquahash.NewShared(), vm.Config{})
 	if err != nil {
 		return err
 	}

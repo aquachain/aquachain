@@ -20,6 +20,7 @@
 package aqua
 
 import (
+	"context"
 	"crypto/rand"
 	"math/big"
 	"sort"
@@ -59,9 +60,9 @@ func newTestProtocolManager(mode downloader.SyncMode, blocks int, generator func
 			Alloc:  core.GenesisAlloc{testBank: {Balance: big.NewInt(1000000)}},
 		}
 		genesis       = gspec.MustCommit(db)
-		blockchain, _ = core.NewBlockChain(db, nil, gspec.Config, engine, vm.Config{})
+		blockchain, _ = core.NewBlockChain(context.TODO(), db, nil, gspec.Config, engine, vm.Config{})
 	)
-	chain, _ := core.GenerateChain(gspec.Config, genesis, aquahash.NewFaker(), db, blocks, generator)
+	chain, _ := core.GenerateChain(context.TODO(), gspec.Config, genesis, aquahash.NewFaker(), db, blocks, generator)
 	if blocks != 0 {
 		if _, err := blockchain.InsertChain(chain); err != nil {
 			panic(err)

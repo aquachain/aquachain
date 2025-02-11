@@ -17,6 +17,7 @@
 package core
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -131,10 +132,10 @@ func TestSetupGenesis(t *testing.T) {
 				// Advance to block #4, past the homestead transition block of customg.
 				genesis := oldcustomg.MustCommit(db)
 
-				bc, _ := NewBlockChain(db, nil, oldcustomg.Config, aquahash.NewFullFaker(), vm.Config{})
+				bc, _ := NewBlockChain(context.TODO(), db, nil, oldcustomg.Config, aquahash.NewFullFaker(), vm.Config{})
 				defer bc.Stop()
 
-				blocks, _ := GenerateChain(oldcustomg.Config, genesis, aquahash.NewFaker(), db, 4, nil)
+				blocks, _ := GenerateChain(context.TODO(), oldcustomg.Config, genesis, aquahash.NewFaker(), db, 4, nil)
 				bc.InsertChain(blocks)
 				bc.CurrentBlock()
 				// This should return a compatibility error.

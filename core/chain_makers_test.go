@@ -17,6 +17,8 @@
 package core
 
 import (
+	"context"
+
 	"gitlab.com/aquachain/aquachain/aquadb"
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/consensus"
@@ -40,7 +42,7 @@ func newCanonical(engine consensus.Engine, n int, full bool) (aquadb.Database, *
 	db := aquadb.NewMemDatabase()
 	genesis := gspec.MustCommit(db)
 
-	blockchain, _ := NewBlockChain(db, nil, params.AllAquahashProtocolChanges, engine, vm.Config{})
+	blockchain, _ := NewBlockChain(context.TODO(), db, nil, params.AllAquahashProtocolChanges, engine, vm.Config{})
 	// Create and inject the requested chain
 	if n == 0 {
 		return db, blockchain, nil
@@ -70,7 +72,7 @@ func makeHeaderChain(parent *types.Header, n int, engine consensus.Engine, db aq
 
 // makeBlockChain creates a deterministic chain of blocks rooted at parent.
 func makeBlockChain(parent *types.Block, n int, engine consensus.Engine, db aquadb.Database, seed int) []*types.Block {
-	blocks, _ := GenerateChain(params.TestChainConfig, parent, engine, db, n, func(i int, b *BlockGen) {
+	blocks, _ := GenerateChain(context.TODO(), params.TestChainConfig, parent, engine, db, n, func(i int, b *BlockGen) {
 		b.header.Version = b.config.GetBlockVersion(b.Number())
 		b.SetCoinbase(common.Address{0: byte(seed), 19: byte(i)})
 	})

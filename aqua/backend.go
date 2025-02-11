@@ -54,6 +54,7 @@ import (
 
 // Aquachain implements the Aquachain full node service.
 type Aquachain struct {
+	p2pnodename string
 	ctx         context.Context // TODO use
 	config      *Config
 	chainConfig *params.ChainConfig
@@ -90,7 +91,7 @@ type Aquachain struct {
 
 // New creates a new Aquachain object (including the
 // initialisation of the common Aquachain object)
-func New(ctx context.Context, nodectx *node.ServiceContext, config *Config) (*Aquachain, error) {
+func New(ctx context.Context, nodectx *node.ServiceContext, config *Config, nodename string) (*Aquachain, error) {
 	if !config.SyncMode.IsValid() {
 		return nil, fmt.Errorf("invalid sync mode %d", config.SyncMode)
 	}
@@ -110,6 +111,7 @@ func New(ctx context.Context, nodectx *node.ServiceContext, config *Config) (*Aq
 	}
 
 	aqua := &Aquachain{
+		p2pnodename:    nodename,
 		ctx:            ctx,
 		config:         config,
 		chainDb:        chainDb,
@@ -298,6 +300,7 @@ func CreateConsensusEngine(ctx *node.ServiceContext, config *aquahash.Config, ch
 // APIs returns the collection of RPC services the aquachain package offers.
 // NOTE, some of these services probably need to be moved to somewhere else.
 func (s *Aquachain) APIs() []rpc.API {
+
 	apis := aquaapi.GetAPIs(s.ApiBackend)
 
 	// Append any APIs exposed explicitly by the consensus engine
@@ -312,7 +315,7 @@ func (s *Aquachain) APIs() []rpc.API {
 	}
 
 	// Append all the local APIs and return
-	return append(apis, []rpc.API{
+	x := append(apis, []rpc.API{
 		{
 			Namespace: "aqua",
 			Version:   "1.0",
@@ -349,7 +352,7 @@ func (s *Aquachain) APIs() []rpc.API {
 		}, {
 			Namespace: "testing",
 			Version:   "1.0",
-			Service:   NewPublicTestingAPI(s.chainConfig, s),
+			Service:   NewPublicTestingAPI(s.chainConfig, s, s.p2pnodename),
 		}, {
 			Namespace: "net",
 			Version:   "1.0",
@@ -357,6 +360,8 @@ func (s *Aquachain) APIs() []rpc.API {
 			Public:    true,
 		},
 	}...)
+	log.Info("APIs", "count", len(x))
+	return x
 }
 
 func (s *Aquachain) ResetWithGenesisBlock(gb *types.Block) {
@@ -467,6 +472,7 @@ func (s *Aquachain) Protocols() []p2p.Protocol {
 // Start implements node.Service, starting all internal goroutines needed by the
 // Aquachain protocol implementation.
 func (s *Aquachain) Start(srvr *p2p.Server) error {
+	log.Info("Starting Aquachain protocol", "network", s.config.ChainId, "version", s.AquaVersion())
 	// Start the bloom bits servicing goroutines
 	s.startBloomHandlers()
 

@@ -1417,9 +1417,9 @@ func SetChainId(cmd *cli.Command, cfg *aqua.Config) *params.ChainConfig {
 }
 
 // RegisterAquaService adds an Aquachain client to the stack.
-func RegisterAquaService(ctx context.Context, stack *node.Node, cfg *aqua.Config) {
+func RegisterAquaService(ctx context.Context, stack *node.Node, cfg *aqua.Config, p2pnodename string) {
 	err := stack.Register(func(nodectx *node.ServiceContext) (node.Service, error) {
-		return aqua.New(ctx, nodectx, cfg)
+		return aqua.New(ctx, nodectx, cfg, p2pnodename)
 	})
 	if err != nil {
 		Fatalf("Failed to register the Aquachain service: %v", err)

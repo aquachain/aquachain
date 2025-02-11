@@ -17,6 +17,7 @@
 package core
 
 import (
+	"context"
 	"io/ioutil"
 	"math/big"
 	"os"
@@ -169,11 +170,11 @@ func benchInsertChain(b *testing.B, disk bool, gen func(int, *BlockGen)) {
 		Alloc:  GenesisAlloc{benchRootAddr: {Balance: benchRootFunds}},
 	}
 	genesis := gspec.MustCommit(db)
-	chain, _ := GenerateChain(gspec.Config, genesis, aquahash.NewFaker(), db, b.N, gen)
+	chain, _ := GenerateChain(context.TODO(), gspec.Config, genesis, aquahash.NewFaker(), db, b.N, gen)
 
 	// Time the insertion of the new chain.
 	// State and blocks are stored in the same DB.
-	chainman, _ := NewBlockChain(db, nil, gspec.Config, aquahash.NewFaker(), vm.Config{})
+	chainman, _ := NewBlockChain(context.TODO(), db, nil, gspec.Config, aquahash.NewFaker(), vm.Config{})
 	defer chainman.Stop()
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -283,7 +284,7 @@ func benchReadChain(b *testing.B, full bool, count uint64) {
 		if err != nil {
 			b.Fatalf("error opening database at %v: %v", dir, err)
 		}
-		chain, err := NewBlockChain(db, nil, params.TestChainConfig, aquahash.NewFaker(), vm.Config{})
+		chain, err := NewBlockChain(context.TODO(), db, nil, params.TestChainConfig, aquahash.NewFaker(), vm.Config{})
 		if err != nil {
 			b.Fatalf("error creating chain: %v", err)
 		}

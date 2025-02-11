@@ -114,7 +114,9 @@ func newTester(t *testing.T, confOverride func(*aqua.Config)) *tester {
 	if confOverride != nil {
 		confOverride(ethConf)
 	}
-	if err = stack.Register(func(ctx *node.ServiceContext) (node.Service, error) { return aqua.New(ctx, ethConf) }); err != nil {
+	if err = stack.Register(func(ctx *node.ServiceContext) (node.Service, error) {
+		return aqua.New(context.TODO(), ctx, ethConf, "test-console")
+	}); err != nil {
 		t.Fatalf("failed to register Aquachain protocol: %v", err)
 	}
 	// Start the node and assemble the JavaScript console around it

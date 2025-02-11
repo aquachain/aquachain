@@ -39,22 +39,6 @@ import (
 	"gitlab.com/aquachain/aquachain/rpc"
 )
 
-// PublicTestingAPI provides a public API to access unstable features
-//
-// (not exposed by default, use '--rpcapi +testing' to enable)
-type PublicTestingAPI struct {
-	cfg   *params.ChainConfig
-	agent *miner.RemoteAgent
-	e     *Aquachain
-}
-
-// NewPublicTestingAPI provides SubmitBlock and GetBlockTemplate
-func NewPublicTestingAPI(cfg *params.ChainConfig, e *Aquachain) *PublicTestingAPI {
-	agent := miner.NewRemoteAgent(e.BlockChain(), e.Engine())
-	e.Miner().Register(agent)
-	return &PublicTestingAPI{cfg, agent, e}
-}
-
 // PublicAquachainAPI provides an API to access Aquachain full node-related
 // information.
 type PublicAquachainAPI struct {
@@ -114,6 +98,27 @@ func (api *PublicMinerAPI) Mining() bool {
 // accepted. Note, this is not an indication if the provided work was valid!
 func (api *PublicMinerAPI) SubmitWork(nonce types.BlockNonce, solution, digest common.Hash) bool {
 	return api.agent.SubmitWork(nonce, digest, solution)
+}
+
+// PublicTestingAPI provides a public API to access unstable features
+//
+// (not exposed by default, use '--rpcapi +testing' to enable)
+type PublicTestingAPI struct {
+	cfg     *params.ChainConfig
+	agent   *miner.RemoteAgent
+	e       *Aquachain
+	p2pname string
+}
+
+// NewPublicTestingAPI provides SubmitBlock and GetBlockTemplate
+func NewPublicTestingAPI(cfg *params.ChainConfig, e *Aquachain, nodename string) *PublicTestingAPI {
+	agent := miner.NewRemoteAgent(e.BlockChain(), e.Engine())
+	e.Miner().Register(agent)
+	return &PublicTestingAPI{cfg, agent, e, nodename}
+}
+
+func (api *PublicTestingAPI) NodeName() string {
+	return api.p2pname
 }
 
 // SubmitBlock can be used by external miner to submit their POW solution. It returns an indication if the work was
