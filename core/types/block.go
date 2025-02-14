@@ -186,6 +186,10 @@ func (h *Header) Size() common.StorageSize {
 	return common.StorageSize(unsafe.Sizeof(*h)) + common.StorageSize(len(h.Extra)+(h.Difficulty.BitLen()+h.Number.BitLen()+h.Time.BitLen())/8)
 }
 
+func RlpHash(version byte, x interface{}) (h common.Hash) {
+	return rlpHash(version, x)
+}
+
 func rlpHash(version byte, x interface{}) (h common.Hash) {
 	switch version {
 	case 0, 1: // ethash
@@ -441,13 +445,6 @@ func (c *writeCounter) Write(b []byte) (int, error) {
 }
 
 func CalcUncleHash(uncles []*Header) common.Hash {
-	// version := byte(1)
-	// // if len(uncles) != 0 {
-	// // 	version = byte(uncles[0].Version)
-	// // 	if version != 1 {
-	// // 		log.Info("CalcUncleHash", "version", version)
-	// // 	}
-	// // }
 	return rlpHash(1, uncles)
 }
 
