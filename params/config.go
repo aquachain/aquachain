@@ -30,8 +30,10 @@ var (
 	MainnetGenesisHash  = common.HexToHash("0x381c8d2c3e3bc702533ee504d7621d510339cafd830028337a4b532ff27cd505") // Mainnet genesis hash to enforce below configs on
 	TestnetGenesisHash  = common.HexToHash("0xa8773cb7d32b8f7e1b32b0c2c8b735c293b8936dd3760c15afc291a23eb0cf88") // Testnet genesis hash to enforce below configs on
 	Testnet2GenesisHash = common.HexToHash("0xde434983d3ada19cd43c44d8ad5511bad01ed12b3cc9a99b1717449a245120df") // Testnet2 genesis hash to enforce below configs on
-	Testnet3GenesisHash = common.HexToHash("0xacce4d644001486af14d4848c331d43c429167f5879e71fa22d16837d280832b") // Testnet3 genesis hash to enforce below configs on
+	Testnet3GenesisHash = common.HexToHash("0x05c1df1f60eedd42bdf3f002bedc4688c5bf0443771d1d30341bc5e4fe76bce8") // Testnet3 genesis hash to enforce below configs on
 	EthnetGenesisHash   = common.HexToHash("0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3")
+	TestingGenesisHash  = common.HexToHash("0x1556b25efd267015f318c621d79231cb43e694c92d3776254a8581cfde2f67cd")
+	AllGenesisHash      = common.HexToHash("0x02f036d05929e5762b8e83ce7c104b37881922732b32fd39253efe1e7e5c2b51")
 )
 
 // KnownHF is the highest hard fork that is known by this version of Aquachain.
@@ -73,18 +75,23 @@ var (
 
 	// Testnet3HF is the map of hard forks (testnet3 private network)
 	Testnet3HF = ForkMap{
-		5: big.NewInt(0), // argonated block hashes
-		6: nil,
+		// 1: big.NewInt(0),
+		// 2: big.NewInt(0),
+		// 3: big.NewInt(0),
+		// 4: big.NewInt(0),
+		5: big.NewInt(0),
 		7: big.NewInt(0), // eip 155, 158
-		8: nil,
-		9: nil,
 	}
 
 	// TestHF is the map of hard forks (for testing suite)
 	TestHF = ForkMap{
-		4: big.NewInt(12),
-		5: big.NewInt(13),
-		7: big.NewInt(30),
+		// 1: big.NewInt(0),
+		// 2: big.NewInt(0),
+		// 3: big.NewInt(0),
+		4: big.NewInt(0),
+		5: big.NewInt(0),
+		7: big.NewInt(0),
+		// 8: big.NewInt(0),
 	}
 
 	NoHF = ForkMap{}
@@ -178,7 +185,7 @@ var (
 	AllCliqueProtocolChanges   = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, nil, &CliqueConfig{Period: 0, Epoch: 30000}, TestHF, 21398, 21098}
 
 	TestChainConfig = &ChainConfig{big.NewInt(3), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, new(AquahashConfig), nil, TestHF, 21397, 21097}
-	TestRules       = TestChainConfig.Rules(new(big.Int))
+	// TestRules       = TestChainConfig.Rules(new(big.Int))
 )
 
 // ChainConfig is the core config which determines the blockchain settings.

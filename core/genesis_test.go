@@ -23,22 +23,30 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"gitlab.com/aquachain/aquachain/aquadb"
 	"gitlab.com/aquachain/aquachain/common"
+	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/consensus/aquahash"
 	"gitlab.com/aquachain/aquachain/core/vm"
 	"gitlab.com/aquachain/aquachain/params"
 )
 
+// for generating delloc array for HF4 (only on mainnet)
 func TestDefaultGenesisAlloc(t *testing.T) {
-	t.Skip()
+	t.SkipNow()
 	m := DefaultGenesisBlock().Alloc
 	fmt.Println("Bad Balances:", len(m))
-	//aquawei := big.NewFloat(params.Aqua)
-	for k := range m {
-		//fmt.Printf("%x %.6f\n", k, new(big.Float).Quo(new(big.Float).SetInt(v.Balance), aquawei))
-		fmt.Printf(`"%x",`+"\n", k)
+	aquawei := big.NewFloat(params.Aqua)
+	_ = aquawei
+	mode := 0
+	for k, v := range m {
+		_ = v
+		switch mode {
+		case 0: // print balances for humans
+			fmt.Printf("%x %.6f\n", k, new(big.Float).Quo(new(big.Float).SetInt(v.Balance), aquawei))
+		case 1: // print address array for dealloc (HF4)
+			fmt.Printf(`"%x",`+"\n", k)
+		}
 	}
 }
 func TestDefaultGenesisBlock(t *testing.T) {
@@ -50,12 +58,19 @@ func TestDefaultGenesisBlock(t *testing.T) {
 	if block.Hash() != params.TestnetGenesisHash {
 		t.Errorf("wrong testnet genesis hash, got %x, want %x", block.Hash(), params.TestnetGenesisHash)
 	}
-
+	block = DefaultTestnet2GenesisBlock().ToBlock(nil)
+	if block.Hash() != params.Testnet2GenesisHash {
+		t.Errorf("wrong testnet2 genesis hash, got %x, want %x", block.Hash(), params.Testnet2GenesisHash)
+	}
+	block = DefaultTestnet3GenesisBlock().ToBlock(nil)
+	if block.Hash() != params.Testnet3GenesisHash {
+		t.Errorf("wrong testnet3 genesis hash, got %x, want %x", block.Hash(), params.Testnet3GenesisHash)
+	}
 }
 
 func TestSetupGenesis(t *testing.T) {
 	var (
-		customghash = common.HexToHash("0x92f036d05929e5762b8e83ce7c104b37881922732b32fd39253efe1e7e5c2b51")
+		customghash = common.HexToHash("0x73ddc0ce61cfa68e5dc3edb1d5b6d16583d739b9430c1d02ca9981b7dd26b7f2")
 		customg     = Genesis{
 			Config: &params.ChainConfig{HomesteadBlock: big.NewInt(3), HF: params.TestChainConfig.HF, ChainId: big.NewInt(101)},
 			Alloc: GenesisAlloc{
@@ -64,6 +79,9 @@ func TestSetupGenesis(t *testing.T) {
 		}
 		oldcustomg = customg
 	)
+	if wanthash := customg.ToBlock(nil).Hash(); wanthash != customghash {
+		t.Fatalf("bad custom hash, got %x, want %x", wanthash, customghash)
+	}
 	oldcustomg.Config = &params.ChainConfig{HomesteadBlock: big.NewInt(2), HF: params.TestChainConfig.HF, ChainId: big.NewInt(102)}
 	tests := []struct {
 		name       string
@@ -117,6 +135,26 @@ func TestSetupGenesis(t *testing.T) {
 			wantConfig: params.TestnetChainConfig,
 		},
 		{
+			name: "custom block in DB, genesis == testnet2",
+			fn: func(db aquadb.Database) (*params.ChainConfig, common.Hash, error) {
+				customg.MustCommit(db)
+				return SetupGenesisBlock(db, DefaultTestnet2GenesisBlock())
+			},
+			wantErr:    &GenesisMismatchError{Stored: customghash, New: params.Testnet2GenesisHash},
+			wantHash:   params.Testnet2GenesisHash,
+			wantConfig: params.Testnet2ChainConfig,
+		},
+		{
+			name: "custom block in DB, genesis == testnet3",
+			fn: func(db aquadb.Database) (*params.ChainConfig, common.Hash, error) {
+				customg.MustCommit(db)
+				return SetupGenesisBlock(db, DefaultTestnet3GenesisBlock())
+			},
+			wantErr:    &GenesisMismatchError{Stored: customghash, New: params.Testnet3GenesisHash},
+			wantHash:   params.Testnet3GenesisHash,
+			wantConfig: params.Testnet3ChainConfig,
+		},
+		{
 			name: "compatible config in DB",
 			fn: func(db aquadb.Database) (*params.ChainConfig, common.Hash, error) {
 				oldcustomg.MustCommit(db)
@@ -154,17 +192,39 @@ func TestSetupGenesis(t *testing.T) {
 
 	for _, test := range tests {
 		db := aquadb.NewMemDatabase()
+		log.Info("Running test", "name", test.name)
 		config, hash, err := test.fn(db)
 		// Check the return values.
-		if !reflect.DeepEqual(err, test.wantErr) {
-			spew := spew.ConfigState{DisablePointerAddresses: true, DisableCapacities: true}
-			t.Errorf("%s: returned error %#v, want %#v", test.name, spew.NewFormatter(err), spew.NewFormatter(test.wantErr))
+		if (err == nil) != (test.wantErr == nil) {
+			t.Fatalf("%s: returned %v, wanted error %v", test.name, err, test.wantErr)
+		}
+		if test.wantErr != nil && test.wantErr != err { // not exact pointer match, compare fields
+			switch x := test.wantErr.(type) {
+			case *GenesisMismatchError:
+				y, ok := err.(*GenesisMismatchError)
+				if !ok {
+					t.Fatalf("%s: returned error %v, wanted error %v", test.name, err, test.wantErr)
+				}
+				if x.Stored != y.Stored || x.New != y.New {
+					t.Fatalf("%s: returned error %v, wanted error %v", test.name, err, test.wantErr)
+				}
+			case *params.ConfigCompatError:
+				y, ok := err.(*params.ConfigCompatError)
+				if !ok {
+					t.Fatalf("%s: returned error %v, wanted error %v", test.name, err, test.wantErr)
+				}
+				if x.What != y.What || x.RewindTo != y.RewindTo || x.StoredConfig.Cmp(y.StoredConfig) != 0 {
+					t.Fatalf("%s: returned error %v, wanted error %v", test.name, err, test.wantErr)
+				}
+			default:
+				t.Fatalf("%s: returned unknonw error %v, wanted error %v", test.name, err, test.wantErr)
+			}
 		}
 		if !reflect.DeepEqual(config, test.wantConfig) {
-			t.Errorf("%s:\nreturned %v\nwant     %v", test.name, config, test.wantConfig)
+			t.Fatalf("%s:\nreturned %v\nwant     %v", test.name, config, test.wantConfig)
 		}
 		if hash != test.wantHash {
-			t.Errorf("%s: returned hash %s, want %s", test.name, hash.Hex(), test.wantHash.Hex())
+			t.Fatalf("%s: returned hash %s, want %s", test.name, hash.Hex(), test.wantHash.Hex())
 		} else if err == nil {
 			// Check database content.
 			stored := GetBlockNoVersion(db, test.wantHash, 0)

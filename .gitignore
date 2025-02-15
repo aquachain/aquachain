@@ -69,3 +69,5 @@ profile.cov
 *.swp
 *.crt
 *.key
+
+/opt/tests/testdata

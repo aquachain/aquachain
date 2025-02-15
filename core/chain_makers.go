@@ -227,7 +227,7 @@ func makeHeader(chain consensus.ChainReader, parent *types.Block, state *state.S
 		Coinbase:   parent.Coinbase(),
 		Difficulty: engine.CalcDifficulty(chain, time.Uint64(), &types.Header{
 			Number:     parent.Number(),
-			Time:       new(big.Int).Sub(time, big.NewInt(240)), // parent time
+			Time:       parent.Time(), // parent time
 			Difficulty: parent.Difficulty(),
 			UncleHash:  parent.UncleHash(),
 		}, nil),

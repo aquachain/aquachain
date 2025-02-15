@@ -1461,18 +1461,14 @@ func MakeChainDatabase(cmd *cli.Command, stack *node.Node) aquadb.Database {
 }
 
 func MakeGenesis(cmd *cli.Command) *core.Genesis {
-	var genesis *core.Genesis
-	switch {
-	case cmd.Bool(TestnetFlag.Name):
-		genesis = core.DefaultTestnetGenesisBlock()
-	case cmd.Bool(Testnet2Flag.Name):
-		genesis = core.DefaultTestnet2GenesisBlock()
-	case cmd.Bool(NetworkEthFlag.Name):
-		genesis = core.DefaultEthnetGenesisBlock()
-	case cmd.Bool(DeveloperFlag.Name):
-		Fatalf("Developer chains are ephemeral")
+	chain := cmd.String(ChainFlag.Name)
+	if chain != "" {
+		return core.DefaultGenesisByName(chain)
 	}
-	return genesis
+	return core.DefaultGenesisBlock()
+}
+func GenesisByChain(chain string) *core.Genesis {
+	return core.DefaultGenesisByName(chain)
 }
 
 func MakeConsensusEngine(cmd *cli.Command, stack *node.Node) consensus.Engine {

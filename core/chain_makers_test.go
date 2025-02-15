@@ -18,10 +18,13 @@ package core
 
 import (
 	"context"
+	"testing"
 
 	"gitlab.com/aquachain/aquachain/aquadb"
 	"gitlab.com/aquachain/aquachain/common"
+	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/consensus"
+	"gitlab.com/aquachain/aquachain/consensus/aquahash"
 	"gitlab.com/aquachain/aquachain/core/types"
 	"gitlab.com/aquachain/aquachain/core/vm"
 	"gitlab.com/aquachain/aquachain/params"
@@ -42,7 +45,10 @@ func newCanonical(engine consensus.Engine, n int, full bool) (aquadb.Database, *
 	db := aquadb.NewMemDatabase()
 	genesis := gspec.MustCommit(db)
 
-	blockchain, _ := NewBlockChain(context.TODO(), db, nil, params.AllAquahashProtocolChanges, engine, vm.Config{})
+	blockchain, _ := NewBlockChain(context.TODO(), db, nil, params.AllAquahashProtocolChanges, engine, vm.Config{
+		Tracer: vm.NewStructLogger(nil),
+	})
+	log.Info("genesis block", "hash", blockchain.genesisBlock.Hash())
 	// Create and inject the requested chain
 	if n == 0 {
 		return db, blockchain, nil
@@ -77,4 +83,22 @@ func makeBlockChain(parent *types.Block, n int, engine consensus.Engine, db aqua
 		b.SetCoinbase(common.Address{0: byte(seed), 19: byte(i)})
 	})
 	return blocks
+}
+
+func TestChainMaker(t *testing.T) {
+	genesis := new(Genesis)
+	db := aquadb.NewMemDatabase()
+	genesis.MustCommit(db)
+	engine := aquahash.NewFullFaker()
+	blockchain, _ := NewBlockChain(context.TODO(), db, nil, params.AllAquahashProtocolChanges, engine, vm.Config{
+		Tracer: vm.NewStructLogger(nil),
+	})
+	defer blockchain.Stop()
+
+	// Create a deterministic chain of 10 blocks
+	blocks := makeBlockChain(genesis.ToBlock(db), 10, engine, db, canonicalSeed)
+	_, err := blockchain.InsertChain(blocks)
+	if err != nil {
+		t.Fatalf("failed to insert chain: %v", err)
+	}
 }

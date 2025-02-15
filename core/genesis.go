@@ -159,8 +159,8 @@ func SetupGenesisBlock(db aquadb.Database, genesis *Genesis) (*params.ChainConfi
 	stored := GetCanonicalHash(db, 0)
 	if (stored == common.Hash{}) {
 		if genesis == nil {
-			log.Info("Writing default main-net genesis block")
 			genesis = DefaultGenesisBlock()
+			log.Info("Writing default genesis block", "chain", genesis.Config.Name())
 		} else {
 			log.Info("Writing custom genesis block")
 		}
@@ -241,8 +241,13 @@ func (g *Genesis) configOrDefault(ghash common.Hash) *params.ChainConfig {
 		return params.EthnetChainConfig
 	case ghash == params.Testnet3GenesisHash:
 		return params.Testnet3ChainConfig
+	case ghash == params.TestingGenesisHash:
+		return params.TestChainConfig
+	case ghash == params.AllGenesisHash:
+		return params.AllAquahashProtocolChanges
 	default:
 		log.Warn("unknown genesis hash", "hash", ghash)
+		// panic("nope")
 		return params.AllAquahashProtocolChanges
 	}
 }
@@ -323,6 +328,7 @@ func (g *Genesis) Commit(db aquadb.Database) (*types.Block, error) {
 	}
 	config := g.Config
 	if config == nil {
+		log.Warn("No genesis config found, using default (all, not mainnet)")
 		config = params.AllAquahashProtocolChanges
 	}
 	return block, WriteChainConfig(db, block.Hash(), config)
@@ -355,6 +361,7 @@ func DefaultGenesisByName(name string) *Genesis {
 	case "testnet3":
 		return DefaultTestnet3GenesisBlock()
 	default:
+		log.Warn("unknown genesis block", "chain", name)
 		return nil
 	}
 }

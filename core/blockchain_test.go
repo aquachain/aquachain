@@ -53,7 +53,7 @@ func testFork(t *testing.T, blockchain *BlockChain, i, n int, full bool, compara
 		hash2 = blockchain2.GetHeaderByNumber(uint64(i)).Hash()
 	}
 	if hash1 != hash2 {
-		t.Errorf("chain content mismatch at %d: have hash %v, want hash %v", i, hash2, hash1)
+		t.Fatalf("chain content mismatch at %d: have hash %v, want hash %v", i, hash2, hash1)
 	}
 	// Extend the newly created chain
 	var (
@@ -319,7 +319,7 @@ func TestReorgLongHeaders(t *testing.T) { testReorgLong(t, false) }
 func TestReorgLongBlocks(t *testing.T)  { testReorgLong(t, true) }
 
 func testReorgShort(t *testing.T, full bool) {
-	testReorg(t, []int64{0, 0, -9}, []int64{0, 0, 0, -9}, 399609468-10667223, full)
+	testReorg(t, []int64{0, 0, -9}, []int64{0, 0, 0, -9}, 392248300, full)
 }
 
 // Tests that reorganising a short difficult chain after a long easy one
@@ -333,13 +333,13 @@ func testReorgLong(t *testing.T, full bool) {
 	// one to become heavyer than a long one. The 96 is an empirical value.
 	easy := make([]int64, 96)
 	for i := 0; i < len(easy); i++ {
-		easy[i] = 240
+		easy[i] = 0 // offset by 0 (eg: normal 240 block, difficulty remains)
 	}
 	diff := make([]int64, len(easy)-1)
 	for i := 0; i < len(diff); i++ {
-		diff[i] = -20
+		diff[i] = -20 // offset by -20 (difficulty goes up)
 	}
-	testReorg(t, easy, diff, 1124583695, full)
+	testReorg(t, easy, diff, 6718587918, full)
 }
 
 func testReorg(t *testing.T, first, second []int64, td int64, full bool) {
@@ -427,7 +427,7 @@ func testReorg(t *testing.T, first, second []int64, td int64, full bool) {
 
 	if have := blockchain.GetTdByHash(blockchain.CurrentHeader().Hash()); have.Cmp(want) != 0 {
 		diff := new(big.Int).Sub(want, have)
-		t.Errorf("total difficulty block %s mismatch: have %v, want %v, d %v", headNum, have, want, diff)
+		t.Errorf("total difficulty block %s mismatch: \nhave %v, \nwant %v, d %v", headNum, have, want, diff)
 	}
 }
 

@@ -32,9 +32,7 @@ import (
 	"gitlab.com/aquachain/aquachain/core/types"
 	"gitlab.com/aquachain/aquachain/core/vm"
 	"gitlab.com/aquachain/aquachain/crypto"
-	"gitlab.com/aquachain/aquachain/crypto/sha3"
 	"gitlab.com/aquachain/aquachain/params"
-	"gitlab.com/aquachain/aquachain/rlp"
 )
 
 // StateTest checks transaction processing without block context.
@@ -119,6 +117,8 @@ func (t *StateTest) Subtests() []StateSubtest {
 	return sub
 }
 
+const TODOVER = 1
+
 // Run executes a specific subtest.
 func (t *StateTest) Run(subtest StateSubtest, vmconfig vm.Config) (*state.StateDB, error) {
 	config, ok := Forks[subtest.Fork]
@@ -144,7 +144,7 @@ func (t *StateTest) Run(subtest StateSubtest, vmconfig vm.Config) (*state.StateD
 	if _, _, _, err := core.ApplyMessage(evm, msg, gaspool); err != nil {
 		statedb.RevertToSnapshot(snapshot)
 	}
-	if logs := rlpHash(statedb.Logs()); logs != common.Hash(post.Logs) {
+	if logs := rlpHash(TODOVER, statedb.Logs()); logs != common.Hash(post.Logs) {
 		return statedb, fmt.Errorf("post state logs hash mismatch: got %x, want %x", logs, post.Logs)
 	}
 	root, _ := statedb.Commit(config.IsEIP158(block.Number()))
@@ -237,9 +237,11 @@ func (tx *stTransaction) toMessage(ps stPostState) (core.Message, error) {
 	return msg, nil
 }
 
-func rlpHash(x interface{}) (h common.Hash) {
-	hw := sha3.NewKeccak256()
-	rlp.Encode(hw, x)
-	hw.Sum(h[:0])
-	return h
-}
+var rlpHash = types.RlpHash
+
+// func rlpHash(x interface{}) (h common.Hash) {
+// 	hw := sha3.NewKeccak256()
+// 	rlp.Encode(hw, x)
+// 	hw.Sum(h[:0])
+// 	return h
+// }

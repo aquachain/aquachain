@@ -23,7 +23,12 @@ import (
 )
 
 // // This table defines supported forks and their chain config.
-var Forks = map[string]*params.ChainConfig{}
+var Forks = map[string]*params.ChainConfig{
+	"Frontier":  params.TestChainConfig,
+	"Homestead": params.TestChainConfig,
+	"EIP150":    params.TestChainConfig,
+	"Byzantium": params.TestChainConfig,
+}
 
 // UnsupportedForkError is returned when a test requests a fork that isn't implemented.
 type UnsupportedForkError struct {
