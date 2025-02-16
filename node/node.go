@@ -94,11 +94,14 @@ func New(conf *Config) (*Node, error) {
 	}
 	if conf.CloseMain == nil {
 		panic("CloseMain not set")
-		return nil, errors.New("CloseMain not set")
+		// return nil, errors.New("CloseMain not set")
 	}
-	chaincfg := params.GetChainConfigByChainId(big.NewInt(int64(conf.P2P.ChainId))) // TODO pass chaincfg in config?
-
+	chaincfg := conf.P2P.ChainConfig()
+	if chaincfg == nil {
+		chaincfg = params.GetChainConfigByChainId(big.NewInt(int64(conf.P2P.ChainId)))
+	}
 	if chaincfg == nil && conf.P2P.ChainConfig() == nil {
+		log.Warn("chaincfg is nil and conf.P2P.ChainConfig() is nil, missing stuff")
 		return nil, fmt.Errorf("unknown chain id %d", conf.P2P.ChainId)
 	}
 

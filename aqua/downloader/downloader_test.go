@@ -59,6 +59,7 @@ func init() {
 
 // downloadTester is a test simulator for mocking out local block chain.
 type downloadTester struct {
+	ctx        context.Context
 	downloader *Downloader
 
 	genesis *types.Block    // Genesis blocks used by the tester and peers
@@ -88,8 +89,8 @@ type downloadTester struct {
 func newTester() *downloadTester {
 	testdb := aquadb.NewMemDatabase()
 	genesis := core.GenesisBlockForTesting(testdb, testAddress, big.NewInt(1000000000))
-
 	tester := &downloadTester{
+		ctx:               context.TODO(),
 		genesis:           genesis,
 		peerDb:            testdb,
 		ownHashes:         []common.Hash{genesis.Hash()},
@@ -114,6 +115,9 @@ func newTester() *downloadTester {
 }
 func (dl *downloadTester) Config() *params.ChainConfig {
 	return dl.chainConfig
+}
+func (dl *downloadTester) Context() context.Context {
+	return dl.ctx
 }
 
 func (dl *downloadTester) GetBlockVersion(height *big.Int) params.HeaderVersion {

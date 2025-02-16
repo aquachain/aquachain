@@ -133,6 +133,10 @@ type BlockChain struct {
 	badBlocks *lru.Cache // Bad block cache
 }
 
+func (bc *BlockChain) Context() context.Context {
+	return bc.ctx
+}
+
 // NewBlockChain returns a fully initialised block chain using information
 // available in the database. It initialises the default Aquachain Validator and
 // Processor.

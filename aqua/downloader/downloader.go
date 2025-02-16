@@ -18,6 +18,7 @@
 package downloader
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
@@ -93,6 +94,7 @@ var (
 )
 
 type Downloader struct {
+	ctx  context.Context
 	mode SyncMode       // Synchronisation mode defining the strategy used (per sync cycle)
 	mux  *event.TypeMux // Event multiplexer to announce sync operation events
 
@@ -199,6 +201,9 @@ type BlockChain interface {
 
 	// InsertReceiptChain inserts a batch of receipts into the local chain.
 	Config() *params.ChainConfig
+
+	// Context for graceful shutdown
+	Context() context.Context
 }
 
 // New creates a new downloader to fetch hashes and blocks from remote peers.
@@ -212,6 +217,7 @@ func New(mode SyncMode, stateDb aquadb.Database, mux *event.TypeMux, chain Block
 
 	log.Info("Connected", "network", chain.Config().Name(), "chain", chain.Config().ChainId)
 	dl := &Downloader{
+		ctx:            chain.Context(),
 		mode:           mode,
 		stateDB:        stateDb,
 		mux:            mux,
@@ -306,7 +312,9 @@ func (d *Downloader) UnregisterPeer(id string) error {
 	logger := log.New("peer", id)
 	logger.Trace("Unregistering sync peer")
 	if err := d.peers.Unregister(id); err != nil {
-		logger.Error("Failed to unregister sync peer", "err", err)
+		if d.ctx.Err() == nil { // dont log if shutdown is in progress
+			logger.Error("Failed to unregister sync peer", "err", err)
+		}
 		return err
 	}
 	d.queue.Revoke(id)
@@ -342,7 +350,9 @@ func (d *Downloader) Synchronise(id string, head common.Hash, td *big.Int, mode 
 	case errTimeout, errStallingPeer,
 		errEmptyHeaderSet, errPeersUnavailable, errTooOld,
 		errInvalidAncestor, errInvalidChain:
-		log.Warn("Synchronisation failed, dropping peer", "peer", id, "err", err)
+		if d.ctx.Err() == nil {
+			log.Warn("Synchronisation failed, dropping peer", "peer", id, "err", err)
+		}
 		if d.dropPeer == nil {
 			// The dropPeer method is nil when `--copydb` is used for a local copy.
 			// Timeouts can occur if e.g. compaction hits at the wrong time, and can be ignored

@@ -39,7 +39,7 @@ func Infof(f string, i ...any) {
 
 func Warnf(f string, i ...any) {
 	if !mainCfg.Enabled() {
-		log.Warn("alerts not configured:", "msg", fmt.Sprintf(f, i...))
+		log.Warn("alert missed", "msg", fmt.Sprintf(f, i...))
 		return
 	}
 	msg := fmt.Sprintf(f, i...)

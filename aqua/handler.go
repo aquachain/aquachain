@@ -191,7 +191,9 @@ func (pm *ProtocolManager) removePeer(id string) {
 	// Unregister the peer from the downloader and Aquachain peer set
 	pm.downloader.UnregisterPeer(id)
 	if err := pm.peers.Unregister(id); err != nil {
-		log.Error("Peer removal failed", "peer", id, "err", err)
+		if pm.blockchain.Context().Err() == nil { // dont log if shutdown is in progress
+			log.Error("Peer removal failed", "peer", id, "err", err)
+		}
 	}
 	// Hard disconnect at the networking layer
 	if peer != nil {
