@@ -357,7 +357,7 @@ func (aquahash *Aquahash) verifyHeader(chain consensus.ChainReader, header, pare
 // the difficulty that a new block should have when created at time
 // given the parent block's time and difficulty.
 func (aquahash *Aquahash) CalcDifficulty(chain consensus.ChainReader, time uint64, parent, grandparent *types.Header) *big.Int {
-	if grandparent == nil && parent != nil && parent.Number.Uint64() != 0 {
+	if grandparent == nil && parent != nil && parent.Number.BitLen() != 0 {
 		grandparent = chain.GetHeader(parent.ParentHash, parent.Number.Uint64()-1)
 	}
 	return CalcDifficulty(chain.Config(), time, parent, grandparent)
@@ -491,10 +491,6 @@ func weiToAqua(wei *big.Int) string {
 func accumulateRewards(config *params.ChainConfig, state *state.StateDB, header *types.Header, uncles []*types.Header) {
 	// Select the correct block reward based on chain config
 	blockReward := BlockReward
-	if config == params.EthnetChainConfig {
-		blockReward = ethReward(config, header)
-	}
-
 	// fees-only after 42,000,000
 	// since uncles have a reward too, we will have to adjust this number
 	// luckily we have time before we hit anywhere near there

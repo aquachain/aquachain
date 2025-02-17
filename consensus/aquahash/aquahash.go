@@ -418,11 +418,10 @@ func (aquahash *Aquahash) Name() string {
 
 // New creates a full sized aquahash PoW scheme.
 func New(config Config) *Aquahash {
-	if config.StartVersion > 1 {
+	if config.StartVersion > 1 { // no need for caches or datasets
 		return &Aquahash{
 			config: config,
 			update: make(chan struct{}),
-			// hashrate: metrics.NewMeter(),
 		}
 	}
 	//	if config.CachesInMem <= 0 {

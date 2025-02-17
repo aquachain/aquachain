@@ -38,11 +38,11 @@ type diffTest struct {
 
 func (d *diffTest) UnmarshalJSON(b []byte) (err error) {
 	var ext struct {
-		ParentTimestamp    string
-		ParentDifficulty   string
-		CurrentTimestamp   string
-		CurrentBlocknumber string
-		CurrentDifficulty  string
+		ParentTimestamp    string `json:"parent_timestamp"`
+		ParentDifficulty   string `json:"parent_difficulty"`
+		CurrentTimestamp   string `json:"current_timestamp"`
+		CurrentBlocknumber string `json:"current_blocknumber"`
+		CurrentDifficulty  string `json:"current_difficulty"`
 	}
 	if err := json.Unmarshal(b, &ext); err != nil {
 		return err
@@ -58,29 +58,92 @@ func (d *diffTest) UnmarshalJSON(b []byte) (err error) {
 }
 
 func TestCalcDifficulty(t *testing.T) {
-	file, err := os.Open(filepath.Join("..", "..", "tests", "testdata", "BasicTests", "difficulty.json"))
-	if err != nil {
-		t.Skip(err)
-	}
-	defer file.Close()
-
 	tests := make(map[string]diffTest)
-	err = json.NewDecoder(file).Decode(&tests)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	config := &params.ChainConfig{HomesteadBlock: big.NewInt(1150000)}
-
-	for name, test := range tests {
-		number := new(big.Int).Sub(test.CurrentBlocknumber, big.NewInt(1))
-		diff := CalcDifficulty(config, test.CurrentTimestamp, &types.Header{
-			Number:     number,
-			Time:       new(big.Int).SetUint64(test.ParentTimestamp),
-			Difficulty: test.ParentDifficulty,
-		}, nil)
-		if diff.Cmp(test.CurrentDifficulty) != 0 {
-			t.Error(name, "failed. Expected", test.CurrentDifficulty, "and calculated", diff)
+	file, err := os.Open(filepath.Join("..", "..", "tests", "testdata", "BasicTests", "difficulty.json"))
+	if err == nil {
+		defer file.Close()
+		err = json.NewDecoder(file).Decode(&tests)
+		if err != nil {
+			t.Fatal(err)
 		}
+	}
+	if len(tests) == 0 {
+		tests["below-min"] = diffTest{
+			ParentTimestamp:    0,
+			ParentDifficulty:   big.NewInt(131072),
+			CurrentTimestamp:   240,
+			CurrentBlocknumber: big.NewInt(1),
+			CurrentDifficulty:  params.MinimumDifficultyHF5,
+		}
+		tests["below-min-2"] = diffTest{
+			ParentTimestamp:    0,
+			ParentDifficulty:   big.NewInt(131072),
+			CurrentTimestamp:   240,
+			CurrentBlocknumber: big.NewInt(2),
+			CurrentDifficulty:  params.MinimumDifficultyHF5,
+		}
+		tests["go up"] = diffTest{
+			ParentTimestamp:    0,
+			ParentDifficulty:   big.NewInt(46039386), // "MinimumDifficultyHF5"
+			CurrentTimestamp:   90,
+			CurrentBlocknumber: big.NewInt(1),
+			CurrentDifficulty:  big.NewInt(46399068),
+		}
+		tests["go up"] = diffTest{
+			ParentTimestamp:    0,
+			ParentDifficulty:   big.NewInt(46039386), // "MinimumDifficultyHF5"
+			CurrentTimestamp:   120,
+			CurrentBlocknumber: big.NewInt(1),
+			CurrentDifficulty:  big.NewInt(46399068), // go up
+		}
+		tests["go up"] = diffTest{
+			ParentTimestamp:    0,
+			ParentDifficulty:   big.NewInt(46039386), // "MinimumDifficultyHF5"
+			CurrentTimestamp:   140,
+			CurrentBlocknumber: big.NewInt(1),
+			CurrentDifficulty:  big.NewInt(46399068), // go up
+		}
+		tests["go up"] = diffTest{
+			ParentTimestamp:    0,
+			ParentDifficulty:   big.NewInt(46039386), // "MinimumDifficultyHF5"
+			CurrentTimestamp:   params.DurationLimitHF6.Uint64() - 1,
+			CurrentBlocknumber: big.NewInt(1),
+			CurrentDifficulty:  big.NewInt(46399068), // go up
+		}
+		tests["go up again"] = diffTest{
+			ParentTimestamp:    0,
+			ParentDifficulty:   big.NewInt(46399068), // from up
+			CurrentTimestamp:   params.DurationLimitHF6.Uint64() - 1,
+			CurrentBlocknumber: big.NewInt(1),
+			CurrentDifficulty:  big.NewInt(46761560), // go up again
+		}
+		tests["stay same"] = diffTest{
+			ParentTimestamp:    0,
+			ParentDifficulty:   big.NewInt(46039386), // "MinimumDifficultyHF5"
+			CurrentTimestamp:   params.DurationLimitHF6.Uint64() + 1,
+			CurrentBlocknumber: big.NewInt(1),
+			CurrentDifficulty:  big.NewInt(46039386), // stay same
+		}
+		tests["go down ok"] = diffTest{
+			ParentTimestamp:    0,
+			ParentDifficulty:   big.NewInt(46761560), // from up again
+			CurrentTimestamp:   params.DurationLimitHF6.Uint64() + 1,
+			CurrentBlocknumber: big.NewInt(1),
+			CurrentDifficulty:  big.NewInt(46396236), // not same as from up
+		}
+		// json.NewEncoder(os.Stdout).Encode(tests)
+	}
+	config := &params.ChainConfig{HomesteadBlock: big.NewInt(0), ChainId: big.NewInt(1337), HF: params.TestHF}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			diff := CalcDifficulty(config, test.CurrentTimestamp, &types.Header{
+				Number:     new(big.Int).Sub(test.CurrentBlocknumber, big.NewInt(1)),
+				Time:       new(big.Int).SetUint64(test.ParentTimestamp),
+				Difficulty: test.ParentDifficulty,
+			}, nil)
+			if diff.Cmp(test.CurrentDifficulty) != 0 {
+				t.Error(name, "failed. Expected", test.CurrentDifficulty, "and calculated", diff)
+			}
+		})
 	}
 }

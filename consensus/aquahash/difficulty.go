@@ -111,106 +111,91 @@ var _, fakedifficultymode = os.LookupEnv("FAKEPOWTEST") // will generate wrong b
 
 // calcDifficultyHFX combines all difficulty algorithms
 func calcDifficultyHFX(config *params.ChainConfig, time uint64, parent, grandparent *types.Header) *big.Int {
+	if config == nil {
+		panic("difficulty: chainConfig is nil")
+	}
 	var (
-		diff          = new(big.Int)
-		next          = new(big.Int).Add(parent.Number, big1)
-		chainID       = config.ChainId.Uint64()
-		hf            = config.UseHF(next)
-		adjust        *big.Int
-		bigTime       = new(big.Int)
-		bigParentTime = new(big.Int)
-		limit         = params.DurationLimitHF6 // target 240 seconds
-		min           = params.MinimumDifficultyHF5
-		mainnet       = params.MainnetChainConfig.ChainId.Uint64() == chainID // bool
-		ethnet        = params.EthnetChainConfig.ChainId.Uint64() == chainID  // bool
+		next                   = new(big.Int).Add(parent.Number, big1)
+		chainID                = config.ChainId.Uint64()
+		adjust        *big.Int = new(big.Int).Div(parent.Difficulty, params.DifficultyBoundDivisor)
+		bigTime                = new(big.Int).SetUint64(time)
+		bigParentTime          = new(big.Int).Set(parent.Time)
+		limit                  = params.DurationLimit // not accurate, fixed in HF6
+		min                    = params.MinimumDifficultyGenesis
+		// mainnet       = params.MainnetChainConfig.ChainId.Uint64() == chainID // TODO: allow others
 	)
 	if fakedifficultymode {
 		log.Warn("Fake difficulty mode!!!", "static-difficulty", params.MinimumDifficultyHF5)
 		return params.MinimumDifficultyHF5
 	}
-	if config == params.Testnet3ChainConfig {
-		return calcDifficultyGrandparent(time, parent, grandparent, hf, chainID)
-	}
-	if ethnet {
-		return EthCalcDifficulty(config, time, parent)
-	}
-	if !mainnet {
-		min = params.MinimumDifficultyHF5Testnet
-	}
 
-	if hf > params.KnownHF {
-		panic("unknown HF not implemented")
-	}
-
-	switch hf {
-	case 9:
-		return calcDifficultyGrandparent(time, parent, grandparent, hf, chainID)
-	case 8:
-		if next.Cmp(config.GetHF(8)) == 0 && mainnet {
-			return params.MinimumDifficultyHF5
-		}
-		if next.Cmp(config.GetHF(8)) == 0 && !mainnet {
-			return params.MinimumDifficultyHF8Testnet
-		}
-		adjust = new(big.Int).Div(parent.Difficulty, params.DifficultyBoundDivisorHF8)
-		if !mainnet {
-			adjust = new(big.Int).Div(parent.Difficulty, params.DifficultyBoundDivisorHF8Testnet)
-			min = params.MinimumDifficultyHF8Testnet
-		}
-	case 6, 7:
-		adjust = new(big.Int).Div(parent.Difficulty, params.DifficultyBoundDivisorHF6)
-	case 5:
-		if next.Cmp(config.GetHF(5)) == 0 && mainnet {
-			return params.MinimumDifficultyHF5
-		}
-		if next.Cmp(config.GetHF(5)) == 0 && !mainnet {
-			return params.MinimumDifficultyHF5Testnet
-		}
-		limit = params.DurationLimit // not accurate, fixed in hf6
+	// fix min
+	if config.IsHF(5, next) {
+		min = params.MinimumDifficultyHF5
 		adjust = new(big.Int).Div(parent.Difficulty, params.DifficultyBoundDivisorHF5)
-		if mainnet {
-			min = params.MinimumDifficultyHF5
-		}
-	case 3, 4:
-		limit = params.DurationLimit // not accurate, fixed in hf6
-		adjust = new(big.Int).Div(parent.Difficulty, params.DifficultyBoundDivisor)
-		if mainnet {
-			min = params.MinimumDifficultyHF3
-		}
-	case 2:
-		limit = params.DurationLimit // not accurate, fixed in hf6
-		adjust = new(big.Int).Div(parent.Difficulty, params.DifficultyBoundDivisor)
-		if mainnet {
-			min = params.MinimumDifficultyHF1
-		}
-	case 1:
-		return calcDifficultyHF1(time, parent, chainID)
-	case 0:
-		return calcDifficultyStarting(time, parent, chainID)
-	default:
-		panic("calcDifficulty: invalid hf")
+	} else if config.IsHF(3, next) {
+		min = params.MinimumDifficultyHF3
+	} else if config.IsHF(1, next) {
+		min = params.MinimumDifficultyHF1
+	}
+	if config.IsHF(6, next) {
+		limit = params.DurationLimitHF6
 	}
 
-	bigTime.SetUint64(time)
-	bigParentTime.Set(parent.Time)
+	// adjust
+	if config.IsHF(8, next) {
+		adjust = new(big.Int).Div(parent.Difficulty, params.DifficultyBoundDivisorHF8)
+	} else if config.IsHF(6, next) {
+		adjust = new(big.Int).Div(parent.Difficulty, params.DifficultyBoundDivisorHF6)
+	}
 
-	// calculate difficulty
+	switch {
+	case config.IsHF(10, next): // HF10: use grandparent
+		return calcDifficultyGrandparent(time, parent, grandparent, config, chainID)
+	case config.IsHF(8, next) && next.Cmp(config.GetHF(8)) == 0: // is this the HF8 fork block?
+		log.Info("Activating Hardfork", "HF", 8, "BlockNumber", next.String())
+		return params.MinimumDifficultyHF5 // difficulty reset for fork block
+	case config.IsHF(6, next) && next.Cmp(config.GetHF(6)) == 0: // is this the HF6 fork block?
+		log.Info("Activating Hardfork", "HF", 6, "BlockNumber", next.String())
+	case config.IsHF(7, next) && next.Cmp(config.GetHF(7)) == 0: // is this the HF7 fork block?
+		log.Info("Activating Hardfork", "HF", 7, "BlockNumber", next.String())
+	case config.IsHF(5, next) && next.Cmp(config.GetHF(5)) == 0: // is this the HF5 fork block?
+		// log.Info("Activating Hardfork", "HF", 5, "BlockNumber", next.String()) // already notified in StateProcesser
+		return params.MinimumDifficultyHF5 // difficulty reset for fork block
+	case config.IsHF(3, next) && next.Cmp(config.GetHF(3)) == 0: // is this the HF3 fork block?
+		log.Info("Activating Hardfork", "HF", 3, "BlockNumber", next.String())
+		return params.MinimumDifficultyHF3 // difficulty reset for fork block
+	case config.IsHF(2, next) && next.Cmp(config.GetHF(2)) == 0: // is this the HF2 fork block?
+		log.Info("Activating Hardfork", "HF", 2, "BlockNumber", next.String())
+		// continue below
+	case config.IsHF(2, next):
+		// continue below
+	case config.IsHF(1, next) && next.Cmp(config.GetHF(1)) == 0: // is this the HF1 fork block?
+		log.Info("Activating Hardfork", "HF", 1, "BlockNumber", next.String())
+		return params.MinimumDifficultyHF1 // difficulty reset for fork block
+	case config.IsHF(1, next):
+		return calcDifficultyHF1(time, parent, chainID)
+	default: // no HF... first 30k blocks.
+		return calcDifficultyStarting(time, parent, chainID)
+
+	}
+	// calculate difficulty using [adjust,min,limit]
+	var diff = new(big.Int).Set(parent.Difficulty)
 	if bigTime.Sub(bigTime, bigParentTime).Cmp(limit) < 0 {
 		diff.Add(parent.Difficulty, adjust)
 	} else {
 		diff.Sub(parent.Difficulty, adjust)
 	}
-
 	if diff.Cmp(min) < 0 {
 		diff.Set(min)
 	}
-
 	return diff
 }
 
 // calcDifficultyGrandparent experimental
-func calcDifficultyGrandparent(time uint64, parent, grandparent *types.Header, hf int, chainID uint64) *big.Int {
+func calcDifficultyGrandparent(time uint64, parent, grandparent *types.Header, chaincfg *params.ChainConfig, chainID uint64) *big.Int {
 	if grandparent == nil {
+		log.Warn("calcDifficultyGrandparent: grandparent is nil, using parent difficulty")
 		return new(big.Int).Set(parent.Difficulty)
 	}
 	bigGrandparentTime := new(big.Int).Set(grandparent.Time)
@@ -223,7 +208,9 @@ func calcDifficultyGrandparent(time uint64, parent, grandparent *types.Header, h
 	y := new(big.Int)
 
 	divisor := params.DifficultyBoundDivisorHF5
-
+	if chaincfg.IsHF(8, parent.Number) {
+		divisor = params.DifficultyBoundDivisorHF8
+	}
 	// 1 - (block_timestamp - parent_timestamp) // 240
 	x.Sub(bigParentTime, bigGrandparentTime)
 	x.Div(x, big240)
@@ -234,11 +221,6 @@ func calcDifficultyGrandparent(time uint64, parent, grandparent *types.Header, h
 		x.Set(bigMinus99)
 	}
 
-	if grandparent.Difficulty.Cmp(big10000) < 0 {
-		divisor = params.DifficultyBoundDivisorHF5
-	} else {
-		divisor = params.DifficultyBoundDivisorHF8
-	}
 	// (parent_diff + parent_diff // 2048 * max(1 - (block_timestamp - parent_timestamp) // 10, -99))
 	y.Div(grandparent.Difficulty, divisor)
 	x.Mul(y, x)
@@ -246,9 +228,9 @@ func calcDifficultyGrandparent(time uint64, parent, grandparent *types.Header, h
 
 	// minimum difficulty can ever be (before exponential factor)
 	if chainID == params.MainnetChainConfig.ChainId.Uint64() {
-		x = math.BigMax(x, params.MinimumDifficultyHF5)
+		x = math.BigMax(params.MinimumDifficultyHF5, x)
 	} else {
-		x = math.BigMax(x, params.MinimumDifficultyHF5Testnet)
+		x = math.BigMax(params.MinimumDifficultyHF5Testnet, x)
 	}
 	return x
 }
