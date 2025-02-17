@@ -911,9 +911,6 @@ func (bc *BlockChain) WriteBlockWithState(block *types.Block, receipts []*types.
 	defer bc.mu.Unlock()
 
 	currentBlock := bc.CurrentBlock()
-	if hf7 := bc.Config().GetHF(7); hf7 != nil && hf7.Cmp(currentBlock.Number()) == 0 {
-		log.Info("Activating Hardfork", "HF", 7, "BlockNumber", hf7)
-	}
 	localTd := bc.GetTd(currentBlock.Hash(), currentBlock.NumberU64())
 	externTd := new(big.Int).Add(block.Difficulty(), ptd)
 
