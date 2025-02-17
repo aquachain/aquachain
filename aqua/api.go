@@ -454,6 +454,8 @@ func hasAllBlocks(chain *core.BlockChain, bs []*types.Block) bool {
 	return true
 }
 
+const ImportBatchSize = 3600
+
 // ImportChain imports a blockchain from a local file.
 func (api *PrivateAdminAPI) ImportChain(file string) (bool, error) {
 	// Make sure the can access the file to import
@@ -473,8 +475,11 @@ func (api *PrivateAdminAPI) ImportChain(file string) (bool, error) {
 	// Run actual the import in pre-configured batches
 	stream := rlp.NewStream(reader, 0)
 
-	blocks, index := make([]*types.Block, 0, 2500), 0
+	blocks, index := make([]*types.Block, 0, ImportBatchSize), 0
 	for batch := 0; ; batch++ {
+		if api.aqua.ctx.Err() != nil {
+			return false, fmt.Errorf("import aborted")
+		}
 		// Load a batch of blocks from the input file
 		for len(blocks) < cap(blocks) {
 			block := new(types.Block)

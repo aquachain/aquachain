@@ -41,7 +41,7 @@ import (
 )
 
 const (
-	importBatchSize = 2500
+	importBatchSize = aqua.ImportBatchSize
 )
 
 var start_time = time.Now().UTC()
