@@ -242,8 +242,7 @@ func (f *BigFlag) Apply(set *flag.FlagSet) error {
 func GlobalBig(cmd *cli.Command, name string) *big.Int {
 	val := cmd.Generic(name)
 	if val == nil {
-		panic("wtf flag is " + name)
-		return nil
+		panic("bad flag is named " + name)
 	}
 
 	return (*big.Int)(val.Get().(*bigValue))
