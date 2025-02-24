@@ -27,7 +27,7 @@ import (
 	"github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/aqua"
 	"gitlab.com/aquachain/aquachain/cmd/utils"
-	"gitlab.com/aquachain/aquachain/consensus/aquahash"
+	"gitlab.com/aquachain/aquachain/consensus/aquahash/ethashdag"
 	"gitlab.com/aquachain/aquachain/params"
 )
 
@@ -87,7 +87,7 @@ func makecache(_ context.Context, cmd *cli.Command) error {
 	if err != nil {
 		utils.Fatalf("Invalid block number: %v", err)
 	}
-	aquahash.MakeCache(block, args[1])
+	ethashdag.MakeCache(block, args[1])
 	return nil
 }
 
@@ -101,7 +101,7 @@ func makedag(_ context.Context, cmd *cli.Command) error {
 	if err != nil {
 		utils.Fatalf("Invalid block number: %v", err)
 	}
-	aquahash.MakeDataset(block, args[1])
+	ethashdag.MakeDataset(block, args[1])
 
 	return nil
 }
