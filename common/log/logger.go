@@ -24,9 +24,9 @@ import (
 	"github.com/go-stack/stack"
 )
 
-const timeKey = "t"
-const lvlKey = "lvl"
-const msgKey = "msg"
+const timeKey = "time"
+const lvlKey = "level"
+const msgKey = "message"
 const errorKey = "LOG15_ERROR"
 
 type Lvl int

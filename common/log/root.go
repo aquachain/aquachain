@@ -21,13 +21,14 @@ import (
 )
 
 var (
-	root          = &logger{[]interface{}{}, new(swapHandler)}
-	StdoutHandler = StreamHandler(os.Stdout, LogfmtFormat())
-	StderrHandler = StreamHandler(os.Stderr, LogfmtFormat())
+	root = &logger{[]interface{}{}, new(swapHandler)}
+	// StdoutHandler = StreamHandler(os.Stdout, LogfmtFormat())
+	// StderrHandler = StreamHandler(os.Stderr, LogfmtFormat())
+	StderrHandler = StreamHandler(os.Stderr, JsonFormatEx(false, true))
 )
 
 func init() {
-	root.SetHandler(StderrHandler)
+	root.SetHandler(CallerFileHandler(StderrHandler))
 }
 
 // New returns a new logger with the given context.
