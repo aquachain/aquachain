@@ -37,7 +37,7 @@ build_dir ?= ./bin
 INSTALL_DIR ?= $(PREFIX)/bin
 release_dir=release
 hashfn := sha384sum
-golangci_linter_version := v1.24.0
+golangci_linter_version := v1.64.5
 main_deps := $(filter %.go,$(wildcard *.go */*.go */*/*.go */*/*/*.go */*/*/*/*.g))
 cgo=$(CGO_ENABLED)
 
@@ -344,7 +344,6 @@ goget:
 
 linter: bin/golangci-lint
 	CGO_ENABLED=0 ./bin/golangci-lint -v run \
-	  --deadline 20m \
 	  --config .golangci.yml \
 	  --build-tags static,netgo,osusergo \
 	  -v
