@@ -23,6 +23,14 @@ import (
 	"gitlab.com/aquachain/aquachain/core/state"
 )
 
+// Some HF require modifying the state trie.
+//
+// These functions are called from, and new ones must be added to:
+// 'Process' in core/state_processor.go
+// 'commitNewWork' in opt/miner/worker.go
+// and for testing, 'GenerateChain' in core/chain_makers.go
+
+// ApplyHardFork4 sets eth presale balances to zero
 func ApplyHardFork4(statedb *state.StateDB) {
 	big0 := new(big.Int)
 	for _, hexadd := range DeallocListHF4 {
@@ -33,6 +41,7 @@ func ApplyHardFork4(statedb *state.StateDB) {
 	}
 }
 
+// ApplyHardFork5 removes eth presale accounts (not just balances)
 func ApplyHardFork5(statedb *state.StateDB) {
 	for _, hexadd := range DeallocListHF4 {
 		address := common.HexToAddress(hexadd)

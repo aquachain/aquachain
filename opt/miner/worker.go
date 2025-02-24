@@ -482,10 +482,10 @@ func (w *worker) commitNewWork() {
 
 	// Mutate the work state according to any hard-fork specs
 	if hf4 := work.config.GetHF(4); hf4 != nil && hf4.Cmp(work.header.Number) == 0 {
-		misc.ApplyHardFork4(work.state)
+		misc.ApplyHardFork4(work.state) // miner commitNewWork
 	}
 	if hf5 := work.config.GetHF(5); hf5 != nil && hf5.Cmp(work.header.Number) == 0 {
-		misc.ApplyHardFork5(work.state)
+		misc.ApplyHardFork5(work.state) // miner commitNewWork
 	}
 
 	// compute uncles for the new block.

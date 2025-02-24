@@ -67,12 +67,13 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 
 	// Mutate the the block and state according to any hard-fork specs
 	if hf4 := p.config.GetHF(4); hf4 != nil && hf4.Cmp(header.Number) == 0 {
-		log.Info("Activating Hardfork", "HF", 4, "BlockNumber", p.config.GetHF(4))
-		misc.ApplyHardFork4(statedb)
+		log.Info("Activating Hardfork", "HF", 4, "BlockNumber", hf4)
+		misc.ApplyHardFork4(statedb) // Process block
 	}
 
 	if hf5 := p.config.GetHF(5); hf5 != nil && hf5.Cmp(header.Number) == 0 {
-		misc.ApplyHardFork5(statedb)
+		log.Info("Activating Hardfork", "HF", 5, "BlockNumber", hf5)
+		misc.ApplyHardFork5(statedb) // Process block
 	}
 	// Iterate over and process the individual transactions
 	for i, tx := range block.Transactions() {
