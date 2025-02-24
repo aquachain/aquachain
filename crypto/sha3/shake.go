@@ -48,8 +48,12 @@ func NewShake256() ShakeHash { return &state{rate: 136, dsbyte: 0x1f} }
 // ShakeSum128 writes an arbitrary-length digest of data into hash.
 func ShakeSum128(hash, data []byte) {
 	h := NewShake128()
-	h.Write(data)
-	h.Read(hash)
+	if _, err := h.Write(data); err != nil {
+		panic("sha3: " + err.Error())
+	}
+	if _, err := h.Read(hash); err != nil {
+		panic("sha3: " + err.Error())
+	}
 }
 
 // ShakeSum256 writes an arbitrary-length digest of data into hash.
