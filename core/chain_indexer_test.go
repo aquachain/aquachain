@@ -25,6 +25,7 @@ import (
 
 	"gitlab.com/aquachain/aquachain/aquadb"
 	"gitlab.com/aquachain/aquachain/common"
+	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/core/types"
 	"gitlab.com/aquachain/aquachain/params"
 )
@@ -50,7 +51,7 @@ func TestChainIndexerWithChildren(t *testing.T) {
 func testChainIndexer(t *testing.T, count int) {
 	db := aquadb.NewMemDatabase()
 	defer db.Close()
-
+	var chaincfg = params.TestChainConfig
 	// Create a chain of indexers and ensure they all report empty
 	backends := make([]*testChainIndexBackend, count)
 	for i := 0; i < count; i++ {
@@ -59,7 +60,7 @@ func testChainIndexer(t *testing.T, count int) {
 			confirmsReq = uint64(rand.Intn(10))
 		)
 		backends[i] = &testChainIndexBackend{t: t, processCh: make(chan uint64)}
-		backends[i].indexer = NewChainIndexer(params.TestChainConfig, db, aquadb.NewTable(db, string([]byte{byte(i)})), backends[i], sectionSize, confirmsReq, 0, fmt.Sprintf("indexer-%d", i))
+		backends[i].indexer = NewChainIndexer(chaincfg, db, aquadb.NewTable(db, string([]byte{byte(i)})), backends[i], sectionSize, confirmsReq, 0, fmt.Sprintf("indexer-%d", i))
 
 		if sections, _, _ := backends[i].indexer.Sections(); sections != 0 {
 			t.Fatalf("Canonical section count mismatch: have %v, want %v", sections, 0)
@@ -101,14 +102,14 @@ func testChainIndexer(t *testing.T, count int) {
 	}
 	// Start indexer with an already existing chain
 	for i := uint64(0); i <= 100; i++ {
-		version := params.TestChainConfig.GetBlockVersion(new(big.Int).SetUint64(i))
+		version := chaincfg.GetBlockVersion(new(big.Int).SetUint64(i))
 		inject(i, version)
 	}
 	notify(100, 100, false)
 
 	// Add new blocks one by one
 	for i := uint64(101); i <= 1000; i++ {
-		version := params.TestChainConfig.GetBlockVersion(new(big.Int).SetUint64(i))
+		version := chaincfg.GetBlockVersion(new(big.Int).SetUint64(i))
 		inject(i, version)
 		notify(i, i, false)
 	}
@@ -117,12 +118,12 @@ func testChainIndexer(t *testing.T, count int) {
 
 	// Create new fork
 	for i := uint64(501); i <= 1000; i++ {
-		version := params.TestChainConfig.GetBlockVersion(new(big.Int).SetUint64(i))
+		version := chaincfg.GetBlockVersion(new(big.Int).SetUint64(i))
 		inject(i, version)
 		notify(i, i, false)
 	}
 	for i := uint64(1001); i <= 1500; i++ {
-		version := params.TestChainConfig.GetBlockVersion(new(big.Int).SetUint64(i))
+		version := chaincfg.GetBlockVersion(new(big.Int).SetUint64(i))
 		inject(i, version)
 	}
 	// Failed processing scenario where less blocks are available than notified
@@ -133,7 +134,7 @@ func testChainIndexer(t *testing.T, count int) {
 
 	// Create new fork
 	for i := uint64(1501); i <= 2000; i++ {
-		version := params.TestChainConfig.GetBlockVersion(new(big.Int).SetUint64(i))
+		version := chaincfg.GetBlockVersion(new(big.Int).SetUint64(i))
 		inject(i, version)
 		notify(i, i, false)
 	}
@@ -170,6 +171,7 @@ func (b *testChainIndexBackend) assertBlocks(headNum, failNum uint64) (uint64, b
 		sections = (headNum + 1 - b.indexer.confirmsReq) / b.indexer.sectionSize
 		if sections > b.stored {
 			// expect processed blocks
+			log.Warn("Expecting processed blocks", "headNum", headNum, "failNum", failNum, "sections", sections, "stored", b.stored)
 			for expectd := b.stored * b.indexer.sectionSize; expectd < sections*b.indexer.sectionSize; expectd++ {
 				if expectd > failNum {
 					// rolled back after processing started, no more process calls expected

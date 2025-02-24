@@ -78,7 +78,8 @@ func (s *SimAdapter) NewNode(config *NodeConfig) (Node, error) {
 	}
 
 	n, err := node.New(&node.Config{
-		Context: context.TODO(),
+		Context:   context.TODO(),
+		CloseMain: func() {},
 		P2P: p2p.Config{
 			PrivateKey:      config.PrivateKey,
 			MaxPeers:        math.MaxInt32,

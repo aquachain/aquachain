@@ -31,6 +31,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"gitlab.com/aquachain/aquachain/aqua/event"
+	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/p2p"
 	"gitlab.com/aquachain/aquachain/p2p/discover"
 	"gitlab.com/aquachain/aquachain/p2p/simulations/adapters"
@@ -175,6 +176,10 @@ func (c *Client) GetNodes() ([]*p2p.NodeInfo, error) {
 
 // CreateNode creates a node in the network using the given configuration
 func (c *Client) CreateNode(config *adapters.NodeConfig) (*p2p.NodeInfo, error) {
+	if config == nil {
+		log.Warn("no config provided, using random config")
+		config = adapters.RandomNodeConfig()
+	}
 	node := &p2p.NodeInfo{}
 	return node, c.Post("/nodes", config, node)
 }
