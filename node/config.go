@@ -275,8 +275,7 @@ var isOldAquachainResource = map[string]bool{
 
 func (c *Config) name() string {
 	if c.Name == "" {
-		panic("empty name")
-		return "aquachain"
+		panic("empty node.Config name")
 	}
 	if strings.Contains(c.Name, "/") {
 		panic("c.Name must not contain '/'")
