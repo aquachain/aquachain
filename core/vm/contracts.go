@@ -24,7 +24,7 @@ import (
 	"gitlab.com/aquachain/aquachain/common/math"
 	"gitlab.com/aquachain/aquachain/crypto"
 	"gitlab.com/aquachain/aquachain/params"
-	"golang.org/x/crypto/ripemd160"
+	"golang.org/x/crypto/ripemd160" // #nosec
 )
 
 // PrecompiledContract is the basic interface for native Go contracts. The implementation
