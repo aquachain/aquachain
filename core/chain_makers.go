@@ -173,10 +173,10 @@ func GenerateChain(ctx context.Context, config *params.ChainConfig, parent *type
 		b.header = makeHeader(b.chainReader, parent, statedb, b.engine)
 		// Mutate the the block and state according to any hard-fork specs
 		if hf4 := config.GetHF(4); hf4 != nil && hf4.Cmp(b.header.Number) == 0 {
-			misc.ApplyHardFork4(statedb)
+			misc.ApplyHardFork4(statedb) // GenerateChain (testing)
 		}
 		if hf5 := config.GetHF(5); hf5 != nil && hf5.Cmp(b.header.Number) == 0 {
-			misc.ApplyHardFork5(statedb)
+			misc.ApplyHardFork5(statedb) // GenerateChain (testing)
 		}
 		// Execute any user modifications to the block and finalize it
 		if gen != nil {
