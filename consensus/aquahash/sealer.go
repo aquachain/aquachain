@@ -130,7 +130,7 @@ func (aquahash *Aquahash) mine(version params.HeaderVersion, block *types.Block,
 		nonce = seed
 	)
 	logger := log.New("miner", id)
-	logger.Trace("Started aquahash search for new nonces", "seed", seed, "algo", version)
+	logger.Trace("Started aquahash search for new nonces", "seed", seed, "algo", version, "number", number, "difficulty", header.Difficulty, "target", target)
 search:
 	for {
 

@@ -960,7 +960,7 @@ func (bc *BlockChain) WriteBlockWithState(block *types.Block, receipts []*types.
 					case size >= 2*limit:
 						log.Warn("State memory usage too high, committing", "size", size, "limit", limit, "optimum", float64(chosen-lastWrite)/triesInMemory)
 					case bc.gcproc >= 2*bc.cacheConfig.TrieTimeLimit:
-						log.Info("State in memory for too long, committing", "time", bc.gcproc, "allowance", bc.cacheConfig.TrieTimeLimit, "optimum", float64(chosen-lastWrite)/triesInMemory)
+						log.Info("State in memory for too long, committing", "dur", bc.gcproc, "allowance", bc.cacheConfig.TrieTimeLimit, "optimum", float64(chosen-lastWrite)/triesInMemory)
 					}
 				}
 				// If optimum or critical limits reached, write to disk
@@ -1051,7 +1051,7 @@ func (bc *BlockChain) insertChain2(chain types.Blocks, try int) (int, []interfac
 	if try > 3 {
 		return 0, nil, nil, fmt.Errorf("after 3 tries, no good chain")
 	}
-	log.Debug("Inserting chain", "length", len(chain), "startversion", chain[0].Version())
+	log.Debug("Inserting chain", "at", chain[0].Number().String(), "length", len(chain), "startversion", chain[0].Version())
 	// Do a sanity check that the provided chain is actually ordered and linked
 	for i := 1; i < len(chain); i++ {
 		if chain[i-1].Version() == 0 {

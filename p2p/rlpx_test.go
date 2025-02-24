@@ -74,7 +74,7 @@ func TestEncHandshake(t *testing.T) {
 		if err := testEncHandshake(nil); err != nil {
 			t.Fatalf("i=%d %v", i, err)
 		}
-		log.Info("no token", "i", i, "time", time.Since(start))
+		log.Info("no token", "i", i, "dur", time.Since(start))
 	}
 	// if true {
 	// 	return
@@ -86,7 +86,7 @@ func TestEncHandshake(t *testing.T) {
 	// 	if err := testEncHandshake(tok); err != nil {
 	// 		t.Fatalf("i=%d %v", i, err)
 	// 	}
-	// 	log.Info("with token", "i", i, "time", time.Since(start))
+	// 	log.Info("with token", "i", i, "dur", time.Since(start))
 	// }
 }
 

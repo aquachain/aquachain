@@ -300,6 +300,6 @@ func (ac *accountCache) scanAccounts() error {
 	case ac.notify <- struct{}{}:
 	default:
 	}
-	log.Trace("Handled keystore changes", "time", end.Sub(start))
+	log.Trace("Handled keystore changes", "dur", end.Sub(start))
 	return nil
 }
