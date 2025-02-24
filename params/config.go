@@ -85,11 +85,12 @@ var (
 
 	// TestHF is the map of hard forks (for testing suite)
 	TestHF = ForkMap{
-		// 1: big.NewInt(0),
-		// 2: big.NewInt(0),
-		// 3: big.NewInt(0),
+		1: big.NewInt(0),
+		2: big.NewInt(0),
+		3: big.NewInt(0),
 		4: big.NewInt(0),
 		5: big.NewInt(0),
+		6: big.NewInt(0),
 		7: big.NewInt(0),
 		// 8: big.NewInt(0),
 	}
