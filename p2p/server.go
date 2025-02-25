@@ -120,7 +120,7 @@ type Config struct {
 	// If set to a non-nil value, the given NAT port mapper
 	// is used to make the listening port available to the
 	// Internet.
-	NAT nat.NatString `toml:",omitempty"`
+	NAT nat.NatString
 
 	// If Dialer is set to a non-nil value, the given Dialer
 	// is used to dial outbound peer connections.
@@ -150,7 +150,7 @@ func (c Config) ChainConfig() *params.ChainConfig {
 // Server manages all peer connections.
 type Server struct {
 	// Config fields may not be modified while the server is running.
-	Config
+	*Config
 	// Hooks for testing. These are useful because we can inhibit
 	// the whole protocol stack.
 	newTransport func(net.Conn) transport
@@ -410,7 +410,7 @@ func (srv *Server) Start(ctx context.Context) (err error) {
 	}
 	now, _ := x.(bool)
 	if !now {
-		for i := 10; i > 0 && ctx.Err() == nil; i-- {
+		for i := 5; i > 0 && ctx.Err() == nil; i-- {
 			log.Info("Starting P2P networking", "in", i, "on", srv.ListenAddr, "chain", chaincfg.Name())
 			for i := 0; i < 10 && ctx.Err() == nil; i++ {
 				time.Sleep(time.Second / 10)

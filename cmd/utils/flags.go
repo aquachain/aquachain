@@ -1158,7 +1158,7 @@ func SetNodeConfig(cmd *cli.Command, cfg *node.Config) error {
 	cfg.P2P.ChainId = chaincfg.ChainId.Uint64()
 	cfg.P2P.BootstrapNodes = bootstrapNodes
 
-	SetP2PConfig(cmd, &cfg.P2P)
+	SetP2PConfig(cmd, cfg.P2P)
 	setIPC(cmd, cfg)
 	setHTTP(cmd, cfg)
 	setWS(cmd, cfg)

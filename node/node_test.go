@@ -41,7 +41,7 @@ func init() {
 func testNodeConfig() *Config {
 	return &Config{
 		Name:       "test node",
-		P2P:        p2p.Config{PrivateKey: testNodeKey, ChainId: 1337},
+		P2P:        &p2p.Config{PrivateKey: testNodeKey, ChainId: 1337},
 		RPCAllowIP: []string{"127.0.0.1"},
 	}
 }

@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/syndtr/goleveldb/leveldb"
 	"gitlab.com/aquachain/aquachain/aquadb"
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/log"
@@ -93,8 +94,8 @@ func encodeBlockNumber(number uint64) []byte {
 // GetCanonicalHash retrieves a hash assigned to a canonical block number.
 func GetCanonicalHash(db DatabaseReader, number uint64) common.Hash {
 	data, err := db.Get(append(append(headerPrefix, encodeBlockNumber(number)...), numSuffix...))
-	if err != nil {
-		log.Warn("Failed to retrieve canonical hash", "number", number, "err", err)
+	if err != nil && err != leveldb.ErrNotFound {
+		log.Error("Failed to retrieve canonical hash", "number", number, "err", err)
 	}
 	if len(data) == 0 {
 		return common.Hash{}

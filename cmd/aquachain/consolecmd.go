@@ -106,9 +106,14 @@ func localConsole(ctx context.Context, cmd *cli.Command) error {
 	if first := cmd.Args().First(); first != "" && first[0] != '-' && first != "console" {
 		return fmt.Errorf("uhoh: %q got here", first)
 	}
+	if args := cmd.Args(); args.Len() != 0 && args.First() != "console" {
+		return fmt.Errorf("invalid command: %q", args.First())
+	}
+	node := makeFullNode(ctx, cmd)
 	if !cmd.Root().Bool("now") {
 		for i := 3; i > 0 && ctx.Err() == nil; i-- {
-			log.Info("starting in ...", "seconds", i)
+			log.Info("starting in ...", "seconds", i, "bootnodes", len(node.Config().P2P.BootstrapNodes),
+				"static", len(node.Config().P2P.StaticNodes), "discovery", !node.Config().P2P.NoDiscovery)
 			for i := 0; i < 10 && ctx.Err() == nil; i++ {
 				time.Sleep(time.Second / 10)
 			}
@@ -117,10 +122,6 @@ func localConsole(ctx context.Context, cmd *cli.Command) error {
 	if ctx.Err() != nil {
 		return context.Cause(ctx)
 	}
-	if args := cmd.Args(); args.Len() != 0 && args.First() != "console" {
-		return fmt.Errorf("invalid command: %q", args.First())
-	}
-	node := makeFullNode(ctx, cmd)
 	startNode(ctx, cmd, node)
 	defer node.Stop()
 

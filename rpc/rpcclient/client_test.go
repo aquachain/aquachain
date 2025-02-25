@@ -491,7 +491,7 @@ func TestClientReconnect(t *testing.T) {
 
 func newTestServer(serviceName string, service interface{}) *rpc.Server {
 	server := rpc.NewServer()
-	if err := server.RegisterName(serviceName, service); err != nil {
+	if _, err := server.RegisterName(serviceName, service); err != nil {
 		panic(err)
 	}
 	return server

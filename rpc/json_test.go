@@ -20,6 +20,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"net"
 	"reflect"
 	"strconv"
 	"testing"
@@ -27,6 +28,10 @@ import (
 
 type RWC struct {
 	*bufio.ReadWriter
+}
+
+func (rwc *RWC) RemoteAddr() net.Addr {
+	return nil
 }
 
 func (rwc *RWC) Close() error {
@@ -37,7 +42,7 @@ func TestJSONRequestParsing(t *testing.T) {
 	server := NewServer()
 	service := new(Service)
 
-	if err := server.RegisterName("calc", service); err != nil {
+	if _, err := server.RegisterName("calc", service); err != nil {
 		t.Fatalf("%v", err)
 	}
 

@@ -40,7 +40,7 @@ var DefaultConfig = Config{
 	HTTPModules: []string{"aqua", "eth", "net", "web3"},
 	WSPort:      DefaultWSPort,
 	WSModules:   []string{"aqua", "eth", "net", "web3"},
-	P2P: p2p.Config{
+	P2P: &p2p.Config{
 		ListenAddr: "0.0.0.0:21303", // tcp+udp, ipv4 only
 		MaxPeers:   20,
 		NAT:        "", // none

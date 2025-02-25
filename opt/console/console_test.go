@@ -100,7 +100,7 @@ func newTester(t *testing.T, confOverride func(*aqua.Config)) *tester {
 		DataDir:           workspace,
 		UseLightweightKDF: true,
 		Name:              testInstance,
-		P2P:               p2p.Config{ChainId: 220},
+		P2P:               &p2p.Config{ChainId: 220},
 		RPCAllowIP:        []string{"127.0.0.1/32"},
 	})
 	if err != nil {

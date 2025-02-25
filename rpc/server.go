@@ -53,7 +53,10 @@ func NewServer() *Server {
 	// register a default service which will provide meta information about the RPC service such as the services and
 	// methods it offers.
 	rpcService := &RPCService{server}
-	server.RegisterName(MetadataApi, rpcService)
+	_, err := server.RegisterName(MetadataApi, rpcService)
+	if err != nil {
+		log.Error("failed to register MetadataAPI RPC service", "error", err)
+	}
 
 	return server
 }
@@ -76,7 +79,7 @@ func (s *RPCService) Modules() map[string]string {
 // RegisterName will create a service for the given rcvr type under the given name. When no methods on the given rcvr
 // match the criteria to be either a RPC method or a subscription an error is returned. Otherwise a new service is
 // created and added to the service collection this server instance serves.
-func (s *Server) RegisterName(name string, rcvr interface{}) error {
+func (s *Server) RegisterName(name string, rcvr interface{}) (methodNames []string, err error) {
 	if s.services == nil {
 		s.services = make(serviceRegistry)
 	}
@@ -86,18 +89,28 @@ func (s *Server) RegisterName(name string, rcvr interface{}) error {
 	rcvrVal := reflect.ValueOf(rcvr)
 
 	if name == "" {
-		return fmt.Errorf("no service name for type %s", svc.typ.String())
+		return nil, fmt.Errorf("no service name for type %s", svc.typ.String())
 	}
 	if !isExported(reflect.Indirect(rcvrVal).Type().Name()) {
-		return fmt.Errorf("%s is not exported", reflect.Indirect(rcvrVal).Type().Name())
+		return nil, fmt.Errorf("%s is not exported", reflect.Indirect(rcvrVal).Type().Name())
 	}
 
 	methods, subscriptions := suitableCallbacks(rcvrVal, svc.typ)
 
 	if len(methods) == 0 && len(subscriptions) == 0 {
-		return fmt.Errorf("Service %T doesn't have any suitable methods/subscriptions to expose", rcvr)
+		return nil, fmt.Errorf("service %T doesn't have any suitable methods/subscriptions to expose", rcvr)
 	}
 
+	methodNames = make([]string, len(methods))
+	var i = 0
+	for _, m := range methods {
+		if m.method.Name == "SendTransaction" {
+			continue
+		}
+		// log.Warn("rpc registered method", "service", name, "method", m.method.Name, "k", k)
+		methodNames[i] = fmt.Sprintf("%s_%s", name, strings.ToLower(m.method.Name[:1])+m.method.Name[1:])
+		i++
+	}
 	// already a previous service register under given name, merge methods/subscriptions
 	if regsvc, present := s.services[name]; present {
 		for _, m := range methods {
@@ -106,14 +119,19 @@ func (s *Server) RegisterName(name string, rcvr interface{}) error {
 		for _, s := range subscriptions {
 			regsvc.subscriptions[formatName(s.method.Name)] = s
 		}
-		return nil
+		return methodNames, nil
 	}
 
 	svc.name = name
 	svc.callbacks, svc.subscriptions = methods, subscriptions
 
 	s.services[svc.name] = svc
-	return nil
+	return methodNames, nil
+}
+
+type methodNames struct {
+	Methods       []string
+	Subscriptions []string
 }
 
 // serveRequest will reads requests from the codec, calls the RPC callback and
@@ -212,7 +230,9 @@ func (s *Server) serveRequest(codec ServerCodec, singleShot bool, options CodecO
 // ServeCodec reads incoming requests from codec, calls the appropriate callback and writes the
 // response back using the given codec. It will block until the codec is closed or the server is
 // stopped. In either case the codec is closed.
-func (s *Server) ServeCodec(codec ServerCodec, options CodecOption) {
+//
+// was ServerCodec
+func (s *Server) ServeCodec(codec *JsonCodec, options CodecOption) {
 	defer codec.Close()
 	s.serveRequest(codec, false, options)
 }

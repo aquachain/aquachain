@@ -32,6 +32,7 @@ import (
 	"gitlab.com/aquachain/aquachain/aqua/accounts"
 	"gitlab.com/aquachain/aquachain/aqua/event"
 	"gitlab.com/aquachain/aquachain/aquadb"
+	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/alerts"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/internal/debug"
@@ -54,7 +55,7 @@ type Node struct {
 	ephemeralKeystore string         // if non-empty, the key directory that will be removed by Stop
 	instanceDirLock   flock.Releaser // prevents concurrent use of instance directory
 
-	serverConfig p2p.Config
+	serverConfig *p2p.Config
 	server       *p2p.Server // Currently running P2P networking layer
 
 	serviceFuncs []ServiceConstructor     // Service constructors (in dependency order)
@@ -187,6 +188,7 @@ func (n *Node) Start(ctx context.Context) error {
 	n.serverConfig = n.config.P2P
 	n.serverConfig.PrivateKey = n.config.NodeKey()
 	n.serverConfig.Name = n.config.NodeName()
+
 	if n.serverConfig.Name == "" {
 		return errors.New("node name must be non-empty")
 	}
@@ -363,7 +365,7 @@ func (n *Node) startInProc(apis []rpc.API) error {
 	// Register all the APIs exposed by the services
 	handler := rpc.NewServer()
 	for _, api := range apis {
-		if err := handler.RegisterName(api.Namespace, api.Service); err != nil {
+		if _, err := handler.RegisterName(api.Namespace, api.Service); err != nil {
 			return err
 		}
 		n.log.Debug("InProc registered", "service", fmt.Sprintf("%T ( %s_ )", api.Service, api.Namespace))
@@ -389,7 +391,7 @@ func (n *Node) startIPC(apis []rpc.API) error {
 	// Register all the APIs exposed by the services
 	handler := rpc.NewServer()
 	for _, api := range apis {
-		if err := handler.RegisterName(api.Namespace, api.Service); err != nil {
+		if _, err := handler.RegisterName(api.Namespace, api.Service); err != nil {
 			return err
 		}
 		n.log.Debug("IPC registered", "service", fmt.Sprintf("%T ( %s_ )", api.Service, api.Namespace))
@@ -444,7 +446,7 @@ func (n *Node) stopIPC() {
 }
 
 // startHTTP initializes and starts the HTTP RPC endpoint.
-func (n *Node) startHTTP(endpoint string, apis []rpc.API, modules []string, cors []string, vhosts []string, allownet netutil.Netlist, behindreverseproxy bool) error {
+func (n *Node) startHTTP(endpoint string, apis []rpc.API, whitelistModules []string, cors []string, vhosts []string, allownet netutil.Netlist, behindreverseproxy bool) error {
 	if len(allownet) == 0 {
 		return fmt.Errorf("http rpc cant start with empty '-allowip' flag")
 	}
@@ -454,17 +456,21 @@ func (n *Node) startHTTP(endpoint string, apis []rpc.API, modules []string, cors
 	}
 	// Generate the whitelist based on the allowed modules
 	whitelist := make(map[string]bool)
-	for _, module := range modules {
+	for _, module := range whitelistModules {
 		whitelist[module] = true
+		log.Info("HTTP whitelist", "module", module)
 	}
 	// Register all the APIs exposed by the services
 	handler := rpc.NewServer()
+	//	var allMethods []string
 	for _, api := range apis {
 		if whitelist[api.Namespace] || (len(whitelist) == 0 && api.Public) {
-			if err := handler.RegisterName(api.Namespace, api.Service); err != nil {
+			m, err := handler.RegisterName(api.Namespace, api.Service)
+			if err != nil {
 				return err
 			}
-			n.log.Debug("HTTP registered", "service", fmt.Sprintf("%T ( %s_ )", api.Service, api.Namespace))
+			//			allMethods = append(allMethods, m...)
+			n.log.Warn("HTTP registered", "service", fmt.Sprintf("%T ( %s_ )", api.Service, api.Namespace), "methods", common.ToJson(m))
 		}
 	}
 	// All APIs registered, start the HTTP listener
@@ -516,10 +522,11 @@ func (n *Node) startWS(endpoint string, apis []rpc.API, modules []string, wsOrig
 	handler := rpc.NewServer()
 	for _, api := range apis {
 		if exposeAll || whitelist[api.Namespace] || (len(whitelist) == 0 && api.Public) {
-			if err := handler.RegisterName(api.Namespace, api.Service); err != nil {
+			m, err := handler.RegisterName(api.Namespace, api.Service)
+			if err != nil {
 				return err
 			}
-			n.log.Debug("WebSocket registered", "service", fmt.Sprintf("%T ( %s_ )", api.Service, api.Namespace))
+			n.log.Warn("WebSocket registered", "service", fmt.Sprintf("%T ( %s_ )", api.Service, api.Namespace), "methods", common.ToJson(m))
 		}
 	}
 	// All APIs registered, start the HTTP listener

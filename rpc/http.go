@@ -43,6 +43,11 @@ const (
 type httpReadWriteNopCloser struct {
 	io.Reader
 	io.Writer
+	remoteAddr *net.TCPAddr
+}
+
+func (t *httpReadWriteNopCloser) RemoteAddr() net.Addr {
+	return t.remoteAddr
 }
 
 // Close does nothing and returns always nil
@@ -65,8 +70,8 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet && r.ContentLength == 0 && r.URL.RawQuery == "" {
 		return
 	}
+	uip := getIP(r, srv.reverseproxy)
 	if code, err := validateRequest(r); err != nil {
-		uip := getIP(r, srv.reverseproxy)
 		log.Debug("invalid request", "from", uip, "size", r.ContentLength)
 		enc := json.NewEncoder(w)
 		enc.SetIndent(" ", " ")
@@ -78,7 +83,7 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// untilEOF and writes the response to w and order the server to process a
 	// single request.
 	body := io.LimitReader(r.Body, maxHTTPRequestContentLength)
-	codec := NewJSONCodec(&httpReadWriteNopCloser{body, w})
+	codec := NewJSONCodec(&httpReadWriteNopCloser{Reader: body, Writer: w, remoteAddr: &net.TCPAddr{IP: uip, Port: 0}})
 	defer codec.Close()
 
 	w.Header().Set("content-type", contentType)

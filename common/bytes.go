@@ -17,7 +17,22 @@
 // Package common contains various helper functions.
 package common
 
-import "encoding/hex"
+import (
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+
+	"gitlab.com/aquachain/aquachain/common/log"
+)
+
+// ToJson only for logging and interactive use
+func ToJson(a any) json.RawMessage {
+	b, err := json.Marshal(a)
+	if err != nil {
+		log.Error("json marshal error", "error", err.Error(), "type", fmt.Sprintf("%T", a))
+	}
+	return b
+}
 
 func ToHex(b []byte) string {
 	hex := Bytes2Hex(b)

@@ -70,7 +70,7 @@ type Config struct {
 	DataDir string
 
 	// Configuration of peer-to-peer networking.
-	P2P p2p.Config
+	P2P *p2p.Config
 
 	// KeyStoreDir is the file system folder that contains private keys. The directory can
 	// be specified as a relative path, in which case it is resolved relative to the
@@ -243,22 +243,28 @@ func (c *Config) NodeName() string {
 	return GetNodeName(c)
 }
 
-// GetNodeName returns the devp2p node identifier.
+// GetNodeName returns the devp2p node identifier. (uses cfg.Name, cfg.Version, and if exists cfg.UserIdent)
 // eg: Aquachain/v1.7.17-dev-f09095/linux-amd64/go1.23.5
-func GetNodeName(c *Config) string {
-	name := c.Name // main name of program
+func GetNodeName(cfg *Config) string {
+	name := cfg.Name // main name of program
 	if name == "" {
 		panic("empty name")
 	}
 	if name == "aquachain" {
 		name = "Aquachain"
 	}
-	if c.UserIdent != "" {
-		name += "-" + c.UserIdent // e.g. Aquachain-supercoolpool
+
+	// userident
+	if cfg.UserIdent != "" {
+		name += "-" + cfg.UserIdent // e.g. Aquachain-supercoolpool
 	}
-	if c.Version != "" {
-		name += "/v" + strings.TrimPrefix(c.Version, "v") // eg: Aquachain-supercoolpool/v1.7.17-sometag
+
+	// version info
+	if cfg.Version != "" {
+		name += "/v" + strings.TrimPrefix(cfg.Version, "v") // eg: Aquachain-supercoolpool/v1.7.17-sometag
 	}
+
+	// build info
 	name += "/" + runtime.GOOS + "-" + runtime.GOARCH // eg: Aquachain-supercoolpool/v1.7.17-sometag/linux-amd64
 	name += "/" + common.ShortGoVersion()             // eg: Aquachain-supercoolpool/v1.7.17-sometag/linux-amd64/go1.23.5
 	return name

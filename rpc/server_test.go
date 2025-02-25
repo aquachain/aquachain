@@ -79,7 +79,7 @@ func TestServerRegisterName(t *testing.T) {
 	server := NewServer()
 	service := new(Service)
 
-	if err := server.RegisterName("calc", service); err != nil {
+	if _, err := server.RegisterName("calc", service); err != nil {
 		t.Fatalf("%v", err)
 	}
 
@@ -105,7 +105,7 @@ func testServerMethodExecution(t *testing.T, method string) {
 	server := NewServer()
 	service := new(Service)
 
-	if err := server.RegisterName("test", service); err != nil {
+	if _, err := server.RegisterName("test", service); err != nil {
 		t.Fatalf("%v", err)
 	}
 

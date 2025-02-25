@@ -39,7 +39,22 @@ web3._extend({
 			name: 'messageHash',
 			call: 'testing_messageHash',
 			params: 1
-		})
+		}),
+		new web3._extend.Method({
+			name: 'getBlockTemplate',
+			call: 'testing_getBlockTemplate',
+			params: 1
+		}),
+		new web3._extend.Method({
+			name: 'submitBlock',
+			call: 'testing_submitBlock',
+			params: 1
+		}),
+		new web3._extend.Method({
+			name: 'nodeName',
+			call: 'testing_nodeName',
+			params: 0
+		}),
 	],
 	properties: []
 });	

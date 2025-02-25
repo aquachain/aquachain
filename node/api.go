@@ -23,10 +23,8 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.com/aquachain/aquachain/common/hexutil"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/common/metrics"
-	"gitlab.com/aquachain/aquachain/crypto"
 	"gitlab.com/aquachain/aquachain/p2p"
 	"gitlab.com/aquachain/aquachain/p2p/discover"
 	"gitlab.com/aquachain/aquachain/p2p/netutil"
@@ -425,14 +423,16 @@ func NewPublicWeb3API(stack *Node) *PublicWeb3API {
 
 // ClientVersion returns the node name
 func (s *PublicWeb3API) ClientVersion() string {
-	if s.stack == nil || s.stack.Server() == nil {
+	if s.stack == nil || s.stack.config == nil || s.stack.config.P2P == nil {
 		return "shutting down"
 	}
-	return s.stack.Server().Name
+	return s.stack.config.P2P.Name
 }
 
+/*
 // Sha3 applies the aquachain sha3 implementation on the input.
 // It assumes the input is hex encoded.
 func (s *PublicWeb3API) Sha3(input hexutil.Bytes) hexutil.Bytes {
 	return crypto.Keccak256(input)
 }
+*/

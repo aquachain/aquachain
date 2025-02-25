@@ -202,7 +202,6 @@ func (c *Console) init(preload []string) error {
 	}
 	flatten := "var aqua = web3.aqua; var personal = web3.personal; "
 	for api := range apis {
-		log.Info("js api...", "api", api)
 		if api == "web3" {
 			continue // manually mapped or ignore
 		}

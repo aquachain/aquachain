@@ -74,7 +74,7 @@ func (c *testTransport) close(err error) {
 }
 
 func startTestServer(t *testing.T, id discover.NodeID, pf func(*Peer)) *Server {
-	config := Config{
+	config := &Config{
 		Name:       "test",
 		MaxPeers:   10,
 		ListenAddr: "127.0.0.1:0",
@@ -211,7 +211,7 @@ func TestServerTaskScheduling(t *testing.T) {
 	// The Server in this test isn't actually running
 	// because we're only interested in what run does.
 	srv := &Server{
-		Config:  Config{MaxPeers: 10},
+		Config:  &Config{MaxPeers: 10},
 		quit:    make(chan struct{}),
 		ntab:    fakeTable{},
 		running: true,
@@ -333,7 +333,7 @@ func (t *testTask) Do(srv *Server) {
 func TestServerAtCap(t *testing.T) {
 	trustedID := randomID()
 	srv := &Server{
-		Config: Config{
+		Config: &Config{
 			PrivateKey:   newkey(),
 			MaxPeers:     10,
 			NoDial:       true,
@@ -437,7 +437,7 @@ func TestServerSetupConn(t *testing.T) {
 
 	for i, test := range tests {
 		srv := &Server{
-			Config: Config{
+			Config: &Config{
 				PrivateKey: srvkey,
 				MaxPeers:   10,
 				NoDial:     true,

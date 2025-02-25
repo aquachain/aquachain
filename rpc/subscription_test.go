@@ -109,7 +109,7 @@ func TestNotifications(t *testing.T) {
 	server := NewServer()
 	service := &NotificationTestService{}
 
-	if err := server.RegisterName("aqua", service); err != nil {
+	if _, err := server.RegisterName("aqua", service); err != nil {
 		t.Fatalf("unable to register test service %v", err)
 	}
 
@@ -243,7 +243,7 @@ func TestSubscriptionMultipleNamespaces(t *testing.T) {
 
 	// setup and start server
 	for _, namespace := range namespaces {
-		if err := server.RegisterName(namespace, &service); err != nil {
+		if _, err := server.RegisterName(namespace, &service); err != nil {
 			t.Fatalf("unable to register test service %v", err)
 		}
 	}

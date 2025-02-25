@@ -21,12 +21,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"reflect"
 	"strconv"
 	"strings"
 	"sync"
 
+	"github.com/go-stack/stack"
 	"gitlab.com/aquachain/aquachain/common/log"
 )
 
@@ -92,7 +94,12 @@ type jsonCodec struct {
 	decode func(v interface{}) error // decodes incoming requests
 	encMu  sync.Mutex                // guards e
 	encode func(v interface{}) error // encodes responses
-	rw     io.ReadWriteCloser        // connection
+	rw     CodecConn                 // connection
+}
+
+type CodecConn interface {
+	io.ReadWriteCloser
+	RemoteAddr() net.Addr
 }
 
 func (err *jsonError) Error() string {
@@ -110,7 +117,7 @@ var _ ServerCodec = (*JsonCodec)(nil)
 
 // NewCodec creates a new RPC server codec with support for JSON-RPC 2.0 based
 // on explicitly given encoding and decoding methods.
-func NewCodec(rwc io.ReadWriteCloser, encode, decode func(v interface{}) error) *JsonCodec {
+func NewCodec(rwc CodecConn, encode, decode func(v interface{}) error) *JsonCodec {
 	return &jsonCodec{
 		closed: make(chan interface{}),
 		encode: encode,
@@ -119,19 +126,25 @@ func NewCodec(rwc io.ReadWriteCloser, encode, decode func(v interface{}) error) 
 	}
 }
 
-var DEBUG_RPC = os.Getenv("DEBUG_RPC") == "1"
+var _DEBUG_RPC_REQUESTS = os.Getenv("DEBUG_RPC_REQUESTS") == "1"
+var _DEBUG_RPC_RESPONSES = os.Getenv("DEBUG_RPC_RESPONSES") == "1"
+var _DEBUG_RPC = os.Getenv("DEBUG_RPC") == "1"
 
 // NewJSONCodec creates a new RPC server codec with support for JSON-RPC 2.0
-func NewJSONCodec(rwc io.ReadWriteCloser) ServerCodec {
+func NewJSONCodec(rwc CodecConn) *JsonCodec {
 	var w io.Writer = rwc
-	if DEBUG_RPC {
+	if _DEBUG_RPC_RESPONSES {
 		w = io.MultiWriter(rwc, os.Stdout) // also log responses to stdout
 	}
+	var r io.Reader = rwc
+	if _DEBUG_RPC_REQUESTS {
+		r = io.TeeReader(rwc, os.Stdout) // also log requests to stdout
+	}
 	enc := json.NewEncoder(w)
-	dec := json.NewDecoder(rwc)
+	dec := json.NewDecoder(r)
 	dec.UseNumber()
 
-	return &jsonCodec{
+	return &JsonCodec{
 		closed: make(chan interface{}),
 		encode: enc.Encode,
 		decode: dec.Decode,
@@ -163,11 +176,28 @@ func (c *jsonCodec) ReadRequestHeaders() ([]rpcRequest, bool, Error) {
 		return nil, false, &invalidRequestError{err.Error()}
 	}
 
-	if isBatch(incomingMsg) {
-		return parseBatchRequest(incomingMsg)
+	ip := strings.Split(fmt.Sprint(c.rw.RemoteAddr()), ":")[0]
+	if ip == "nil" {
+		ip = "none"
 	}
-
-	return parseRequest(incomingMsg)
+	var req []rpcRequest
+	var ok bool
+	var err Error
+	isBatch := isBatch(incomingMsg)
+	if isBatch {
+		req, ok, err = parseBatchRequest(incomingMsg)
+		if err == nil {
+			log.Info("batch rpc request", "payloadSize", len(incomingMsg),
+				"from", json.RawMessage(ip), "requests", len(req), "caller2", fmt.Sprintf("%+v", stack.Caller(1)))
+		}
+	} else {
+		req, ok, err = parseRequest(incomingMsg)
+		if err == nil {
+			log.Info("rpc request", "payloadSize", len(incomingMsg),
+				"from", ip, "method", req[0].method, "caller2", fmt.Sprintf("%+v", stack.Caller(1)))
+		}
+	}
+	return req, ok, err
 }
 
 // checkReqId returns an error when the given reqId isn't valid for RPC method calls.
@@ -186,8 +216,6 @@ func checkReqId(reqId json.RawMessage) error {
 	return fmt.Errorf("invalid request id")
 }
 
-var logRpcRequest = os.Getenv("DEBUG_RPC") == "1"
-
 // parseRequest will parse a single request from the given RawMessage. It will return
 // the parsed request, an indication if the request was a batch or an error when
 // the request could not be parsed.
@@ -203,14 +231,15 @@ func parseRequest(incomingMsg json.RawMessage) ([]rpcRequest, bool, Error) {
 	if err := checkReqId(in.Id); err != nil {
 		return nil, false, &invalidMessageError{err.Error()}
 	}
-	if logRpcRequest {
-		log.Info("incoming request", in.Method, incomingMsg)
+	if _DEBUG_RPC {
+		log.Info("incoming request", "method", in.Method, "payload", in.Payload)
 	}
 	// try keeping eth compatibility
 	if strings.HasPrefix(in.Method, "eth_") {
 		in.Method = "aqua_" + in.Method[4:]
 	}
 
+	// eg. getblockcount -> btc_getblockcount
 	if !strings.Contains(in.Method, "_") {
 		in.Method = "btc_" + in.Method
 	}
