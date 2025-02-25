@@ -72,6 +72,10 @@ type Format interface {
 	Format(r *Record) []byte
 }
 
+func ResetFieldPadding() {
+	fieldPadding = make(map[string]int)
+}
+
 // FormatFunc returns a new Format object which uses
 // the given function to perform record formatting.
 func FormatFunc(f func(*Record) []byte) Format {
@@ -135,8 +139,11 @@ func TerminalFormat(usecolor bool) Format {
 				align = len(location)
 				atomic.StoreUint32(&locationLength, uint32(align))
 			}
-			padding := strings.Repeat(" ", align-len(location))
-
+			padding := strings.Repeat(" ", align-(len(location)))
+			if len(padding) > 10 {
+				padding = padding[:10]
+			}
+			// padding := "\t"
 			// Assemble and print the log heading
 			if color > 0 {
 				fmt.Fprintf(b, "\x1b[%dm%s\x1b[0m[%s|%s]%s %s ", color, lvl, r.Time.Format(termTimeFormat), location, padding, r.Msg)
@@ -190,6 +197,9 @@ func logfmt(buf *bytes.Buffer, ctx []interface{}, color int, term bool) {
 		// XXX: we should probably check that all of your key bytes aren't invalid
 		fieldPaddingLock.RLock()
 		padding := fieldPadding[k]
+		if len(fieldPadding) > 10 {
+			ResetFieldPadding()
+		}
 		fieldPaddingLock.RUnlock()
 
 		length := utf8.RuneCountInString(v)
@@ -198,6 +208,9 @@ func logfmt(buf *bytes.Buffer, ctx []interface{}, color int, term bool) {
 
 			fieldPaddingLock.Lock()
 			fieldPadding[k] = padding
+			if len(fieldPadding) > 10 {
+				ResetFieldPadding()
+			}
 			fieldPaddingLock.Unlock()
 		}
 		if color > 0 {
@@ -208,7 +221,7 @@ func logfmt(buf *bytes.Buffer, ctx []interface{}, color int, term bool) {
 		}
 		buf.WriteString(v)
 		if i < len(ctx)-2 {
-			buf.Write(bytes.Repeat([]byte{' '}, padding-length))
+			buf.Write(bytes.Repeat([]byte{' '}, min(padding-length, 10)))
 		}
 	}
 	buf.WriteByte('\n')
