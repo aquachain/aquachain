@@ -22,8 +22,6 @@ import (
 	"io"
 	"sort"
 
-	"strings"
-
 	"github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/cmd/utils"
 	"gitlab.com/aquachain/aquachain/common/log"
@@ -45,7 +43,7 @@ var AppHelpTemplate = logo + `NAME:
     Copyright 2013-2018 The go-ethereum authors
 
 USAGE:
-   {{.App.HelpName}} [options]{{if .App.Commands}} command [command options]{{end}} {{if .App.ArgsUsage}}{{.App.ArgsUsage}}{{else}}[arguments...]{{end}}
+   {{.App.Name}} [options]{{if .App.Commands}} command [command options]{{end}} {{if .App.ArgsUsage}}{{.App.ArgsUsage}}{{else}}[arguments...]{{end}}
    {{if .App.Version}}
 VERSION:
    {{.App.Version}}
@@ -275,18 +273,17 @@ func init() {
 	// Override the default app help printer, but only for the global app help
 	originalHelpPrinter := cli.HelpPrinter
 	cli.HelpPrinter = func(w io.Writer, tmpl string, data interface{}) {
-		println("help template: ", tmpl)
 		if tmpl == AppHelpTemplate {
 			// Iterate over all the flags and add any uncategorized ones
 			categorized := make(map[string]struct{})
 			for _, group := range AppHelpFlagGroups {
 				for _, flag := range group.Flags {
-					log.Info("", "flag", flag.Names()[0], "cat", group.Name, "is", flag.String())
 					categorized[flag.String()] = struct{}{}
 				}
 			}
 			cmd, ok := data.(*cli.Command)
 			if !ok {
+				log.Warn("unexpected data type for app help template", "type", data)
 				originalHelpPrinter(w, tmpl, data)
 				return
 			}
@@ -294,9 +291,6 @@ func init() {
 			uncategorized := []cli.Flag{}
 			for _, flag := range flags {
 				if _, ok := categorized[flag.String()]; !ok {
-					if strings.HasPrefix(flag.Names()[0], "dashboard") {
-						continue
-					}
 					uncategorized = append(uncategorized, flag)
 				}
 			}
