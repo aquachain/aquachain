@@ -133,6 +133,13 @@ func (h UnprefixedHash) MarshalText() ([]byte, error) {
 // Address represents the 20 byte address of an Aquachain account.
 type Address [AddressLength]byte
 
+func (a Address) MarshalTOML() ([]byte, error) {
+	if a == (Address{}) {
+		return []byte{'"', '"'}, nil
+	}
+	return fmt.Appendf(nil, "\"%s\"", a.Hex()), nil
+}
+
 func BytesToAddress(b []byte) Address {
 	var a Address
 	a.SetBytes(b)
