@@ -17,17 +17,16 @@
 package aquahash
 
 import (
-	crand "crypto/rand"
 	"encoding/binary"
-	"math"
 	"math/big"
-	"math/rand"
+	mrand "math/rand"
 	"runtime"
 	"sync"
 
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/consensus"
+	"gitlab.com/aquachain/aquachain/consensus/aquahash/ethashdag"
 	"gitlab.com/aquachain/aquachain/core/types"
 	"gitlab.com/aquachain/aquachain/crypto"
 	"gitlab.com/aquachain/aquachain/params"
@@ -59,14 +58,6 @@ func (aquahash *Aquahash) Seal(chain consensus.ChainReader, block *types.Block, 
 
 	aquahash.lock.Lock()
 	threads := aquahash.threads
-	if aquahash.rand == nil {
-		seed, err := crand.Int(crand.Reader, big.NewInt(math.MaxInt64))
-		if err != nil {
-			aquahash.lock.Unlock()
-			return nil, err
-		}
-		aquahash.rand = rand.New(rand.NewSource(seed.Int64()))
-	}
 	aquahash.lock.Unlock()
 	if threads == 0 {
 		threads = runtime.NumCPU()
@@ -76,13 +67,21 @@ func (aquahash *Aquahash) Seal(chain consensus.ChainReader, block *types.Block, 
 	}
 	var pend sync.WaitGroup
 	version := chaincfg.GetBlockVersion(block.Number())
+	if version == 0 {
+		return nil, errUnknownGrandparent
+	}
+	if version == 1 && aquahash.ethashdag == nil {
+		// make sure we have a dataset for ethash version 1
+		aquahash.ethashdag = ethashdag.New(aquahash.config)
+		aquahash.ethashdag.Dataset(block.NumberU64())
+	}
 	for i := 0; i < threads; i++ {
 		pend.Add(1)
 		go func(id int, nonce uint64) {
 			defer pend.Done()
 			log.Trace("launching miner", "algoVersion", version)
 			aquahash.mine(version, block, id, nonce, abort, found)
-		}(i, uint64(aquahash.rand.Int63()))
+		}(i, uint64(mrand.Int63()))
 	}
 	// Wait until sealing is terminated or a nonce is found
 	var result *types.Block
@@ -113,7 +112,7 @@ func (aquahash *Aquahash) mine(version params.HeaderVersion, block *types.Block,
 		hash    = header.HashNoNonce().Bytes()
 		target  = new(big.Int).Div(maxUint256, header.Difficulty)
 		number  = header.Number.Uint64()
-		dataset *dataset
+		dataset *ethashdag.Dataset
 	)
 	header.Version = version
 	if header.Version == 0 || header.Version > crypto.KnownVersion {
@@ -121,7 +120,12 @@ func (aquahash *Aquahash) mine(version params.HeaderVersion, block *types.Block,
 		return
 	}
 	if header.Version == 1 {
-		dataset = aquahash.dataset(number)
+		if aquahash.ethashdag == nil {
+			log.Warn("Mining with ethash version 1 is disabled")
+			return
+		}
+		log.Warn("Mining with ethash version 1")
+		dataset = aquahash.ethashdag.Dataset(number)
 	}
 
 	// Start generating random nonces until we abort or find a good one
@@ -157,7 +161,7 @@ search:
 
 			switch header.Version {
 			case 1:
-				digest, result = hashimotoFull(dataset.dataset, hash, nonce)
+				digest, result = ethashdag.HashimotoFull(dataset.GetDataset(), hash, nonce)
 			default:
 				seed := make([]byte, 40)
 				copy(seed, hash)

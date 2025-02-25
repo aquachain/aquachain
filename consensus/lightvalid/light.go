@@ -72,7 +72,7 @@ func (l *Light) Verify(block LightBlock) bool {
 func (l *Light) VerifyWithError(block LightBlock) error {
 
 	version := block.Version()
-	if version == 0 || version > crypto.KnownVersion {
+	if version < 2 || version > crypto.KnownVersion {
 		return ErrNoVersion
 	}
 

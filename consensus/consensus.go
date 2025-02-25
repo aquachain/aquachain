@@ -18,6 +18,7 @@
 package consensus
 
 import (
+	"context"
 	"math/big"
 
 	"gitlab.com/aquachain/aquachain/common"
@@ -33,6 +34,8 @@ import (
 type ChainReader interface {
 	// Config retrieves the blockchain's chain configuration.
 	Config() *params.ChainConfig
+
+	GetContext() context.Context
 
 	// CurrentHeader retrieves the current header from the local chain.
 	CurrentHeader() *types.Header

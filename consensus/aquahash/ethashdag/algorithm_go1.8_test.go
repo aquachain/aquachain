@@ -17,7 +17,7 @@
 //go:build go1.8
 // +build go1.8
 
-package aquahash
+package ethashdag
 
 import "testing"
 

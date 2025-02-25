@@ -18,6 +18,7 @@ package clique
 
 import (
 	"bytes"
+	"context"
 	"math/big"
 	"testing"
 
@@ -74,6 +75,10 @@ func (ap *testerAccountPool) address(account string) common.Address {
 // block. All other methods and requests will panic.
 type testerChainReader struct {
 	db aquadb.Database
+}
+
+func (r *testerChainReader) GetContext() context.Context {
+	return context.TODO()
 }
 
 func (r *testerChainReader) Config() *params.ChainConfig                 { return params.AllCliqueProtocolChanges }

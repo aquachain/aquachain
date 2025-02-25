@@ -133,7 +133,7 @@ func TestCalcDifficulty(t *testing.T) {
 		}
 		// json.NewEncoder(os.Stdout).Encode(tests)
 	}
-	config := &params.ChainConfig{HomesteadBlock: big.NewInt(0), ChainId: big.NewInt(1337), HF: params.TestHF}
+	config := &params.ChainConfig{HomesteadBlock: big.NewInt(0), ChainId: big.NewInt(1337), HF: params.AllAquahashProtocolChanges.HF}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			diff := CalcDifficulty(config, test.CurrentTimestamp, &types.Header{

@@ -17,7 +17,7 @@
 //go:build go1.8
 // +build go1.8
 
-package aquahash
+package ethashdag
 
 import "math/big"
 
@@ -41,6 +41,8 @@ func calcCacheSize(epoch int) uint64 {
 	}
 	return size
 }
+
+const maxEpoch = MaxEpoch
 
 // datasetSize returns the size of the aquahash mining dataset that belongs to a certain
 // block number.

@@ -17,7 +17,7 @@
 //go:build !go1.8
 // +build !go1.8
 
-package aquahash
+package ethashdag
 
 // cacheSize calculates and returns the size of the aquahash verification cache that
 // belongs to a certain block number. The cache size grows linearly, however, we

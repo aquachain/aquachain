@@ -29,6 +29,7 @@ import (
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/common/math"
 	"gitlab.com/aquachain/aquachain/consensus"
+	"gitlab.com/aquachain/aquachain/consensus/aquahash/ethashdag"
 	"gitlab.com/aquachain/aquachain/core/state"
 	"gitlab.com/aquachain/aquachain/core/types"
 	"gitlab.com/aquachain/aquachain/crypto"
@@ -409,18 +410,16 @@ func (aquahash *Aquahash) VerifySeal(chain consensus.ChainReader, header *types.
 	case types.H_UNSET: // 0
 		panic("header version not set")
 	case types.H_KECCAK256: // 1
-		cache := aquahash.cache(number)
-		if cache == nil {
-			return errors.New("invalid startVersion for use with ethash")
+		var err error
+		if aquahash.ethashdag == nil {
+			log.Warn("ethashdag not initialized, creating new")
+			aquahash.ethashdag = ethashdag.New(aquahash.config)
 		}
-		size := datasetSize(number)
-		if aquahash.config.PowMode == ModeTest {
-			size = 32 * 1024
+		_, digest, result, err = aquahash.ethashdag.VerifySeal(header.Number.Uint64(), header)
+		if err != nil {
+			return err
 		}
-		digest, result = hashimotoLight(size, cache.cache, header.HashNoNonce().Bytes(), header.Nonce.Uint64())
-		// Caches are unmapped in a finalizer. Ensure that the cache stays live
-		// until after the call to hashimotoLight so it's not unmapped while being used.
-		runtime.KeepAlive(cache)
+
 	default:
 		seed := make([]byte, 40)
 		copy(seed, header.HashNoNonce().Bytes())
@@ -428,17 +427,25 @@ func (aquahash *Aquahash) VerifySeal(chain consensus.ChainReader, header *types.
 		result = crypto.VersionHash(byte(header.Version), seed)
 		digest = make([]byte, common.HashLength)
 	}
-
 	if !bytes.Equal(header.MixDigest[:], digest) {
-		//fmt.Printf("Invalid Digest (%v):\n%x (!=) %x\n", header.Number.Uint64(), header.MixDigest[:], digest)
+		fmt.Printf("Invalid Digest (algo %s) (block #%v):\n%s (!=) %02x\n", header.Version.String(), header.Number.Uint64(), header.MixDigest.TerminalString(), digest[:])
+		for i := 0; i < len(header.MixDigest); i++ {
+			fmt.Printf("%02x", header.MixDigest[i])
+		}
+		fmt.Println()
 		return errInvalidMixDigest
 	}
+
 	target := new(big.Int).Div(maxUint256, header.Difficulty)
 	if new(big.Int).SetBytes(result).Cmp(target) > 0 {
 		return errInvalidPoW
 	}
 	return nil
 }
+
+const maxEpoch = ethashdag.MaxEpoch
+
+var maxUint256 = new(big.Int).SetUint64(1).Lsh(new(big.Int).SetUint64(1), 256)
 
 // Prepare implements consensus.Engine, initializing the difficulty field of a
 // header to conform to the aquahash protocol. The changes are done inline.
