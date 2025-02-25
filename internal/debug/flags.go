@@ -19,21 +19,29 @@ package debug
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"runtime"
 
-	colorable "github.com/mattn/go-colorable"
 	cli "github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/common/log"
-	"gitlab.com/aquachain/aquachain/common/log/term"
 	"gitlab.com/aquachain/aquachain/common/metrics"
 	"gitlab.com/aquachain/aquachain/common/metrics/exp"
 )
 
 var (
+	logcolorflag = &cli.BoolFlag{
+		Name:  "color",
+		Usage: "Force colored log output (COLOR env)",
+		Value: os.Getenv("COLOR") == "1",
+	}
+	logjsonflag = &cli.BoolFlag{
+		Name:  "jsonlog",
+		Usage: "Log in JSON format",
+		Value: false,
+	}
+
 	verbosityFlag = &cli.IntFlag{
 		Name:  "verbosity",
 		Usage: "Logging verbosity: 0=silent, 1=error, 2=warn, 3=info, 4=debug, 5=detail",
@@ -52,6 +60,7 @@ var (
 	debugFlag = &cli.BoolFlag{
 		Name:  "debug",
 		Usage: "Prepends log messages with call-site location (file and line number)",
+		Value: os.Getenv("DEBUG") != "",
 	}
 	pprofFlag = &cli.BoolFlag{
 		Name:  "pprof",
@@ -88,35 +97,18 @@ var (
 
 // Flags holds all command-line flags required for debugging.
 var Flags = []cli.Flag{
+	logcolorflag, logjsonflag,
 	verbosityFlag, vmoduleFlag, backtraceAtFlag, debugFlag,
 	pprofFlag, pprofAddrFlag, pprofPortFlag,
 	memprofilerateFlag, blockprofilerateFlag, cpuprofileFlag, traceFlag,
 }
 
-var glogger *log.GlogHandler = initglogger()
-
-func initglogger() *log.GlogHandler {
-	usecolor := os.Getenv("COLOR") == "1" || (term.IsTty(os.Stderr.Fd()) && os.Getenv("TERM") != "dumb")
-	output := io.Writer(os.Stderr)
-	if usecolor {
-		output = colorable.NewColorableStderr()
-	}
-	x := log.NewGlogHandler(log.StreamHandler(output, log.TerminalFormat(usecolor)))
-	x.Verbosity(log.LvlInfo)
-	return x
-}
-
 // Setup initializes profiling and logging based on the CLI flags.
 // It should be called as early as possible in the program.
 func Setup(ctx_ context.Context, cmd *cli.Command) error {
-	// logging
-	log.PrintOrigins(cmd.Bool(debugFlag.Name))
-	glogger.Verbosity(log.Lvl(cmd.Int(verbosityFlag.Name)))
-	glogger.Vmodule(wrapVmodule(cmd.String(vmoduleFlag.Name)))
-	glogger.BacktraceAt(cmd.String(backtraceAtFlag.Name))
-	log.Root().SetHandler(glogger)
-
 	// profiling, tracing
+	SetGlogger(Initglogger(cmd.Bool(logcolorflag.Name), cmd.Bool(logjsonflag.Name)))
+
 	runtime.MemProfileRate = int(cmd.Int(memprofilerateFlag.Name))
 	Handler.SetBlockProfileRate(int(cmd.Int(blockprofilerateFlag.Name)))
 	if traceFile := cmd.String(traceFlag.Name); traceFile != "" {

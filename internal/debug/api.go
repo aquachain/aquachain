@@ -33,7 +33,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mattn/go-colorable"
 	"gitlab.com/aquachain/aquachain/common/log"
+	"gitlab.com/aquachain/aquachain/common/log/term"
 )
 
 // Handler is the global debugging handler.
@@ -54,6 +56,32 @@ const (
 	VmoduleGood  = "p2p/discover=3,aqua/*=4,consensus/*=9,core/*=9,rpc/*=9,node/*=9,opt/*=9,p2p/discover/udp.go=0"
 	VmoduleGreat = "p2p/discover=3,aqua/*=9,consensus/*=9,core/*=9,rpc/*=9,node/*=9,opt/*=9"
 )
+
+var glogger *log.GlogHandler
+
+// set global logger
+func SetGlogger(l *log.GlogHandler) {
+	glogger = l
+	log.Root().SetHandler(l)
+}
+func Initglogger(alwayscolor, isjson bool) *log.GlogHandler {
+	usecolor := alwayscolor || os.Getenv("COLOR") == "1" || (term.IsTty(os.Stderr.Fd()) && os.Getenv("TERM") != "dumb")
+	output := io.Writer(os.Stderr)
+	if usecolor {
+		output = colorable.NewColorableStderr()
+	}
+	var form log.Format
+	if isjson {
+		form = log.JsonFormat()
+	} else {
+		form = log.TerminalFormat(usecolor)
+	}
+
+	x := log.NewGlogHandler(log.StreamHandler(output, form))
+	x.Verbosity(log.LvlInfo)
+	log.Warn("new glogger", "color", alwayscolor, "json", isjson)
+	return x
+}
 
 // Verbosity sets the log verbosity ceiling. The verbosity of individual packages
 // and source files can be raised using Vmodule.
