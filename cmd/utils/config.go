@@ -4,18 +4,15 @@ import (
 	"bufio"
 	"context"
 	"errors"
-	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
-	"unicode"
 
-	"github.com/naoina/toml"
 	"github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/aqua"
 	"gitlab.com/aquachain/aquachain/common/log"
+	"gitlab.com/aquachain/aquachain/common/toml"
 	"gitlab.com/aquachain/aquachain/node"
 	"gitlab.com/aquachain/aquachain/params"
 )
@@ -26,14 +23,10 @@ func LoadConfigFromFile(file string, cfg *AquachainConfig) error {
 		return err
 	}
 	defer f.Close()
-	err = tomlSettings.NewDecoder(bufio.NewReader(f)).Decode(cfg)
-	// Add file name to errors that have a line number.
-	if _, ok := err.(*toml.LineError); ok {
-		err = errors.New(file + ", " + err.Error())
-	}
+	_, err = toml.NewDecoder(bufio.NewReader(f)).Decode(cfg)
 	// after toml decode, lets expand DataDir (tilde, environmental variables)
 	// this keeps config file tidy and sharable.
-	// TODO re-tilde on save
+	// TODO re-tilde on save? or make replacer func
 	if err == nil {
 		cfg.Node.DataDir = strings.Replace(cfg.Node.DataDir, "~/", "$HOME/", 1)
 		cfg.Node.DataDir = os.ExpandEnv(cfg.Node.DataDir)
@@ -51,28 +44,28 @@ const (
 	NoPreviousConfig cfgopt = 1
 )
 
-// These settings ensure that TOML keys use the same names as Go struct fields.
-var tomlSettings = toml.Config{
-	NormFieldName: func(rt reflect.Type, key string) string {
-		return key
-	},
-	FieldToKey: func(rt reflect.Type, field string) string {
-		return field
-	},
-	MissingField: func(rt reflect.Type, field string) error {
-		link := ""
-		if unicode.IsUpper(rune(rt.Name()[0])) && rt.PkgPath() != "main" {
-			link = fmt.Sprintf(", see https://pkg.go.dev/%s#%s for available fields", rt.PkgPath(), rt.Name())
-		}
-		err := fmt.Errorf("field '%s' is not defined in %s%s", field, rt.String(), link)
-		if os.Getenv("TOML_MISSING_FIELD") == "OK" {
-			log.Warn(err.Error())
-			return nil
-		}
-		// wrong config file, or outdated config file
-		return err
-	},
-}
+// // These settings ensure that TOML keys use the same names as Go struct fields.
+// var tomlSettings = toml.Config{
+// 	NormFieldName: func(rt reflect.Type, key string) string {
+// 		return key
+// 	},
+// 	FieldToKey: func(rt reflect.Type, field string) string {
+// 		return field
+// 	},
+// 	MissingField: func(rt reflect.Type, field string) error {
+// 		link := ""
+// 		if unicode.IsUpper(rune(rt.Name()[0])) && rt.PkgPath() != "main" {
+// 			link = fmt.Sprintf(", see https://pkg.go.dev/%s#%s for available fields", rt.PkgPath(), rt.Name())
+// 		}
+// 		err := fmt.Errorf("field '%s' is not defined in %s%s", field, rt.String(), link)
+// 		if os.Getenv("TOML_MISSING_FIELD") == "OK" {
+// 			log.Warn(err.Error())
+// 			return nil
+// 		}
+// 		// wrong config file, or outdated config file
+// 		return err
+// 	},
+// }
 
 // MakeConfigNode created a Node and Config, and is called by a subcommand at startup.
 func MakeConfigNode(ctx context.Context, cmd *cli.Command, gitCommit string, clientIdentifier string, closemain func(), s ...cfgopt) (*node.Node, *AquachainConfig) {
@@ -83,6 +76,8 @@ func MakeConfigNode(ctx context.Context, cmd *cli.Command, gitCommit string, cli
 			useprev = false
 		}
 	}
+	// log.Info("Calling MkConfig", "chain", cmd.String(ChainFlag.Name),
+	// 	"config", cmd.String(ConfigFileFlag.Name), "useprev", fmt.Sprint(useprev), "gitCommit", gitCommit, "id", clientIdentifier)
 	cfgptr := Mkconfig(cmd.String(ChainFlag.Name), cmd.String(ConfigFileFlag.Name), useprev, gitCommit, clientIdentifier)
 	// Apply flags.
 	if err := SetNodeConfig(cmd, &cfgptr.Node); err != nil {

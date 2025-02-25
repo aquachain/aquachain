@@ -18,17 +18,14 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"os"
-	"reflect"
-	"unicode"
 
 	cli "github.com/urfave/cli/v3"
 
-	"github.com/naoina/toml"
 	"gitlab.com/aquachain/aquachain/cmd/utils"
 	"gitlab.com/aquachain/aquachain/common/log"
+	"gitlab.com/aquachain/aquachain/common/toml"
 	"gitlab.com/aquachain/aquachain/node"
 )
 
@@ -44,22 +41,22 @@ var (
 	}
 )
 
-// These settings ensure that TOML keys use the same names as Go struct fields.
-var tomlSettings = toml.Config{
-	NormFieldName: func(rt reflect.Type, key string) string {
-		return key
-	},
-	FieldToKey: func(rt reflect.Type, field string) string {
-		return field
-	},
-	MissingField: func(rt reflect.Type, field string) error {
-		link := ""
-		if unicode.IsUpper(rune(rt.Name()[0])) && rt.PkgPath() != "main" {
-			link = fmt.Sprintf(", see https://pkg.go.dev/%s#%s for available fields", rt.PkgPath(), rt.Name())
-		}
-		return fmt.Errorf("field '%s' is not defined in %s%s", field, rt.String(), link)
-	},
-}
+// // These settings ensure that TOML keys use the same names as Go struct fields.
+// var tomlSettings = toml.Config{
+// 	NormFieldName: func(rt reflect.Type, key string) string {
+// 		return key
+// 	},
+// 	FieldToKey: func(rt reflect.Type, field string) string {
+// 		return field
+// 	},
+// 	MissingField: func(rt reflect.Type, field string) error {
+// 		link := ""
+// 		if unicode.IsUpper(rune(rt.Name()[0])) && rt.PkgPath() != "main" {
+// 			link = fmt.Sprintf(", see https://pkg.go.dev/%s#%s for available fields", rt.PkgPath(), rt.Name())
+// 		}
+// 		return fmt.Errorf("field '%s' is not defined in %s%s", field, rt.String(), link)
+// 	},
+// }
 
 func closeMain() {
 	log.Warn("got closemain signal")
@@ -86,7 +83,7 @@ func dumpConfig(ctx context.Context, cmd *cli.Command) error {
 		comment += "# Note: this config doesn't contain the genesis block.\n\n"
 	}
 
-	out, err := tomlSettings.Marshal(&cfg)
+	out, err := toml.Marshal(&cfg)
 	if err != nil {
 		return err
 	}

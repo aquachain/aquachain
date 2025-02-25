@@ -3,6 +3,7 @@ module gitlab.com/aquachain/aquachain
 go 1.24.0
 
 require (
+	github.com/BurntSushi/toml v1.4.0
 	github.com/aerth/tgun v0.1.7
 	github.com/btcsuite/btcd/btcec/v2 v2.3.4
 	github.com/cespare/cp v1.1.1
@@ -19,7 +20,6 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/mattn/go-colorable v0.1.14
-	github.com/naoina/toml v0.1.1
 	github.com/pborman/uuid v1.2.1
 	github.com/peterh/liner v1.2.2
 	github.com/robertkrimen/otto v0.5.1
@@ -43,10 +43,8 @@ require (
 require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
-	github.com/naoina/go-stringutil v0.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/urfave/cli/v3 v3.0.0-beta1

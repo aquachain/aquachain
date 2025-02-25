@@ -160,8 +160,8 @@ type Config struct {
 	// fetch client's remote IP
 	RPCBehindProxy bool
 
-	CloseMain func() `toml:"-"`
-	Context   context.Context
+	CloseMain func()          `toml:"-"`
+	Context   context.Context `toml:"-"`
 }
 
 // IPCEndpoint resolves an IPC endpoint based on a configured value, taking into

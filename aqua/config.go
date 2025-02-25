@@ -27,6 +27,7 @@ import (
 	"gitlab.com/aquachain/aquachain/aqua/downloader"
 	"gitlab.com/aquachain/aquachain/aqua/gasprice"
 	"gitlab.com/aquachain/aquachain/common"
+	"gitlab.com/aquachain/aquachain/common/alerts"
 	"gitlab.com/aquachain/aquachain/common/hexutil"
 	"gitlab.com/aquachain/aquachain/consensus/aquahash"
 	"gitlab.com/aquachain/aquachain/core"
@@ -47,8 +48,8 @@ var DefaultConfig = Config{
 	TrieCache:     256,
 	TrieTimeout:   5 * time.Minute,
 	GasPrice:      big.NewInt(10000000), // 0.01 gwei
-
-	TxPool: core.DefaultTxPoolConfig,
+	NoPruning:     true,
+	TxPool:        core.DefaultTxPoolConfig,
 	GPO: gasprice.Config{
 		Blocks:     20,
 		Percentile: 60,
@@ -69,7 +70,7 @@ func init() {
 	}
 }
 
-// was go:generate gencodec -type Config -field-override configMarshaling -formats toml -out gen_config.go
+//go:generate gencodec -type Config -field-override ConfigMarshaling -formats toml -out gen_config.go
 
 type Config struct {
 	// The genesis block, which is inserted if the database is empty.
@@ -111,10 +112,10 @@ type Config struct {
 	JavascriptDirectory string `toml:"-"` // for console/attach only
 
 	// Alert options
-	// Alerts alerts.AlertConfig
+	Alerts alerts.AlertConfig `toml:",omitempty"`
 }
 
-// // configMarshaling must be changed if the Config struct changes.
-// type configMarshaling struct {
-// 	ExtraData hexutil.Bytes
-// }
+// ConfigMarshaling must be changed if the Config struct changes.
+type ConfigMarshaling struct {
+	ExtraData hexutil.Bytes
+}

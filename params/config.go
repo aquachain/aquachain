@@ -21,9 +21,9 @@ import (
 	"math/big"
 	"os"
 
-	"github.com/naoina/toml"
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/log"
+	"gitlab.com/aquachain/aquachain/common/toml"
 )
 
 var (
@@ -241,7 +241,7 @@ func LoadChainConfigFile(path string) (*ChainConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = toml.NewDecoder(f).Decode(cfg)
+	_, err = toml.NewDecoder(f).Decode(cfg)
 	f.Close()
 	if err != nil {
 		return nil, err
@@ -265,7 +265,9 @@ func SaveChainConfig(cfg *ChainConfig, path string) error {
 		return err
 	}
 	defer f.Close()
-	return toml.NewEncoder(f).Encode(cfg)
+	err = toml.NewEncoder(f).Encode(cfg)
+	return err
+
 }
 
 // GetGenesisVersion returns the genesis version of the chain

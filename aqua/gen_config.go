@@ -3,406 +3,149 @@
 package aqua
 
 import (
+	"math/big"
+	"time"
 
+	"gitlab.com/aquachain/aquachain/aqua/downloader"
+	"gitlab.com/aquachain/aquachain/aqua/gasprice"
+	"gitlab.com/aquachain/aquachain/common"
+	"gitlab.com/aquachain/aquachain/common/alerts"
+	"gitlab.com/aquachain/aquachain/common/hexutil"
+	"gitlab.com/aquachain/aquachain/consensus/aquahash/ethashdag"
+	"gitlab.com/aquachain/aquachain/core"
 )
 
-// var _ = (*configMarshaling)(nil)
+var _ = (*ConfigMarshaling)(nil)
 
-// // MarshalJSON marshals as JSON.
-// func (c Config) MarshalJSON() ([]byte, error) {
-// 	type Config struct {
-// 		Genesis                 *core.Genesis `toml:",omitempty"`
-// 		NetworkId               uint64
-// 		SyncMode                downloader.SyncMode
-// 		NoPruning               bool `toml:"NoPruning"`
-// 		SkipBcVersionCheck      bool `toml:"-"`
-// 		DatabaseHandles         int  `toml:"-"`
-// 		DatabaseCache           int
-// 		TrieCache               int
-// 		TrieTimeout             time.Duration
-// 		Aquabase                common.Address `toml:",omitempty"`
-// 		MinerThreads            int            `toml:",omitempty"`
-// 		ExtraData               hexutil.Bytes  `toml:",omitempty"`
-// 		GasPrice                *big.Int
-// 		Aquahash                aquahash.Config
-// 		TxPool                  core.TxPoolConfig
-// 		GPO                     gasprice.Config
-// 		EnablePreimageRecording bool
-// 		WorkingDirectory                 string `toml:"-"`
-// 		Alerts                  alerts.AlertConfig
-// 	}
-// 	var enc Config
-// 	enc.Genesis = c.Genesis
-// 	enc.NetworkId = c.NetworkId
-// 	enc.SyncMode = c.SyncMode
-// 	enc.NoPruning = c.NoPruning
-// 	enc.SkipBcVersionCheck = c.SkipBcVersionCheck
-// 	enc.DatabaseHandles = c.DatabaseHandles
-// 	enc.DatabaseCache = c.DatabaseCache
-// 	enc.TrieCache = c.TrieCache
-// 	enc.TrieTimeout = c.TrieTimeout
-// 	enc.Aquabase = c.Aquabase
-// 	enc.MinerThreads = c.MinerThreads
-// 	enc.ExtraData = c.ExtraData
-// 	enc.GasPrice = c.GasPrice
-// 	enc.Aquahash = c.Aquahash
-// 	enc.TxPool = c.TxPool
-// 	enc.GPO = c.GPO
-// 	enc.EnablePreimageRecording = c.EnablePreimageRecording
-// 	enc.WorkingDirectory = c.WorkingDirectory
-// 	enc.Alerts = c.Alerts
-// 	return json.Marshal(&enc)
-// }
+// MarshalTOML marshals as TOML.
+func (c Config) MarshalTOML() (interface{}, error) {
+	type Config struct {
+		Genesis                 *core.Genesis `toml:",omitempty"`
+		ChainId                 uint64
+		SyncMode                downloader.SyncMode
+		NoPruning               bool `toml:"NoPruning"`
+		SkipBcVersionCheck      bool `toml:"-"`
+		DatabaseHandles         int  `toml:"-"`
+		DatabaseCache           int
+		TrieCache               int
+		TrieTimeout             time.Duration
+		Aquabase                common.Address `toml:",omitempty"`
+		MinerThreads            int            `toml:",omitempty"`
+		ExtraData               hexutil.Bytes  `toml:",omitempty"`
+		GasPrice                *big.Int
+		Aquahash                ethashdag.Config
+		TxPool                  core.TxPoolConfig
+		GPO                     gasprice.Config
+		EnablePreimageRecording bool
+		JavascriptDirectory     string             `toml:"-"`
+		Alerts                  alerts.AlertConfig `toml:",omitempty"`
+	}
+	var enc Config
+	enc.Genesis = c.Genesis
+	enc.ChainId = c.ChainId
+	enc.SyncMode = c.SyncMode
+	enc.NoPruning = c.NoPruning
+	enc.SkipBcVersionCheck = c.SkipBcVersionCheck
+	enc.DatabaseHandles = c.DatabaseHandles
+	enc.DatabaseCache = c.DatabaseCache
+	enc.TrieCache = c.TrieCache
+	enc.TrieTimeout = c.TrieTimeout
+	enc.Aquabase = c.Aquabase
+	enc.MinerThreads = c.MinerThreads
+	enc.ExtraData = c.ExtraData
+	enc.GasPrice = c.GasPrice
+	enc.Aquahash = c.Aquahash
+	enc.TxPool = c.TxPool
+	enc.GPO = c.GPO
+	enc.EnablePreimageRecording = c.EnablePreimageRecording
+	enc.JavascriptDirectory = c.JavascriptDirectory
+	enc.Alerts = c.Alerts
+	return &enc, nil
+}
 
-// // UnmarshalJSON unmarshals from JSON.
-// func (c *Config) UnmarshalJSON(input []byte) error {
-// 	type Config struct {
-// 		Genesis                 *core.Genesis `toml:",omitempty"`
-// 		NetworkId               *uint64
-// 		SyncMode                *downloader.SyncMode
-// 		NoPruning               *bool `toml:"NoPruning"`
-// 		SkipBcVersionCheck      *bool `toml:"-"`
-// 		DatabaseHandles         *int  `toml:"-"`
-// 		DatabaseCache           *int
-// 		TrieCache               *int
-// 		TrieTimeout             *time.Duration
-// 		Aquabase                *common.Address `toml:",omitempty"`
-// 		MinerThreads            *int            `toml:",omitempty"`
-// 		ExtraData               *hexutil.Bytes  `toml:",omitempty"`
-// 		GasPrice                *big.Int
-// 		Aquahash                *aquahash.Config
-// 		TxPool                  *core.TxPoolConfig
-// 		GPO                     *gasprice.Config
-// 		EnablePreimageRecording *bool
-// 		WorkingDirectory                 *string `toml:"-"`
-// 		Alerts                  *alerts.AlertConfig
-// 	}
-// 	var dec Config
-// 	if err := json.Unmarshal(input, &dec); err != nil {
-// 		return err
-// 	}
-// 	if dec.Genesis != nil {
-// 		c.Genesis = dec.Genesis
-// 	}
-// 	if dec.NetworkId != nil {
-// 		c.NetworkId = *dec.NetworkId
-// 	}
-// 	if dec.SyncMode != nil {
-// 		c.SyncMode = *dec.SyncMode
-// 	}
-// 	if dec.NoPruning != nil {
-// 		c.NoPruning = *dec.NoPruning
-// 	}
-// 	if dec.SkipBcVersionCheck != nil {
-// 		c.SkipBcVersionCheck = *dec.SkipBcVersionCheck
-// 	}
-// 	if dec.DatabaseHandles != nil {
-// 		c.DatabaseHandles = *dec.DatabaseHandles
-// 	}
-// 	if dec.DatabaseCache != nil {
-// 		c.DatabaseCache = *dec.DatabaseCache
-// 	}
-// 	if dec.TrieCache != nil {
-// 		c.TrieCache = *dec.TrieCache
-// 	}
-// 	if dec.TrieTimeout != nil {
-// 		c.TrieTimeout = *dec.TrieTimeout
-// 	}
-// 	if dec.Aquabase != nil {
-// 		c.Aquabase = *dec.Aquabase
-// 	}
-// 	if dec.MinerThreads != nil {
-// 		c.MinerThreads = *dec.MinerThreads
-// 	}
-// 	if dec.ExtraData != nil {
-// 		c.ExtraData = *dec.ExtraData
-// 	}
-// 	if dec.GasPrice != nil {
-// 		c.GasPrice = dec.GasPrice
-// 	}
-// 	if dec.Aquahash != nil {
-// 		c.Aquahash = *dec.Aquahash
-// 	}
-// 	if dec.TxPool != nil {
-// 		c.TxPool = *dec.TxPool
-// 	}
-// 	if dec.GPO != nil {
-// 		c.GPO = *dec.GPO
-// 	}
-// 	if dec.EnablePreimageRecording != nil {
-// 		c.EnablePreimageRecording = *dec.EnablePreimageRecording
-// 	}
-// 	if dec.WorkingDirectory != nil {
-// 		c.WorkingDirectory = *dec.WorkingDirectory
-// 	}
-// 	if dec.Alerts != nil {
-// 		c.Alerts = *dec.Alerts
-// 	}
-// 	return nil
-// }
-
-// // MarshalYAML marshals as YAML.
-// func (c Config) MarshalYAML() (interface{}, error) {
-// 	type Config struct {
-// 		Genesis                 *core.Genesis `toml:",omitempty"`
-// 		NetworkId               uint64
-// 		SyncMode                downloader.SyncMode
-// 		NoPruning               bool `toml:"NoPruning"`
-// 		SkipBcVersionCheck      bool `toml:"-"`
-// 		DatabaseHandles         int  `toml:"-"`
-// 		DatabaseCache           int
-// 		TrieCache               int
-// 		TrieTimeout             time.Duration
-// 		Aquabase                common.Address `toml:",omitempty"`
-// 		MinerThreads            int            `toml:",omitempty"`
-// 		ExtraData               hexutil.Bytes  `toml:",omitempty"`
-// 		GasPrice                *big.Int
-// 		Aquahash                aquahash.Config
-// 		TxPool                  core.TxPoolConfig
-// 		GPO                     gasprice.Config
-// 		EnablePreimageRecording bool
-// 		WorkingDirectory                 string `toml:"-"`
-// 		Alerts                  alerts.AlertConfig
-// 	}
-// 	var enc Config
-// 	enc.Genesis = c.Genesis
-// 	enc.NetworkId = c.NetworkId
-// 	enc.SyncMode = c.SyncMode
-// 	enc.NoPruning = c.NoPruning
-// 	enc.SkipBcVersionCheck = c.SkipBcVersionCheck
-// 	enc.DatabaseHandles = c.DatabaseHandles
-// 	enc.DatabaseCache = c.DatabaseCache
-// 	enc.TrieCache = c.TrieCache
-// 	enc.TrieTimeout = c.TrieTimeout
-// 	enc.Aquabase = c.Aquabase
-// 	enc.MinerThreads = c.MinerThreads
-// 	enc.ExtraData = c.ExtraData
-// 	enc.GasPrice = c.GasPrice
-// 	enc.Aquahash = c.Aquahash
-// 	enc.TxPool = c.TxPool
-// 	enc.GPO = c.GPO
-// 	enc.EnablePreimageRecording = c.EnablePreimageRecording
-// 	enc.WorkingDirectory = c.WorkingDirectory
-// 	enc.Alerts = c.Alerts
-// 	return &enc, nil
-// }
-
-// // UnmarshalYAML unmarshals from YAML.
-// func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
-// 	type Config struct {
-// 		Genesis                 *core.Genesis `toml:",omitempty"`
-// 		NetworkId               *uint64
-// 		SyncMode                *downloader.SyncMode
-// 		NoPruning               *bool `toml:"NoPruning"`
-// 		SkipBcVersionCheck      *bool `toml:"-"`
-// 		DatabaseHandles         *int  `toml:"-"`
-// 		DatabaseCache           *int
-// 		TrieCache               *int
-// 		TrieTimeout             *time.Duration
-// 		Aquabase                *common.Address `toml:",omitempty"`
-// 		MinerThreads            *int            `toml:",omitempty"`
-// 		ExtraData               *hexutil.Bytes  `toml:",omitempty"`
-// 		GasPrice                *big.Int
-// 		Aquahash                *aquahash.Config
-// 		TxPool                  *core.TxPoolConfig
-// 		GPO                     *gasprice.Config
-// 		EnablePreimageRecording *bool
-// 		WorkingDirectory                 *string `toml:"-"`
-// 		Alerts                  *alerts.AlertConfig
-// 	}
-// 	var dec Config
-// 	if err := unmarshal(&dec); err != nil {
-// 		return err
-// 	}
-// 	if dec.Genesis != nil {
-// 		c.Genesis = dec.Genesis
-// 	}
-// 	if dec.NetworkId != nil {
-// 		c.NetworkId = *dec.NetworkId
-// 	}
-// 	if dec.SyncMode != nil {
-// 		c.SyncMode = *dec.SyncMode
-// 	}
-// 	if dec.NoPruning != nil {
-// 		c.NoPruning = *dec.NoPruning
-// 	}
-// 	if dec.SkipBcVersionCheck != nil {
-// 		c.SkipBcVersionCheck = *dec.SkipBcVersionCheck
-// 	}
-// 	if dec.DatabaseHandles != nil {
-// 		c.DatabaseHandles = *dec.DatabaseHandles
-// 	}
-// 	if dec.DatabaseCache != nil {
-// 		c.DatabaseCache = *dec.DatabaseCache
-// 	}
-// 	if dec.TrieCache != nil {
-// 		c.TrieCache = *dec.TrieCache
-// 	}
-// 	if dec.TrieTimeout != nil {
-// 		c.TrieTimeout = *dec.TrieTimeout
-// 	}
-// 	if dec.Aquabase != nil {
-// 		c.Aquabase = *dec.Aquabase
-// 	}
-// 	if dec.MinerThreads != nil {
-// 		c.MinerThreads = *dec.MinerThreads
-// 	}
-// 	if dec.ExtraData != nil {
-// 		c.ExtraData = *dec.ExtraData
-// 	}
-// 	if dec.GasPrice != nil {
-// 		c.GasPrice = dec.GasPrice
-// 	}
-// 	if dec.Aquahash != nil {
-// 		c.Aquahash = *dec.Aquahash
-// 	}
-// 	if dec.TxPool != nil {
-// 		c.TxPool = *dec.TxPool
-// 	}
-// 	if dec.GPO != nil {
-// 		c.GPO = *dec.GPO
-// 	}
-// 	if dec.EnablePreimageRecording != nil {
-// 		c.EnablePreimageRecording = *dec.EnablePreimageRecording
-// 	}
-// 	if dec.WorkingDirectory != nil {
-// 		c.WorkingDirectory = *dec.WorkingDirectory
-// 	}
-// 	if dec.Alerts != nil {
-// 		c.Alerts = *dec.Alerts
-// 	}
-// 	return nil
-// }
-
-// // MarshalTOML marshals as TOML.
-// func (c Config) MarshalTOML() (interface{}, error) {
-// 	type Config struct {
-// 		Genesis                 *core.Genesis `toml:",omitempty"`
-// 		NetworkId               uint64
-// 		SyncMode                downloader.SyncMode
-// 		NoPruning               bool `toml:"NoPruning"`
-// 		SkipBcVersionCheck      bool `toml:"-"`
-// 		DatabaseHandles         int  `toml:"-"`
-// 		DatabaseCache           int
-// 		TrieCache               int
-// 		TrieTimeout             time.Duration
-// 		Aquabase                common.Address `toml:",omitempty"`
-// 		MinerThreads            int            `toml:",omitempty"`
-// 		ExtraData               hexutil.Bytes  `toml:",omitempty"`
-// 		GasPrice                *big.Int
-// 		Aquahash                aquahash.Config
-// 		TxPool                  core.TxPoolConfig
-// 		GPO                     gasprice.Config
-// 		EnablePreimageRecording bool
-// 		WorkingDirectory                 string `toml:"-"`
-// 		Alerts                  alerts.AlertConfig
-// 	}
-// 	var enc Config
-// 	enc.Genesis = c.Genesis
-// 	enc.NetworkId = c.NetworkId
-// 	enc.SyncMode = c.SyncMode
-// 	enc.NoPruning = c.NoPruning
-// 	enc.SkipBcVersionCheck = c.SkipBcVersionCheck
-// 	enc.DatabaseHandles = c.DatabaseHandles
-// 	enc.DatabaseCache = c.DatabaseCache
-// 	enc.TrieCache = c.TrieCache
-// 	enc.TrieTimeout = c.TrieTimeout
-// 	enc.Aquabase = c.Aquabase
-// 	enc.MinerThreads = c.MinerThreads
-// 	enc.ExtraData = c.ExtraData
-// 	enc.GasPrice = c.GasPrice
-// 	enc.Aquahash = c.Aquahash
-// 	enc.TxPool = c.TxPool
-// 	enc.GPO = c.GPO
-// 	enc.EnablePreimageRecording = c.EnablePreimageRecording
-// 	enc.WorkingDirectory = c.WorkingDirectory
-// 	enc.Alerts = c.Alerts
-// 	return &enc, nil
-// }
-
-// // UnmarshalTOML unmarshals from TOML.
-// func (c *Config) UnmarshalTOML(unmarshal func(interface{}) error) error {
-// 	type Config struct {
-// 		Genesis                 *core.Genesis `toml:",omitempty"`
-// 		NetworkId               *uint64
-// 		SyncMode                *downloader.SyncMode
-// 		NoPruning               *bool `toml:"NoPruning"`
-// 		SkipBcVersionCheck      *bool `toml:"-"`
-// 		DatabaseHandles         *int  `toml:"-"`
-// 		DatabaseCache           *int
-// 		TrieCache               *int
-// 		TrieTimeout             *time.Duration
-// 		Aquabase                *common.Address `toml:",omitempty"`
-// 		MinerThreads            *int            `toml:",omitempty"`
-// 		ExtraData               *hexutil.Bytes  `toml:",omitempty"`
-// 		GasPrice                *big.Int
-// 		Aquahash                *aquahash.Config
-// 		TxPool                  *core.TxPoolConfig
-// 		GPO                     *gasprice.Config
-// 		EnablePreimageRecording *bool
-// 		WorkingDirectory                 *string `toml:"-"`
-// 		Alerts                  *alerts.AlertConfig
-// 	}
-// 	var dec Config
-// 	if err := unmarshal(&dec); err != nil {
-// 		return err
-// 	}
-// 	if dec.Genesis != nil {
-// 		c.Genesis = dec.Genesis
-// 	}
-// 	if dec.NetworkId != nil {
-// 		c.NetworkId = *dec.NetworkId
-// 	}
-// 	if dec.SyncMode != nil {
-// 		c.SyncMode = *dec.SyncMode
-// 	}
-// 	if dec.NoPruning != nil {
-// 		c.NoPruning = *dec.NoPruning
-// 	}
-// 	if dec.SkipBcVersionCheck != nil {
-// 		c.SkipBcVersionCheck = *dec.SkipBcVersionCheck
-// 	}
-// 	if dec.DatabaseHandles != nil {
-// 		c.DatabaseHandles = *dec.DatabaseHandles
-// 	}
-// 	if dec.DatabaseCache != nil {
-// 		c.DatabaseCache = *dec.DatabaseCache
-// 	}
-// 	if dec.TrieCache != nil {
-// 		c.TrieCache = *dec.TrieCache
-// 	}
-// 	if dec.TrieTimeout != nil {
-// 		c.TrieTimeout = *dec.TrieTimeout
-// 	}
-// 	if dec.Aquabase != nil {
-// 		c.Aquabase = *dec.Aquabase
-// 	}
-// 	if dec.MinerThreads != nil {
-// 		c.MinerThreads = *dec.MinerThreads
-// 	}
-// 	if dec.ExtraData != nil {
-// 		c.ExtraData = *dec.ExtraData
-// 	}
-// 	if dec.GasPrice != nil {
-// 		c.GasPrice = dec.GasPrice
-// 	}
-// 	if dec.Aquahash != nil {
-// 		c.Aquahash = *dec.Aquahash
-// 	}
-// 	if dec.TxPool != nil {
-// 		c.TxPool = *dec.TxPool
-// 	}
-// 	if dec.GPO != nil {
-// 		c.GPO = *dec.GPO
-// 	}
-// 	if dec.EnablePreimageRecording != nil {
-// 		c.EnablePreimageRecording = *dec.EnablePreimageRecording
-// 	}
-// 	if dec.WorkingDirectory != nil {
-// 		c.WorkingDirectory = *dec.WorkingDirectory
-// 	}
-// 	if dec.Alerts != nil {
-// 		c.Alerts = *dec.Alerts
-// 	}
-// 	return nil
-// }
+// UnmarshalTOML unmarshals from TOML.
+func (c *Config) UnmarshalTOML(unmarshal func(interface{}) error) error {
+	type Config struct {
+		Genesis                 *core.Genesis `toml:",omitempty"`
+		ChainId                 *uint64
+		SyncMode                *downloader.SyncMode
+		NoPruning               *bool `toml:"NoPruning"`
+		SkipBcVersionCheck      *bool `toml:"-"`
+		DatabaseHandles         *int  `toml:"-"`
+		DatabaseCache           *int
+		TrieCache               *int
+		TrieTimeout             *time.Duration
+		Aquabase                *common.Address `toml:",omitempty"`
+		MinerThreads            *int            `toml:",omitempty"`
+		ExtraData               *hexutil.Bytes  `toml:",omitempty"`
+		GasPrice                *big.Int
+		Aquahash                *ethashdag.Config
+		TxPool                  *core.TxPoolConfig
+		GPO                     *gasprice.Config
+		EnablePreimageRecording *bool
+		JavascriptDirectory     *string             `toml:"-"`
+		Alerts                  *alerts.AlertConfig `toml:",omitempty"`
+	}
+	var dec Config
+	if err := unmarshal(&dec); err != nil {
+		return err
+	}
+	if dec.Genesis != nil {
+		c.Genesis = dec.Genesis
+	}
+	if dec.ChainId != nil {
+		c.ChainId = *dec.ChainId
+	}
+	if dec.SyncMode != nil {
+		c.SyncMode = *dec.SyncMode
+	}
+	if dec.NoPruning != nil {
+		c.NoPruning = *dec.NoPruning
+	}
+	if dec.SkipBcVersionCheck != nil {
+		c.SkipBcVersionCheck = *dec.SkipBcVersionCheck
+	}
+	if dec.DatabaseHandles != nil {
+		c.DatabaseHandles = *dec.DatabaseHandles
+	}
+	if dec.DatabaseCache != nil {
+		c.DatabaseCache = *dec.DatabaseCache
+	}
+	if dec.TrieCache != nil {
+		c.TrieCache = *dec.TrieCache
+	}
+	if dec.TrieTimeout != nil {
+		c.TrieTimeout = *dec.TrieTimeout
+	}
+	if dec.Aquabase != nil {
+		c.Aquabase = *dec.Aquabase
+	}
+	if dec.MinerThreads != nil {
+		c.MinerThreads = *dec.MinerThreads
+	}
+	if dec.ExtraData != nil {
+		c.ExtraData = *dec.ExtraData
+	}
+	if dec.GasPrice != nil {
+		c.GasPrice = dec.GasPrice
+	}
+	if dec.Aquahash != nil {
+		c.Aquahash = *dec.Aquahash
+	}
+	if dec.TxPool != nil {
+		c.TxPool = *dec.TxPool
+	}
+	if dec.GPO != nil {
+		c.GPO = *dec.GPO
+	}
+	if dec.EnablePreimageRecording != nil {
+		c.EnablePreimageRecording = *dec.EnablePreimageRecording
+	}
+	if dec.JavascriptDirectory != nil {
+		c.JavascriptDirectory = *dec.JavascriptDirectory
+	}
+	if dec.Alerts != nil {
+		c.Alerts = *dec.Alerts
+	}
+	return nil
+}

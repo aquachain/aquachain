@@ -92,7 +92,10 @@ func encodeBlockNumber(number uint64) []byte {
 
 // GetCanonicalHash retrieves a hash assigned to a canonical block number.
 func GetCanonicalHash(db DatabaseReader, number uint64) common.Hash {
-	data, _ := db.Get(append(append(headerPrefix, encodeBlockNumber(number)...), numSuffix...))
+	data, err := db.Get(append(append(headerPrefix, encodeBlockNumber(number)...), numSuffix...))
+	if err != nil {
+		log.Warn("Failed to retrieve canonical hash", "number", number, "err", err)
+	}
 	if len(data) == 0 {
 		return common.Hash{}
 	}
