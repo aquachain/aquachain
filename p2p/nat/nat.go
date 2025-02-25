@@ -92,6 +92,13 @@ func Parse(spec string) (Interface, error) {
 
 type NatString string
 
+func (n NatString) MarshalTOML() ([]byte, error) {
+	if n == "" {
+		return []byte("\"none\""), nil
+	}
+	return fmt.Appendf(nil, "%q", string(n)), nil
+}
+
 func (n NatString) String() string { return string(n) }
 
 func (n *NatString) Get() Interface {
