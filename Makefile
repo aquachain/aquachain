@@ -31,7 +31,7 @@ winextension :=
 ifeq (windows,$(GOOS))
 winextension = .exe
 endif
-maincmd_name := aquachain-$(version)-$(COMMITHASH)$(winextension)
+maincmd_name := aquachain-$(version)$(winextension)
 PWD != pwd
 build_dir ?= ./bin
 INSTALL_DIR ?= $(PREFIX)/bin
