@@ -126,7 +126,7 @@ func main() {
 		writeAddr bool
 		verbosity int
 		vmodule   string
-		debug     bool
+		debug     bool = os.Getenv("DEBUG") != ""
 	)
 	flag.StringVar(&genKey, "genkey", "", "generate a new private key and write to file (file must not exist)")
 	flag.BoolVar(&writeAddr, "writeaddress", false, "write out the node's pubkey hash and quit")

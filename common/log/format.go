@@ -122,7 +122,7 @@ func TerminalFormat(usecolor bool) Format {
 
 		b := &bytes.Buffer{}
 		lvl := r.Lvl.AlignedString()
-		if true || atomic.LoadUint32(&locationEnabled) != 0 {
+		if atomic.LoadUint32(&locationEnabled) != 0 {
 			// Log origin printing was requested, format the location path and line number
 			location := fmt.Sprintf("%+v", r.Call)
 			for _, prefix := range locationTrims {
@@ -291,7 +291,7 @@ func formatShared(value interface{}) (result interface{}) {
 func formatJsonValue(value interface{}) interface{} {
 	value = formatShared(value)
 	switch value.(type) {
-	case int, int8, int16, int32, int64, float32, float64, uint, uint8, uint16, uint32, uint64, string:
+	case int, int8, int16, int32, int64, float32, float64, uint, uint8, uint16, uint32, uint64, string, json.RawMessage, *json.RawMessage, bool:
 		return value
 	default:
 		return fmt.Sprintf("%+v", value)

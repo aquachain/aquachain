@@ -204,7 +204,6 @@ func afterFunc(context.Context, *cli.Command) error {
 func beforeFunc(ctx context.Context, cmd *cli.Command) (context.Context, error) {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	// TODO move logging setup out of debug?
 	if err := debug.Setup(ctx, cmd); err != nil {
 		return ctx, err
 	}

@@ -112,8 +112,12 @@ func (h *closingHandler) Close() error {
 // CallerFileHandler returns a Handler that adds the line number and file of
 // the calling function to the context with key "caller".
 func CallerFileHandler(h Handler) Handler {
+	verb := "%#v" // full path
+	if os.Getenv("DEBUG") == "" {
+		verb = "%+v" // relative path
+	}
 	return FuncHandler(func(r *Record) error {
-		r.Ctx = append(r.Ctx, "caller", fmt.Sprint(r.Call))
+		r.Ctx = append(r.Ctx, "caller", fmt.Sprintf(verb, r.Call))
 		return h.Log(r)
 	})
 }

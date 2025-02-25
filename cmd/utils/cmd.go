@@ -189,7 +189,7 @@ func ImportChain(chain *core.BlockChain, fn string) error {
 		}
 		missing := missingBlocks(chain, blocks[:i])
 		if len(missing) == 0 {
-			log.Info("Skipping batch as all blocks present", "batch", batch, "first", blocks[0].Hash(), "last", blocks[i-1].Hash(), "blocknumber", blocks[i-1].Number(), "date", common.FormatTimestamp(blocks[i-1].Time().Uint64()))
+			log.Info("Skipping batch as all blocks present", "size", len(blocks), "batch", batch, "first", blocks[0].Hash(), "last", blocks[i-1].Hash(), "blocknumber", blocks[i-1].Number(), "date", common.FormatTimestamp(blocks[i-1].Time().Uint64()))
 			continue
 		}
 		if _, err := chain.InsertChain(missing); err != nil {

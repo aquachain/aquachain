@@ -64,17 +64,17 @@ func (l Lvl) AlignedString() string {
 func (l Lvl) String() string {
 	switch l {
 	case LvlTrace:
-		return "trce"
+		return "trace"
 	case LvlDebug:
-		return "dbug"
+		return "debug"
 	case LvlInfo:
 		return "info"
 	case LvlWarn:
 		return "warn"
 	case LvlError:
-		return "eror"
+		return "error"
 	case LvlCrit:
-		return "crit"
+		return "critical"
 	default:
 		panic("bad level")
 	}

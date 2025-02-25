@@ -1475,7 +1475,7 @@ func MakeConsensusEngine(cmd *cli.Command, stack *node.Node) consensus.Engine {
 	if cmd.Bool(FakePoWFlag.Name) {
 		return aquahash.NewFaker()
 	}
-	return aquahash.New(aquahash.Config{
+	return aquahash.New(&aquahash.Config{
 		CacheDir:       stack.ResolvePath(aqua.DefaultConfig.Aquahash.CacheDir),
 		CachesInMem:    aqua.DefaultConfig.Aquahash.CachesInMem,
 		CachesOnDisk:   aqua.DefaultConfig.Aquahash.CachesOnDisk,
