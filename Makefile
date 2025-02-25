@@ -49,6 +49,7 @@ endif
 
 # change ${GOCMD} build flags
 GO_FLAGS ?= 
+GO_FLAGS += -trimpath
 
 ifeq (1,$(verbose))
 GO_FLAGS += -v 
