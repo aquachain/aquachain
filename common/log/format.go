@@ -318,6 +318,10 @@ func formatLogfmtValue(value interface{}, term bool) string {
 	}
 	value = formatShared(value)
 	switch v := value.(type) {
+	case json.RawMessage:
+		return string(v)
+	case *json.RawMessage:
+		return string(*v)
 	case bool:
 		return strconv.FormatBool(v)
 	case float32:
