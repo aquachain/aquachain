@@ -232,12 +232,12 @@ var (
 		Name:  "fast",
 		Usage: "Enable fast syncing through state downloads",
 	}
-	defaultSyncMode = aqua.DefaultConfig.SyncMode
+	tmpdefaultSyncMode = aqua.DefaultConfig.SyncMode
 
 	SyncModeFlag = &cli.StringFlag{
 		Name:  "syncmode",
 		Usage: `Blockchain sync mode ("fast", "full")`,
-		Value: defaultSyncMode.String(),
+		Value: tmpdefaultSyncMode.String(),
 		Action: func(ctx context.Context, cmd *cli.Command, v string) error {
 			if v != "fast" && v != "full" && v != "offline" {
 				return fmt.Errorf("invalid sync mode: %q", v)
@@ -247,7 +247,7 @@ var (
 	}
 	GCModeFlag = &cli.StringFlag{
 		Name:  "gcmode",
-		Usage: `GC mode to use, either "full" or "archive". Use "archive" for full, accurate state (for example, 'admin.supply')`,
+		Usage: `GC mode to use, either "full" or "archive". Use "archive" for full accurate state (for example, 'admin.supply')`,
 		Value: "archive",
 	}
 )
@@ -1009,6 +1009,9 @@ func SetP2PConfig(cmd *cli.Command, cfg *p2p.Config) {
 		log.Info("Offline mode enabled")
 		cfg.NoDiscovery = true
 		cfg.Offline = true
+		cfg.NAT = ""
+		cfg.BootstrapNodes = nil
+		// also set aqua.SyncMode ...
 	} else {
 		log.Info("Listen Address:", "tcp+udp", cfg.ListenAddr)
 		log.Debug("Maximum peer count", "AQUA", cfg.MaxPeers)
