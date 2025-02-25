@@ -104,7 +104,8 @@ func (s *Server) RegisterName(name string, rcvr interface{}) (methodNames []stri
 	methodNames = make([]string, len(methods))
 	var i = 0
 	for _, m := range methods {
-		if m.method.Name == "SendTransaction" {
+		if m.method.Name == "SendTransaction" || strings.HasPrefix(strings.TrimSpace(strings.ToLower(m.method.Name)), "sign") {
+			log.Info("some methods disabled", "service", name, "method", m.method.Name)
 			continue
 		}
 		// log.Warn("rpc registered method", "service", name, "method", m.method.Name, "k", k)
