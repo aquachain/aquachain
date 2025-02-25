@@ -31,7 +31,7 @@ const (
 )
 
 var (
-	VersionMeta = "dev" // Version metadata to append to the version string
+	VersionMeta = "dev" // Version metadata to append to the version string (replaced by Makefile)
 )
 
 // Version holds the textual version string.
