@@ -20,12 +20,12 @@ endef
 $(info $(LOGO))
 aquachain_cmd=./cmd/aquachain
 COMMITHASH := ${GITHUB_SHA}
-version  :=     $(shell git describe --tags --always --dirty)
+version  :=     $(shell git describe --tags --always --dirty --abbrev=6 || echo "0.0.0")
 ifeq (,$(version))
 version := $(shell cat VERSION)
 endif
 ifeq (,$(COMMITHASH))
-COMMITHASH := $(shell git rev-parse --short HEAD)
+COMMITHASH := $(shell git rev-parse --short=6 HEAD)
 endif
 winextension :=
 ifeq (windows,$(GOOS))
