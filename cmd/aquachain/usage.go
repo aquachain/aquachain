@@ -281,7 +281,7 @@ func init() {
 			categorized := make(map[string]struct{})
 			for _, group := range AppHelpFlagGroups {
 				for _, flag := range group.Flags {
-					log.Info("flag", flag.Names()[0], "cat", group.Name, "is", flag.String())
+					log.Info("", "flag", flag.Names()[0], "cat", group.Name, "is", flag.String())
 					categorized[flag.String()] = struct{}{}
 				}
 			}
