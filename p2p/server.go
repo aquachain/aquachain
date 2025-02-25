@@ -120,7 +120,7 @@ type Config struct {
 	// If set to a non-nil value, the given NAT port mapper
 	// is used to make the listening port available to the
 	// Internet.
-	NAT nat.Interface `toml:",omitempty"`
+	NAT nat.NatString `toml:",omitempty"`
 
 	// If Dialer is set to a non-nil value, the given Dialer
 	// is used to dial outbound peer connections.
@@ -463,12 +463,12 @@ func (srv *Server) Start(ctx context.Context) (err error) {
 			return err
 		}
 		realaddr = conn.LocalAddr().(*net.UDPAddr)
-		if srv.NAT != nil {
+		if nats := srv.NAT.Get(); nats != nil {
 			if !realaddr.IP.IsLoopback() {
-				go nat.Map(srv.NAT, srv.quit, "udp", realaddr.Port, realaddr.Port, "aquachain discovery")
+				go nat.Map(nats, srv.quit, "udp", realaddr.Port, realaddr.Port, "aquachain discovery")
 			}
 			// TODO: react to external IP changes over time.
-			if ext, err := srv.NAT.ExternalIP(); err == nil {
+			if ext, err := nats.ExternalIP(); err == nil {
 				realaddr = &net.UDPAddr{IP: ext, Port: realaddr.Port}
 			}
 		}
@@ -533,10 +533,10 @@ func (srv *Server) startListening() error {
 	srv.loopWG.Add(1)
 	go srv.listenLoop()
 	// Map the TCP listening port if NAT is configured.
-	if !laddr.IP.IsLoopback() && srv.NAT != nil {
+	if !laddr.IP.IsLoopback() && srv.NAT != "" {
 		srv.loopWG.Add(1)
 		go func() {
-			nat.Map(srv.NAT, srv.quit, "tcp", laddr.Port, laddr.Port, "aquachain p2p")
+			nat.Map(srv.NAT.Get(), srv.quit, "tcp", laddr.Port, laddr.Port, "aquachain p2p")
 			srv.loopWG.Done()
 		}()
 	}

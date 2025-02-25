@@ -90,6 +90,22 @@ func Parse(spec string) (Interface, error) {
 	}
 }
 
+type NatString string
+
+func (n NatString) String() string { return string(n) }
+
+func (n *NatString) Get() Interface {
+	if n == nil {
+		return nil
+	}
+	m, err := Parse(string(*n))
+	if err != nil {
+		log.Warn("Failed to parse NAT string", "err", err)
+		return nil
+	}
+	return m
+}
+
 const (
 	mapTimeout        = 20 * time.Minute
 	mapUpdateInterval = 15 * time.Minute

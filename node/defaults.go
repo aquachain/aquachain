@@ -23,7 +23,6 @@ import (
 	"runtime"
 
 	"gitlab.com/aquachain/aquachain/p2p"
-	"gitlab.com/aquachain/aquachain/p2p/nat"
 	"gitlab.com/aquachain/aquachain/params"
 )
 
@@ -44,7 +43,7 @@ var DefaultConfig = Config{
 	P2P: p2p.Config{
 		ListenAddr: "0.0.0.0:21303", // tcp+udp, ipv4 only
 		MaxPeers:   20,
-		NAT:        nat.Any(), // try UPnP or NAT-PMP
+		NAT:        "", // none
 	},
 }
 

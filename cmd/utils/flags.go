@@ -793,14 +793,14 @@ func getListenAddress(cmd *cli.Command) string {
 // setNAT creates a port mapper from command line flags.
 func setNAT(cmd *cli.Command, cfg *p2p.Config) {
 	if cmd.IsSet(NATFlag.Name) {
-		natif, err := nat.Parse(cmd.String(NATFlag.Name))
+		_, err := nat.Parse(cmd.String(NATFlag.Name))
 		if err != nil {
 			Fatalf("Option %s: %v", NATFlag.Name, err)
 		}
-		cfg.NAT = natif
+		cfg.NAT = nat.NatString(cmd.String(NATFlag.Name))
 	}
 	if cmd.IsSet(OfflineFlag.Name) {
-		cfg.NAT = nil
+		cfg.NAT = ""
 	}
 }
 
