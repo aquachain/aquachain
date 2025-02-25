@@ -203,7 +203,7 @@ func (pm *ProtocolManager) synchronise(peer *peer) {
 
 	// Run the sync cycle, and disable fast sync if we've went past the pivot block
 	if err := pm.downloader.Synchronise(peer.id, pHead, pTd, mode); err != nil {
-		if err != downloader.ErrBusy && pm.blockchain.Context().Err() == nil {
+		if err != downloader.ErrBusy && pm.blockchain.GetContext().Err() == nil {
 			log.Warn("error synchronizing with bad peer", "err", err)
 		}
 		return

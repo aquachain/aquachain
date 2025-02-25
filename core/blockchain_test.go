@@ -319,7 +319,7 @@ func TestReorgLongHeaders(t *testing.T) { testReorgLong(t, false) }
 func TestReorgLongBlocks(t *testing.T)  { testReorgLong(t, true) }
 
 func testReorgShort(t *testing.T, full bool) {
-	testReorg(t, []int64{0, 0, -9}, []int64{0, 0, 0, -9}, 392248300, full)
+	testReorg(t, []int64{0, 0, -9}, []int64{0, 0, 0, -9}, 62133491973, full)
 }
 
 // Tests that reorganising a short difficult chain after a long easy one
@@ -339,7 +339,7 @@ func testReorgLong(t *testing.T, full bool) {
 	for i := 0; i < len(diff); i++ {
 		diff[i] = -20 // offset by -20 (difficulty goes up)
 	}
-	testReorg(t, easy, diff, 6718587918, full)
+	testReorg(t, easy, diff, 66353998696, full) // some HF are activated on the way
 }
 
 func testReorg(t *testing.T, first, second []int64, td int64, full bool) {
@@ -941,7 +941,8 @@ func TestReorgSideEvent(t *testing.T) {
 		gen.header.Version = gen.config.GetBlockVersion(gen.Number())
 	})
 	chainSideCh := make(chan ChainSideEvent, 64)
-	blockchain.SubscribeChainSideEvent(chainSideCh)
+	subscription := blockchain.SubscribeChainSideEvent(chainSideCh)
+	defer subscription.Unsubscribe()
 	if _, err := blockchain.InsertChain(replacementBlocks); err != nil {
 		t.Fatalf("failed to insert chain: %v", err)
 	}

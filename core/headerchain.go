@@ -17,6 +17,7 @@
 package core
 
 import (
+	"context"
 	crand "crypto/rand"
 	"errors"
 	"fmt"
@@ -48,6 +49,7 @@ const (
 // It is not thread safe either, the encapsulating chain structures should do
 // the necessary mutex locking/unlocking.
 type HeaderChain struct {
+	ctx    context.Context
 	config *params.ChainConfig
 
 	chainDb       aquadb.Database
@@ -66,12 +68,19 @@ type HeaderChain struct {
 	engine consensus.Engine
 }
 
+func (hc *HeaderChain) GetContext() context.Context {
+	if hc.ctx == nil {
+		hc.ctx = context.TODO()
+	}
+	return hc.ctx
+}
+
 // NewHeaderChain creates a new HeaderChain structure.
 //
 //	getValidator should return the parent's validator
 //	procInterrupt points to the parent's interrupt semaphore
 //	wg points to the parent's shutdown wait group
-func NewHeaderChain(chainDb aquadb.Database, config *params.ChainConfig, engine consensus.Engine, procInterrupt func() bool) (*HeaderChain, error) {
+func NewHeaderChain(ctx context.Context, chainDb aquadb.Database, config *params.ChainConfig, engine consensus.Engine, procInterrupt func() bool) (*HeaderChain, error) {
 	headerCache, _ := lru.New(headerCacheLimit)
 	tdCache, _ := lru.New(tdCacheLimit)
 	numberCache, _ := lru.New(numberCacheLimit)
@@ -86,6 +95,7 @@ func NewHeaderChain(chainDb aquadb.Database, config *params.ChainConfig, engine 
 	}
 
 	hc := &HeaderChain{
+		ctx:           ctx,
 		config:        config,
 		chainDb:       chainDb,
 		headerCache:   headerCache,
@@ -104,6 +114,7 @@ func NewHeaderChain(chainDb aquadb.Database, config *params.ChainConfig, engine 
 	hc.currentHeader.Store(hc.genesisHeader)
 	if head := GetHeadBlockHash(chainDb); head != (common.Hash{}) {
 		if chead := hc.GetHeaderByHash(head); chead != nil {
+			log.Warn("store head header", "hash", head)
 			chead.Version = hc.Config().GetBlockVersion(chead.Number)
 			hc.currentHeader.Store(chead)
 		}
@@ -364,7 +375,7 @@ func (hc *HeaderChain) GetHeader(hash common.Hash, number uint64) *types.Header 
 	}
 	header.Version = hc.Config().GetBlockVersion(header.Number)
 	if header.Hash() != hash {
-		log.Info("header hash version mismatch")
+		log.Warn("header hash version mismatch", "dbhash", header.Hash().TerminalString(), "want", hash.TerminalString(), "config", hc.Config().Name(), "hf", hc.Config().HF)
 		return nil
 	}
 	// Cache the found header for next time and return

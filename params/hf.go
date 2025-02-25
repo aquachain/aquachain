@@ -59,7 +59,7 @@ func (v HeaderVersion) String() string {
 	case 4:
 		return "argon2id-C"
 	default:
-		return "unknown"
+		return "unknown " + fmt.Sprint(int(v))
 	}
 }
 

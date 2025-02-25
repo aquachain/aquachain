@@ -85,17 +85,27 @@ var (
 
 	// TestHF is the map of hard forks (for testing suite)
 	TestHF = ForkMap{
+		1: big.NewInt(1),
+		2: big.NewInt(2),
+		3: big.NewInt(3),
+		4: big.NewInt(4),
+		5: big.NewInt(5), // argon2id
+		6: big.NewInt(6),
+		7: big.NewInt(7),
+		// 8: big.NewInt(0),
+	}
+
+	NoHF  = ForkMap{}
+	AllHF = ForkMap{
 		1: big.NewInt(0),
 		2: big.NewInt(0),
 		3: big.NewInt(0),
 		4: big.NewInt(0),
-		5: big.NewInt(0),
+		5: big.NewInt(0), // argon2id
 		6: big.NewInt(0),
 		7: big.NewInt(0),
 		// 8: big.NewInt(0),
 	}
-
-	NoHF = ForkMap{}
 )
 
 func IsMainnet(cfg *ChainConfig) bool {
@@ -182,8 +192,8 @@ var (
 	//
 	// This configuration is intentionally not using keyed fields to force anyone
 	// adding flags to the config to also have to set these fields.
-	AllAquahashProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, new(AquahashConfig), nil, TestHF, 21398, 21099}
-	AllCliqueProtocolChanges   = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, nil, &CliqueConfig{Period: 0, Epoch: 30000}, TestHF, 21398, 21098}
+	AllAquahashProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, new(AquahashConfig), nil, AllHF, 21398, 21099}
+	AllCliqueProtocolChanges   = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, nil, &CliqueConfig{Period: 0, Epoch: 30000}, AllHF, 21398, 21098}
 
 	TestChainConfig = &ChainConfig{big.NewInt(3), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, new(AquahashConfig), nil, TestHF, 21397, 21097}
 	// TestRules       = TestChainConfig.Rules(new(big.Int))

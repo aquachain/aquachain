@@ -17,6 +17,7 @@
 package miner
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
@@ -39,7 +40,8 @@ type hashrate struct {
 }
 
 type RemoteAgent struct {
-	mu sync.Mutex
+	mu  sync.Mutex
+	ctx context.Context
 
 	quitCh   chan struct{}
 	workCh   chan *Work
@@ -58,6 +60,7 @@ type RemoteAgent struct {
 
 func NewRemoteAgent(chain consensus.ChainReader, engine consensus.Engine) *RemoteAgent {
 	return &RemoteAgent{
+		ctx:      chain.GetContext(),
 		chain:    chain,
 		engine:   engine,
 		work:     make(map[common.Hash]*Work),
@@ -148,7 +151,13 @@ func (a *RemoteAgent) SubmitBlock(block *types.Block) bool {
 		return false
 	}
 	// Solutions seems to be valid, return to the miner and notify acceptance
-	a.returnCh <- &Result{nil, block}
+	select {
+	case a.returnCh <- &Result{nil, block}:
+	case <-a.ctx.Done():
+		// shutting down
+		log.Warn("Skipping SubmitBlock (shutting down)")
+		return false
+	}
 	return true
 
 }
@@ -196,7 +205,7 @@ func (a *RemoteAgent) SubmitWork(nonce types.BlockNonce, mixDigest, hash common.
 	result.Nonce = nonce
 	result.MixDigest = mixDigest
 	if result.Version == 0 {
-		log.Info("Not real work", "version", result.Version)
+		log.Warn("Not real work", "version", result.Version)
 	}
 	if err := a.engine.VerifySeal(a.chain, result); err != nil {
 		log.Warn("Invalid proof-of-work submitted", "hash", hash, "err", err)
@@ -205,7 +214,13 @@ func (a *RemoteAgent) SubmitWork(nonce types.BlockNonce, mixDigest, hash common.
 	block := work.Block.WithSeal(result)
 
 	// Solutions seems to be valid, return to the miner and notify acceptance
-	a.returnCh <- &Result{work, block}
+	select {
+	case a.returnCh <- &Result{work, block}:
+	case <-a.ctx.Done():
+		// shutting down
+	}
+
+	// immediately remove the work to prevent duplicates (causes "work submitted but wasnt pending")
 	delete(a.work, hash)
 
 	return true
@@ -233,7 +248,7 @@ func (a *RemoteAgent) loop(workCh chan *Work, quitCh chan struct{}) {
 			// cleanup
 			a.mu.Lock()
 			for hash, work := range a.work {
-				if time.Since(work.createdAt) > 7*(12*time.Second) {
+				if time.Since(work.createdAt) > 7*(240*time.Second) {
 					delete(a.work, hash)
 				}
 			}

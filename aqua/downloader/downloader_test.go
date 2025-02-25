@@ -116,7 +116,7 @@ func newTester() *downloadTester {
 func (dl *downloadTester) Config() *params.ChainConfig {
 	return dl.chainConfig
 }
-func (dl *downloadTester) Context() context.Context {
+func (dl *downloadTester) GetContext() context.Context {
 	return dl.ctx
 }
 

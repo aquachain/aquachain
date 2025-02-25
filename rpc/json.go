@@ -186,6 +186,8 @@ func checkReqId(reqId json.RawMessage) error {
 	return fmt.Errorf("invalid request id")
 }
 
+var logRpcRequest = os.Getenv("DEBUG_RPC") == "1"
+
 // parseRequest will parse a single request from the given RawMessage. It will return
 // the parsed request, an indication if the request was a batch or an error when
 // the request could not be parsed.
@@ -201,8 +203,9 @@ func parseRequest(incomingMsg json.RawMessage) ([]rpcRequest, bool, Error) {
 	if err := checkReqId(in.Id); err != nil {
 		return nil, false, &invalidMessageError{err.Error()}
 	}
-
-	println("incoming", in.Method, string(incomingMsg))
+	if logRpcRequest {
+		log.Info("incoming request", in.Method, incomingMsg)
+	}
 	// try keeping eth compatibility
 	if strings.HasPrefix(in.Method, "eth_") {
 		in.Method = "aqua_" + in.Method[4:]

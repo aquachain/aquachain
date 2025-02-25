@@ -202,8 +202,8 @@ type BlockChain interface {
 	// InsertReceiptChain inserts a batch of receipts into the local chain.
 	Config() *params.ChainConfig
 
-	// Context for graceful shutdown
-	Context() context.Context
+	// GetContext for graceful shutdown
+	GetContext() context.Context
 }
 
 // New creates a new downloader to fetch hashes and blocks from remote peers.
@@ -217,7 +217,7 @@ func New(mode SyncMode, stateDb aquadb.Database, mux *event.TypeMux, chain Block
 
 	log.Info("Connected", "network", chain.Config().Name(), "chain", chain.Config().ChainId)
 	dl := &Downloader{
-		ctx:            chain.Context(),
+		ctx:            chain.GetContext(),
 		mode:           mode,
 		stateDB:        stateDb,
 		mux:            mux,

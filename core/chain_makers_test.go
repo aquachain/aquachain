@@ -18,6 +18,7 @@ package core
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"gitlab.com/aquachain/aquachain/aquadb"
@@ -36,6 +37,10 @@ const (
 	forkSeed      = 2
 )
 
+type HasContext interface {
+	GetContext() context.Context
+}
+
 // newCanonical creates a chain database, and injects a deterministic canonical
 // chain. Depending on the full flag, if creates either a full block chain or a
 // header only chain.
@@ -44,10 +49,21 @@ func newCanonical(engine consensus.Engine, n int, full bool) (aquadb.Database, *
 	gspec := new(Genesis)
 	db := aquadb.NewMemDatabase()
 	genesis := gspec.MustCommit(db)
-
-	blockchain, _ := NewBlockChain(context.TODO(), db, nil, params.AllAquahashProtocolChanges, engine, vm.Config{
+	ctx := context.TODO()
+	if ctxer, ok := engine.(HasContext); ok {
+		ctx = ctxer.GetContext()
+	} else {
+		log.Warn("no context in test chain maker")
+	}
+	blockchain, _ := NewBlockChain(ctx, db, nil, params.AllAquahashProtocolChanges, engine, vm.Config{
 		Tracer: vm.NewStructLogger(nil),
 	})
+	if blockchain == nil {
+		return nil, nil, fmt.Errorf("failed to create blockchain")
+	}
+	if blockchain.genesisBlock == nil {
+		return nil, nil, fmt.Errorf("failed to create blockchain genesis")
+	}
 	log.Info("genesis block", "hash", blockchain.genesisBlock.Hash())
 	// Create and inject the requested chain
 	if n == 0 {
@@ -90,14 +106,20 @@ func TestChainMaker(t *testing.T) {
 	db := aquadb.NewMemDatabase()
 	genesis.MustCommit(db)
 	engine := aquahash.NewFullFaker()
-	blockchain, _ := NewBlockChain(context.TODO(), db, nil, params.AllAquahashProtocolChanges, engine, vm.Config{
+	blockchain, err := NewBlockChain(context.TODO(), db, nil, params.AllAquahashProtocolChanges, engine, vm.Config{
 		Tracer: vm.NewStructLogger(nil),
 	})
+	if err != nil {
+		t.Fatalf("failed to create blockchain: %+v", err)
+	}
+	if blockchain == nil {
+		t.Fatalf("failed to create blockchain")
+	}
 	defer blockchain.Stop()
 
 	// Create a deterministic chain of 10 blocks
 	blocks := makeBlockChain(genesis.ToBlock(db), 10, engine, db, canonicalSeed)
-	_, err := blockchain.InsertChain(blocks)
+	_, err = blockchain.InsertChain(blocks)
 	if err != nil {
 		t.Fatalf("failed to insert chain: %v", err)
 	}

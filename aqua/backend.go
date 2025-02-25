@@ -272,18 +272,18 @@ func CreateConsensusEngine(ctx *node.ServiceContext, config *aquahash.Config, ch
 		return aquahash.NewTester()
 	case config.PowMode == aquahash.ModeShared:
 		log.Warn("Aquahash used in shared mode")
-		return aquahash.NewShared()
+		return aquahash.NewSharedTesting()
 	case chainConfig.Clique != nil:
 		log.Info("Starting Clique", "period", chainConfig.Clique.Period, "epoch", chainConfig.Clique.Epoch)
 		return clique.New(chainConfig.Clique, db)
 	default:
 		log.Info("Starting aquahash", "version", startVersion)
 		if startVersion > 1 {
-			engine := aquahash.New(aquahash.Config{StartVersion: startVersion})
+			engine := aquahash.New(&aquahash.Config{StartVersion: startVersion})
 			engine.SetThreads(-1)
 			return engine
 		}
-		engine := aquahash.New(aquahash.Config{
+		engine := aquahash.New(&aquahash.Config{
 			CacheDir:       ctx.ResolvePath(config.CacheDir),
 			CachesInMem:    config.CachesInMem,
 			CachesOnDisk:   config.CachesOnDisk,

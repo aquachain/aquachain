@@ -133,7 +133,7 @@ type BlockChain struct {
 	badBlocks *lru.Cache // Bad block cache
 }
 
-func (bc *BlockChain) Context() context.Context {
+func (bc *BlockChain) GetContext() context.Context {
 	return bc.ctx
 }
 
@@ -141,6 +141,9 @@ func (bc *BlockChain) Context() context.Context {
 // available in the database. It initialises the default Aquachain Validator and
 // Processor.
 func NewBlockChain(ctx context.Context, db aquadb.Database, cacheConfig *CacheConfig, chainConfig *params.ChainConfig, engine consensus.Engine, vmConfig vm.Config) (*BlockChain, error) {
+	if ctx == nil {
+		panic("no context")
+	}
 	if cacheConfig == nil {
 		cacheConfig = &CacheConfig{
 			TrieNodeLimit: 256 * 1024 * 1024,
@@ -148,7 +151,7 @@ func NewBlockChain(ctx context.Context, db aquadb.Database, cacheConfig *CacheCo
 		}
 	}
 	if chainConfig == nil {
-		return nil, fmt.Errorf("nil config")
+		panic("no chain config")
 	}
 	bodyCache, _ := lru.New(bodyCacheLimit)
 	bodyRLPCache, _ := lru.New(bodyCacheLimit)
@@ -176,7 +179,7 @@ func NewBlockChain(ctx context.Context, db aquadb.Database, cacheConfig *CacheCo
 	bc.SetProcessor(NewStateProcessor(chainConfig, bc, engine))
 
 	var err error
-	bc.hc, err = NewHeaderChain(db, chainConfig, engine, bc.getProcInterrupt)
+	bc.hc, err = NewHeaderChain(ctx, db, chainConfig, engine, bc.getProcInterrupt)
 	if err != nil {
 		return nil, err
 	}
@@ -661,6 +664,10 @@ func (bc *BlockChain) TrieNode(hash common.Hash) ([]byte, error) {
 // Stop stops the blockchain service. If any imports are currently in progress
 // it will abort them using the procInterrupt.
 func (bc *BlockChain) Stop() {
+	if bc == nil {
+		log.Warn("no blockchain to stop")
+		return
+	}
 	if !atomic.CompareAndSwapInt32(&bc.running, 0, 1) {
 		return
 	}
