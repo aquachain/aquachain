@@ -81,6 +81,7 @@ type btHeader struct {
 	GasLimit         uint64
 	GasUsed          uint64
 	Timestamp        *big.Int
+	Version          int
 }
 
 type btHeaderMarshaling struct {
