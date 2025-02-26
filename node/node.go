@@ -189,7 +189,7 @@ func (n *Node) Start(ctx context.Context) error {
 	n.serverConfig.PrivateKey = n.config.NodeKey()
 	n.serverConfig.Name = n.config.NodeName()
 
-	if n.serverConfig.Name == "" {
+	if strings.Count(n.serverConfig.Name, "/") < 3 {
 		return errors.New("node name must be non-empty")
 	}
 	n.serverConfig.Logger = n.log
@@ -378,6 +378,9 @@ func (n *Node) startRPC(services map[reflect.Type]Service) error {
 // startInProc initializes an in-process RPC endpoint.
 func (n *Node) startInProc(apis []rpc.API) error {
 	// Register all the APIs exposed by the services
+	if n.config.NoInProc {
+		return nil
+	}
 	handler := rpc.NewServer()
 	for _, api := range apis {
 		if _, err := handler.RegisterName(api.Namespace, api.Service); err != nil {
@@ -409,7 +412,7 @@ func (n *Node) startIPC(apis []rpc.API) error {
 		if _, err := handler.RegisterName(api.Namespace, api.Service); err != nil {
 			return err
 		}
-		n.log.Debug("IPC registered", "service", fmt.Sprintf("%T ( %s_ )", api.Service, api.Namespace))
+		n.log.Debug("IPC registered", "service", fmt.Sprintf("%T", api.Service), "namespace", api.Namespace)
 	}
 	// All APIs registered, start the IPC listener
 	var (
@@ -666,7 +669,7 @@ func (n *Node) Restart() error {
 
 // Attach creates an RPC client attached to an in-process API handler.
 func (n *Node) Attach(name string) (*rpcclient.Client, error) {
-	n.log.Trace("Attaching new client", "name", name)
+	n.log.Trace("Attaching new client", "name", name, "caller2", log.Caller(1), "caller3", log.Caller(2))
 	n.lock.RLock()
 	defer n.lock.RUnlock()
 
