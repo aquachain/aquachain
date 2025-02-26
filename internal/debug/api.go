@@ -33,7 +33,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-stack/stack"
 	"github.com/mattn/go-colorable"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/common/log/term"
@@ -90,7 +89,7 @@ func Initglogger(callerinfo bool, verbosityLvl64 int64, alwayscolor, isjson bool
 	}
 	x := log.NewGlogHandler(h)
 	x.Verbosity(verbosityLvl)
-	go log.Warn("new glogger", "verbosity", verbosityLvl, "color", alwayscolor, "json", isjson, "caller2", stack.Caller(2))
+	go log.Warn("new glogger", "verbosity", verbosityLvl, "color", alwayscolor, "json", isjson, "caller2", log.Caller(2))
 	return x
 }
 
