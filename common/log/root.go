@@ -43,7 +43,7 @@ var (
 // New is a convenient alias for Root().New
 func New(ctx ...interface{}) LoggerI {
 	logger := root.New(ctx...)
-	go root.Warn("New Logger Created", "ctx", ctx, "caller2", stack.Caller(2))
+	go root.Warn("New Logger Created", "ctx", ctx, "caller2", stack.Caller(1))
 	return logger
 }
 
