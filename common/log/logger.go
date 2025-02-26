@@ -63,7 +63,7 @@ func (l Lvl) AlignedString() string {
 // Strings returns the name of a Lvl.
 func (l Lvl) String() string {
 	switch l {
-	case LvlTrace:
+	case LvlTrace, 6, 7, 8, 9:
 		return "trace"
 	case LvlDebug:
 		return "debug"
@@ -117,7 +117,7 @@ type RecordKeyNames struct {
 	Lvl  string
 }
 
-type Logger = *logger
+type Logger = *logger // TODO remove '*' from this line
 
 // A Logger writes key/value pairs to a Handler
 type LoggerI interface {
@@ -205,7 +205,10 @@ func (l *logger) GetHandler() Handler {
 }
 
 func (l *logger) SetHandler(h Handler) {
-	l.h.Swap(h)
+	old := l.h.Swap(h)
+	if old != nil {
+		go l.Info("Handler reset", "old", fmt.Sprintf("%T", old), "handler", fmt.Sprintf("%T", h), "caller2", stack.Caller(2), "caller3", stack.Caller(3))
+	}
 }
 
 func normalize(ctx []interface{}) []interface{} {

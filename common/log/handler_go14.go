@@ -31,8 +31,13 @@ func (h *swapHandler) Log(r *Record) error {
 	return (*h.handler.Load().(*Handler)).Log(r)
 }
 
-func (h *swapHandler) Swap(newHandler Handler) {
-	h.handler.Store(&newHandler)
+// Swap returns the old handler.
+func (h *swapHandler) Swap(newHandler Handler) Handler {
+	x := h.handler.Swap(&newHandler)
+	if x == nil {
+		return nil
+	}
+	return *x.(*Handler)
 }
 
 func (h *swapHandler) Get() Handler {

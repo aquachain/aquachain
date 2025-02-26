@@ -109,7 +109,7 @@ an example that adds the source file and line number of each logging call to
 the context.
 
 	h := log.CallerFileHandler(log.StdoutHandler)
-	log.Root().SetHandler(h)
+	log.SetRootHandler(h)
 	...
 	log.Error("open file", "err", err)
 
@@ -120,7 +120,7 @@ This will output a line that looks like:
 Here's an example that logs the call stack rather than just the call site.
 
 	h := log.CallerStackHandler("%+v", log.StdoutHandler)
-	log.Root().SetHandler(h)
+	log.SetRootHandler(h)
 	...
 	log.Error("open file", "err", err)
 

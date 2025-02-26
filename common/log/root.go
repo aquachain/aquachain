@@ -18,29 +18,44 @@ package log
 
 import (
 	"os"
+
+	"github.com/go-stack/stack"
 )
+
+func newRoot() *logger {
+	x := &logger{[]interface{}{}, new(swapHandler)}
+	x.SetHandler(StderrHandler)
+	return x
+}
 
 var (
-	root = &logger{[]interface{}{}, new(swapHandler)}
+	StderrHandler         = CallerFileHandler(StreamHandler(os.Stderr, JsonFormatEx(false, true)))
+	root          *logger = newRoot()
 	// StdoutHandler = StreamHandler(os.Stdout, LogfmtFormat())
 	// StderrHandler = StreamHandler(os.Stderr, LogfmtFormat())
-	StderrHandler = StreamHandler(os.Stderr, JsonFormatEx(false, true))
 )
 
-func init() {
-	root.SetHandler(CallerFileHandler(StderrHandler))
-}
+// func init() {
+// 	root.SetHandler(CallerFileHandler(StderrHandler))
+// }
 
 // New returns a new logger with the given context.
 // New is a convenient alias for Root().New
 func New(ctx ...interface{}) LoggerI {
 	logger := root.New(ctx...)
-	// logger.Error("New Logger Created")
+	go root.Warn("New Logger Created", "ctx", ctx, "caller2", stack.Caller(2))
 	return logger
 }
 
+func SetRootHandler(h Handler) {
+	if root == nil {
+		root = newRoot()
+	}
+	root.SetHandler(h)
+}
+
 // Root returns the root logger
-func Root() Logger {
+func Root() *logger {
 	return root
 }
 
@@ -50,31 +65,35 @@ func Root() Logger {
 
 // Trace is a convenient alias for Root().Trace
 func Trace(msg string, ctx ...interface{}) {
-	root.write(msg, LvlTrace, ctx)
+	Root().write(msg, LvlTrace, ctx)
 }
 
 // Debug is a convenient alias for Root().Debug
 func Debug(msg string, ctx ...interface{}) {
-	root.write(msg, LvlDebug, ctx)
+	Root().write(msg, LvlDebug, ctx)
 }
 
 // Info is a convenient alias for Root().Info
 func Info(msg string, ctx ...interface{}) {
-	root.write(msg, LvlInfo, ctx)
+	Root().write(msg, LvlInfo, ctx)
 }
 
 // Warn is a convenient alias for Root().Warn
 func Warn(msg string, ctx ...interface{}) {
-	root.write(msg, LvlWarn, ctx)
+	Root().write(msg, LvlWarn, ctx)
 }
 
 // Error is a convenient alias for Root().Error
 func Error(msg string, ctx ...interface{}) {
-	root.write(msg, LvlError, ctx)
+	Root().write(msg, LvlError, ctx)
 }
 
 // Crit is a convenient alias for Root().Crit
 func Crit(msg string, ctx ...interface{}) {
-	root.write(msg, LvlCrit, ctx)
+	if root != nil {
+		root.write(msg, LvlCrit, ctx)
+	} else {
+		println("fatal: ", msg)
+	}
 	os.Exit(1)
 }

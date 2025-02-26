@@ -117,7 +117,7 @@ func CallerFileHandler(h Handler) Handler {
 		verb = "%+v" // relative path
 	}
 	return FuncHandler(func(r *Record) error {
-		r.Ctx = append(r.Ctx, "caller", fmt.Sprintf(verb, r.Call))
+		r.Ctx = append([]any{"caller", fmt.Sprintf(verb, r.Call)}, r.Ctx...)
 		return h.Log(r)
 	})
 }

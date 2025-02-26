@@ -54,6 +54,7 @@ type GlogHandler struct {
 func NewGlogHandler(h Handler) *GlogHandler {
 	return &GlogHandler{
 		origin: h,
+		level:  uint32(LvlInfo),
 	}
 }
 
@@ -67,6 +68,12 @@ type pattern struct {
 // Verbosity sets the glog verbosity ceiling. The verbosity of individual packages
 // and source files can be raised using Vmodule.
 func (h *GlogHandler) Verbosity(level Lvl) {
+	if level > LvlTrace {
+		level = LvlTrace
+	}
+	if level < LvlCrit {
+		level = LvlCrit
+	}
 	atomic.StoreUint32(&h.level, uint32(level))
 }
 
