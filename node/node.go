@@ -456,9 +456,9 @@ func (n *Node) startHTTP(endpoint string, apis []rpc.API, whitelistModules []str
 	}
 	// Generate the whitelist based on the allowed modules
 	whitelist := make(map[string]bool)
+	log.Info("HTTP whitelist", "modules", whitelistModules)
 	for _, module := range whitelistModules {
 		whitelist[module] = true
-		log.Info("HTTP whitelist", "module", module)
 	}
 	// Register all the APIs exposed by the services
 	handler := rpc.NewServer()
@@ -470,7 +470,7 @@ func (n *Node) startHTTP(endpoint string, apis []rpc.API, whitelistModules []str
 				return err
 			}
 			//			allMethods = append(allMethods, m...)
-			n.log.Warn("HTTP registered", "service", fmt.Sprintf("%T ( %s_ )", api.Service, api.Namespace), "methods", common.ToJson(m))
+			n.log.Warn("HTTP method available", "methods", common.ToJson(m), "service", fmt.Sprintf("%T ( %s_ )", api.Service, api.Namespace))
 		}
 	}
 	// All APIs registered, start the HTTP listener
