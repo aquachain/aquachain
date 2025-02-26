@@ -234,6 +234,7 @@ func getIP(r *http.Request, reverseproxy bool) net.IP {
 	}
 	remoteAddr, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
+		log.Warn("allowip: failed to parse remote address", "err", err)
 		// Either invalid (too many colons) or no port specified
 		remoteAddr = strings.Split(r.RemoteAddr, ":")[0]
 	}
