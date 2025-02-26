@@ -47,10 +47,10 @@ type callback struct {
 
 // service represents a registered object
 type service struct {
-	name          string        // name for service
-	typ           reflect.Type  // receiver type
-	callbacks     callbacks     // registered handlers
-	subscriptions subscriptions // available subscriptions/notifications
+	name          string           // name for service
+	typ           reflect.Type     // receiver type
+	callbacks     callbacksmap     // registered handlers
+	subscriptions subscriptionsmap // available subscriptions/notifications
 }
 
 // serverRequest is an incoming request
@@ -63,9 +63,9 @@ type serverRequest struct {
 	err           Error
 }
 
-type serviceRegistry map[string]*service // collection of services
-type callbacks map[string]*callback      // collection of RPC callbacks
-type subscriptions map[string]*callback  // collection of subscription callbacks
+type serviceRegistry map[string]*service   // collection of services
+type callbacksmap map[string]*callback     // collection of RPC callbacks
+type subscriptionsmap map[string]*callback // collection of subscription callbacks
 
 // Server represents a RPC server
 type Server struct {
