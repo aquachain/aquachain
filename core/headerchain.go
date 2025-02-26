@@ -114,7 +114,7 @@ func NewHeaderChain(ctx context.Context, chainDb aquadb.Database, config *params
 	hc.currentHeader.Store(hc.genesisHeader)
 	if head := GetHeadBlockHash(chainDb); head != (common.Hash{}) {
 		if chead := hc.GetHeaderByHash(head); chead != nil {
-			log.Warn("store head header", "hash", head)
+			log.Warn("storing head header", "hash", head, "number", chead.Number, "version", hc.Config().GetBlockVersion(chead.Number))
 			chead.Version = hc.Config().GetBlockVersion(chead.Number)
 			hc.currentHeader.Store(chead)
 		}
