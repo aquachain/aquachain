@@ -520,5 +520,5 @@ func accumulateRewards(config *params.ChainConfig, state *state.StateDB, header 
 		reward.Add(reward, r)
 	}
 	state.AddBalance(header.Coinbase, reward)
-	log.Trace("Block reward", "miner", header.Coinbase, "reward", weiToAqua(reward))
+	log.Trace("Block reward", "miner", header.Coinbase, "reward", weiToAqua(reward), "caller2", log.Caller(1), "caller3", log.Caller(2))
 }

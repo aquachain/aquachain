@@ -139,12 +139,14 @@ var (
 	}
 )
 
+var noEnvFlag = &cli.BoolFlag{Name: "noenv", Usage: "Skip loading existing .env file"}
+
 func doinit() *cli.Command {
 	app := &cli.Command{
 		Name:    "aquachain",
 		Usage:   "the Aquachain command line interface",
 		Version: params.VersionWithCommit(gitCommit),
-		Flags:   []cli.Flag{&cli.BoolFlag{Name: "noenv", Usage: "Skip loading existing .env file"}},
+		Flags:   []cli.Flag{noEnvFlag},
 		// UsageText: ,
 	}
 	// Initialize the CLI app and start Aquachain
@@ -254,7 +256,13 @@ func daemonStart(ctx context.Context, cmd *cli.Command) error {
 // it unlocks any requested accounts, and starts the RPC/IPC interfaces and the
 // miner.
 func startNode(ctx context.Context, cmd *cli.Command, stack *node.Node) {
-	unlocks := strings.Split(cmd.String(utils.UnlockedAccountFlag.Name), ",")
+	unlocks := strings.Split(strings.TrimSpace(cmd.String(utils.UnlockedAccountFlag.Name)), ",")
+	for _, v := range unlocks {
+		log.Info("Unlocking account", "account", v)
+	}
+	if len(unlocks) == 1 && unlocks[0] == "" {
+		unlocks = []string{} // TODO
+	}
 	if len(unlocks) > 0 && stack.Config().NoKeys {
 		utils.Fatalf("Unlocking accounts is not supported with --%s", utils.NoKeysFlag.Name)
 	}
@@ -280,7 +288,7 @@ func startNode(ctx context.Context, cmd *cli.Command, stack *node.Node) {
 	utils.StartNode(ctx, stack)
 
 	// Register wallet event handlers to open and auto-derive wallets
-	if !stack.Config().NoKeys {
+	if !stack.Config().NoKeys && !stack.Config().NoInProc {
 		events := make(chan accounts.WalletEvent, 16)
 		stack.AccountManager().Subscribe(events)
 		log.Info("Starting Account Manager")

@@ -27,6 +27,7 @@ import (
 	"sync/atomic"
 
 	set "github.com/deckarep/golang-set"
+	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/log"
 )
 
@@ -114,14 +115,22 @@ func (s *Server) RegisterName(name string, rcvr interface{}) (methodNames []stri
 	}
 
 	methodNames = make([]string, 0, len(methods))
+	for k, m := range methods {
+		coolname := fmt.Sprintf("%s_%s", name, strings.ToLower(m.method.Name[:1])+m.method.Name[1:])
+		if !unsafe_rpc_signing && isProtectedMethodName(m.method.Name) {
+			log.Warn("disabling HTTP method (no UNSAFE_RPC_SIGNING=1 env)", "service", name, "method", coolname)
+			delete(methods, k)
+			continue
+		}
+		methodNames = append(methodNames, coolname)
+	}
+	for _, m := range subscriptions {
+		coolname := fmt.Sprintf("Subscription: %s_%s", name, strings.ToLower(m.method.Name[:1])+m.method.Name[1:])
+		methodNames = append(methodNames, coolname)
+	}
 	// already a previous service register under given name, merge methods/subscriptions
 	if regsvc, present := s.services[name]; present {
 		for _, m := range methods {
-			if !unsafe_rpc_signing && (m.method.Name == "SignTransaction" || m.method.Name == "Sign" || m.method.Name == "SendTransaction") {
-				log.Info("disabling HTTP method", "service", name, "method", m.method.Name)
-				continue
-			}
-			methodNames = append(methodNames, fmt.Sprintf("%s_%s", name, strings.ToLower(m.method.Name[:1])+m.method.Name[1:]))
 			regsvc.callbacks[formatName(m.method.Name)] = m
 		}
 		for _, s := range subscriptions {
@@ -137,9 +146,8 @@ func (s *Server) RegisterName(name string, rcvr interface{}) (methodNames []stri
 	return methodNames, nil
 }
 
-type methodNames struct {
-	Methods       []string
-	Subscriptions []string
+func isProtectedMethodName(name string) bool {
+	return name == "SignTransaction" || name == "Sign" || name == "SendTransaction"
 }
 
 // serveRequest will reads requests from the codec, calls the RPC callback and
@@ -149,6 +157,7 @@ type methodNames struct {
 // requests until the codec returns an error when reading a request (in most cases
 // an EOF). It executes requests in parallel when singleShot is false.
 func (s *Server) serveRequest(codec ServerCodec, singleShot bool, options CodecOption) error {
+	log.Info("serving request", "codec", fmt.Sprintf("%T", codec), "singleShot", singleShot, "options", common.ToJson(options), "run", atomic.LoadInt32(&s.run))
 	var pend sync.WaitGroup
 
 	defer func() {

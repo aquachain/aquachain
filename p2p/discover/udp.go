@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"os"
 	"time"
 
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -600,8 +601,6 @@ func (t *udp) readLoop(unhandled chan<- ReadPacket) {
 	}
 }
 
-var debugneighborpacket = true
-
 func shorten[T any](a []T, n int) []T {
 	if len(a) <= n {
 		return a
@@ -609,30 +608,39 @@ func shorten[T any](a []T, n int) []T {
 	return a[:n]
 }
 
+var debugpacket = os.Getenv("DEBUG_DISCO") == "1"
+
 func (t *udp) handlePacket(from *net.UDPAddr, buf []byte) error {
 	packet, fromID, hash, err := decodePacket(t.netcompat(), buf)
 	if err != nil {
 		log.Debug("Bad discv4 packet", "addr", from, "err", err)
 		return err
 	}
+	if debugpacket {
+		name := packet.name()
+		switch x := packet.(type) {
+		case *neighbors:
+			log.Trace("<< "+name, "addr", from, "neighbors", len(x.Nodes), "peers", shorten(x.Nodes, 4))
+		case *findnode:
+			log.Trace("<< "+name, "addr", from, "target", x.Target)
+		case *ping:
+			log.Trace("<< "+name, "addr", from, "from", x.From.UDP, "to", x.To)
+		case *pong:
+			d := time.Until(time.Unix(int64(x.Expiration), 0))
+			if d < time.Millisecond*20 {
+				log.Warn("<< "+name, "addr", from, "exp", d, "to", x.To)
+			} else {
+				log.Trace("<< "+name, "addr", from, "exp", d, "to", x.To)
+			}
+		default:
+			log.Warn("<< "+name, "addr", from, "unknown", x)
+		}
+
+	}
 	err = packet.handle(t, from, fromID, hash)
 	if err != nil {
-		log.Warn("Failed to handle discv4 packet", "addr", from, "err", err)
-
+		log.Error("Failed to handle discv4 packet", "addr", from, "err", err)
 		return err
-	}
-	name := packet.name()
-	switch x := packet.(type) {
-	case *neighbors:
-		log.Trace("<< "+name, "addr", from, "neighbors", len(x.Nodes), "peers", shorten(x.Nodes, 4))
-	case *findnode:
-		log.Trace("<< "+name, "addr", from, "target", x.Target)
-	case *ping:
-		log.Trace("<< "+name, "addr", from, "from", x.From, "to", x.To)
-	case *pong:
-		log.Trace("<< "+name, "addr", from, "to", x.To)
-	default:
-		log.Warn("<< "+name, "addr", from, "unknown", x)
 	}
 	return err
 }

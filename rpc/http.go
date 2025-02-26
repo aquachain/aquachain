@@ -253,7 +253,7 @@ func (h *allowIPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Warn("allowip: blocking http rpc connection", "OffendingIP", ip, "User-Agent", r.UserAgent())
-	http.Error(w, "", http.StatusForbidden)
+	http.Error(w, `{"error": "forbidden zone"}`, http.StatusForbidden)
 }
 
 func newAllowIPHandler(allowIPMap netutil.Netlist, behindreverseproxy bool, next http.Handler) http.Handler {

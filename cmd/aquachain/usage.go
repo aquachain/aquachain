@@ -87,6 +87,8 @@ var AppHelpFlagGroups = []flagGroup{
 			utils.HF8MainnetFlag,
 			utils.AlertModeFlag,
 			utils.DoitNowFlag,
+			utils.NoKeysFlag,
+			utils.RPCBehindProxyFlag,
 		},
 	},
 	{Name: "DEVELOPER CHAIN",
@@ -260,7 +262,9 @@ func flagCategory(flag cli.Flag) string {
 	return "MISC"
 }
 
-func init() {
+var _ = initHelp // TODO
+
+func initHelp() {
 	// Override the default app help template
 	cli.RootCommandHelpTemplate = AppHelpTemplate
 

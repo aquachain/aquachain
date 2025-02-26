@@ -162,6 +162,7 @@ type Config struct {
 
 	CloseMain func(error)     `toml:"-"`
 	Context   context.Context `toml:"-"`
+	NoInProc  bool            `toml:",omitempty"`
 }
 
 // IPCEndpoint resolves an IPC endpoint based on a configured value, taking into

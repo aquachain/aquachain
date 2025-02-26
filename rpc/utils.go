@@ -30,6 +30,8 @@ import (
 	"time"
 	"unicode"
 	"unicode/utf8"
+
+	"gitlab.com/aquachain/aquachain/common/log"
 )
 
 var (
@@ -132,6 +134,7 @@ METHODS:
 		mtype := method.Type
 		mname := formatName(method.Name)
 		if method.PkgPath != "" { // method must be exported
+			log.Warn("rpc: method must be exported", "method", mname)
 			continue
 		}
 
@@ -169,6 +172,7 @@ METHODS:
 		for i := firstArg; i < numIn; i++ {
 			argType := mtype.In(i)
 			if !isExportedOrBuiltinType(argType) {
+				log.Warn("rpc: method has non-exported argument type", "method", mname)
 				continue METHODS
 			}
 			h.argTypes[i-firstArg] = argType
@@ -177,6 +181,7 @@ METHODS:
 		// check that all returned values are exported or builtin types
 		for i := 0; i < mtype.NumOut(); i++ {
 			if !isExportedOrBuiltinType(mtype.Out(i)) {
+				log.Warn("rpc: method has non-exported return type", "method", mname)
 				continue METHODS
 			}
 		}
@@ -191,12 +196,14 @@ METHODS:
 		}
 
 		if h.errPos >= 0 && h.errPos != mtype.NumOut()-1 {
+			log.Warn("rpc: method has an error return value in the wrong position", "method", mname)
 			continue METHODS
 		}
 
 		switch mtype.NumOut() {
 		case 0, 1, 2:
 			if mtype.NumOut() == 2 && h.errPos == -1 { // method must one return value and 1 error
+				log.Warn("rpc: method has two return values but no error as second return value", "method", mname)
 				continue METHODS
 			}
 			callbacks[mname] = &h

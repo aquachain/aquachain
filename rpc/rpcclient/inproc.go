@@ -25,6 +25,9 @@ import (
 
 // NewInProcClient attaches an in-process connection to the given RPC server.
 func DialInProc(handler *rpc.Server) *Client {
+	if handler == nil {
+		panic("InProc handler is nil")
+	}
 	initctx := context.Background()
 	c, err := newClient(initctx, func(context.Context) (net.Conn, error) {
 		p1, p2 := net.Pipe()
