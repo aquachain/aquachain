@@ -45,17 +45,15 @@ var locationTrims = []string{
 // format output.
 func PrintOrigins(print bool) {
 	if print {
-		println("PrintOrigins enabled")
 		atomic.StoreUint32(&locationEnabled, 1)
 	} else {
-		println("PrintOrigins disabled")
 		atomic.StoreUint32(&locationEnabled, 0)
 	}
 }
 
 // locationEnabled is an atomic flag controlling whether the terminal formatter
 // should append the log locations too when printing entries.
-var locationEnabled uint32 = 1
+var locationEnabled uint32
 
 // locationLength is the maxmimum path length encountered, which all logs are
 // padded to to aid in alignment.
@@ -151,7 +149,6 @@ func TerminalFormat(usecolor bool) Format {
 				fmt.Fprintf(b, "%s[%s|%s]%s %s ", lvl, r.Time.Format(termTimeFormat), location, padding, r.Msg)
 			}
 		} else {
-			r.Msg = "wtf " + r.Msg
 			if color > 0 {
 				fmt.Fprintf(b, "\x1b[%dm%s\x1b[0m[%s] %s ", color, lvl, r.Time.Format(termTimeFormat), r.Msg)
 			} else {

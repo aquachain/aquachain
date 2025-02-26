@@ -83,11 +83,12 @@ func Initglogger(callerinfo bool, verbosityLvl64 int64, alwayscolor, isjson bool
 		form = log.TerminalFormat(usecolor)
 	}
 	h := log.StreamHandler(output, form)
-	if callerinfo {
+	if isjson && callerinfo {
 		h = log.CallerFileHandler(h)
+	} else if callerinfo {
+		log.PrintOrigins(true) // show line numbers
 	}
 	x := log.NewGlogHandler(h)
-
 	x.Verbosity(verbosityLvl)
 	go log.Warn("new glogger", "verbosity", verbosityLvl, "color", alwayscolor, "json", isjson, "caller2", stack.Caller(2))
 	return x
