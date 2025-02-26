@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"math/big"
 	"runtime"
+	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -94,10 +95,11 @@ func New(ctx context.Context, nodectx *node.ServiceContext, config *Config, node
 	if !config.SyncMode.IsValid() {
 		return nil, fmt.Errorf("invalid sync mode %d", config.SyncMode)
 	}
-	if nodename != "" {
-		log.Info("Node name", "name", nodename)
-		config.p2pnodename = nodename
+	if strings.Count(nodename, "/") < 3 {
+		return nil, fmt.Errorf("invalid node name %s", nodename)
 	}
+	log.Info("Node name", "name", nodename)
+	config.p2pnodename = nodename
 	chainDb, err := CreateDB(nodectx, config, "chaindata")
 	if err != nil {
 		return nil, err
