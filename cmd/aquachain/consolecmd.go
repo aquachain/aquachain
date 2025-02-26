@@ -57,12 +57,14 @@ func maincancel(err error) {
 //		Usage: "JavaScript root path for `loadScript`",
 //		Value: ".",
 //	}
+
 var (
-	consoleFlags = []cli.Flag{utils.JavascriptDirectoryFlag, utils.ExecFlag, utils.PreloadJSFlag, &cli.StringFlag{
+	socksClientFlag = &cli.StringFlag{
 		Name:  "socks",
 		Value: "",
-		Usage: "SOCKS5 proxy for outgoing RPC connections (eg: -socks socks5://localhost:1080)",
-	}}
+		Usage: "SOCKS5 proxy for outgoing RPC connections (eg: -socks socks5h://localhost:1080)",
+	}
+	consoleFlags  = []cli.Flag{utils.JavascriptDirectoryFlag, utils.ExecFlag, utils.PreloadJSFlag, socksClientFlag}
 	daemonFlags   = append(nodeFlags, rpcFlags...)
 	daemonCommand = &cli.Command{
 		Action:      utils.MigrateFlags(daemonStart),
@@ -73,10 +75,11 @@ var (
 		Description: "",
 	}
 	consoleCommand = &cli.Command{
-		Action:   utils.MigrateFlags(localConsole),
+		// Action:   utils.MigrateFlags(localConsole),
+		Action:   localConsole,
 		Name:     "console",
 		Usage:    "Start an interactive JavaScript environment",
-		Flags:    append(daemonFlags, consoleFlags...),
+		Flags:    append(consoleFlags, daemonFlags...),
 		Category: "CONSOLE COMMANDS",
 		Description: `
 The Aquachain console is an interactive shell for the JavaScript runtime environment
@@ -203,7 +206,7 @@ func remoteConsole(ctx context.Context, cmd *cli.Command) error {
 	if endpoint == "" {
 		return fmt.Errorf("no endpoint specified")
 	}
-	socks := cmd.String("socks") // ignored if IPC endpoint is the endpoint, maybe ignored if 127
+	socks := cmd.String(socksClientFlag.Name) // ignored if IPC endpoint is the endpoint, maybe ignored if 127
 	client, err := dialRPC(endpoint, socks, clientIdentifier)
 	if err != nil {
 		utils.Fatalf("Unable to attach to remote aquachain: %v", err)
