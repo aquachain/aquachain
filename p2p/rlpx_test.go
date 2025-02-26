@@ -63,7 +63,7 @@ func TestSharedSecret(t *testing.T) {
 
 func init() {
 	if os.Getenv("DEBUG") == "1" {
-		log.Root().SetHandler(log.LvlFilterHandler(log.LvlTrace, log.StreamHandler(os.Stderr, log.TerminalFormat(true))))
+		log.SetRootHandler(log.LvlFilterHandler(log.LvlTrace, log.StreamHandler(os.Stderr, log.TerminalFormat(true))))
 		log.PrintOrigins(true)
 	}
 }

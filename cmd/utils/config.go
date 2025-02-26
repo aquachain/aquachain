@@ -68,7 +68,7 @@ const (
 // }
 
 // MakeConfigNode created a Node and Config, and is called by a subcommand at startup.
-func MakeConfigNode(ctx context.Context, cmd *cli.Command, gitCommit string, clientIdentifier string, closemain func(), s ...cfgopt) (*node.Node, *AquachainConfig) {
+func MakeConfigNode(ctx context.Context, cmd *cli.Command, gitCommit string, clientIdentifier string, closemain func(error), s ...cfgopt) (*node.Node, *AquachainConfig) {
 	// Load defaults.
 	useprev := true
 	for _, v := range s {

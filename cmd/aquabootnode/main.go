@@ -152,7 +152,7 @@ func main() {
 	glogger := log.NewGlogHandler(log.StreamHandler(os.Stderr, log.TerminalFormat(colormode)))
 	glogger.Verbosity(log.Lvl(verbosity))
 	glogger.Vmodule(vmodule)
-	log.Root().SetHandler(glogger)
+	log.SetRootHandler(glogger)
 	if debug {
 		log.PrintOrigins(true) // show line numbers
 	}

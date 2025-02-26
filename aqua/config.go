@@ -112,7 +112,8 @@ type Config struct {
 	JavascriptDirectory string `toml:"-"` // for console/attach only
 
 	// Alert options
-	Alerts alerts.AlertConfig `toml:",omitempty"`
+	Alerts      alerts.AlertConfig `toml:",omitempty"`
+	p2pnodename string             `toml:"-"`
 }
 
 // ConfigMarshaling must be changed if the Config struct changes.

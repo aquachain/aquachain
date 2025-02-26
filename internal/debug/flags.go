@@ -106,9 +106,9 @@ var Flags = []cli.Flag{
 // Setup initializes profiling and logging based on the CLI flags.
 // It should be called as early as possible in the program.
 func Setup(ctx_ context.Context, cmd *cli.Command) error {
+	// do this asap
+	SetGlogger(Initglogger(cmd.Bool(debugFlag.Name), cmd.Int(verbosityFlag.Name), cmd.Bool(logcolorflag.Name), cmd.Bool(logjsonflag.Name)))
 	// profiling, tracing
-	SetGlogger(Initglogger(cmd.Bool(logcolorflag.Name), cmd.Bool(logjsonflag.Name)))
-
 	runtime.MemProfileRate = int(cmd.Int(memprofilerateFlag.Name))
 	Handler.SetBlockProfileRate(int(cmd.Int(blockprofilerateFlag.Name)))
 	if traceFile := cmd.String(traceFlag.Name); traceFile != "" {
@@ -131,9 +131,9 @@ func Setup(ctx_ context.Context, cmd *cli.Command) error {
 		runtime.SetMutexProfileFraction(10)
 		address := fmt.Sprintf("%s:%d", cmd.String(pprofAddrFlag.Name), cmd.Int(pprofPortFlag.Name))
 		go func() {
-			log.Info("Starting pprof server", "addr", fmt.Sprintf("http://%s/debug/pprof", address))
+			log.Warn("Starting pprof server", "addr", fmt.Sprintf("http://%s/debug/pprof", address))
 			if err := http.ListenAndServe(address, nil); err != nil {
-				log.Error("Failure in running pprof server", "err", err)
+				log.Crit("Failure in running pprof server", "err", err)
 			}
 		}()
 	}

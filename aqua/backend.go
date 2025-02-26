@@ -54,7 +54,6 @@ import (
 
 // Aquachain implements the Aquachain full node service.
 type Aquachain struct {
-	p2pnodename string
 	ctx         context.Context // TODO use
 	config      *Config
 	chainConfig *params.ChainConfig
@@ -95,6 +94,10 @@ func New(ctx context.Context, nodectx *node.ServiceContext, config *Config, node
 	if !config.SyncMode.IsValid() {
 		return nil, fmt.Errorf("invalid sync mode %d", config.SyncMode)
 	}
+	if nodename != "" {
+		log.Info("Node name", "name", nodename)
+		config.p2pnodename = nodename
+	}
 	chainDb, err := CreateDB(nodectx, config, "chaindata")
 	if err != nil {
 		return nil, err
@@ -111,14 +114,13 @@ func New(ctx context.Context, nodectx *node.ServiceContext, config *Config, node
 	}
 
 	aqua := &Aquachain{
-		p2pnodename:    nodename,
 		ctx:            ctx,
 		config:         config,
 		chainDb:        chainDb,
 		chainConfig:    chainConfig,
 		eventMux:       nodectx.EventMux,
 		accountManager: nodectx.AccountManager,
-		engine:         CreateConsensusEngine(nodectx, &config.Aquahash, chainConfig, chainDb),
+		engine:         CreateConsensusEngine(nodectx, &config.Aquahash, chainConfig, chainDb, nodename),
 		shutdownChan:   make(chan bool),
 		stopDbUpgrade:  stopDbUpgrade,
 		gasPrice:       config.GasPrice,
@@ -261,7 +263,7 @@ func CreateDB(ctx *node.ServiceContext, config *Config, name string) (aquadb.Dat
 }
 
 // CreateConsensusEngine creates the required type of consensus engine instance for an Aquachain service
-func CreateConsensusEngine(ctx *node.ServiceContext, config *aquahash.Config, chainConfig *params.ChainConfig, db aquadb.Database) consensus.Engine {
+func CreateConsensusEngine(ctx *node.ServiceContext, config *aquahash.Config, chainConfig *params.ChainConfig, db aquadb.Database, nodename string) consensus.Engine {
 	startVersion := chainConfig.GetGenesisVersion()
 	switch {
 	case config.PowMode == aquahash.ModeFake:
@@ -352,7 +354,7 @@ func (s *Aquachain) APIs() []rpc.API {
 		}, {
 			Namespace: "testing",
 			Version:   "1.0",
-			Service:   NewPublicTestingAPI(s.chainConfig, s, s.p2pnodename),
+			Service:   NewPublicTestingAPI(s.chainConfig, s, s.config.p2pnodename),
 		}, {
 			Namespace: "net",
 			Version:   "1.0",

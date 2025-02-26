@@ -160,7 +160,7 @@ type Config struct {
 	// fetch client's remote IP
 	RPCBehindProxy bool
 
-	CloseMain func()          `toml:"-"`
+	CloseMain func(error)     `toml:"-"`
 	Context   context.Context `toml:"-"`
 }
 

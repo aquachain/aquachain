@@ -86,6 +86,11 @@ func parseBool(s string) bool {
 // RegisterName will create a service for the given rcvr type under the given name. When no methods on the given rcvr
 // match the criteria to be either a RPC method or a subscription an error is returned. Otherwise a new service is
 // created and added to the service collection this server instance serves.
+//
+// New: if UNSAFE_RPC_SIGNING is not set, it will disallow the following methods:
+// - SignTransaction
+// - Sign
+// - SendTransaction
 func (s *Server) RegisterName(name string, rcvr interface{}) (methodNames []string, err error) {
 	if s.services == nil {
 		s.services = make(serviceRegistry)
@@ -109,17 +114,14 @@ func (s *Server) RegisterName(name string, rcvr interface{}) (methodNames []stri
 	}
 
 	methodNames = make([]string, 0, len(methods))
-	for _, m := range methods {
-		if !unsafe_rpc_signing && (m.method.Name == "SignTransaction" || m.method.Name == "Sign" || m.method.Name == "SendTransaction") {
-			log.Info("disabling HTTP method", "service", name, "method", m.method.Name)
-			continue
-		}
-		// log.Warn("rpc registered method", "service", name, "method", m.method.Name, "k", k)
-		methodNames = append(methodNames, fmt.Sprintf("%s_%s", name, strings.ToLower(m.method.Name[:1])+m.method.Name[1:]))
-	}
 	// already a previous service register under given name, merge methods/subscriptions
 	if regsvc, present := s.services[name]; present {
 		for _, m := range methods {
+			if !unsafe_rpc_signing && (m.method.Name == "SignTransaction" || m.method.Name == "Sign" || m.method.Name == "SendTransaction") {
+				log.Info("disabling HTTP method", "service", name, "method", m.method.Name)
+				continue
+			}
+			methodNames = append(methodNames, fmt.Sprintf("%s_%s", name, strings.ToLower(m.method.Name[:1])+m.method.Name[1:]))
 			regsvc.callbacks[formatName(m.method.Name)] = m
 		}
 		for _, s := range subscriptions {

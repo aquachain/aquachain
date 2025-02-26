@@ -58,9 +58,9 @@ var (
 // 	},
 // }
 
-func closeMain() {
-	log.Warn("got closemain signal")
-	maincancel()
+func closeMain(err error) {
+	log.Warn("got closemain signal", "err", err)
+	maincancel(err)
 }
 func makeFullNode(ctx context.Context, cmd *cli.Command) *node.Node {
 	stack, cfg := utils.MakeConfigNode(ctx, cmd, gitCommit, clientIdentifier, closeMain)

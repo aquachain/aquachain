@@ -14,6 +14,7 @@ import (
 
 func testGenerateKey(t *testing.T, limit int) error {
 	t.Logf("hi")
+	log.Printf("limit: %d", limit)
 	for i := 0; i < limit; i++ {
 		pk, err := crypto.GenerateKey()
 		if err != nil {
@@ -45,6 +46,8 @@ func testGenerateKey(t *testing.T, limit int) error {
 			return err
 		}
 	}
+
+	log.Printf("done")
 	return nil
 }
 

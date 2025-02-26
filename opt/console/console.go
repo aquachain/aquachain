@@ -19,6 +19,7 @@ package console
 import (
 	"context"
 	"embed"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -420,9 +421,9 @@ func (c *Console) Evaluate(statement string) error {
 
 // Interactive starts an interactive user session, where input is propted from
 // the configured user prompter.
-func (c *Console) Interactive(ctx context.Context, donefn func()) {
+func (c *Console) Interactive(ctx context.Context, donefn func(error)) {
 	if donefn != nil {
-		defer donefn()
+		defer donefn(errors.New("console is closed"))
 	}
 	var (
 		prompt    = c.prompt          // Current prompt line (used for multi-line inputs)
@@ -466,7 +467,12 @@ func (c *Console) Interactive(ctx context.Context, donefn func()) {
 	}()
 	for {
 		// Send the next prompt, triggering an input read and process the result
-		scheduler <- prompt
+		select {
+		case scheduler <- prompt:
+		case <-ctx.Done():
+			// bye
+			return
+		}
 		select {
 		case <-ctx.Done():
 			// User forcefully quite the console

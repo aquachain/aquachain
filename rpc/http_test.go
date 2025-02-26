@@ -48,7 +48,7 @@ func TestHTTPErrorResponseWithValidRequest(t *testing.T) {
 func testHTTPErrorResponse(t *testing.T, method, contentType, body string, expected int) {
 	request := httptest.NewRequest(method, "http://url.com", strings.NewReader(body))
 	request.Header.Set("content-type", contentType)
-	if code, _ := validateRequest(request); code != expected {
+	if code := validateRequest(request); code != expected {
 		t.Fatalf("response code should be %d not %d", expected, code)
 	}
 }

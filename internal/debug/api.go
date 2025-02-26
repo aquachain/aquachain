@@ -33,6 +33,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-stack/stack"
 	"github.com/mattn/go-colorable"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/common/log/term"
@@ -62,9 +63,14 @@ var glogger *log.GlogHandler
 // set global logger
 func SetGlogger(l *log.GlogHandler) {
 	glogger = l
-	log.Root().SetHandler(l)
+	log.SetRootHandler(l)
 }
-func Initglogger(alwayscolor, isjson bool) *log.GlogHandler {
+
+func Initglogger(callerinfo bool, verbosityLvl64 int64, alwayscolor, isjson bool) *log.GlogHandler {
+	verbosityLvl := log.Lvl(verbosityLvl64)
+	if verbosityLvl == 0 {
+		verbosityLvl = log.LvlInfo
+	}
 	usecolor := alwayscolor || os.Getenv("COLOR") == "1" || (term.IsTty(os.Stderr.Fd()) && os.Getenv("TERM") != "dumb")
 	output := io.Writer(os.Stderr)
 	if usecolor {
@@ -76,10 +82,14 @@ func Initglogger(alwayscolor, isjson bool) *log.GlogHandler {
 	} else {
 		form = log.TerminalFormat(usecolor)
 	}
+	h := log.StreamHandler(output, form)
+	if callerinfo {
+		h = log.CallerFileHandler(h)
+	}
+	x := log.NewGlogHandler(h)
 
-	x := log.NewGlogHandler(log.StreamHandler(output, form))
-	x.Verbosity(log.LvlInfo)
-	log.Warn("new glogger", "color", alwayscolor, "json", isjson)
+	x.Verbosity(verbosityLvl)
+	go log.Warn("new glogger", "verbosity", verbosityLvl, "color", alwayscolor, "json", isjson, "caller2", stack.Caller(2))
 	return x
 }
 

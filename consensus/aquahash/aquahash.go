@@ -21,7 +21,6 @@ import (
 	"sync"
 	"time"
 
-	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/consensus"
 	"gitlab.com/aquachain/aquachain/consensus/aquahash/ethashdag"
@@ -71,7 +70,6 @@ func New(config *Config) *Aquahash {
 			update:    make(chan struct{}),
 		}
 	}
-	log.Warn("using ethashdag", "config", common.ToJson(config))
 	if config.CachesInMem <= 0 {
 		log.Warn("One aquahash cache must always be in memory", "requested", config.CachesInMem)
 		config.CachesInMem = 1

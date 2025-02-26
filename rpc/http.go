@@ -71,12 +71,12 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uip := getIP(r, srv.reverseproxy)
-	if code, err := validateRequest(r); err != nil {
+	if code := validateRequest(r); code != 200 {
 		log.Debug("invalid request", "from", uip, "size", r.ContentLength)
 		enc := json.NewEncoder(w)
 		enc.SetIndent(" ", " ")
 		w.WriteHeader(code)
-		enc.Encode(map[string]string{"error": err.Error()})
+		enc.Encode(map[string]string{"error": http.StatusText(code)})
 		return
 	}
 	// All checks passed, create a codec that reads direct from the request body
@@ -90,22 +90,25 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	srv.ServeSingleRequest(codec, OptionMethodInvocation)
 }
 
-// validateRequest returns a non-zero response code and error message if the
+var (
+	// ErrMethodNotAllowed is returned when the HTTP method is not allowed.
+	ErrMethodNotAllowed = errors.New("method not allowed")
+)
+
+// validateRequest returns a non-zero response code and public error message if the
 // request is invalid.
-func validateRequest(r *http.Request) (int, error) {
+func validateRequest(r *http.Request) int {
 	if r.Method == http.MethodPut || r.Method == http.MethodDelete {
-		return http.StatusMethodNotAllowed, errors.New("method not allowed")
+		return http.StatusMethodNotAllowed
 	}
 	if r.ContentLength > maxHTTPRequestContentLength {
-		err := fmt.Errorf("content length too large (%d>%d)", r.ContentLength, maxHTTPRequestContentLength)
-		return http.StatusRequestEntityTooLarge, err
+		return http.StatusRequestEntityTooLarge
 	}
 	mt, _, err := mime.ParseMediaType(r.Header.Get("content-type"))
 	if r.Method != http.MethodOptions && (err != nil || mt != contentType) {
-		err := fmt.Errorf("invalid content type, only %s is supported", contentType)
-		return http.StatusUnsupportedMediaType, err
+		return http.StatusUnsupportedMediaType
 	}
-	return 0, nil
+	return 200
 }
 
 func newLoggedHandler(srv *Server) http.Handler {

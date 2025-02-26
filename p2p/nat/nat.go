@@ -105,6 +105,9 @@ func (n *NatString) Get() Interface {
 	if n == nil {
 		return nil
 	}
+	if *n == "" || strings.ToLower(string(*n)) == "none" {
+		return nil
+	}
 	m, err := Parse(string(*n))
 	if err != nil {
 		log.Warn("Failed to parse NAT string", "err", err)
@@ -122,6 +125,7 @@ const (
 // This function is typically invoked in its own goroutine.
 func Map(m Interface, c chan struct{}, protocol string, extport, intport int, name string) {
 	log := log.New("proto", protocol, "extport", extport, "intport", intport, "interface", m)
+	log.Info("Mapping network port")
 	refresh := time.NewTimer(mapUpdateInterval)
 	defer func() {
 		refresh.Stop()

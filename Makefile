@@ -69,7 +69,7 @@ GO_FLAGS += -installsuffix cgo
 LINKER_FLAGS += -linkmode external -extldflags -static
 endif
 
-LINKER_FLAGS = -X main.gitCommit=${COMMITHASH} -X main.gitTag=${version} -X main.buildDate=${shell date -u +%s} -s -w 
+LINKER_FLAGS = -w -s -buildid= -X main.gitCommit=${COMMITHASH} -X main.gitTag=${version} -X main.buildDate=${shell date -u +%s}
 LINKER_FLAGS += -X gitlab.com/aquachain/aquachain/params.buildtags=${TAGS64}
 
 ## if release=1, rebuild all sources

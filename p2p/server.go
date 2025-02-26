@@ -533,7 +533,7 @@ func (srv *Server) startListening() error {
 	srv.loopWG.Add(1)
 	go srv.listenLoop()
 	// Map the TCP listening port if NAT is configured.
-	if !laddr.IP.IsLoopback() && srv.NAT != "" {
+	if !laddr.IP.IsLoopback() && srv.NAT != "" && srv.NAT != "none" {
 		srv.loopWG.Add(1)
 		go func() {
 			nat.Map(srv.NAT.Get(), srv.quit, "tcp", laddr.Port, laddr.Port, "aquachain p2p")

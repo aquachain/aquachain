@@ -39,7 +39,7 @@ func contextBackground() context.Context {
 }
 
 func init() {
-	// log.Root().SetHandler(log.LvlFilterHandler(log.LvlError, log.StreamHandler(os.Stderr, log.TerminalFormat(false))))
+	// log.SetRootHandler(log.LvlFilterHandler(log.LvlError, log.StreamHandler(os.Stderr, log.TerminalFormat(false))))
 }
 
 type testTransport struct {

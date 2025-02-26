@@ -342,7 +342,7 @@ type execNodeConfig struct {
 func execP2PNode() {
 	glogger := log.NewGlogHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 	glogger.Verbosity(log.LvlInfo)
-	log.Root().SetHandler(glogger)
+	log.SetRootHandler(glogger)
 
 	// read the services from argv
 	serviceNames := strings.Split(os.Args[1], ",")

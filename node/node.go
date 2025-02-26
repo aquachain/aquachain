@@ -526,7 +526,7 @@ func (n *Node) startWS(endpoint string, apis []rpc.API, modules []string, wsOrig
 			if err != nil {
 				return err
 			}
-			n.log.Warn("WebSocket registered", "service", fmt.Sprintf("%T ( %s_ )", api.Service, api.Namespace), "methods", common.ToJson(m))
+			n.log.Warn("WebSocket methods are available", "service", fmt.Sprintf("%T ( %s_ )", api.Service, api.Namespace), "methods", common.ToJson(m))
 		}
 	}
 	// All APIs registered, start the HTTP listener

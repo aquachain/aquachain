@@ -36,7 +36,19 @@ import (
 	rpc "gitlab.com/aquachain/aquachain/rpc/rpcclient"
 )
 
-var mainctx, maincancel = signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+var mainctx, maincancelreal = mkmainctx()
+
+func mkmainctx() (context.Context, context.CancelCauseFunc) {
+	pctx, cncl := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	_ = cncl // unused
+	ctx, cancelCause := context.WithCancelCause(pctx)
+	return ctx, cancelCause
+}
+
+func maincancel(err error) {
+	log.Warn("calling main cancel: interrupted", "err", err)
+	maincancelreal(err)
+}
 
 // // ATM the url is left to the user and deployment to
 //
