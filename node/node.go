@@ -670,6 +670,9 @@ func (n *Node) Restart() error {
 // Attach creates an RPC client attached to an in-process API handler.
 func (n *Node) Attach(name string) (*rpcclient.Client, error) {
 	n.log.Trace("Attaching new client", "name", name, "caller2", log.Caller(1), "caller3", log.Caller(2))
+	if n.config.NoInProc {
+		return nil, fmt.Errorf("inproc disabled")
+	}
 	n.lock.RLock()
 	defer n.lock.RUnlock()
 
