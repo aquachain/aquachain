@@ -1173,7 +1173,7 @@ func SetNodeConfig(cmd *cli.Command, cfg *node.Config) error {
 	if cmd.IsSet(UseUSBFlag.Name) {
 		cfg.UseUSB = cmd.Bool(UseUSBFlag.Name)
 	}
-	if cmd.IsSet(RPCBehindProxyFlag.Name) {
+	if cmd.IsSet(RPCBehindProxyFlag.Name) || os.Getenv("REVERSE_PROXY") != "" {
 		cfg.RPCBehindProxy = cmd.Bool(RPCBehindProxyFlag.Name)
 	}
 	return nil

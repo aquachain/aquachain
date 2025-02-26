@@ -125,6 +125,7 @@ var (
 		utils.RPCVirtualHostsFlag,
 		utils.RPCListenAddrFlag,
 		utils.RPCAllowIPFlag,
+		utils.RPCBehindProxyFlag,
 		utils.RPCPortFlag,
 		utils.RPCApiFlag,
 		utils.WSEnabledFlag,
