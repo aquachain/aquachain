@@ -1550,17 +1550,28 @@ func MakeConsolePreloads(cmd *cli.Command) []string {
 // When all flags are migrated this function can be removed and the existing
 // configuration functionality must be changed that is uses local flags
 func MigrateFlags(action func(_ context.Context, cmd *cli.Command) error) func(context.Context, *cli.Command) error {
-	return func(ctx context.Context, cmd *cli.Command) error {
-		cmdmap := map[string]string{}
-		for _, c := range cmd.Commands {
-			cmdmap[c.Name] = c.Name
-		}
-		for _, name := range cmd.FlagNames() {
-			if cmd.Root().IsSet(name) {
-				cmd.Set(name, cmd.Root().String(name))
-			}
-		}
-		log.Info("running action", "name", cmd.Name)
-		return action(ctx, cmd)
+	migrated := &MigratedCommand{
+		Action: action,
 	}
+
+	return migrated.Run
+}
+
+type MigratedCommand struct {
+	Action func(context.Context, *cli.Command) error
+}
+
+func (m *MigratedCommand) Run(ctx context.Context, cmd *cli.Command) error {
+	cmdmap := map[string]string{}
+	for _, c := range cmd.Commands {
+		cmdmap[c.Name] = c.Name
+		log.Warn("migrating command", "name", c.Name, "flags", c.Flags)
+	}
+	for _, name := range cmd.FlagNames() {
+		if cmd.Root().IsSet(name) {
+			cmd.Set(name, cmd.Root().String(name))
+		}
+	}
+	log.Info("running migrated action", "name", cmd.Name)
+	return m.Action(ctx, cmd)
 }
