@@ -19,6 +19,7 @@ package rpc
 import (
 	"context"
 	"fmt"
+	"os"
 	"reflect"
 	"runtime"
 	"strings"
@@ -76,6 +77,12 @@ func (s *RPCService) Modules() map[string]string {
 	return modules
 }
 
+var unsafe_rpc_signing = parseBool(os.Getenv("UNSAFE_RPC_SIGNING"))
+
+func parseBool(s string) bool {
+	return strings.ToLower(s) == "true" || s == "1"
+}
+
 // RegisterName will create a service for the given rcvr type under the given name. When no methods on the given rcvr
 // match the criteria to be either a RPC method or a subscription an error is returned. Otherwise a new service is
 // created and added to the service collection this server instance serves.
@@ -101,16 +108,14 @@ func (s *Server) RegisterName(name string, rcvr interface{}) (methodNames []stri
 		return nil, fmt.Errorf("service %T doesn't have any suitable methods/subscriptions to expose", rcvr)
 	}
 
-	methodNames = make([]string, len(methods))
-	var i = 0
+	methodNames = make([]string, 0, len(methods))
 	for _, m := range methods {
-		if m.method.Name == "SendTransaction" || strings.HasPrefix(strings.TrimSpace(strings.ToLower(m.method.Name)), "sign") {
-			log.Info("some methods disabled", "service", name, "method", m.method.Name)
+		if !unsafe_rpc_signing && (m.method.Name == "SignTransaction" || m.method.Name == "Sign" || m.method.Name == "SendTransaction") {
+			log.Info("disabling HTTP method", "service", name, "method", m.method.Name)
 			continue
 		}
 		// log.Warn("rpc registered method", "service", name, "method", m.method.Name, "k", k)
-		methodNames[i] = fmt.Sprintf("%s_%s", name, strings.ToLower(m.method.Name[:1])+m.method.Name[1:])
-		i++
+		methodNames = append(methodNames, fmt.Sprintf("%s_%s", name, strings.ToLower(m.method.Name[:1])+m.method.Name[1:]))
 	}
 	// already a previous service register under given name, merge methods/subscriptions
 	if regsvc, present := s.services[name]; present {
