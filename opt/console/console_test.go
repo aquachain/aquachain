@@ -96,7 +96,7 @@ func newTester(t *testing.T, confOverride func(*aqua.Config)) *tester {
 	// Create a networkless protocol stack and start an Aquachain service within
 	stack, err := node.New(&node.Config{
 		Context:           context.TODO(),
-		CloseMain:         func() {},
+		CloseMain:         func(err error) { panic(err.Error()) },
 		DataDir:           workspace,
 		UseLightweightKDF: true,
 		Name:              testInstance,
@@ -212,7 +212,7 @@ func TestInteractive(t *testing.T) {
 	tester := newTester(t, nil)
 	defer tester.Close(t)
 
-	go tester.console.Interactive(context.Background(), func() {})
+	go tester.console.Interactive(context.Background(), func(err error) { panic(err.Error()) })
 
 	// Wait for a promt and send a statement back
 	select {
