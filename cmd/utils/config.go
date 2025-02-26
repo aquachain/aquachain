@@ -105,6 +105,7 @@ func DefaultNodeConfig(gitCommit, clientIdentifier string) node.Config {
 	cfg.HTTPModules = append(cfg.HTTPModules, "aqua")
 	cfg.WSModules = append(cfg.WSModules, "aqua")
 	cfg.IPCPath = "aquachain.ipc"
+	cfg.P2P.Name = node.GetNodeName(&cfg) // cached
 	return cfg
 }
 

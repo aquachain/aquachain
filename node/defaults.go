@@ -43,8 +43,15 @@ var DefaultConfig = Config{
 	P2P: &p2p.Config{
 		ListenAddr: "0.0.0.0:21303", // tcp+udp, ipv4 only
 		MaxPeers:   20,
-		NAT:        "", // none
+		NAT:        "none", // none
 	},
+	RPCBehindProxy: os.Getenv("AQUA_RPC_BEHIND_PROXY") != "",
+	UserIdent:      os.Getenv("AQUA_USER_IDENT"),
+	HTTPHost:       DefaultHTTPHost,
+	WSHost:         DefaultWSHost,
+	RPCNoSign:      os.Getenv("NO_SIGN") != "", // doesnt do anything here. something needs to read it
+	NoKeys:         os.Getenv("NO_KEYS") != "", // doesnt do anything here. something needs to read it
+
 }
 
 // DefaultDataDir is the default data directory to use for the databases and other
