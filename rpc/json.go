@@ -28,7 +28,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/go-stack/stack"
 	"gitlab.com/aquachain/aquachain/common/log"
 )
 
@@ -188,13 +187,13 @@ func (c *jsonCodec) ReadRequestHeaders() ([]rpcRequest, bool, Error) {
 		req, ok, err = parseBatchRequest(incomingMsg)
 		if err == nil {
 			log.Info("batch rpc request", "payloadSize", len(incomingMsg),
-				"from", json.RawMessage(ip), "requests", len(req), "caller2", fmt.Sprintf("%+v", stack.Caller(1)))
+				"from", json.RawMessage(ip), "requests", len(req), "caller2", fmt.Sprintf("%+v", log.Caller(1)))
 		}
 	} else {
 		req, ok, err = parseRequest(incomingMsg)
 		if err == nil {
 			log.Info("rpc request", "payloadSize", len(incomingMsg),
-				"from", ip, "method", req[0].method, "caller2", fmt.Sprintf("%+v", stack.Caller(1)))
+				"from", ip, "method", req[0].method, "caller2", fmt.Sprintf("%+v", log.Caller(1)))
 		}
 	}
 	return req, ok, err
