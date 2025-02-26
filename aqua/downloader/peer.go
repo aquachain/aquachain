@@ -24,7 +24,6 @@ import (
 	"fmt"
 	"math"
 	"math/big"
-	"sort"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -391,7 +390,7 @@ func (ps *peerSet) Reset() {
 // for data retrievals.
 func (ps *peerSet) Register(p *peerConnection) error {
 	// Retrieve the current median RTT as a sane default
-	p.rtt = ps.medianRTT()
+	p.rtt = rttMaxEstimate
 
 	// Register the new peer with some meaningful defaults
 	ps.lock.Lock()
@@ -546,35 +545,4 @@ func (ps *peerSet) idlePeers(minProtocol, maxProtocol int, idleCheck func(*peerC
 		}
 	}
 	return idle, total
-}
-
-// medianRTT returns the median RTT of the peerset, considering only the tuning
-// peers if there are more peers available.
-func (ps *peerSet) medianRTT() time.Duration {
-	// Gather all the currnetly measured round trip times
-	ps.lock.RLock()
-	defer ps.lock.RUnlock()
-
-	rtts := make([]float64, 0, len(ps.peers))
-	for _, p := range ps.peers {
-		p.lock.RLock()
-		rtts = append(rtts, float64(p.rtt))
-		p.lock.RUnlock()
-	}
-	sort.Float64s(rtts)
-
-	median := rttMaxEstimate
-	if qosTuningPeers <= len(rtts) {
-		median = time.Duration(rtts[qosTuningPeers/2]) // Median of our tuning peers
-	} else if len(rtts) > 0 {
-		median = time.Duration(rtts[len(rtts)/2]) // Median of our connected peers (maintain even like this some baseline qos)
-	}
-	// Restrict the RTT into some QoS defaults, irrelevant of true RTT
-	if median < rttMinEstimate {
-		median = rttMinEstimate
-	}
-	if median > rttMaxEstimate {
-		median = rttMaxEstimate
-	}
-	return median
 }

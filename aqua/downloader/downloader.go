@@ -53,10 +53,6 @@ var (
 	ttlScaling       = 3                        // Constant scaling factor for RTT -> TTL conversion
 	ttlLimit         = time.Minute              // Maximum TTL allowance to prevent reaching crazy timeouts
 
-	qosTuningPeers   = 5    // Number of peers to tune based on (best peers)
-	qosConfidenceCap = 10   // Number of peers above which not to modify RTT confidence
-	qosTuningImpact  = 0.25 // Impact that a new tuning target has on the previous value
-
 	maxQueuedHeaders  = 32 * 1024 // [aqua/62] Maximum number of headers to queue for import (DOS protection)
 	maxHeadersProcess = 2048      // Number of header download results to import at once into the chain
 	maxResultsProcess = 2048      // Number of content download results to import at once into the chain
@@ -242,7 +238,7 @@ func New(mode SyncMode, stateDb aquadb.Database, mux *event.TypeMux, chain Block
 		},
 		trackStateReq: make(chan *stateReq),
 	}
-	go dl.qosTuner()
+	// go dl.qosTuner()
 	go dl.stateFetcher()
 	return dl
 }
@@ -294,8 +290,6 @@ func (d *Downloader) RegisterPeer(id string, version int, peer Peer) error {
 		logger.Error("Failed to register sync peer", "err", err)
 		return err
 	}
-	d.qosReduceConfidence()
-
 	return nil
 }
 
@@ -1613,56 +1607,58 @@ func (d *Downloader) deliver(id string, destCh chan dataPack, packet dataPack, i
 	}
 }
 
-// qosTuner is the quality of service tuning loop that occasionally gathers the
-// peer latency statistics and updates the estimated request round trip time.
-func (d *Downloader) qosTuner() {
-	for {
-		// Retrieve the current median RTT and integrate into the previoust target RTT
-		rtt := time.Duration((1-qosTuningImpact)*float64(atomic.LoadUint64(&d.rttEstimate)) + qosTuningImpact*float64(d.peers.medianRTT()))
-		atomic.StoreUint64(&d.rttEstimate, uint64(rtt))
+// // qosTuner is the quality of service tuning loop that occasionally gathers the
+// // peer latency statistics and updates the estimated request round trip time.
+// func (d *Downloader) qosTuner() {
 
-		// A new RTT cycle passed, increase our confidence in the estimated RTT
-		conf := atomic.LoadUint64(&d.rttConfidence)
-		conf = conf + (1000000-conf)/2
-		atomic.StoreUint64(&d.rttConfidence, conf)
+// 	for d.blockchain.GetContext().Err() == nil {
+// 		// Retrieve the current median RTT and integrate into the previoust target RTT
+// 		rtt := time.Duration((1-qosTuningImpact)*float64(atomic.LoadUint64(&d.rttEstimate)) + qosTuningImpact*float64(d.peers.medianRTT()))
+// 		atomic.StoreUint64(&d.rttEstimate, uint64(rtt))
 
-		// Log the new QoS values and sleep until the next RTT
-		log.Trace("Recalculated downloader QoS values", "rtt", rtt, "confidence", float64(conf)/1000000.0, "ttl", d.requestTTL())
-		select {
-		case <-d.quitCh:
-			return
-		case <-time.After(rtt):
-		}
-	}
-}
+// 		// A new RTT cycle passed, increase our confidence in the estimated RTT
+// 		conf := atomic.LoadUint64(&d.rttConfidence)
+// 		x := conf
+// 		conf = conf + (1000000-conf)/2
+// 		atomic.StoreUint64(&d.rttConfidence, conf)
 
-// qosReduceConfidence is meant to be called when a new peer joins the downloader's
-// peer set, needing to reduce the confidence we have in out QoS estimates.
-func (d *Downloader) qosReduceConfidence() {
-	// If we have a single peer, confidence is always 1
-	peers := uint64(d.peers.Len())
-	if peers == 0 {
-		// Ensure peer connectivity races don't catch us off guard
-		return
-	}
-	if peers == 1 {
-		atomic.StoreUint64(&d.rttConfidence, 1000000)
-		return
-	}
-	// If we have a ton of peers, don't drop confidence)
-	if peers >= uint64(qosConfidenceCap) {
-		return
-	}
-	// Otherwise drop the confidence factor
-	conf := atomic.LoadUint64(&d.rttConfidence) * (peers - 1) / peers
-	if float64(conf)/1000000 < rttMinConfidence {
-		conf = uint64(rttMinConfidence * 1000000)
-	}
-	atomic.StoreUint64(&d.rttConfidence, conf)
+// 		// Log the new QoS values and sleep until the next RTT
+// 		log.Trace("Recalculated downloader QoS values", "rtt", rtt, "conf", x, "confidence", float64(conf)/1000000.0, "ttl", d.requestTTL())
+// 		select {
+// 		case <-d.quitCh:
+// 			return
+// 		case <-time.After(rtt * 10):
+// 		}
+// 	}
+// }
 
-	rtt := time.Duration(atomic.LoadUint64(&d.rttEstimate))
-	log.Trace("Relaxed downloader QoS values", "rtt", rtt, "confidence", float64(conf)/1000000.0, "ttl", d.requestTTL())
-}
+// // qosReduceConfidence is meant to be called when a new peer joins the downloader's
+// // peer set, needing to reduce the confidence we have in out QoS estimates.
+// func (d *Downloader) qosReduceConfidence() {
+// 	// If we have a single peer, confidence is always 1
+// 	peers := uint64(d.peers.Len())
+// 	if peers == 0 {
+// 		// Ensure peer connectivity races don't catch us off guard
+// 		return
+// 	}
+// 	if peers == 1 {
+// 		atomic.StoreUint64(&d.rttConfidence, 1000000)
+// 		return
+// 	}
+// 	// If we have a ton of peers, don't drop confidence)
+// 	if peers >= uint64(qosConfidenceCap) {
+// 		return
+// 	}
+// 	// Otherwise drop the confidence factor
+// 	conf := atomic.LoadUint64(&d.rttConfidence) * (peers - 1) / peers
+// 	if float64(conf)/1000000 < rttMinConfidence {
+// 		conf = uint64(rttMinConfidence * 1000000)
+// 	}
+// 	atomic.StoreUint64(&d.rttConfidence, conf)
+
+// 	rtt := time.Duration(atomic.LoadUint64(&d.rttEstimate))
+// 	log.Trace("Relaxed downloader QoS values", "rtt", rtt, "confidence", float64(conf)/1000000.0, "ttl", d.requestTTL())
+// }
 
 // requestRTT returns the current target round trip time for a download request
 // to complete in.
