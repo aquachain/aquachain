@@ -393,7 +393,7 @@ func (f *Fetcher) loop() {
 			}
 			// Send out all block header requests
 			for peer, hashes := range request {
-				log.Trace("Fetching scheduled headers", "peer", peer, "list", hashes)
+				log.Trace("Fetching scheduled headers", "peer", peer, "list", common.ToJson(hashes))
 
 				// Create a closure of the fetch and schedule in on a new thread
 				fetchHeader, hashes := f.fetching[hashes[0]].fetchHeader, hashes
@@ -486,11 +486,11 @@ func (f *Fetcher) loop() {
 							block.ReceivedAt = task.time
 
 							complete = append(complete, block)
-							log.Trace("getting lock")
+							// log.Trace("getting lock")
 							f.mu.Lock()
 							f.completing[hash] = announce
 							f.mu.Unlock()
-							log.Trace("lock done")
+							// log.Trace("lock done")
 							continue
 						}
 						// Otherwise add to the list of blocks needing completion
