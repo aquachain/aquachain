@@ -64,7 +64,7 @@ func closeMain(err error) {
 }
 func makeFullNode(ctx context.Context, cmd *cli.Command) *node.Node {
 	stack, cfg := utils.MakeConfigNode(ctx, cmd, gitCommit, clientIdentifier, closeMain)
-	utils.RegisterAquaService(mainctx, stack, &cfg.Aqua, cfg.Node.Name)
+	utils.RegisterAquaService(mainctx, stack, &cfg.Aqua, cfg.Node.NodeName())
 
 	// Add the Aquachain Stats daemon if requested.
 	if cfg.Aquastats.URL != "" {
