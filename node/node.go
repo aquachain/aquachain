@@ -216,11 +216,26 @@ func (n *Node) Start(ctx context.Context) error {
 	}
 	running := &p2p.Server{Config: n.serverConfig}
 	n.log.Info("Starting peer-to-peer node", "instance", n.serverConfig.Name, "listening", n.serverConfig.ListenAddr)
-
-	alerts.Warnf("Starting %s (%s) on %s\nDiscovery: %v",
-		n.serverConfig.Name,
-		"",
-		n.serverConfig.ListenAddr, !n.serverConfig.NoDiscovery)
+	getport := func(s string) string {
+		_, port, _ := net.SplitHostPort(s)
+		if port == "0" {
+			port = "???"
+		}
+		return port
+	}
+	{
+		hostname, _ := os.Hostname()
+		if hostname == "" {
+			hostname = "???"
+		}
+		if len(n.config.HTTPVirtualHosts[0]) == 0 {
+			return fmt.Errorf("no virtual host")
+		}
+		alerts.Warnf("Starting %s on %s port %s\nDiscovery: %v\nStatic: %d\nTrusted: %d\nReverseProxy: %v\nHost: %s\n",
+			n.serverConfig.Name,
+			hostname,
+			getport(n.serverConfig.ListenAddr), !n.serverConfig.NoDiscovery, numStatic, numTrusted, n.config.RPCBehindProxy, n.config.HTTPVirtualHosts[0])
+	}
 	// Otherwise copy and specialize the P2P configuration
 	services := make(map[reflect.Type]Service)
 	for _, constructor := range n.serviceFuncs {
