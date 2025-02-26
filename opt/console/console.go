@@ -221,9 +221,6 @@ func (c *Console) init(preload []string) error {
 		return fmt.Errorf("namespace flattening: %v", err)
 	}
 
-	if _, err = c.jsre.Run("console.log('WOW'.toLowerCase(), JSON.stringify(Object.keys(web3.aqua))); "); err != nil {
-		return fmt.Errorf("namespace flattening: %v", err)
-	}
 	// Initialize the global name register (disabled for now)
 	//c.jsre.Run(`var GlobalRegistrar = aqua.contract(` + registrar.GlobalRegistrarAbi + `);   registrar = GlobalRegistrar.at("` + registrar.GlobalRegistrarAddr + `");`)
 
