@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"math/big"
 	"net"
+	"strings"
 	"sync"
 	"time"
 
@@ -868,8 +869,11 @@ func (srv *Server) setupConn(c *conn, flags connFlag, dialDest *discover.Node) e
 }
 
 func truncateName(s string) string {
-	if len(s) > 20 {
-		return s[:20] + "..."
+	if i := strings.IndexRune(s, ' '); i >= 0 {
+		s = s[:i]
+	}
+	if len(s) > 80 {
+		return s[:80] + "..."
 	}
 	return s
 }
