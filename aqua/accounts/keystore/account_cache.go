@@ -247,7 +247,7 @@ func (ac *accountCache) scanAccounts() error {
 	var (
 		buf = new(bufio.Reader)
 		key struct {
-			Address string `json:"address"`
+			Address string `json:"address	"`
 		}
 	)
 	readAccount := func(path string) *accounts.Account {
@@ -258,6 +258,12 @@ func (ac *accountCache) scanAccounts() error {
 		}
 		defer fd.Close()
 		buf.Reset(fd)
+		if got, err := buf.Peek(1); err == nil && got[0] != '{' {
+			log.Warn("Keystore file is not a json object", "path", path)
+			return nil
+		}
+		fullpath := path
+		path = filepath.Base(path)
 		// Parse the address.
 		key.Address = ""
 		err = json.NewDecoder(buf).Decode(&key)
@@ -274,7 +280,7 @@ func (ac *accountCache) scanAccounts() error {
 			log.Warn("Failed to decode keystore key", "path", path, "err", "missing or zero address")
 			return nil
 		}
-		return &accounts.Account{Address: addr, URL: accounts.URL{Scheme: KeyStoreScheme, Path: path}}
+		return &accounts.Account{Address: addr, URL: accounts.URL{Scheme: KeyStoreScheme, Path: fullpath}}
 	}
 	// Process all the file diffs
 	start := time.Now()
