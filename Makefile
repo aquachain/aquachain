@@ -100,6 +100,11 @@ $(shorttarget): $(GOFILES)
 	@echo compiled: $(shorttarget)
 	@sha256sum $(shorttarget) 2>/dev/null || true
 	@file $(shorttarget) 2>/dev/null || true
+$(shorttarget).exe: $(GOFILES)
+	GOOS=windows CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build -tags '$(tags)' $(GO_FLAGS) -o $@ $(aquachain_cmd)
+	@echo compiled: $(shorttarget)
+	@sha256sum $(shorttarget) 2>/dev/null || true
+	@file $(shorttarget) 2>/dev/null || true
 default: $(shorttarget)
 echo: # useful lol
 	@echo "GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=$(CGO_ENABLED)"
