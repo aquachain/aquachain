@@ -53,8 +53,10 @@ func echo(_ context.Context, cmd *cli.Command) error {
 
 var (
 	echoCommand = &cli.Command{
-		Action: echo,
-		Name:   "echo",
+		Action:      echo,
+		Name:        "echo",
+		Category:    "TEST COMMANDS",
+		Description: "echo flag set",
 	}
 	initCommand = &cli.Command{
 		Action:    utils.MigrateFlags(initGenesis),
