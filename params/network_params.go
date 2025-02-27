@@ -47,4 +47,7 @@ const (
 	// considered immutable (i.e. soft finality). It is used by the downloader as a
 	// hard limit against deep ancestors, by the blockchain against deep reorgs.
 	ImmutabilityThreshold uint64 = 900
+
+	// OneHourBlocks is the average target count of blocks per hour.
+	OneHourBlocks = 15
 )
