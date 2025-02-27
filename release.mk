@@ -1,3 +1,16 @@
+$(info loading release.mk ...)
+
+# release files (old, TODO remove)
+release_files := \
+	$(maincmd_name)-linux-amd64 \
+	$(maincmd_name)-linux-arm \
+	$(maincmd_name)-linux-riscv64 \
+	$(maincmd_name)-windows-amd64.exe \
+	$(maincmd_name)-freebsd-amd64 \
+	$(maincmd_name)-openbsd-amd64 \
+	$(maincmd_name)-netbsd-amd64 \
+	$(maincmd_name)-osx-amd64
+releasetexts := README.md COPYING AUTHORS
 
 defaultwhat: 
 	@echo "release mk file :)"

@@ -1,29 +1,16 @@
 # edit mkconfig.mk if necessary
 include mkconfig.mk
+gobindatacmd ?= $(shell which go-bindata)
+# for install target
+build_dir ?= bin
+PREFIX ?= /usr/local
+INSTALL_DIR ?= $(PREFIX)/bin
 
-# the main target
+# the main target is bin/aquachain or bin/aquachain.exe
 shorttarget := $(build_dir)/aquachain$(winextension)
-
-CURRENT_TARGET := $@
-ifeq (,$(CURRENT_TARGET))
-CURRENT_TARGET := $(shorttarget)
-endif
-
-# release files (old, TODO remove)
-release_files := \
-	$(maincmd_name)-linux-amd64 \
-	$(maincmd_name)-linux-arm \
-	$(maincmd_name)-linux-riscv64 \
-	$(maincmd_name)-windows-amd64.exe \
-	$(maincmd_name)-freebsd-amd64 \
-	$(maincmd_name)-openbsd-amd64 \
-	$(maincmd_name)-netbsd-amd64 \
-	$(maincmd_name)-osx-amd64
-releasetexts := README.md COPYING AUTHORS
-
+$(info shorttarget = $(shorttarget))
 
 define LOGO
-Welcome to ...
                               _           _
   __ _  __ _ _   _  __ _  ___| |__   __ _(_)_ __
  / _ '|/ _' | | | |/ _' |/ __| '_ \ / _' | | '_ \ 
@@ -33,52 +20,77 @@ Welcome to ...
 	Latest Source: https://gitlab.com/aquachain/aquachain
 	Website: https://aquachain.github.io
 
-Current MAKE target is: $(CURRENT_TARGET) ($(GOOS)/$(GOARCH))
+Target architecture: $(GOOS)/$(GOARCH)
+Version: $(version) (commit=$(COMMITHASH)) $(codename)
 endef
-#$(info $(shell env))
 $(info $(LOGO))
+
+# apt install file 
+
+# targets
 $(shorttarget): $(GOFILES)
+	$(info Building... $@)
 	CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build -tags '$(tags)' $(GO_FLAGS) -o $@ $(aquachain_cmd)
-	@echo compiled: $(shorttarget)
-	@sha256sum $(shorttarget) 2>/dev/null || true
-	@file $(shorttarget) 2>/dev/null || true
+	@echo Compiled: $(shorttarget)
+	@sha256sum $(shorttarget) 2>/dev/null || echo "warn: 'sha256sum' command not found"
+	@file $(shorttarget) 2>/dev/null || echo "warn: 'file' command not found"
+# if on windows, this would be .exe.exe but whatever
 $(shorttarget).exe: $(GOFILES)
+	$(info Building... $@)
 	GOOS=windows CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build -tags '$(tags)' $(GO_FLAGS) -o $@ $(aquachain_cmd)
 	@echo compiled: $(shorttarget)
 	@sha256sum $(shorttarget) 2>/dev/null || true
 	@file $(shorttarget) 2>/dev/null || true
+.PHONY += install
+install:
+	install -v $(build_dir)/aquachain $(INSTALL_DIR)/
 default: $(shorttarget)
-echo: # useful lol
-	@echo "GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=$(CGO_ENABLED)"
-	@echo GOCMD $(GOCMD)
-	@echo GOFILES $(GOFILES)
-	@echo shorttarget $(shorttarget)
-	@echo GO_FLAGS $(GO_FLAGS)
-	@echo aquachain_cmd $(aquachain_cmd)
-	@echo tags $(tags)
-	@echo GOTAGS $(GOTAGS)
-	@echo GOOS $(GOOS)
-	@echo GOARCH $(GOARCH)
-	@echo COMMITHASH $(COMMITHASH)
-	@echo version $(version)
-	@echo codename $(codename)
-	@echo LINKER_FLAGS $(LINKER_FLAGS)
-	@echo TAGS64 $(TAGS64)
-	@echo cgo $(cgo)
+echoflags:
+	@echo "CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build $(GO_FLAGS) -o $@ $(aquachain_cmd)"
+echo:
+	$(info  )
+	$(info Variables:)
+	$(info  )
+	@$(foreach V,$(.VARIABLES), \
+		$(if $(filter-out environment% default automatic, $(origin $V)), \
+			$(if $(filter-out LOGO GOFILES,$V), \
+				$(info $V=$($V)) )))
+	$(info  )
+clean:
+	rm -rf bin release docs tmprelease
+# echo: # useful lol
+# 	@echo "GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=$(CGO_ENABLED)"
+# 	@echo GOCMD=$(GOCMD)
+# 	@echo shorttarget=$(shorttarget)
+# 	@echo GO_FLAGS=$(GO_FLAGS)
+# 	@echo aquachain_cmd=$(aquachain_cmd)
+# 	@echo tags=$(tags)
+# 	@echo GOTAGS=$(GOTAGS)
+# 	@echo GOOS=$(GOOS)
+# 	@echo GOARCH=$(GOARCH)
+# 	@echo COMMITHASH=$(COMMITHASH)
+# 	@echo version=$(version)
+# 	@echo codename=$(codename)
+# 	@echo LINKER_FLAGS=$(LINKER_FLAGS)
+# 	@echo TAGS64=$(TAGS64)
+# 	@echo cgo=$(cgo)
+# 	@echo build_dir=$(build_dir)
+# 	@echo INSTALL_DIR=$(INSTALL_DIR)
+# 	@echo release_dir=$(release_dir)
+# 	@echo hashfn=$(hashfn)
+# 	@echo golangci_linter_version=$(golangci_linter_version)
+# 	@echo PWD=$(PWD)
 bootnode: bin/aquabootnode
 bin/aquabootnode: $(GOFILES)
 	CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build -tags '$(tags)' $(GO_FLAGS) -o bin/aquabootnode ./cmd/aquabootnode
 
 .PHONY += default bootnode hash
-echoflags:
-	@echo "CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build $(GO_FLAGS) -o $@ $(aquachain_cmd)"
 
-.PHONY += install
-install:
-	install -v $(build_dir)/aquachain $(INSTALL_DIR)/
 internal/jsre/deps/bindata.go: internal/jsre/deps/web3.js  internal/jsre/deps/bignumber.js
-	@test -x "$(shell which go-bindata)" || echo 'go-bindata not found in PATH. run make devtools to install required development dependencies PATH=${PATH}'
-	test ! -x "$(shell which go-bindata)" || go generate -v ./$(shell dirname $@)/...
+	@test -x "$(gobindatacmd)" || echo 'warn: go-bindata not found in PATH. run make devtools to install required development dependencies'
+	@test -x "$(gobindatacmd)" || exit 0
+	@echo "regenerating embedded javascript assets"
+	@test ! -x "$(gobindatacmd)" || go generate -v ./$(shell dirname $@)/...
 all:
 	mkdir -p $(build_dir)
 	cd $(build_dir) && \
@@ -108,18 +120,19 @@ help:
 	@echo
 	@echo "clean compile package release: 'make clean release release=1'"
 	@echo
-	@echo "cross-compile release: 'make clean cross release=1'"
-	@echo "cross-compile all tools: 'make clean cross release=1 cmds=all'"
-	@echo "compile with cgo and usb support: make cgo=1 tags=usb'"
-	@echo
-	@echo note: this help response is dynamic and reacts to environmental variables.
+	@#echo "cross-compile release: 'make clean cross release=1'"
+	@#echo "cross-compile all tools: 'make clean cross release=1 cmds=all'"
+	@#echo "compile with cgo and usb support: make cgo=1 tags=usb'"
 
 test:
 	CGO_ENABLED=0 bash testing/test-short-only.bash $(args)
 race:
 	CGO_ENABLED=1 bash testing/test-short-only.bash -race
 
+ifeq (1,$(release))
 include release.mk
+endif
+
 .PHONY += release
 checkrelease:
 ifneq (1,$(release))
@@ -130,24 +143,7 @@ release: checkrelease package hash
 release/SHA384.txt:
 	$(hashfn) release/*.tar.gz release/*.zip | tee $@
 hash: release/SHA384.txt
-clean:
-	rm -rf bin release docs tmprelease
-
-
-# # cross compile for each target OS/ARCH
-# crossold:	$(addprefix $(build_dir)/, $(release_files))
-# .PHONY += cross
-
-
-
-
-# broken: $(release_dir)/$(maincmd_name)-linux-arm64.tar.gz
-
-
-
 .PHONY += hash
-
-
 devtools:
 	${GOCMD} install golang.org/x/tools/cmd/stringer@latest
 	${GOCMD} install github.com/kevinburke/go-bindata/v4/...@latest
