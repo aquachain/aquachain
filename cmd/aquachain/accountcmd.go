@@ -278,7 +278,7 @@ func accountCreate(_ context.Context, cmd *cli.Command) error {
 			utils.Fatalf("%v", err)
 		}
 	}
-	utils.SetNodeConfig(cmd, &cfg.Node)
+	utils.SetNodeConfig(cmd, cfg.Node)
 	scryptN, scryptP, keydir, err := cfg.Node.AccountConfig()
 
 	if err != nil {

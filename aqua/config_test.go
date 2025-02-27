@@ -23,8 +23,8 @@ func TestConfigEmpty(t *testing.T) {
 	println(string(got))
 }
 func TestConfigDefault(t *testing.T) {
-	var cfg Config = DefaultConfig
-	got, err := toml.Marshal(&cfg)
+	var cfg *Config = DefaultConfig
+	got, err := toml.Marshal(cfg)
 	if err != nil {
 		t.Fatal(err)
 	}

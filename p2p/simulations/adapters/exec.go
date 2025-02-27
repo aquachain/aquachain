@@ -330,7 +330,7 @@ func init() {
 // execNodeConfig is used to serialize the node configuration so it can be
 // passed to the child process as a JSON encoded environment variable
 type execNodeConfig struct {
-	Stack     node.Config       `json:"stack"`
+	Stack     *node.Config      `json:"stack"`
 	Node      *NodeConfig       `json:"node"`
 	Snapshots map[string][]byte `json:"snapshots,omitempty"`
 	PeerAddrs map[string]string `json:"peer_addrs,omitempty"`
@@ -381,7 +381,7 @@ func execP2PNode() {
 	}
 
 	// initialize the devp2p stack
-	stack, err := node.New(&conf.Stack)
+	stack, err := node.New(conf.Stack)
 	if err != nil {
 		log.Crit("error creating node stack", "err", err)
 	}

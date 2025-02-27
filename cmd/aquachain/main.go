@@ -296,7 +296,8 @@ func startNode(ctx context.Context, cmd *cli.Command, stack *node.Node) {
 			// Create an chain state reader for self-derivation
 			rpcClient, err := stack.Attach("accountManager")
 			if err != nil {
-				utils.Fatalf("Failed to attach to self: %v", err)
+				log.GracefulShutdown(log.Errorf("failed to attach to self: %v", err))
+				return
 			}
 			stateReader := aquaclient.NewClient(rpcClient)
 			defer rpcClient.Close()

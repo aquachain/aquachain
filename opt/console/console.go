@@ -19,7 +19,6 @@ package console
 import (
 	"context"
 	"embed"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -416,12 +415,16 @@ func (c *Console) Evaluate(statement string) error {
 	return c.jsre.Evaluate(statement, c.printer)
 }
 
+var errShutdown = fmt.Errorf("console shutdown")
+
 // Interactive starts an interactive user session, where input is propted from
 // the configured user prompter.
-func (c *Console) Interactive(ctx context.Context, donefn func(error)) {
-	if donefn != nil {
-		defer donefn(errors.New("console is closed"))
-	}
+func (c *Console) Interactive(ctx context.Context) {
+	defer func() {
+		if ctx.Err() == nil {
+			log.GracefulShutdown(errShutdown)
+		}
+	}()
 	var (
 		prompt    = c.prompt          // Current prompt line (used for multi-line inputs)
 		indents   = 0                 // Current number of input indents (used for multi-line inputs)

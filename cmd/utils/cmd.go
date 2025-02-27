@@ -268,7 +268,7 @@ type EthstatsConfig struct {
 
 type AquachainConfig struct {
 	Info      any            `toml:",omitempty"` // this is so config file can have a comment at the top and still parse
-	Aqua      aqua.Config    // aquachain config
-	Node      node.Config    // p2p node config
+	Aqua      *aqua.Config   // aquachain config
+	Node      *node.Config   // p2p node config
 	Aquastats EthstatsConfig `toml:",omitempty"`
 }

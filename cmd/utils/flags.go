@@ -881,6 +881,7 @@ func setWS(cmd *cli.Command, cfg *node.Config) {
 		if cmd.IsSet(WSListenAddrFlag.Name) {
 			cfg.WSHost = cmd.String(WSListenAddrFlag.Name)
 		}
+		log.Info("Websocket enabled!", "wshost", cfg.WSHost)
 	}
 
 	if cmd.IsSet(WSPortFlag.Name) {

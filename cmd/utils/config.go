@@ -80,18 +80,18 @@ func MakeConfigNode(ctx context.Context, cmd *cli.Command, gitCommit string, cli
 	// 	"config", cmd.String(ConfigFileFlag.Name), "useprev", fmt.Sprint(useprev), "gitCommit", gitCommit, "id", clientIdentifier)
 	cfgptr := Mkconfig(cmd.String(ChainFlag.Name), cmd.String(ConfigFileFlag.Name), useprev, gitCommit, clientIdentifier)
 	// Apply flags.
-	if err := SetNodeConfig(cmd, &cfgptr.Node); err != nil {
+	if err := SetNodeConfig(cmd, cfgptr.Node); err != nil {
 		Fatalf("Fatal: could not set node config %+v", err)
 	}
 	cfgptr.Node.Context = ctx
 	cfgptr.Node.NoInProc = cmd.Name != "" && cmd.Name != "console" && os.Getenv("NO_INPROC") == "1"
 	cfgptr.Node.CloseMain = closemain
-	stack, err := node.New(&cfgptr.Node)
+	stack, err := node.New(cfgptr.Node)
 	if err != nil {
 		Fatalf("Failed to create the protocol stack: %v", err)
 	}
 
-	SetAquaConfig(cmd, stack, &cfgptr.Aqua)
+	SetAquaConfig(cmd, stack, cfgptr.Aqua)
 	if cmd.IsSet(AquaStatsURLFlag.Name) {
 		cfgptr.Aquastats.URL = cmd.String(AquaStatsURLFlag.Name)
 	}
@@ -99,14 +99,14 @@ func MakeConfigNode(ctx context.Context, cmd *cli.Command, gitCommit string, cli
 	return stack, cfgptr
 }
 
-func DefaultNodeConfig(gitCommit, clientIdentifier string) node.Config {
+func DefaultNodeConfig(gitCommit, clientIdentifier string) *node.Config {
 	cfg := node.DefaultConfig
 	cfg.Name = clientIdentifier
 	cfg.Version = params.VersionWithCommit(gitCommit)
 	cfg.HTTPModules = append(cfg.HTTPModules, "aqua")
 	cfg.WSModules = append(cfg.WSModules, "aqua")
 	cfg.IPCPath = "aquachain.ipc"
-	cfg.P2P.Name = node.GetNodeName(&cfg) // cached
+	cfg.P2P.Name = node.GetNodeName(cfg) // cached
 	return cfg
 }
 
@@ -159,5 +159,7 @@ func Mkconfig(chainName string, configFileOptional string, checkDefaultConfigFil
 		}
 	}
 
+	// set defaults asap
+	node.DefaultConfig = cfgptr.Node
 	return cfgptr
 }

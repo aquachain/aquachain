@@ -34,7 +34,7 @@ const (
 )
 
 // DefaultConfig contains reasonable default settings.
-var DefaultConfig = Config{
+var DefaultConfig = &Config{
 	DataDir:     defaultDataDir(),
 	HTTPPort:    DefaultHTTPPort,
 	HTTPModules: []string{"aqua", "eth", "net", "web3"},

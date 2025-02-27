@@ -18,7 +18,9 @@ package log
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"runtime/debug"
 	"time"
 
 	"github.com/go-stack/stack"
@@ -100,6 +102,10 @@ func Crit(msg string, ctx ...interface{}) {
 	os.Exit(1)
 }
 
+// GracefulShutdown (when configured) initiates a graceful shutdown of the
+// entire stack (chain, rpc, p2p, etc) and logs the cause of the shutdown.
+//
+// After 10 seconds the process should panic
 func GracefulShutdown(cause error) {
 	if root != nil {
 		root.write("graceful shutdown initiated", LvlCrit, []any{"cause", cause})
@@ -108,8 +114,14 @@ func GracefulShutdown(cause error) {
 	}
 	cancelcausefunc(cause)
 	go func() {
-		time.Sleep(time.Second * 10) // should not even finish
-		os.Exit(1)
+		for i := 10; i > 0; i++ {
+			root.write("graceful shutdown initiated", LvlCrit, []any{"cause", cause, "seconds", i})
+			time.Sleep(time.Second)
+		}
+		// panic big
+		debug.SetTraceback("all")
+		panic(cause.Error())
+		os.Exit(2)
 	}()
 }
 
@@ -121,3 +133,6 @@ var cancelcausefunc context.CancelCauseFunc = func(cause error) {
 func RegisterCancelCause(f context.CancelCauseFunc) {
 	cancelcausefunc = f
 }
+
+// Errorf can be swapped for a caller-aware version
+var Errorf = fmt.Errorf
