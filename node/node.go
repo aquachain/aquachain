@@ -488,7 +488,7 @@ func (n *Node) startHTTP(endpoint string, apis []rpc.API, whitelistModules []str
 				return err
 			}
 			//			allMethods = append(allMethods, m...)
-			n.log.Warn("HTTP method available", "methods", common.ToJson(m), "service", fmt.Sprintf("%T ( %s_ )", api.Service, api.Namespace))
+			n.log.Warn("HTTP method available", "methods", common.ToJson(m), "service", fmt.Sprintf("%T", api.Service), "namespace", api.Namespace)
 		}
 	}
 	// All APIs registered, start the HTTP listener
@@ -501,7 +501,7 @@ func (n *Node) startHTTP(endpoint string, apis []rpc.API, whitelistModules []str
 	}
 
 	go rpc.NewHTTPServer(cors, vhosts, allownet, behindreverseproxy, handler).Serve(listener)
-	n.log.Info("HTTP endpoint opened", "url", fmt.Sprintf("http://%s", endpoint), "cors", strings.Join(cors, ","), "vhosts", strings.Join(vhosts, ","), "allowip", allownet.String())
+	n.log.Warn("HTTP endpoint opened", "usingReverseProxy", behindreverseproxy, "url", fmt.Sprintf("http://%s", endpoint), "cors", common.ToJson(cors), "vhosts", strings.Join(vhosts, ","), "allowip", allownet.String())
 
 	// All listeners booted successfully
 	n.httpEndpoint = endpoint
@@ -536,6 +536,9 @@ func (n *Node) startWS(endpoint string, apis []rpc.API, modules []string, wsOrig
 	for _, module := range modules {
 		whitelist[module] = true
 	}
+	if exposeAll {
+		n.log.Warn("WebSocket exposing all modules over the network", "address", endpoint)
+	}
 	// Register all the APIs exposed by the services
 	handler := rpc.NewServer()
 	for _, api := range apis {
@@ -544,7 +547,7 @@ func (n *Node) startWS(endpoint string, apis []rpc.API, modules []string, wsOrig
 			if err != nil {
 				return err
 			}
-			n.log.Warn("WebSocket methods are available", "service", fmt.Sprintf("%T ( %s_ )", api.Service, api.Namespace), "methods", common.ToJson(m))
+			n.log.Warn("WebSocket methods are available", "service", fmt.Sprintf("%T", api.Service), "namespace", api.Namespace, "methods", common.ToJson(m))
 		}
 	}
 	// All APIs registered, start the HTTP listener
