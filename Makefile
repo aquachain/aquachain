@@ -96,15 +96,15 @@ all:
 	cd $(build_dir) && \
 		CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build -o . $(GO_FLAGS) ../cmd/...
 
-cross:
-	@echo to build a release, use "make clean release release=1"
-	mkdir -p $(build_dir)
-	cd $(build_dir) && mkdir -p $(GOOS)
-	cd $(build_dir)/linux && GOOS=linux \
-		CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build -o . $(GO_FLAGS) ../.${aquachain_cmd}
-	cd $(build_dir)/windows && GOOS=windows \
-		CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build -o . $(GO_FLAGS) ../.${aquachain_cmd}
+main_command_dir := ${aquachain_cmd}
 
+# cross compilation wizard target for testing different architectures
+cross:
+	@echo warn: to build a real release, use "make clean release release=1"
+	@mkdir -p $(build_dir)/${GOOS}-${GOARCH}
+	$(info Building to directory: $(build_dir)/${GOOS}-${GOARCH})
+	cd $(build_dir)/${GOOS}-${GOARCH} && GOOS=${GOOS} GOARCH=${GOARCH} \
+		CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build -o . $(GO_FLAGS) ../.${main_command_dir}
 
 help:
 	@echo
@@ -112,18 +112,22 @@ help:
 	@echo 'make install' target is: "$(INSTALL_DIR)/"
 	@echo using go flags: "$(GO_FLAGS)"
 	@echo
-	@echo to compile quickly, run \'make\' and then \'$(shorttarget) help\'
-	@echo to install system-wide, run something like \'sudo make install\'
+	@echo to compile quickly, run \'make\' and then \'$(shorttarget) version\'
+	@echo then, to install system-wide, run something like \'sudo make install\'
 	@echo
-	@echo "to cross-compile, try 'make cross' or 'make GOOS=windows'"
+	@echo adding 'release=1' to any target will rebuild the dependency libraries.
+	@echo
+	@echo -n "Building a new release:\n\tmake clean release release=1"
+	@echo
+	@echo
+	@echo "to cross-compile a single OS, try 'make cross' or 'make GOOS=windows'"
 	@echo "to add things left out by default, use tags: 'make tags=metrics'"
 	@echo
-	@echo "clean compile package release: 'make clean release release=1'"
 	@echo
 	@#echo "cross-compile release: 'make clean cross release=1'"
 	@#echo "cross-compile all tools: 'make clean cross release=1 cmds=all'"
-	@#echo "compile with cgo and usb support: make cgo=1 tags=usb'"
-
+	@#echo "compile with CGO tracer support: make cgo=1'"
+	@echo required shell commands: git, go, sha256sum, file, date, base64, tr, printf, which, pwd, echo, find
 test:
 	CGO_ENABLED=0 bash testing/test-short-only.bash $(args)
 race:
