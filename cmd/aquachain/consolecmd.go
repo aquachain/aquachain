@@ -42,6 +42,7 @@ func mkmainctx() (context.Context, context.CancelCauseFunc) {
 	pctx, cncl := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	_ = cncl // unused
 	ctx, cancelCause := context.WithCancelCause(pctx)
+	log.RegisterCancelCause(cancelCause)
 	return ctx, cancelCause
 }
 

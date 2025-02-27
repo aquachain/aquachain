@@ -17,7 +17,9 @@
 package log
 
 import (
+	"context"
 	"os"
+	"time"
 
 	"github.com/go-stack/stack"
 )
@@ -98,4 +100,24 @@ func Crit(msg string, ctx ...interface{}) {
 	os.Exit(1)
 }
 
+func GracefulShutdown(cause error) {
+	if root != nil {
+		root.write("graceful shutdown initiated", LvlCrit, []any{"cause", cause})
+	} else {
+		println("fatal: ", cause.Error())
+	}
+	cancelcausefunc(cause)
+	go func() {
+		time.Sleep(time.Second * 10) // should not even finish
+		os.Exit(1)
+	}()
+}
+
 var Caller = stack.Caller
+var cancelcausefunc context.CancelCauseFunc = func(cause error) {
+	Root().Crit("main shutdown function not registered, exiting", "cause", cause)
+}
+
+func RegisterCancelCause(f context.CancelCauseFunc) {
+	cancelcausefunc = f
+}
