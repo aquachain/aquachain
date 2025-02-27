@@ -21,8 +21,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
+	"time"
 
 	"golang.org/x/net/websocket"
 
@@ -43,7 +43,6 @@ var websocketJSONCodec = websocket.Codec{
 	Unmarshal: func(msg []byte, payloadType byte, v interface{}) error {
 		dec := json.NewDecoder(bytes.NewReader(msg))
 		dec.UseNumber()
-
 		return dec.Decode(v)
 	},
 }
@@ -95,16 +94,19 @@ func wsHandshakeValidator(allowedOrigins []string, allowIPset netutil.Netlist, r
 		}
 	}
 
-	// allow localhost if no allowedOrigins are specified.
+	// browser/cors: allow only localhost if no allowedOrigins are specified.
 	if len(origins.ToSlice()) == 0 {
+		log.Warn("websocket: no '--wsorigins' specified, use --wsorigins='*' if you want browser access (CORS)")
 		origins.Add("http://localhost")
-		if hostname, err := os.Hostname(); err == nil {
-			origins.Add("http://" + strings.ToLower(hostname))
-		}
 	}
 
 	log.Info(fmt.Sprintf("Allowed origin(s) for WS RPC interface %v\n", origins.ToSlice()))
-	log.Info(fmt.Sprintf("Allowed IP(s) for WS RPC interface %s\n", allowIPset.String()))
+	if len(allowIPset) == 1 && allowIPset[0].String() == "0.0.0.0/0" {
+		log.Warn("WARNING: WS RPC interface is open to all IPs")
+		time.Sleep(time.Second)
+	} else {
+		log.Info(fmt.Sprintf("Allowed IP(s) for WS RPC interface %s\n", allowIPset.String()))
+	}
 
 	f := func(cfg *websocket.Config, req *http.Request) error {
 		checkip := func(r *http.Request, reverseProxy bool) error {

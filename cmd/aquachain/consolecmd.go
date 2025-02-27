@@ -166,11 +166,11 @@ func localConsole(ctx context.Context, cmd *cli.Command) error {
 	}
 	// Otherwise print the welcome screen and enter interactive mode
 	console.Welcome()
-	console.Interactive(mainctx, maincancel)
+	console.Interactive(mainctx)
 	return nil
 }
 
-func assumeEndpoint(ctx context.Context, cmd *cli.Command) string {
+func assumeEndpoint(_ context.Context, cmd *cli.Command) string {
 
 	chaincfg := params.GetChainConfig(cmd.String(utils.ChainFlag.Name))
 	path := node.DefaultDatadirByChain(chaincfg)
@@ -232,7 +232,7 @@ func remoteConsole(ctx context.Context, cmd *cli.Command) error {
 
 	// Otherwise print the welcome screen and enter interactive mode
 	console.Welcome()
-	console.Interactive(ctx, maincancel)
+	console.Interactive(ctx)
 
 	return nil
 }

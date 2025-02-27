@@ -212,7 +212,7 @@ func TestInteractive(t *testing.T) {
 	tester := newTester(t, nil)
 	defer tester.Close(t)
 
-	go tester.console.Interactive(context.Background(), func(err error) { panic(err.Error()) })
+	go tester.console.Interactive(context.Background())
 
 	// Wait for a promt and send a statement back
 	select {
