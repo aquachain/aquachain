@@ -17,7 +17,12 @@ package: $(release_dir)/$(maincmd_name)-windows-amd64.zip \
 	$(release_dir)/$(maincmd_name)-linux-arm.tar.gz \
 	$(release_dir)/$(maincmd_name)-freebsd-amd64.tar.gz \
 	$(release_dir)/$(maincmd_name)-openbsd-amd64.tar.gz \
-	$(release_dir)/$(maincmd_name)-netbsd-amd64.tar.gz
+	$(release_dir)/$(maincmd_name)-netbsd-amd64.tar.gz \
+	debs
+
+debs:
+	bash contrib/makedeb.bash linux-amd64 linux-arm linux-riscv64
+
 
 # # create release packages
 $(release_dir)/$(maincmd_name)-windows-%.zip: $(build_dir)/windows-%/
