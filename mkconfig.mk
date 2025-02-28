@@ -4,6 +4,10 @@ GOCMD ?= $(shell which go)
 PWD != pwd
 # might be set by user or recursive make
 GOOS ?= $(shell ${GOCMD} env GOOS)
+ifeq (osx,$(GOOS))]
+GOOS = darwin
+endif
+
 GOARCH ?= $(shell ${GOCMD} env GOARCH)
 GOPATH ?= $(shell go env GOPATH)
 # rebuild target if *any* go file changes
@@ -14,12 +18,12 @@ ifeq (,$(COMMITHASH))
 COMMITHASH := $(shell git rev-parse --short=6 HEAD)
 endif
 
-$(info GOCMD = $(GOCMD))
-$(info GOOS = $(GOOS))
-$(info GOARCH = $(GOARCH))
-$(info GOPATH = $(GOPATH))
-$(info version = $(version))
-$(info COMMITHASH = $(COMMITHASH))
+# $(info GOCMD = $(GOCMD))
+# $(info GOOS = $(GOOS))
+# $(info GOARCH = $(GOARCH))
+# $(info GOPATH = $(GOPATH))
+# $(info version = $(version))
+# $(info COMMITHASH = $(COMMITHASH))
 
 
 # build flags and tags (TODO: use a separator instead of base64)
@@ -40,7 +44,7 @@ winextension = .exe
 endif
 
 # maincmd_name will be the name of the binary
-maincmd_name := aquachain-$(version)$(winextension)
+maincmd_name := aquachain-$(version)
 $(info maincmd_name = $(maincmd_name))
 
 # output release tarballs here

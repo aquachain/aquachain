@@ -6,8 +6,13 @@ build_dir ?= bin
 PREFIX ?= /usr/local
 INSTALL_DIR ?= $(PREFIX)/bin
 
+maybeext := 
+ifeq (windows,$(GOOS))
+maybeext := .exe
+endif
+
 # the main target is bin/aquachain or bin/aquachain.exe
-shorttarget := $(build_dir)/aquachain$(winextension)
+shorttarget := $(build_dir)/aquachain$(maybeext)
 $(info shorttarget = $(shorttarget))
 
 define LOGO
@@ -34,7 +39,7 @@ $(shorttarget): $(GOFILES)
 	@echo Compiled: $(shorttarget)
 	@sha256sum $(shorttarget) 2>/dev/null || echo "warn: 'sha256sum' command not found"
 	@file $(shorttarget) 2>/dev/null || echo "warn: 'file' command not found"
-# if on windows, this would be .exe.exe but whatever
+# if on windows, this would become .exe.exe but whatever
 $(shorttarget).exe: $(GOFILES)
 	$(info Building... $@)
 	GOOS=windows CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build -tags '$(tags)' $(GO_FLAGS) -o $@ $(aquachain_cmd)
@@ -81,8 +86,9 @@ clean:
 # 	@echo golangci_linter_version=$(golangci_linter_version)
 # 	@echo PWD=$(PWD)
 bootnode: bin/aquabootnode
-bin/aquabootnode: $(GOFILES)
-	CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build -tags '$(tags)' $(GO_FLAGS) -o bin/aquabootnode ./cmd/aquabootnode
+# bin/%: $(GOFILES)
+# 	$(info Building... ./cmd/$*)
+# 	CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build -tags '$(tags)' $(GO_FLAGS) -o bin/$* ./cmd/$*
 
 .PHONY += default bootnode hash
 
@@ -100,6 +106,9 @@ main_command_dir := ${aquachain_cmd}
 
 # cross compilation wizard target for testing different architectures
 cross:
+	test -n "$(GOOS)"
+	test -n "$(GOARCH)" 
+	@echo cross-compiling for $(GOOS)/$(GOARCH)
 	@echo warn: to build a real release, use "make clean release release=1"
 	@mkdir -p $(build_dir)/${GOOS}-${GOARCH}
 	$(info Building to directory: $(build_dir)/${GOOS}-${GOARCH})
