@@ -1,8 +1,9 @@
 [Unit]
 Description=Aquachain Server (RPC)
 Requires=network
-After=network-online.target
-Wants=network-online.target
+# uncomment if not --user
+#After=network-online.target
+#Wants=network-online.target
 
 [Service]
 Type=simple
@@ -19,8 +20,7 @@ Environment="COLOR=1"
 # default, rpc for 127.0.0.1 only, private rpc through ~/.aquachain/aquachain.ipc
 # if datadir/aquachain.toml exists, it will be parsed
 # if .env exists it will be sourced
-ExecStart=/usr/local/bin/aquachain --now -chain aqua -verbosity 6 -debug -jsonlog daemon
-#ExecStart=/usr/local/bin/aquachain --now -chain aqua -ws -rpc -verbosity 6 -debug -jsonlog daemon
+ExecStart=/usr/local/bin/aquachain --now -chain testnet -ws -rpc -verbosity 4 -debug daemon
 
 
 # or, as a public rpc, we have no keys. but, an aquabase/coinbase is useful.
@@ -28,15 +28,14 @@ ExecStart=/usr/local/bin/aquachain --now -chain aqua -verbosity 6 -debug -jsonlo
 #ExecStart=/usr/local/bin/aquachain -chain testnet -allowip 0.0.0.0/0 --txpool.nolocals -aquabase 0xDA7064FB41A2a599275Dd74113787A7aA8ee3E4f -gcmode archive -rpc -ws -debug -verbosity 4 --rpccorsdomain='*' --rpcvhosts='*' -wsorigins '*' daemon
 
 # uncomment next lines if not --user
-User=aqua
-Group=aqua
-WorkingDirectory=/home/aqua
-StandardOutput=append:/var/log/aqua.log
-StandardError=append:/var/log/aqua.log
+#User=aqua
+#WorkingDirectory=/home/aqua
+#StandardOutput=append:/var/log/aqua.log
+#StandardError=append:/var/log/aqua.log
 
 [Install]
 # uncomment if --user
-#WantedBy=default.target
+WantedBy=default.target
 # uncomment if not --user
-WantedBy=network-online.target
+#WantedBy=network-online.target
 
