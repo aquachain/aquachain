@@ -1,10 +1,10 @@
-$(info loading mkconfig.mk ...)
+#$(info loading mkconfig.mk ...)
 # the actual go command
 GOCMD ?= $(shell which go)
 PWD != pwd
 # might be set by user or recursive make
 GOOS ?= $(shell ${GOCMD} env GOOS)
-ifeq (osx,$(GOOS))]
+ifeq (osx,$(GOOS))
 GOOS = darwin
 endif
 
@@ -18,18 +18,18 @@ ifeq (,$(COMMITHASH))
 COMMITHASH := $(shell git rev-parse --short=6 HEAD)
 endif
 
-# $(info GOCMD = $(GOCMD))
-# $(info GOOS = $(GOOS))
-# $(info GOARCH = $(GOARCH))
-# $(info GOPATH = $(GOPATH))
-# $(info version = $(version))
-# $(info COMMITHASH = $(COMMITHASH))
+# #$(info GOCMD = $(GOCMD))
+# #$(info GOOS = $(GOOS))
+# #$(info GOARCH = $(GOARCH))
+# #$(info GOPATH = $(GOPATH))
+# #$(info version = $(version))
+# #$(info COMMITHASH = $(COMMITHASH))
 
 
 # build flags and tags (TODO: use a separator instead of base64)
 tags ?= netgo osusergo static
 TAGS64 ?= $(shell printf "$(tags)"|base64 | tr -d '\r\n' | tr -d '\n' || true)
-$(info tags = "$(tags)" b64: $(TAGS64))
+#$(info tags = "$(tags)" b64: $(TAGS64))
 
 # export env used by recursive make
 export GOOS GOARCH GOPATH GOCMD GOFLAGS TAGS64
@@ -45,7 +45,7 @@ endif
 
 # maincmd_name will be the name of the binary
 maincmd_name := aquachain-$(version)
-$(info maincmd_name = $(maincmd_name))
+#$(info maincmd_name = $(maincmd_name))
 
 # output release tarballs here
 release_dir ?= release
@@ -61,7 +61,7 @@ ifeq (1,$(cgo))
 CGO_ENABLED = 1
 endif
 export CGO_ENABLED
-$(info CGO_ENABLED = $(cgo))
+#$(info CGO_ENABLED = $(cgo))
 
 # change ${GOCMD} build flags
 GO_FLAGS ?= 
@@ -90,6 +90,6 @@ endif
 
 # go ldflags escaping aaaaaahhhhh
 GO_FLAGS += -ldflags '$(LINKER_FLAGS)'
-$(info GO_FLAGS = $(GO_FLAGS))
+#$(info GO_FLAGS = $(GO_FLAGS))
 
 

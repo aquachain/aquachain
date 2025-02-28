@@ -13,7 +13,7 @@ endif
 
 # the main target is bin/aquachain or bin/aquachain.exe
 shorttarget := $(build_dir)/aquachain$(maybeext)
-$(info shorttarget = $(shorttarget))
+# $(info shorttarget = $(shorttarget))
 
 define LOGO
                               _           _
@@ -28,12 +28,12 @@ define LOGO
 Target architecture: $(GOOS)/$(GOARCH)
 Version: $(version) (commit=$(COMMITHASH)) $(codename)
 endef
-$(info $(LOGO))
 
 # apt install file 
 
 # targets
 $(shorttarget): $(GOFILES)
+	$(info $(LOGO))
 	$(info Building... $@)
 	CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build -tags '$(tags)' $(GO_FLAGS) -o $@ $(aquachain_cmd)
 	@echo Compiled: $(shorttarget)
@@ -50,6 +50,8 @@ $(shorttarget).exe: $(GOFILES)
 install:
 	install -v $(build_dir)/aquachain $(INSTALL_DIR)/
 default: $(shorttarget)
+print-version:
+	@echo $(version)
 echoflags:
 	@echo "CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build $(GO_FLAGS) -o $@ $(aquachain_cmd)"
 echo:
