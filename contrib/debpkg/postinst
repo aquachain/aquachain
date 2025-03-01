@@ -1,5 +1,8 @@
 #!/bin/sh
+# this is a postinst script for aquachain debian package
 set -e
+# Source debconf library.
+. /usr/share/debconf/confmodule
 now=$(date)
 if ! which systemctl >/dev/null; then
     echo "warn: systemd not found, skipping aquachain.service installation"
@@ -14,6 +17,55 @@ if ! getent passwd aqua >/dev/null; then
     adduser --system --ingroup aqua --home $default_aqua_homedir --shell /usr/sbin/nologin aqua
     echo "created user: aqua"
 fi
+RET=
+db_input medium aquachain/aquabase || true
+db_go || true
+db_get aquachain/aquabase || true
+aquabase=$RET
+if [ -z "$aquabase" ]; then
+    aquabase=0xDA7064FB41A2a599275Dd74113787A7aA8ee3E4f
+fi
+
+db_input medium aquachain/datadir || true
+db_go || true
+db_get aquachain/datadir || true
+datadir=$RET
+if [ -z "$datadir" ]; then
+    datadir=${default_aqua_datadir}
+fi
+
+db_input medium aquachain/chain || true
+db_go || true
+db_get aquachain/chain || true
+chain=$RET
+if [ -z "$chain" ]; then
+    chain=aqua
+fi
+mayberpc=
+db_input medium aquachain/rpc || true
+db_go || true
+db_get aquachain/rpc || true
+rpc=$RET
+if [ -z "$rpc" ]; then
+    rpc=1
+fi
+if [ "$rpc" -eq 1 ]; then
+    mayberpc="-rpc -ws"
+fi
+aqua_args=
+db_input medium aquachain/args || true
+db_go || true
+db_get aquachain/args || true
+aqua_args=$RET
+
+db_input medium aquachain/verbosity || true
+db_go || true
+db_get aquachain/verbosity || true
+verbosity=$RET
+if [ -z "$verbosity" ]; then
+    verbosity=4
+fi
+
 if [ ! -d $default_aqua_homedir ]; then
     mkdir -v -p $default_aqua_homedir
     chown -v -R aqua:aqua $default_aqua_homedir
@@ -23,20 +75,19 @@ fi
 
 mkdir -p /etc/default
 # create a default config file with OPTIONS=-debug
-test ! -f /etc/default/aquachain || cat >>/etc/default/aquachain <<EOF2
+test -f /etc/default/aquachain || cat >>/etc/default/aquachain <<EOF2
 # aquachain config (generated at ${now})
-OPTIONS=-debug
-# this overrides cmdline args in service file
+OPTIONS=-debug ${mayberpc} -jsonlog -chain ${chain} -datadir ${datadir} -verbosity ${verbosity} -aquabase ${aquabase} ${aqua_args}
 JSONLOG=0
 NO_SIGN=1
 NO_KEYS=1
 # unsafe stuff for testing/example
 #UNSAFE_RPC_ALLOW_IP=1
 # example allow all rpc and ws connections
-#OPTIONS=-nokeys -chain testnet -allowip 0.0.0.0/0 --txpool.nolocals -aquabase 0xDA7064FB41A2a599275Dd74113787A7aA8ee3E4f -rpc -ws -debug -verbosity 4 --rpccorsdomain='*' --rpcvhosts='*' -wsorigins '*'
+#OPTIONS=-nokeys -chain testnet -allowip 0.0.0.0/0 --txpool.nolocals -aquabase ${aquabase} -rpc -ws -debug -verbosity 4 --rpccorsdomain='*' --rpcvhosts='*' -wsorigins '*'
 EOF2
-    chmod -v 600 $tmpdir/etc/default/aquachain
+chmod -v 600 $tmpdir/etc/default/aquachain
 
-    # enable and start the service
-    systemctl daemon-reload
-    systemctl enable --now aquachain
+# enable and start the service
+systemctl daemon-reload
+systemctl enable --now aquachain

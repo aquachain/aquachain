@@ -1,15 +1,20 @@
 #!/bin/sh
+# this is a prerm script for aquachain debian package
 set -e
 if ! which systemctl >/dev/null; then
     echo "warn: systemd not found, skipping aquachain.service uninstallation"
     exit 0
 fi
+echo "stopping aquachain service"
 systemctl disable --now aquachain
+sleep 1
+echo "removing user and group"
 if getent passwd aqua >/dev/null; then
     userdel aqua || true
 fi
 if getent group aqua >/dev/null; then
     groupdel aqua || true
 fi
-echo "warn: not removing keystore in /var/lib/aquachain, please remove manually"
+echo "warn: not removing keystore or datadir in /var/lib/aquachain, please remove manually"
 echo "warn: not removing /etc/default/aquachain, please remove manually"
+# todo: purge etc

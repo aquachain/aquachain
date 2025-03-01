@@ -114,8 +114,8 @@ Description: Aquachain
  Aquachain RPC server
 EOF
 
-    cp contrib/debpkg/postinst $tmpdir/DEBIAN/postinst
-    cp contrib/debpkg/prerm $tmpdir/DEBIAN/prerm
+    cp -v contrib/debpkg/postinst $tmpdir/DEBIAN/postinst
+    cp -v contrib/debpkg/prerm $tmpdir/DEBIAN/prerm
     chmod 755 $tmpdir/DEBIAN/postinst
     chmod 755 $tmpdir/DEBIAN/prerm
 
@@ -124,7 +124,7 @@ EOF
 #!/bin/sh
 set -e
 if ! which systemctl >/dev/null; then
-    echo "warn: systemd not found, skipping aquachain.service installation"
+    echo "warn: systemctl not found, skipping aquachain.service installation"
     exit 0
 fi
 systemctl daemon-reload
