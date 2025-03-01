@@ -47,4 +47,6 @@ fi
 
 echo "Starting Aquachain node with args: ${AQUACHAIN_ARGS}"
 
-exec sh -c "/usr/local/bin/aquachain ${AQUACHAIN_ARGS} daemon"
+# lol TODO: fix this
+cmdline=$(echo exec /usr/local/bin/aquachain ${AQUACHAIN_ARGS} daemon)
+exec sh -c ${cmdline}
