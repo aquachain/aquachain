@@ -108,11 +108,19 @@ Depends: adduser
 Optional: systemd
 Section: net
 Priority: optional
-Keywords: aquachain, blockchain, coin
+Keywords: aquachain, blockchain, coin, evm, smart contracts
 Homepage: https://aquachain.github.io
-Description: Aquachain
- Aquachain RPC server
+Description: daemon and client for the aquachain peer-to-peer network
+ Aquachain is a blockchain platform with a native coin, AQUA.
+ It is a fork of Ethereum with a few changes.
+ .
+ This package contains the aquachain daemon and client.
 EOF
+
+    # create the preinst file
+    cat >$tmpdir/DEBIAN/preinst <<EOF
+EOF
+
 
     cp -v contrib/debpkg/postinst $tmpdir/DEBIAN/postinst
     cp -v contrib/debpkg/prerm $tmpdir/DEBIAN/prerm
