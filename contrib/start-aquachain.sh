@@ -31,13 +31,18 @@ VERBOSITY=${VERBOSITY-3}
 
 # Additional arguments for Aquachain (added below)
 AQUACHAIN_ARGS=${AQUACHAIN_ARGS}
+
+# add -rpc and -ws flags
 USE_RPC=1
+# add -rpchost and -wshost flags
+PUBLIC_RPC_MODE=0
+
 if [ "${RPC_ALLOW_IP}" = "none" ]; then
     RPC_ALLOW_IP=""
     USE_RPC=0
 fi
 if [ "${RPC_ALLOW_IP}" = "0.0.0.0/0" ]; then
-    USE_RPC=1
+    USE_RPC=0
     PUBLIC_RPC_MODE=1
     export NO_KEYS=1
     export NO_SIGN=1
@@ -45,7 +50,7 @@ if [ "${RPC_ALLOW_IP}" = "0.0.0.0/0" ]; then
     echo warn: public rpc mode enabled, no keys or signing allowed 1>&2
 fi
 if [ -n "${RPC_ALLOW_IP}" ]; then
-    AQUACHAIN_ARGS="${AQUACHAIN_ARGS} --rpcallowip \"${RPC_ALLOW_IP}\""
+    AQUACHAIN_ARGS="${AQUACHAIN_ARGS} --allowip \"${RPC_ALLOW_IP}\""
 fi
 if [ -n "${AQUACHAIN_DATADIR}" ]; then
     AQUACHAIN_ARGS="${AQUACHAIN_ARGS} --datadir \"${AQUACHAIN_DATADIR}\""
@@ -59,11 +64,14 @@ fi
 if [ -n "${VERBOSITY}" ]; then
     AQUACHAIN_ARGS="${AQUACHAIN_ARGS} -verbosity ${VERBOSITY}"
 fi
+# use public rpc
 if ["${PUBLIC_RPC_MODE}" = "1" ]; then
-    AQUACHAIN_ARGS="${AQUACHAIN_ARGS} --rpc --rpcaddr 0.0.0.0 --ws --wsaddr
-
-# RPC allow IP
-export RPC_ALLOW_IP=${RPC_ALLOW_IP}
+    AQUACHAIN_ARGS="${AQUACHAIN_ARGS} --rpc --rpcaddr 0.0.0.0 --ws --wsaddr 0.0.0.0"
+fi
+# use default localhost rpc
+if [ "${USE_RPC}" = "1" ]; then
+    AQUACHAIN_ARGS="${AQUACHAIN_ARGS} --rpc --ws"
+fi
 export AQUACHAIN_ARGS=${AQUACHAIN_ARGS}
 echo "Starting Aquachain node with args: ${AQUACHAIN_ARGS}" 1>&2
 
