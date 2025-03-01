@@ -124,40 +124,14 @@ Keywords: aquachain, blockchain, coin, EVM, smart contracts
 Homepage: https://aquachain.github.io
 Description: daemon and client for the aquachain peer-to-peer network
 EOF
-
-    # create the preinst file
-    cat >$tmpdir/DEBIAN/preinst <<EOF
-#!/bin/sh
-set -e
-if [ "\$1" = "install" ]; then
-    if ! getent group aquachain >/dev/null; then
-        addgroup --system aqua
-    fi
-    if ! getent passwd aquachain >/dev/null; then
-        adduser --system --no-create-home --ingroup aqua --home $default_aqua_homedir aqua
-    fi
-    mkdir -p $default_aqua_homedir
-    chown -R aquachain:aquachain $default_aqua_homedir
-
-fi
-
-if [ "\$1" = "remove" ]; then
-    if getent passwd aquachain >/dev/null; then
-        userdel aquachain
-    fi
-    if getent group aquachain >/dev/null; then
-        groupdel aquachain
-    fi
-fi
-EOF
-    chmod 755 $tmpdir/DEBIAN/preinst
-
     # copy the postinst and prerm files
+    cp -v contrib/debpkg/aquachain.preinst $tmpdir/DEBIAN/preinst
     cp -v contrib/debpkg/aquachain.postinst $tmpdir/DEBIAN/postinst
     cp -v contrib/debpkg/aquachain.prerm $tmpdir/DEBIAN/prerm
     cp -v contrib/debpkg/aquachain.templates $tmpdir/DEBIAN/templates
     cp -v contrib/debpkg/aquachain.config $tmpdir/DEBIAN/config
     cp -v contrib/debpkg/aquachain.postrm $tmpdir/DEBIAN/postrm
+    chmod 755 $tmpdir/DEBIAN/preinst
     chmod 755 $tmpdir/DEBIAN/postinst
     chmod 755 $tmpdir/DEBIAN/prerm
     chmod 644 $tmpdir/DEBIAN/templates
@@ -165,8 +139,6 @@ EOF
     chmod 755 $tmpdir/DEBIAN/postrm
     test ! -f contrib/debpkg/conffiles || cp -v contrib/debpkg/conffiles $tmpdir/DEBIAN/conffiles
     test ! -f contrib/debpkg/conffiles || chmod 644 $tmpdir/DEBIAN/conffiles
-
-    
 
     # build the debian package
     if [ -f "aquachain-$version-$goos-$goarch.deb" ]; then

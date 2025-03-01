@@ -1,0 +1,22 @@
+#!/bin/sh
+set -e
+if [ "$1" = "install" ]; then
+    if ! getent group aqua >/dev/null; then
+        addgroup --system aqua
+    fi
+    if ! getent passwd aqua >/dev/null; then
+        adduser --system --no-create-home --ingroup aqua --home /var/lib/aquachain aqua
+    fi
+    mkdir -p /var/lib/aquachain
+    chown -R aqua:aqua /var/lib/aquachain
+
+fi
+
+if [ "$1" = "remove" ]; then
+    if getent passwd aqua >/dev/null; then
+        userdel aqua
+    fi
+    if getent group aqua >/dev/null; then
+        groupdel aqua
+    fi
+fi
