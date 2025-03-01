@@ -135,6 +135,7 @@ if [ ! -d $default_aqua_homedir ]; then
     chmod 700 $default_aqua_homedir
 fi
 
+mkdir -p $tmpdir/etc/default
 # create a default config file with OPTIONS=-debug
 cat >$tmpdir/etc/default/aquachain <<EOF2
 # aquachain config (generated at $version)
