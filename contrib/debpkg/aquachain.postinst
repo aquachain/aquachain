@@ -1,7 +1,7 @@
 #!/bin/sh
 # this is a postinst script for aquachain debian package
 # we make systemd unit, user, group, and config files
-set -ex
+set -e
 now=$(date)
 default_aqua_homedir=/var/lib/aquachain
 
