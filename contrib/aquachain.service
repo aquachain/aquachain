@@ -20,5 +20,5 @@ Restart=always
 ExecStart=/usr/local/bin/start-aquachain.sh
 
 [Install]
-WantedBy=network-online.target
+WantedBy=multi-user.target
 
