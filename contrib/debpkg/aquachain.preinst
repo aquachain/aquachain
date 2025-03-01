@@ -13,7 +13,6 @@ if [ ! -d /var/lib/aquachain ]; then
     chown -R aqua:aqua /var/lib/aquachain
     chmod 700 /var/lib/aquachain
 fi
-
 if [ "$1" = "remove" ]; then
     if getent passwd aqua >/dev/null; then
         userdel aqua

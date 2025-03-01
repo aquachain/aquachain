@@ -55,7 +55,7 @@ JSONLOG=0
 NO_SIGN=1
 NO_KEYS=1
 EOF2
-chmod -v 600 $tmpdir/etc/default/aquachain
+chmod -v 644 $tmpdir/etc/default/aquachain
 
 # enable and start the service
 
