@@ -10,13 +10,5 @@ systemctl disable --now aquachain || pkill -u aqua -f aquachain || echo "warn: f
 sleep 1
 # systemctl disable --now aquachain || service stop aquachain
 # sleep 1
-echo "removing user and group"
-if getent passwd aqua >/dev/null; then
-    userdel aqua || true
-fi
-if getent group aqua >/dev/null; then
-    groupdel aqua || true
-fi
-echo "warn: not removing keystore or datadir in /var/lib/aquachain, please remove manually"
-echo "warn: not removing /etc/default/aquachain, please remove manually"
+
 # todo: purge etc

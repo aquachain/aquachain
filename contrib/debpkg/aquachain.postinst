@@ -2,9 +2,6 @@
 # this is a postinst script for aquachain debian package
 set -e
 
-if [ "$1" == "configure" ]; then
-    exit 0
-fi
 echo args: $@
 # Source the configuration values.
 if [ -f /etc/aquachain/aquachain.conf ]; then
@@ -17,7 +14,7 @@ fi
 echo "Aquachain installed successfully."
 echo "Coinbase Address: $AQUABASE"
 echo "Data Directory: $AQUACHAIN_DATADIR"
-echo "Chain: $AQUACHAN_CHAIN"
+echo "Chain: $AQUACHAIN_CHAIN"
 echo "Verbosity: $VERBOSITY"
 echo "Additional Arguments: $AQUACHAIN_ARGS"
 echo "RPC Enabled: $RPC"

@@ -85,7 +85,9 @@ build_deb() {
     mkdir -p $tmpdir/usr/local/bin
     mkdir -p $tmpdir/etc/systemd/system
     mkdir -p $tmpdir/etc/init.d
+    mkdir -p $tmpdir/etc/aquachain
     chmod -R 755 $tmpdir
+    chmod 750 $tmpdir/etc/aquachain
 
     # copy the binary to the package directory
     cp $binfile $tmpdir/usr/local/bin/aquachain
@@ -103,6 +105,14 @@ build_deb() {
     else
         echo "warn: missing $manfile"
     fi
+
+    if [ -f contrib/debpkg/aquachain.conf ]; then
+        cp contrib/debpkg/aquachain.conf $tmpdir/etc/aquachain/aquachain.conf
+        chmod 600 $tmpdir/etc/aquachain/aquachain.conf
+    else
+        echo "warn: missing contrib/aquachain.conf"
+    fi
+
 
     # this creates warnings, but helps graceful shutdown when power-button is pressed
     cp $k01file $tmpdir/etc/init.d/K01aquachain

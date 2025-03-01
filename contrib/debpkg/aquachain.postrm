@@ -1,7 +1,20 @@
 #!/bin/sh
 set -e
+if getent passwd aqua >/dev/null; then
+    echo "removing user and group"
+    userdel aqua || true
+fi
+if getent group aqua >/dev/null; then
+    echo "removing group"
+    groupdel aqua || true
+fi
+echo "warn: not removing keystore or datadir in /var/lib/aquachain, please remove manually"
+echo "warn: not removing /etc/default/aquachain, please remove manually"
+
 if ! which systemctl >/dev/null; then
-    echo "warn: systemctl not found, skipping aquachain.service installation"
+    echo "warn: systemctl not found, skipping aquachain.service uninstallation"
     exit 0
 fi
+
+# this fails if systemd isnt running etc
 systemctl daemon-reload || true
