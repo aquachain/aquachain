@@ -127,12 +127,28 @@ if ! getent group aqua >/dev/null; then
     addgroup --system aqua
 fi
 if ! getent passwd aqua >/dev/null; then
-    adduser --system --no-create-home --ingroup aqua --home $default_aqua_homedir --shell /usr/sbin/nologin aqua
+    adduser --system --ingroup aqua --home $default_aqua_homedir --shell /usr/sbin/nologin aqua
 fi
-# enable and start the service
-systemctl daemon-reload
-systemctl enable --now aquachain
-EOF
+
+# create a default config file with OPTIONS=-debug
+cat >$tmpdir/etc/default/aquachain <<EOF2
+# aquachain config (generated at $version)
+OPTIONS=-debug
+# this overrides cmdline args in service file
+JSONLOG=0
+NO_SIGN=1
+NO_KEYS=1
+# unsafe stuff for testing/example
+#UNSAFE_RPC_ALLOW_IP=1
+# example allow all rpc and ws connections
+#OPTIONS=-nokeys -chain testnet -allowip 0.0.0.0/0 --txpool.nolocals -aquabase 0xDA7064FB41A2a599275Dd74113787A7aA8ee3E4f -rpc -ws -debug -verbosity 4 --rpccorsdomain='*' --rpcvhosts='*' -wsorigins '*'
+EOF2
+    chmod 600 $tmpdir/etc/default/aquachain
+
+    # enable and start the service
+    systemctl daemon-reload
+    systemctl enable --now aquachain
+    EOF
     chmod 755 $tmpdir/DEBIAN/postinst
 
     # create the prerm file

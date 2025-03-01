@@ -29,7 +29,6 @@ ExecStart=/usr/local/bin/aquachain --now -chain testnet -ws -rpc -verbosity 4 -d
 
 # uncomment next lines if not --user
 #User=aqua
-#WorkingDirectory=/home/aqua
 #StandardOutput=append:/var/log/aqua.log
 #StandardError=append:/var/log/aqua.log
 
