@@ -31,8 +31,6 @@ ExecStart=/usr/local/bin/aquachain --now -jsonlog ${OPTIONS} daemon
 #ExecStart=/usr/local/bin/aquachain -chain testnet -allowip 0.0.0.0/0 --txpool.nolocals -aquabase 0xDA7064FB41A2a599275Dd74113787A7aA8ee3E4f -gcmode archive -rpc -ws -debug -verbosity 4 --rpccorsdomain='*' --rpcvhosts='*' -wsorigins '*' daemon
 
 [Install]
-# uncomment if --user
-#WantedBy=default.target
 # uncomment if not --user
 WantedBy=network-online.target
 
