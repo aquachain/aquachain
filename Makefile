@@ -65,35 +65,12 @@ echo:
 	$(info  )
 clean:
 	rm -rf bin release docs tmprelease
-# echo: # useful lol
-# 	@echo "GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=$(CGO_ENABLED)"
-# 	@echo GOCMD=$(GOCMD)
-# 	@echo shorttarget=$(shorttarget)
-# 	@echo GO_FLAGS=$(GO_FLAGS)
-# 	@echo aquachain_cmd=$(aquachain_cmd)
-# 	@echo tags=$(tags)
-# 	@echo GOTAGS=$(GOTAGS)
-# 	@echo GOOS=$(GOOS)
-# 	@echo GOARCH=$(GOARCH)
-# 	@echo COMMITHASH=$(COMMITHASH)
-# 	@echo version=$(version)
-# 	@echo codename=$(codename)
-# 	@echo LINKER_FLAGS=$(LINKER_FLAGS)
-# 	@echo TAGS64=$(TAGS64)
-# 	@echo cgo=$(cgo)
-# 	@echo build_dir=$(build_dir)
-# 	@echo INSTALL_DIR=$(INSTALL_DIR)
-# 	@echo release_dir=$(release_dir)
-# 	@echo hashfn=$(hashfn)
-# 	@echo golangci_linter_version=$(golangci_linter_version)
-# 	@echo PWD=$(PWD)
 bootnode: bin/aquabootnode
-# bin/%: $(GOFILES)
-# 	$(info Building... ./cmd/$*)
-# 	CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build -tags '$(tags)' $(GO_FLAGS) -o bin/$* ./cmd/$*
-
+bin/%: $(GOFILES)
+	$(info Building command ... ./cmd/$*)
+	CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build -tags '$(tags)' $(GO_FLAGS) -o bin/$* ./cmd/$*
 .PHONY += default bootnode hash
-
+deb: aquachain_$(version)_$(GOOS)_$(GOARCH).deb
 internal/jsre/deps/bindata.go: internal/jsre/deps/web3.js  internal/jsre/deps/bignumber.js
 	@test -x "$(gobindatacmd)" || echo 'warn: go-bindata not found in PATH. run make devtools to install required development dependencies'
 	@test -x "$(gobindatacmd)" || exit 0

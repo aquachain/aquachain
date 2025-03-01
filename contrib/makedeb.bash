@@ -148,7 +148,7 @@ EOF2
     # enable and start the service
     systemctl daemon-reload
     systemctl enable --now aquachain
-    EOF
+EOF
     chmod 755 $tmpdir/DEBIAN/postinst
 
     # create the prerm file
@@ -183,8 +183,9 @@ EOF
 
     rm -rf $tmpdir
     echo "removed: $tmpdir"
-
 }
+# end build_deb
+
 for goos_goarch in $@; do
     if [[ $goos_goarch != linux-* ]]; then
         echo "fatal: only linux duh"
@@ -192,3 +193,9 @@ for goos_goarch in $@; do
     fi
     build_deb $goos_goarch
 done
+
+if [ -z "$1" ]; then
+    echo "usage: $0 goos-goarch"
+    echo "example: $0 linux-amd64"
+    exit 1
+fi
