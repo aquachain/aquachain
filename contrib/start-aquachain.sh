@@ -1,4 +1,5 @@
 #!/bin/bash
+set -ex
 if [ -f /etc/default/aquachain ]; then
     . /etc/default/aquachain
 fi
