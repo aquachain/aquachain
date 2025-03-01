@@ -170,24 +170,30 @@ func localConsole(ctx context.Context, cmd *cli.Command) error {
 	return nil
 }
 
+// assumeEndpoint returns the default IPC endpoint for the given chain.
+// for 'attach' with no arg
 func assumeEndpoint(_ context.Context, cmd *cli.Command) string {
 
 	chaincfg := params.GetChainConfig(cmd.String(utils.ChainFlag.Name))
-	path := node.DefaultDatadirByChain(chaincfg)
-	if cmd.IsSet(utils.DataDirFlag.Name) {
-		path = cmd.String(utils.DataDirFlag.Name)
+	defaultpath := node.DefaultDatadirByChain(chaincfg)
+	path := defaultpath
+	if cmd.Bool(utils.TestnetFlag.Name) {
+		path = filepath.Join(path, "testnet")
+	} else if cmd.Bool(utils.Testnet2Flag.Name) {
+		path = filepath.Join(path, "testnet2")
+	} else if cmd.Bool(utils.Testnet3Flag.Name) {
+		path = filepath.Join(path, "testnet3")
+	} else if cmd.Bool(utils.NetworkEthFlag.Name) {
+		path = filepath.Join(path, "ethereum")
+	} else if cmd.Bool(utils.DeveloperFlag.Name) {
+		path = filepath.Join(path, "develop")
 	}
-	if path != "" {
-		if cmd.Bool(utils.TestnetFlag.Name) {
-			path = filepath.Join(path, "testnet")
-		} else if cmd.Bool(utils.Testnet2Flag.Name) {
-			path = filepath.Join(path, "testnet2")
-		} else if cmd.Bool(utils.Testnet3Flag.Name) {
-			path = filepath.Join(path, "testnet3")
-		} else if cmd.Bool(utils.NetworkEthFlag.Name) {
-			path = filepath.Join(path, "ethereum")
-		} else if cmd.Bool(utils.DeveloperFlag.Name) {
-			path = filepath.Join(path, "develop")
+
+	if cmd.IsSet(utils.DataDirFlag.Name) {
+		got := cmd.String(utils.DataDirFlag.Name)
+		// handle case where /var/lib/aquachain is passed with testnet and incompatible genesis block
+		if got != "" && got != path && got != defaultpath {
+			path = got // will be a subdirectory because Joined above
 		}
 	}
 	if path == "" {

@@ -65,7 +65,8 @@ if [ -n "${VERBOSITY}" ]; then
     AQUACHAIN_ARGS="${AQUACHAIN_ARGS} -verbosity ${VERBOSITY}"
 fi
 # use public rpc
-if ["${PUBLIC_RPC_MODE}" = "1" ]; then
+if [ "${PUBLIC_RPC_MODE}" = "1" ]; then
+    echo "Serving public HTTP and WS RPC on all interfaces" 1>&2
     AQUACHAIN_ARGS="${AQUACHAIN_ARGS} --rpc --rpcaddr 0.0.0.0 --ws --wsaddr 0.0.0.0"
 fi
 # use default localhost rpc
@@ -77,9 +78,4 @@ echo "Starting Aquachain node with args: ${AQUACHAIN_ARGS}" 1>&2
 
 # lol TODO: fix this arg expansion
 cmdline=$(echo exec /usr/local/bin/aquachain ${AQUACHAIN_ARGS} daemon)
-echo "${cmdline}"
-for i in $(seq 1 10); do
-   echo "Waiting for dev ..."
-   sleep 1
-done
 exec /bin/sh -c "${cmdline}"

@@ -590,6 +590,9 @@ func MakeDataDir(cmd *cli.Command) string {
 	if chainName == "" {
 		Fatalf("No chain selected, no data directory specified")
 	}
+	if chainName == params.MainnetChainConfig.Name() {
+		return node.DefaultConfig.DataDir // skip subdirectory for mainnet
+	}
 	return filepath.Join(node.DefaultConfig.DataDir, chainName)
 }
 
