@@ -38,4 +38,5 @@ Default: 127.0.0.1/24
 Description: RPC
  Allow connections from other machines to this RPC server. Can be comma separated list of IP addresses and CIDR ranges.
  If blank or unset, only connections from localhost are allowed.
+ If set to 0.0.0.0/0 then we assume this is a public RPC server and set NO_KEYS, NO_SIGN modes to minimize exposed surface.
  
