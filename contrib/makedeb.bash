@@ -1,5 +1,7 @@
 #!/bin/bash
 # makedeb.bash - to make a debian package from release binary
+# called as.. eg bash contrib/makedeb.bash linux-amd64 linux-arm linux-riscv64
+# requires: make, dpkg-deb, gzip, du, mktemp, cut, getent, adduser, addgroup, systemctl
 set -e
 
 if [ ! -f contrib/makedeb.bash ]; then
@@ -160,10 +162,15 @@ EOF
     dpkg-deb --build $tmpdir "aquachain-$version-$goos-$goarch.deb"
     echo "created: aquachain-$version-$goos-$goarch.deb"
     sha256sum "aquachain-$version-$goos-$goarch.deb"
-}
 
-# called as.. eg bash contrib/makedeb.bash linux-amd64 linux-arm linux-riscv64
+    rm -rf $tmpdir
+    echo "removed: $tmpdir"
+
+}
 for goos_goarch in $@; do
-    echo "building debian package for $goos_goarch"
+    if [[ $goos_goarch != linux-* ]]; then
+        echo "fatal: only linux duh"
+        exit 1
+    fi
     build_deb $goos_goarch
 done
