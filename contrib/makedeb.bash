@@ -11,6 +11,7 @@ fi
 
 service_file=contrib/aquachain.service
 k01file=contrib/K01aquachain
+default_aqua_homedir=/var/lib/aquachain
 
 for file in $service_file $k01file; do
     if [ ! -f $file ]; then
@@ -103,7 +104,8 @@ Version: ${version#v}
 Architecture: $goarch
 Maintainer: Aquachain Core Developers <aquachain@riseup.net>
 Installed-Size: $(du -s $tmpdir | cut -f1)
-Depends: adduser, systemd
+Depends: adduser
+Optional: systemd
 Section: net
 Priority: optional
 Keywords: aquachain, blockchain, coin
@@ -125,7 +127,7 @@ if ! getent group aqua >/dev/null; then
     addgroup --system aqua
 fi
 if ! getent passwd aqua >/dev/null; then
-    adduser --system --no-create-home --ingroup aqua --home /var/lib/aquachain --shell /usr/sbin/nologin aqua
+    adduser --system --no-create-home --ingroup aqua --home $default_aqua_homedir --shell /usr/sbin/nologin aqua
 fi
 # enable and start the service
 systemctl daemon-reload
