@@ -1,29 +1,29 @@
 Template: aquachain/aquabase
 Type: string
-Default: 0xDA7064FB41A2a599275Dd74113787A7aA8ee3E4f
+Default: 
 Description: Coinbase Address
- Configure the coinbase address for mining rewards. Useful even if you aren't mining, as it can be used to identify your RPC server.
- It defaults to a pool address, but you should change it to your own address.
+ Press ENTER if not mining. Otherwise, enter your coinbase address.
+ This is the address that will receive mining rewards. It should be a valid Aquachain address.
 
 Template: aquachain/datadir
 Type: string
 Default: /var/lib/aquachain
 Description: Data Directory
- Configure the data directory for the Aquachain node. This is where the blockchain data will be stored.
+ Configure the data directory, where the blockchain data will be stored.
 
 Template: aquachain/chain
-Type: string
+Type: select
 Default: aqua
+Choices: aqua, testnet, testnet3
 Description: Chain
  Configure the chain for the Aquachain node. This is the network you will connect to.
- Choose one of: aqua, testnet, testnet3
 
 Template: aquachain/verbosity
-Type: string
-Default: 4
-Description: Verbosity
- Configure the verbosity level for the Aquachain node. This is how much information will be printed to the log.
- Choose one of: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+Type: select
+Default: debug
+Choices: debug, info, warn, trace, error, silent
+Description: Log Verbosity
+ Configure the verbosity level for the Aquachain node.
 
 Template: aquachain/aquaargs
 Type: string
@@ -33,10 +33,9 @@ Description: Additional Arguments
  For example, you can use this to change the RPC/WS host interface, or to enable/disable certain features.
 
 Template: aquachain/rpcallowip
-Type: string
+Type: select
 Default: 127.0.0.1/24
-Description: RPC
- Allow connections from other machines to this RPC server. Can be comma separated list of IP addresses and CIDR ranges.
- If blank or unset, only connections from localhost are allowed.
- If set to 0.0.0.0/0 then we assume this is a public RPC server and set NO_KEYS, NO_SIGN modes to minimize exposed surface.
+Choices: 127.0.0.1/24, 0.0.0.0/0, none, ${lan_subnet}
+Description: Allow RPC Connections from IPs
+ If set to 0.0.0.0/0 (all IP addresses) then we assume this is a public RPC server and set NO_KEYS, NO_SIGN modes to minimize exposed surface.
  
