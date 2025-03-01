@@ -30,10 +30,12 @@ Type: string
 Default:
 Description: Additional Arguments
  Configure additional arguments for the Aquachain node. This is useful for customizing the behavior of the node.
- For example, you can use this to change the RPC/WS host interface
+ For example, you can use this to change the RPC/WS host interface, or to enable/disable certain features.
 
-Template: aquachain/rpc
+Template: aquachain/rpcallowip
 Type: string
-Default: 1
+Default: "127.0.0.1/24"
 Description: RPC
- Enable the RPC server (by default only on localhost)
+ Allow connections from other machines to this RPC server. Can be comma separated list of IP addresses and CIDR ranges.
+ If blank or unset, only connections from localhost are allowed.
+ 

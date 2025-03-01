@@ -3,6 +3,7 @@
 # called as.. eg bash contrib/makedeb.bash linux-amd64 linux-arm linux-riscv64
 # requires: make, dpkg-deb, gzip, du, mktemp, cut, getent, adduser, addgroup, systemctl
 set -e
+echo "makedeb.bash packaging args=$@"
 
 if [ ! -f contrib/makedeb.bash ]; then
     echo 'fatal: run this script from the root of the source tree'
@@ -12,6 +13,20 @@ fi
 service_file=contrib/aquachain.service
 k01file=contrib/K01aquachain
 default_aqua_homedir=/var/lib/aquachain
+manfile=contrib/aquachain.1
+
+# use -s to avoid 'make' output
+version=$(make -s print-version)
+echo $version
+if [ -z "$version" ]; then
+    echo "fatal: missing version"
+    exit 1
+fi
+# no spaces
+if [[ $version == *" "* ]]; then
+    echo "fatal: version has spaces"
+    exit 1
+fi
 
 for file in $service_file $k01file; do
     if [ ! -f $file ]; then
@@ -56,20 +71,8 @@ build_deb() {
     echo found binary: $binfile
     ls -ln $binfile
     sha256sum $binfile
-    echo "building debian package for $goos-$goarch"
+    echo "makedeb.bash packaging $goos-$goarch"
 
-    # use -s to avoid 'make' output
-    version=$(make -s print-version)
-    echo $version
-    if [ -z "$version" ]; then
-        echo "fatal: missing version"
-        exit 1
-    fi
-    # no spaces
-    if [[ $version == *" "* ]]; then
-        echo "fatal: version has spaces"
-        exit 1
-    fi
     # create a temporary directory
     tmpdir=$(mktemp -d)
     echo "created: $tmpdir"
@@ -91,9 +94,8 @@ build_deb() {
     # copy the service file to the package directory
     cp $service_file $tmpdir/etc/systemd/system/aquachain.service
     chmod 644 $tmpdir/etc/systemd/system/aquachain.service
-    
+
     # add man page
-    manfile=contrib/aquachain.1
     if [ -f $manfile ]; then
         mkdir -p $tmpdir/usr/share/man/man1
         cp $manfile $tmpdir/usr/share/man/man1
@@ -116,10 +118,9 @@ Architecture: $goarch
 Maintainer: Aquachain Core Developers <aquachain@riseup.net>
 Installed-Size: $(du -s $tmpdir | cut -f1)
 Depends: adduser
-Optional: systemd
 Section: net
 Priority: optional
-Keywords: aquachain, blockchain, coin, evm, smart contracts
+Keywords: aquachain, blockchain, coin, EVM, smart contracts
 Homepage: https://aquachain.github.io
 Description: daemon and client for the aquachain peer-to-peer network
 EOF
@@ -152,32 +153,26 @@ EOF
     chmod 755 $tmpdir/DEBIAN/preinst
 
     # copy the postinst and prerm files
-    cp -v contrib/debpkg/postinst $tmpdir/DEBIAN/postinst
-    cp -v contrib/debpkg/prerm $tmpdir/DEBIAN/prerm
-    cp -v contrib/debpkg/templates $tmpdir/DEBIAN/templates
-    cp -v contrib/debpkg/config $tmpdir/DEBIAN/config
-    test ! -f contrib/debpkg/conffiles || cp -v contrib/debpkg/conffiles $tmpdir/DEBIAN/conffiles
-    test ! -f contrib/debpkg/conffiles || chmod 644 $tmpdir/DEBIAN/conffiles
+    cp -v contrib/debpkg/aquachain.postinst $tmpdir/DEBIAN/postinst
+    cp -v contrib/debpkg/aquachain.prerm $tmpdir/DEBIAN/prerm
+    cp -v contrib/debpkg/aquachain.templates $tmpdir/DEBIAN/templates
+    cp -v contrib/debpkg/aquachain.config $tmpdir/DEBIAN/config
+    cp -v contrib/debpkg/aquachain.postrm $tmpdir/DEBIAN/postrm
     chmod 755 $tmpdir/DEBIAN/postinst
     chmod 755 $tmpdir/DEBIAN/prerm
     chmod 644 $tmpdir/DEBIAN/templates
     chmod 755 $tmpdir/DEBIAN/config
+    chmod 755 $tmpdir/DEBIAN/postrm
+    test ! -f contrib/debpkg/conffiles || cp -v contrib/debpkg/conffiles $tmpdir/DEBIAN/conffiles
+    test ! -f contrib/debpkg/conffiles || chmod 644 $tmpdir/DEBIAN/conffiles
+
     
 
-
-    # create the postrm file
-    cat >$tmpdir/DEBIAN/postrm <<EOF
-#!/bin/sh
-set -e
-if ! which systemctl >/dev/null; then
-    echo "warn: systemctl not found, skipping aquachain.service installation"
-    exit 0
-fi
-systemctl daemon-reload
-EOF
-    chmod 755 $tmpdir/DEBIAN/postrm
-
     # build the debian package
+    if [ -f "aquachain-$version-$goos-$goarch.deb" ]; then
+        echo "warn: removing existing aquachain-$version-$goos-$goarch.deb"
+        rm -f "aquachain-$version-$goos-$goarch.deb"
+    fi
     echo "building: aquachain-$version-$goos-$goarch.deb"
     dpkg-deb --build $tmpdir "aquachain-$version-$goos-$goarch.deb"
     echo "created: aquachain-$version-$goos-$goarch.deb"

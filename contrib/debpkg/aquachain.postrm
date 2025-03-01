@@ -1,0 +1,7 @@
+#!/bin/sh
+set -e
+if ! which systemctl >/dev/null; then
+    echo "warn: systemctl not found, skipping aquachain.service installation"
+    exit 0
+fi
+systemctl daemon-reload || true

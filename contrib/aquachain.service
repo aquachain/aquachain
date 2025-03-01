@@ -12,26 +12,13 @@ StandardOutput=append:/var/log/aqua.log
 StandardError=append:/var/log/aqua.log
 EnvironmentFile=-/etc/default/aquachain
 EnvironmentFile=-/etc/default/aquachain.d/*
-# SIGINT important, so database stays nice!
 KillSignal=SIGINT
-# Wait for disk write up to 90 seconds, but usually takes less than one.
 TimeoutStopSec=90s
-# Group with other aquachain-related services
 Slice=aquachain.slice
 Restart=always
-
-Environment="COLOR=1"
-# default, rpc for 127.0.0.1 only, private rpc through ~/.aquachain/aquachain.ipc
-# if datadir/aquachain.toml exists, it will be parsed
-# if .env exists it will be sourced
-ExecStart=/usr/local/bin/aquachain --offline --now ${OPTIONS[@]} daemon
-
-#ExecStart=/usr/local/bin/aquachain --now -chain aqua -ws -rpc -verbosity 6 -debug -jsonlog daemon
-# or, as a public rpc, we have no keys. but, an aquabase/coinbase is useful.
-# change this "--aquabase" flag to some address to fix client issues
-#ExecStart=/usr/local/bin/aquachain -chain testnet -allowip 0.0.0.0/0 --txpool.nolocals -aquabase 0xDA7064FB41A2a599275Dd74113787A7aA8ee3E4f -gcmode archive -rpc -ws -debug -verbosity 4 --rpccorsdomain='*' --rpcvhosts='*' -wsorigins '*' daemon
+# this next line gets replaced by dpkg-reconfigure
+ExecStart=/usr/local/bin/aquachain --offline --now $AQUACHAIN_ARGS
 
 [Install]
-# uncomment if not --user
 WantedBy=network-online.target
 

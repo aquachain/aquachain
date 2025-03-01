@@ -1,10 +1,31 @@
 #!/bin/sh
 # this is a postinst script for aquachain debian package
 set -e
-# Source debconf library.
-. /usr/share/debconf/confmodule
+
+if [ "$1" == "configure" ]; then
+    exit 0
+fi
+echo args: $@
+# Source the configuration values.
+if [ -f /etc/aquachain/aquachain.conf ]; then
+    . /etc/aquachain/aquachain.conf
+else
+    echo "Configuration file not found."
+    exit 1
+fi
+
+echo "Aquachain installed successfully."
+echo "Coinbase Address: $AQUABASE"
+echo "Data Directory: $AQUACHAIN_DATADIR"
+echo "Chain: $AQUACHAN_CHAIN"
+echo "Verbosity: $VERBOSITY"
+echo "Additional Arguments: $AQUACHAIN_ARGS"
+echo "RPC Enabled: $RPC"
+
+
 now=$(date)
 default_aqua_homedir=/var/lib/aquachain
+exit 0
 if ! which systemctl >/dev/null; then
     echo "warn: systemd not found, skipping aquachain.service installation"
     exit 0
@@ -27,7 +48,7 @@ if [ -z "$aquabase" ]; then
     aquabase=0xDA7064FB41A2a599275Dd74113787A7aA8ee3E4f
 fi
 
-db_input medium aquachain/datadir || true
+db_input high aquachain/datadir || true
 db_go || true
 db_get aquachain/datadir || true
 datadir=$RET
@@ -35,7 +56,7 @@ if [ -z "$datadir" ]; then
     datadir=${default_aqua_homedir}
 fi
 
-db_input medium aquachain/chain || true
+db_input high aquachain/chain || true
 db_go || true
 db_get aquachain/chain || true
 chain=$RET
@@ -43,7 +64,7 @@ if [ -z "$chain" ]; then
     chain=aqua
 fi
 mayberpc=
-db_input medium aquachain/rpc || true
+db_input high aquachain/rpc || true
 db_go || true
 db_get aquachain/rpc || true
 rpc=$RET

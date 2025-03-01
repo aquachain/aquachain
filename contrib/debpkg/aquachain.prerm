@@ -5,9 +5,11 @@ if ! which systemctl >/dev/null; then
     echo "warn: systemd not found, skipping aquachain.service uninstallation"
     exit 0
 fi
-echo "stopping aquachain service"
-systemctl disable --now aquachain
+echo "stopping aquachain service: $@"
+systemctl disable --now aquachain || pkill -u aqua -f aquachain || echo "warn: failed to stop aquachain service"
 sleep 1
+# systemctl disable --now aquachain || service stop aquachain
+# sleep 1
 echo "removing user and group"
 if getent passwd aqua >/dev/null; then
     userdel aqua || true
