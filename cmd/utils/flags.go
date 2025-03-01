@@ -555,7 +555,13 @@ var (
 	}
 	NoKeysFlag = &cli.BoolFlag{
 		Name:  "nokeys",
-		Usage: "Disables keystore",
+		Usage: "Disables keystore entirely (env: NO_KEYS)",
+		Value: common.EnvBool(os.Getenv("NO_KEYS")) || common.EnvBool(os.Getenv("NOKEYS")), // both just in case
+	}
+	NoSignFlag = &cli.BoolFlag{
+		Name:  "nosign",
+		Usage: "Disables all signing via RPC endpoints (env:NO_SIGN) (useful when wallet is unlocked for signing blocks on a public testnet3 server)",
+		Value: common.EnvBool(os.Getenv("NO_SIGN")) || common.EnvBool(os.Getenv("NOSIGN")), // both just in case
 	}
 	NetrestrictFlag = &cli.StringFlag{
 		Name:  "netrestrict",
@@ -1079,7 +1085,7 @@ type DirectoryConfig struct {
 func switchDatadir(cmd *cli.Command, chaincfg *params.ChainConfig) DirectoryConfig {
 	var cfg DirectoryConfig
 	// var newdatadir string
-	if cmd.IsSet(KeyStoreDirFlag.Name) {
+	if !cmd.Bool(NoKeysFlag.Name) && cmd.IsSet(KeyStoreDirFlag.Name) {
 		cfg.KeyStoreDir = cmd.String(KeyStoreDirFlag.Name)
 	}
 	if cmd.IsSet(DataDirFlag.Name) {
@@ -1089,8 +1095,11 @@ func switchDatadir(cmd *cli.Command, chaincfg *params.ChainConfig) DirectoryConf
 	if cfg.DataDir == "" && chaincfg == nil {
 		Fatalf("No chain and no data directory specified. Please specify a chain with --chain or a data directory with --datadir")
 	}
-	if cfg.DataDir != "" {
-		println("datadir already set:", cfg.DataDir)
+	if chaincfg == nil {
+		// custom dir
+		return cfg
+	}
+	if chaincfg != params.MainnetChainConfig && cfg.DataDir != node.DefaultConfig.DataDir {
 		return cfg
 	}
 	cfg.DataDir = node.DefaultDatadirByChain(chaincfg)
