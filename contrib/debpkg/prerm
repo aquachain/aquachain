@@ -1,0 +1,15 @@
+#!/bin/sh
+set -e
+if ! which systemctl >/dev/null; then
+    echo "warn: systemd not found, skipping aquachain.service uninstallation"
+    exit 0
+fi
+systemctl disable --now aquachain
+if getent passwd aqua >/dev/null; then
+    userdel aqua || true
+fi
+if getent group aqua >/dev/null; then
+    groupdel aqua || true
+fi
+echo "warn: not removing keystore in /var/lib/aquachain, please remove manually"
+echo "warn: not removing /etc/default/aquachain, please remove manually"

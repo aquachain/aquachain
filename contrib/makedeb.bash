@@ -114,74 +114,9 @@ Description: Aquachain
  Aquachain RPC server
 EOF
 
-    # create the postinst file
-    cat >$tmpdir/DEBIAN/postinst <<EOF
-#!/bin/sh
-set -e
-if ! which systemctl >/dev/null; then
-    echo "warn: systemd not found, skipping aquachain.service installation"
-    exit 0
-fi
-# add user and group
-if ! getent group aqua >/dev/null; then
-    addgroup --system aqua
-    echo "created group: aqua"
-fi
-if ! getent passwd aqua >/dev/null; then
-    adduser --system --ingroup aqua --home $default_aqua_homedir --shell /usr/sbin/nologin aqua
-    echo "created user: aqua"
-fi
-if [ ! -d $default_aqua_homedir ]; then
-    mkdir -v -p $default_aqua_homedir
-    chown -v -R aqua:aqua $default_aqua_homedir
-    chmod -v 700 $default_aqua_homedir
-    echo "created aqua directory: $default_aqua_homedir"
-fi
-
-mkdir -p /etc/default
-# create a default config file with OPTIONS=-debug
-test ! -f /etc/default/aquachain || cat >>/etc/default/aquachain <<EOF2
-# aquachain config (generated at $version)
-OPTIONS=-debug
-# this overrides cmdline args in service file
-JSONLOG=0
-NO_SIGN=1
-NO_KEYS=1
-# unsafe stuff for testing/example
-#UNSAFE_RPC_ALLOW_IP=1
-# example allow all rpc and ws connections
-#OPTIONS=-nokeys -chain testnet -allowip 0.0.0.0/0 --txpool.nolocals -aquabase 0xDA7064FB41A2a599275Dd74113787A7aA8ee3E4f -rpc -ws -debug -verbosity 4 --rpccorsdomain='*' --rpcvhosts='*' -wsorigins '*'
-EOF2
-    chmod -v 600 $tmpdir/etc/default/aquachain
-
-    # enable and start the service
-    systemctl daemon-reload
-    systemctl enable --now aquachain
-EOF
+    cp contrib/debpkg/postinst $tmpdir/DEBIAN/postinst
+    cp contrib/debpkg/prerm $tmpdir/DEBIAN/prerm
     chmod 755 $tmpdir/DEBIAN/postinst
-
-    # create the prerm file
-    cat >$tmpdir/DEBIAN/prerm <<EOF
-#!/bin/sh
-set -e
-if ! which systemctl >/dev/null; then
-    echo "warn: systemd not found, skipping aquachain.service installation"
-    exit 0
-fi
-systemctl disable --now aquachain
-if getent passwd aqua >/dev/null; then
-    userdel aqua || true
-fi
-if getent group aqua >/dev/null; then
-    groupdel aqua || true
-fi
-# if purge, remove homedir
-if [ "\$1" = "purge" ]; then
-    cp -vr ${default_aqua_homedir}/.aquachain/keystore /tmp/aquachain-keystore.$(date +%s) || true
-    rm -vrf $default_aqua_homedir
-fi
-
-EOF
     chmod 755 $tmpdir/DEBIAN/prerm
 
     # create the postrm file
