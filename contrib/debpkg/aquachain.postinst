@@ -2,6 +2,12 @@
 # this is a postinst script for aquachain debian package
 # we make systemd unit, user, group, and config files
 set -e
+if ! getent group aqua >/dev/null; then
+    addgroup --system aqua
+fi
+if ! getent passwd aqua >/dev/null; then
+    adduser --system --no-create-home --ingroup aqua --home /var/lib/aquachain aqua
+fi
 now=$(date)
 default_aqua_homedir=/var/lib/aquachain
 

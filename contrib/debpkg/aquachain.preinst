@@ -1,11 +1,12 @@
 #!/bin/sh
 set -e
-    if ! getent group aqua >/dev/null; then
-        addgroup --system aqua
-    fi
-    if ! getent passwd aqua >/dev/null; then
-        adduser --system --no-create-home --ingroup aqua --home /var/lib/aquachain aqua
-    fi
+echo aquachain.preinst: $@
+if ! getent group aqua >/dev/null; then
+    addgroup --system aqua
+fi
+if ! getent passwd aqua >/dev/null; then
+    adduser --system --no-create-home --ingroup aqua --home /var/lib/aquachain aqua
+fi
 
 if [ ! -d /var/lib/aquachain ]; then
     mkdir -p /var/lib/aquachain
