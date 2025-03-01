@@ -129,6 +129,11 @@ fi
 if ! getent passwd aqua >/dev/null; then
     adduser --system --ingroup aqua --home $default_aqua_homedir --shell /usr/sbin/nologin aqua
 fi
+if [ ! -d $default_aqua_homedir ]; then
+    mkdir -p $default_aqua_homedir
+    chown -R aqua:aqua $default_aqua_homedir
+    chmod 700 $default_aqua_homedir
+fi
 
 # create a default config file with OPTIONS=-debug
 cat >$tmpdir/etc/default/aquachain <<EOF2
