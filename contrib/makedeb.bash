@@ -125,14 +125,17 @@ fi
 # add user and group
 if ! getent group aqua >/dev/null; then
     addgroup --system aqua
+    echo "created group: aqua"
 fi
 if ! getent passwd aqua >/dev/null; then
     adduser --system --ingroup aqua --home $default_aqua_homedir --shell /usr/sbin/nologin aqua
+    echo "created user: aqua"
 fi
 if [ ! -d $default_aqua_homedir ]; then
-    mkdir -p $default_aqua_homedir
-    chown -R aqua:aqua $default_aqua_homedir
-    chmod 700 $default_aqua_homedir
+    mkdir -v -p $default_aqua_homedir
+    chown -v -R aqua:aqua $default_aqua_homedir
+    chmod -v 700 $default_aqua_homedir
+    echo "created aqua directory: $default_aqua_homedir"
 fi
 
 mkdir -p $tmpdir/etc/default
@@ -149,7 +152,7 @@ NO_KEYS=1
 # example allow all rpc and ws connections
 #OPTIONS=-nokeys -chain testnet -allowip 0.0.0.0/0 --txpool.nolocals -aquabase 0xDA7064FB41A2a599275Dd74113787A7aA8ee3E4f -rpc -ws -debug -verbosity 4 --rpccorsdomain='*' --rpcvhosts='*' -wsorigins '*'
 EOF2
-    chmod 600 $tmpdir/etc/default/aquachain
+    chmod -v 600 $tmpdir/etc/default/aquachain
 
     # enable and start the service
     systemctl daemon-reload
