@@ -1,6 +1,46 @@
-aquachain/aquabase: 0xDA7064FB41A2a599275Dd74113787A7aA8ee3E4f
-aquachain/datadir: /var/lib/aquachain
-aquachain/chain: aqua
-aquachain/verbosity: 4
-aquachain/aquaargs:
-aquachain/rpc: 1
+#!/bin/sh
+set -e
+
+# Source debconf library.
+. /usr/share/debconf/confmodule
+
+# Register the questions.
+db_input high aquachain/aquabase || true
+db_input medium aquachain/datadir || true
+db_input medium aquachain/chain || true
+db_input medium aquachain/verbosity || true
+db_input medium aquachain/aquaargs || true
+db_input medium aquachain/rpc || true
+db_go
+
+# Get the responses.
+db_get aquachain/aquabase
+AQUABASE=$RET
+
+db_get aquachain/datadir
+DATADIR=$RET
+
+db_get aquachain/chain
+CHAIN=$RET
+
+db_get aquachain/verbosity
+VERBOSITY=$RET
+
+db_get aquachain/aquaargs
+AQUAARGS=$RET
+
+db_get aquachain/rpc
+RPC=$RET
+
+# Export the configuration values for use in the postinst script.
+{
+echo "AQUABASE=$AQUABASE"
+echo "DATADIR=$DATADIR"
+echo "CHAIN=$CHAIN"
+echo "VERBOSITY=$VERBOSITY"
+echo "AQUAARGS=$AQUAARGS"
+echo "RPC=$RPC"
+} | tee /tmp/aquachain_config.$$.tmp
+
+# End the debconf session.
+db_stop

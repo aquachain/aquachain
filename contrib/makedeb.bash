@@ -53,12 +53,23 @@ build_deb() {
         exit 1
     fi
 
-    echo found: $binfile
+    echo found binary: $binfile
+    ls -ln $binfile
+    sha256sum $binfile
     echo "building debian package for $goos-$goarch"
 
     # use -s to avoid 'make' output
     version=$(make -s print-version)
-
+    echo $version
+    if [ -z "$version" ]; then
+        echo "fatal: missing version"
+        exit 1
+    fi
+    # no spaces
+    if [[ $version == *" "* ]]; then
+        echo "fatal: version has spaces"
+        exit 1
+    fi
     # create a temporary directory
     tmpdir=$(mktemp -d)
     echo "created: $tmpdir"
@@ -80,8 +91,8 @@ build_deb() {
     # copy the service file to the package directory
     cp $service_file $tmpdir/etc/systemd/system/aquachain.service
     chmod 644 $tmpdir/etc/systemd/system/aquachain.service
-
-    # add man page if exists in contrib/ dir when we make one
+    
+    # add man page
     manfile=contrib/aquachain.1
     if [ -f $manfile ]; then
         mkdir -p $tmpdir/usr/share/man/man1
@@ -91,7 +102,7 @@ build_deb() {
         echo "warn: missing $manfile"
     fi
 
-    # this helps graceful shutdown when power-button is pressed
+    # this creates warnings, but helps graceful shutdown when power-button is pressed
     cp $k01file $tmpdir/etc/init.d/K01aquachain
     chmod 755 $tmpdir/etc/init.d/K01aquachain
 
@@ -111,10 +122,6 @@ Priority: optional
 Keywords: aquachain, blockchain, coin, evm, smart contracts
 Homepage: https://aquachain.github.io
 Description: daemon and client for the aquachain peer-to-peer network
- Aquachain is a blockchain platform with a native coin, AQUA.
- It is a fork of Ethereum with a few changes.
- .
- This package contains the aquachain daemon and client.
 EOF
 
     # create the preinst file
@@ -150,11 +157,11 @@ EOF
     cp -v contrib/debpkg/templates $tmpdir/DEBIAN/templates
     cp -v contrib/debpkg/config $tmpdir/DEBIAN/config
     test ! -f contrib/debpkg/conffiles || cp -v contrib/debpkg/conffiles $tmpdir/DEBIAN/conffiles
+    test ! -f contrib/debpkg/conffiles || chmod 644 $tmpdir/DEBIAN/conffiles
     chmod 755 $tmpdir/DEBIAN/postinst
     chmod 755 $tmpdir/DEBIAN/prerm
     chmod 644 $tmpdir/DEBIAN/templates
-    chmod 644 $tmpdir/DEBIAN/config
-    test ! -f contrib/debpkg/conffiles || chmod 644 $tmpdir/DEBIAN/conffiles
+    chmod 755 $tmpdir/DEBIAN/config
     
 
 
