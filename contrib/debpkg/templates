@@ -1,4 +1,3 @@
-# templates file for debconf
 Template: aquachain/aquabase
 Type: string
 Default: 0xDA7064FB41A2a599275Dd74113787A7aA8ee3E4f
