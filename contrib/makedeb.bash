@@ -148,10 +148,12 @@ EOF
     cp -v contrib/debpkg/postinst $tmpdir/DEBIAN/postinst
     cp -v contrib/debpkg/prerm $tmpdir/DEBIAN/prerm
     cp -v contrib/debpkg/templates $tmpdir/DEBIAN/templates
+    cp -v contrib/debpkg/config $tmpdir/DEBIAN/config
     test ! -f contrib/debpkg/conffiles || cp -v contrib/debpkg/conffiles $tmpdir/DEBIAN/conffiles
     chmod 755 $tmpdir/DEBIAN/postinst
     chmod 755 $tmpdir/DEBIAN/prerm
     chmod 644 $tmpdir/DEBIAN/templates
+    chmod 644 $tmpdir/DEBIAN/config
     test ! -f contrib/debpkg/conffiles || chmod 644 $tmpdir/DEBIAN/conffiles
     
 
