@@ -95,27 +95,25 @@ cross:
 		CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build -o . $(GO_FLAGS) ../.${main_command_dir}
 
 help:
-	@echo
+	@echo Variables:
+	@echo PREFIX="$(PREFIX)/"
+	@echo INSTALL_DIR="$(INSTALL_DIR)/"
 	@echo without args, target is: "$(shorttarget)"
-	@echo 'make install' target is: "$(INSTALL_DIR)/"
 	@echo using go flags: "$(GO_FLAGS)"
 	@echo
-	@echo to compile quickly, run \'make\' and then \'$(shorttarget) version\'
-	@echo then, to install system-wide, run something like \'sudo make install\'
+	@echo "Help:"
+	@echo To compile quickly, run \'make\' and then: $(shorttarget) version
+	@echo To install system-wide, run something like: sudo make install
 	@echo
-	@echo adding 'release=1' to any target will rebuild the dependency libraries.
+	@echo -n "note: adding 'release=1' to any target builds a release version\n"
 	@echo
-	@echo -n "Building a new release:\n\tmake clean release release=1"
+	@echo -n "make\n\tdefault, compile bin/aquachain${winextension}\n"
+	@echo -n "make cross GOOS=linux GOARCH=amd64\n\tcross-compile for a different OS/arch\n"
+	@echo -n "make clean release=1 cross deb\n\tcreate a Debian package (.deb file)\n"
+	@echo -n "make clean release=1 release\n\tcreate all release files for all OS/arch combos\n"
+	@echo -n "make echo\n\tprint all variables (for development)\n"
 	@echo
-	@echo
-	@echo "to cross-compile a single OS, try 'make cross' or 'make GOOS=windows'"
-	@echo "to add things left out by default, use tags: 'make tags=metrics'"
-	@echo
-	@echo
-	@#echo "cross-compile release: 'make clean cross release=1'"
-	@#echo "cross-compile all tools: 'make clean cross release=1 cmds=all'"
-	@#echo "compile with CGO tracer support: make cgo=1'"
-	@echo required shell commands: git, go, sha256sum, file, date, base64, tr, printf, which, pwd, echo, find
+	@echo -n "Required commands:\n\tgit, go, file\n"
 test:
 	CGO_ENABLED=0 bash testing/test-short-only.bash $(args)
 race:
