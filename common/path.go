@@ -65,3 +65,26 @@ func AbsolutePath(Datadir string, filename string) string {
 	}
 	return filepath.Join(Datadir, filename)
 }
+
+// EnvBool returns false if empty/unset/falsy, true otherwise
+func EnvBool(name string) bool {
+	x, ok := os.LookupEnv(name)
+	if !ok {
+		return false
+	}
+	if x == "" {
+		return false
+	}
+	if x == "0" {
+		return false
+	}
+	if x == "1" {
+		return true
+	}
+	x = strings.TrimSpace(x)
+	x = strings.ToLower(x)
+	if x == "false" || x == "no" || x == "off" {
+		return false
+	}
+	return true
+}

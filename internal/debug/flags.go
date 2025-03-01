@@ -25,6 +25,7 @@ import (
 	"runtime"
 
 	cli "github.com/urfave/cli/v3"
+	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/common/metrics"
 	"gitlab.com/aquachain/aquachain/common/metrics/exp"
@@ -60,7 +61,7 @@ var (
 	debugFlag = &cli.BoolFlag{
 		Name:  "debug",
 		Usage: "Prepends log messages with call-site location (file and line number)",
-		Value: os.Getenv("DEBUG") != "",
+		Value: common.EnvBool("DEBUG"),
 	}
 	pprofFlag = &cli.BoolFlag{
 		Name:  "pprof",

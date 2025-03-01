@@ -25,7 +25,6 @@ import (
 	"fmt"
 	"net"
 	"net/url"
-	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -33,6 +32,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/rpc"
 )
@@ -417,7 +417,7 @@ func (c *Client) newMessage(method string, paramsIn ...interface{}) (*jsonrpcMes
 	return &jsonrpcMessage{Version: "2.0", ID: c.nextID(), Method: method, Params: params}, nil
 }
 
-var isdebug = os.Getenv("DEBUG_RPC") != ""
+var isdebug = common.EnvBool("DEBUG_RPC")
 
 // send registers op with the dispatch loop, then sends msg on the connection.
 // if sending fails, op is deregistered.

@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/p2p"
 	"gitlab.com/aquachain/aquachain/params"
 )
@@ -45,12 +46,12 @@ var DefaultConfig = &Config{
 		MaxPeers:   20,
 		NAT:        "none", // none
 	},
-	RPCBehindProxy: os.Getenv("AQUA_RPC_BEHIND_PROXY") != "",
+	RPCBehindProxy: common.EnvBool("AQUA_RPC_BEHIND_PROXY"),
 	UserIdent:      os.Getenv("AQUA_USER_IDENT"),
 	HTTPHost:       DefaultHTTPHost,
 	WSHost:         DefaultWSHost,
-	RPCNoSign:      os.Getenv("NO_SIGN") != "", // doesnt do anything here. something needs to read it
-	NoKeys:         os.Getenv("NO_KEYS") != "", // doesnt do anything here. something needs to read it
+	RPCNoSign:      common.EnvBool("NO_SIGN"), // doesnt do anything here. something needs to read it
+	NoKeys:         common.EnvBool("NO_KEYS"), // doesnt do anything here. something needs to read it
 
 }
 
