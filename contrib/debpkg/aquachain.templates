@@ -34,7 +34,7 @@ Description: Additional Arguments
 
 Template: aquachain/rpcallowip
 Type: string
-Default: "127.0.0.1/24"
+Default: 127.0.0.1/24
 Description: RPC
  Allow connections from other machines to this RPC server. Can be comma separated list of IP addresses and CIDR ranges.
  If blank or unset, only connections from localhost are allowed.

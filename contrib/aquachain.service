@@ -17,7 +17,7 @@ TimeoutStopSec=90s
 Slice=aquachain.slice
 Restart=always
 # this next line gets replaced by dpkg-reconfigure
-ExecStart=/usr/local/bin/aquachain --offline --now $AQUACHAIN_ARGS
+ExecStart=/usr/local/bin/start-aquachain.sh
 
 [Install]
 WantedBy=network-online.target

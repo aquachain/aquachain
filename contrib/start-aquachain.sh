@@ -1,5 +1,7 @@
-# /etc/aquachain/aquachain.conf
-# this file is only used with 'start-aquachain.sh' script
+#!/bin/bash
+
+# Aquachain RPC allow IP
+RPC_ALLOW_IP=${RPC_ALLOW_IP}
 
 # Aquachain coinbase address
 AQUABASE=${AQUABASE}
@@ -12,9 +14,6 @@ AQUACHAIN_CHAIN=${AQUACHAIN_CHAIN}
 
 # Aquachain verbosity
 VERBOSITY=${VERBOSITY-3}
-
-# RPC allow IP
-RPC_ALLOW_IP=${RPC_ALLOW_IP}
 
 # Additional arguments for Aquachain
 AQUACHAIN_ARGS=${AQUACHAIN_ARGS}
@@ -33,3 +32,13 @@ fi
 if [ -n "${VERBOSITY}" ]; then
     AQUACHAIN_ARGS="${AQUACHAIN_ARGS} -verbosity ${VERBOSITY}"
 fi
+
+# RPC allow IP
+export RPC_ALLOW_IP=${RPC_ALLOW_IP}
+
+if [ "$1" = "stop" ]; then
+    echo cant stop
+    exit 1
+fi
+
+exec /usr/local/bin/aquachain ${AQUACHAIN_ARGS}

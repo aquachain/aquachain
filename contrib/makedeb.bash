@@ -92,6 +92,7 @@ build_deb() {
     # copy the binary to the package directory
     cp $binfile $tmpdir/usr/local/bin/aquachain
     chmod 755 $tmpdir/usr/local/bin/aquachain
+    cp contrib/start-aquachain.sh $tmpdir/usr/local/bin/start-aquachain.sh
 
     # copy the service file to the package directory
     cp $service_file $tmpdir/etc/systemd/system/aquachain.service
