@@ -119,15 +119,41 @@ EOF
 
     # create the preinst file
     cat >$tmpdir/DEBIAN/preinst <<EOF
+#!/bin/sh
+set -e
+if [ "\$1" = "install" ]; then
+    if ! getent group aquachain >/dev/null; then
+        addgroup --system aqua
+    fi
+    if ! getent passwd aquachain >/dev/null; then
+        adduser --system --no-create-home --ingroup aqua --home $default_aqua_homedir aqua
+    fi
+    mkdir -p $default_aqua_homedir
+    chown -R aquachain:aquachain $default_aqua_homedir
+
+fi
+
+if [ "\$1" = "remove" ]; then
+    if getent passwd aquachain >/dev/null; then
+        userdel aquachain
+    fi
+    if getent group aquachain >/dev/null; then
+        groupdel aquachain
+    fi
+fi
 EOF
+    chmod 755 $tmpdir/DEBIAN/preinst
 
-
+    # copy the postinst and prerm files
     cp -v contrib/debpkg/postinst $tmpdir/DEBIAN/postinst
     cp -v contrib/debpkg/prerm $tmpdir/DEBIAN/prerm
     cp -v contrib/debpkg/templates $tmpdir/DEBIAN/templates
     test ! -f contrib/debpkg/conffiles || cp -v contrib/debpkg/conffiles $tmpdir/DEBIAN/conffiles
     chmod 755 $tmpdir/DEBIAN/postinst
     chmod 755 $tmpdir/DEBIAN/prerm
+    chmod 644 $tmpdir/DEBIAN/templates
+    test ! -f contrib/debpkg/conffiles || chmod 644 $tmpdir/DEBIAN/conffiles
+    
 
 
     # create the postrm file
