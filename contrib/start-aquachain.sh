@@ -1,4 +1,7 @@
 #!/bin/bash
+if [ -f /etc/default/aquachain ]; then
+    . /etc/default/aquachain
+fi
 
 # Aquachain RPC allow IP
 RPC_ALLOW_IP=${RPC_ALLOW_IP}
@@ -35,7 +38,7 @@ fi
 
 # RPC allow IP
 export RPC_ALLOW_IP=${RPC_ALLOW_IP}
-
+export AQUACHAIN_ARGS=${AQUACHAIN_ARGS}
 if [ "$1" = "stop" ]; then
     echo cant stop
     exit 1
