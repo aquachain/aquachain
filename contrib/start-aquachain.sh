@@ -1,5 +1,9 @@
 #!/bin/bash
 set -ex
+if [ "$1" = "stop" ]; then
+    echo cant stop
+    exit 1
+fi
 if [ -f /etc/default/aquachain ]; then
     . /etc/default/aquachain
 fi
@@ -25,11 +29,20 @@ AQUACHAIN_CHAIN=${AQUACHAIN_CHAIN}
 # Aquachain verbosity
 VERBOSITY=${VERBOSITY-3}
 
-# Additional arguments for Aquachain
+# Additional arguments for Aquachain (added below)
 AQUACHAIN_ARGS=${AQUACHAIN_ARGS}
+USE_RPC=1
 if [ "${RPC_ALLOW_IP}" = "none" ]; then
     RPC_ALLOW_IP=""
-
+    USE_RPC=0
+fi
+if [ "${RPC_ALLOW_IP}" = "0.0.0.0/0" ]; then
+    USE_RPC=1
+    PUBLIC_RPC_MODE=1
+    export NO_KEYS=1
+    export NO_SIGN=1
+    echo warn: public rpc mode enabled, no keys or signing allowed
+    echo warn: public rpc mode enabled, no keys or signing allowed 1>&2
 fi
 if [ -n "${RPC_ALLOW_IP}" ]; then
     AQUACHAIN_ARGS="${AQUACHAIN_ARGS} --rpcallowip \"${RPC_ALLOW_IP}\""
@@ -52,18 +65,13 @@ if ["${PUBLIC_RPC_MODE}" = "1" ]; then
 # RPC allow IP
 export RPC_ALLOW_IP=${RPC_ALLOW_IP}
 export AQUACHAIN_ARGS=${AQUACHAIN_ARGS}
-if [ "$1" = "stop" ]; then
-    echo cant stop
-    exit 1
-fi
-
 echo "Starting Aquachain node with args: ${AQUACHAIN_ARGS}" 1>&2
 
-# lol TODO: fix this
+# lol TODO: fix this arg expansion
 cmdline=$(echo exec /usr/local/bin/aquachain ${AQUACHAIN_ARGS} daemon)
 echo "${cmdline}"
 for i in $(seq 1 10); do
    echo "Waiting for dev ..."
    sleep 1
 done
-sh -c "${cmdline}"
+exec /bin/sh -c "${cmdline}"
