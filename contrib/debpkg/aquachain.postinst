@@ -52,5 +52,10 @@ EOF2
 chmod -v 600 $tmpdir/etc/default/aquachain
 
 # enable and start the service
+
+echo "aquachain is installed, now starting it"
 systemctl daemon-reload || true
-systemctl enable --now aquachain || service aquachain start 
+systemctl enable --now aquachain || service aquachain start || echo "warn: failed to start aquachain service"
+
+echo "done installing aquachain"
+exit 0
