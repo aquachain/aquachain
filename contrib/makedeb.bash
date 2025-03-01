@@ -138,9 +138,9 @@ if [ ! -d $default_aqua_homedir ]; then
     echo "created aqua directory: $default_aqua_homedir"
 fi
 
-mkdir -p $tmpdir/etc/default
+mkdir -p /etc/default
 # create a default config file with OPTIONS=-debug
-cat >$tmpdir/etc/default/aquachain <<EOF2
+test ! -f /etc/default/aquachain || cat >>/etc/default/aquachain <<EOF2
 # aquachain config (generated at $version)
 OPTIONS=-debug
 # this overrides cmdline args in service file
