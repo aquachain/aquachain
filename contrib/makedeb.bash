@@ -88,10 +88,24 @@ build_deb() {
     cp $service_file $tmpdir/etc/systemd/system/aquachain.service
     chmod 644 $tmpdir/etc/systemd/system/aquachain.service
 
+    # add man page if exists in contrib/ dir when we make one
+    manfile=contrib/aquachain.1
+    if [ -f $manfile ]; then
+        mkdir -p $tmpdir/usr
+        mkdir -p $tmpdir/usr/share
+        mkdir
+        cp $manfile $tmpdir/usr/share
+        gzip -9 $tmpdir/usr/share/aquachain.1
+    else
+        echo "warn: missing $manfile"
+    fi
+
     # this helps graceful shutdown when power-button is pressed
     cp $k01file $tmpdir/etc/init.d/K01aquachain
     chmod 755 $tmpdir/etc/init.d/K01aquachain
 
+    debianarch=$goarch
+    
     # create the control file
     cat >$tmpdir/DEBIAN/control <<EOF
 Package: aquachain
@@ -99,23 +113,33 @@ Version: ${version#v}
 Architecture: $goarch
 Maintainer: Aquachain Core Developers <aquachain@riseup.net>
 Installed-Size: $(du -s $tmpdir | cut -f1)
-Depends: systemd
+Depends: adduser systemd
 Section: net
 Priority: optional
+Keywords: aquachain blockchain coin
 Homepage: https://aquachain.github.io
 Description: Aquachain
- Aquachain is a decentralized cryptocurrency.
+ Aquachain RPC server
 EOF
 
     # create the postinst file
     cat >$tmpdir/DEBIAN/postinst <<EOF
 #!/bin/sh
 set -e
+if ! which systemctl >/dev/null; then
+    echo "warn: systemd not found, skipping aquachain.service installation"
+    exit 0
+fi
 # add user and group
-
+if ! getent group aqua >/dev/null; then
+    addgroup --system aqua
+fi
+if ! getent passwd aqua >/dev/null; then
+    adduser --system --no-create-home --ingroup aqua --home /var/lib/aquachain --shell /usr/sbin/nologin aqua
+fi
 # enable and start the service
-systemctl daemon-reload || true
-systemctl enable --now aquachain || true
+systemctl daemon-reload
+systemctl enable --now aquachain
 EOF
     chmod 755 $tmpdir/DEBIAN/postinst
 
@@ -123,7 +147,11 @@ EOF
     cat >$tmpdir/DEBIAN/prerm <<EOF
 #!/bin/sh
 set -e
-systemctl disable --now aquachain || true
+if ! which systemctl >/dev/null; then
+    echo "warn: systemd not found, skipping aquachain.service installation"
+    exit 0
+fi
+systemctl disable --now aquachain
 EOF
     chmod 755 $tmpdir/DEBIAN/prerm
 
@@ -131,18 +159,19 @@ EOF
     cat >$tmpdir/DEBIAN/postrm <<EOF
 #!/bin/sh
 set -e
-systemctl daemon-reload || true
+if ! which systemctl >/dev/null; then
+    echo "warn: systemd not found, skipping aquachain.service installation"
+    exit 0
+fi
+systemctl daemon-reload
 EOF
     chmod 755 $tmpdir/DEBIAN/postrm
 
-    echo "building: aquachain-$version-$goos-$goarch.deb"
     # build the debian package
+    echo "building: aquachain-$version-$goos-$goarch.deb"
     dpkg-deb --build $tmpdir "aquachain-$version-$goos-$goarch.deb"
-
     echo "created: aquachain-$version-$goos-$goarch.deb"
-
     sha256sum "aquachain-$version-$goos-$goarch.deb"
-
 }
 
 for goos_goarch in $@; do
