@@ -24,7 +24,8 @@ Environment="COLOR=1"
 # default, rpc for 127.0.0.1 only, private rpc through ~/.aquachain/aquachain.ipc
 # if datadir/aquachain.toml exists, it will be parsed
 # if .env exists it will be sourced
-ExecStart=/usr/local/bin/aquachain --now ${OPTIONS} daemon
+ExecStart=/usr/local/bin/aquachain --offline --now ${OPTIONS[@]} daemon
+
 #ExecStart=/usr/local/bin/aquachain --now -chain aqua -ws -rpc -verbosity 6 -debug -jsonlog daemon
 # or, as a public rpc, we have no keys. but, an aquabase/coinbase is useful.
 # change this "--aquabase" flag to some address to fix client issues

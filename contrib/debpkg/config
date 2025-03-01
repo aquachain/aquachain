@@ -1,0 +1,22 @@
+# config file for debconf
+
+# The coinbase address for mining rewards. Useful even if you aren't mining, as it can be used to identify your RPC server.
+# It defaults to a pool address, but you should change it to your own address.
+aquachain/aquabase: 0xDA7064FB41A2a599275Dd74113787A7aA8ee3E4f
+
+# The data directory for the Aquachain node. This is where the blockchain data will be stored.
+aquachain/datadir: /var/lib/aquachain
+
+# The chain for the Aquachain node. This is the network you will connect to.
+# Choose one of: aqua, testnet, testnet3
+aquachain/chain: aqua
+
+# The verbosity level for the Aquachain node. This is how much information will be printed to the log.
+# Choose one of: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+aquachain/verbosity: 4
+
+# Additional arguments for the Aquachain node. This is useful for customizing the behavior of the node.
+# For example, you can use this to change the RPC/WS host interface
+aquachain/aquaargs:
+
+aquachain/rpc: 1

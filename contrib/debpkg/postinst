@@ -19,7 +19,7 @@ if ! getent passwd aqua >/dev/null; then
     echo "created user: aqua"
 fi
 RET=
-db_input medium aquachain/aquabase || true
+db_input high aquachain/aquabase || true
 db_go || true
 db_get aquachain/aquabase || true
 aquabase=$RET
@@ -54,7 +54,7 @@ if [ "$rpc" -eq 1 ]; then
     mayberpc="-rpc -ws"
 fi
 aqua_args=
-db_input medium aquachain/args || true
+db_input high aquachain/args || true
 db_go || true
 db_get aquachain/args || true
 aqua_args=$RET
@@ -76,8 +76,7 @@ if [ ! -d $default_aqua_homedir ]; then
 fi
 
 mkdir -p /etc/default
-# create a default config file with OPTIONS=-debug
-test -f /etc/default/aquachain || cat >>/etc/default/aquachain <<EOF2
+cat >/etc/default/aquachain <<EOF2
 # aquachain config (generated at ${now})
 OPTIONS=-debug ${mayberpc} -jsonlog -chain ${chain} -datadir ${datadir} -verbosity ${verbosity} -aquabase ${aquabase} ${aqua_args}
 JSONLOG=0

@@ -116,8 +116,11 @@ EOF
 
     cp -v contrib/debpkg/postinst $tmpdir/DEBIAN/postinst
     cp -v contrib/debpkg/prerm $tmpdir/DEBIAN/prerm
+    cp -v contrib/debpkg/templates $tmpdir/DEBIAN/templates
+    cp -v contrib/debpkg/conffiles $tmpdir/DEBIAN/conffiles
     chmod 755 $tmpdir/DEBIAN/postinst
     chmod 755 $tmpdir/DEBIAN/prerm
+
 
     # create the postrm file
     cat >$tmpdir/DEBIAN/postrm <<EOF

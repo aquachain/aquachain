@@ -1,0 +1,130 @@
+.Dd Mar 4, 2025
+.Dt aquachain 1
+.Sh NAME
+.Nm aquachain
+.Nd The Aquachain P2P daemon and client console.
+.Sh SYNOPSIS
+.Nm
+.Op Fl now         \" [-now]
+.Op Fl config Ar aquachain.toml         \" [-config path]
+.Sh DESCRIPTION
+.Nm
+is a decentralized peer-to-peer daemon and client console
+.Pp
+.Bl -bullet
+.It
+EVM-compatible blockchain and RPC
+.It
+Target block time of 240 seconds (around 15 per hour)
+.It
+Proof-of-work algorithm is currently: 
+.Ar argon2id
+.Pp                      \" Inserts a space
+.El
+.Sh WARNINGS          \" Warnings about misuse or misunderstanding
+.Bl -bullet
+.It
+Starting the program joins the discovery network, makes peer connections, then begins syncing the blockchain.
+.It
+The DATADIR requires at least 2GB of free space to store the blockchain and state data.
+.It
+If you lose your key, the coins are gone forever. and no one can help you.
+.It
+If you allow signing from all RPC clients, your node's wallet will be drained and the key compromised.
+.El
+.Sh NOTES             \" Miscellaneous information
+.Bl -bullet
+.It
+By default, the node runs safely with no keys at all. Use a separate wallet for signing transactions.
+.It
+Configure your wallet (such as Frame or Metamask) to sign transactions using ChainID 61717561.
+.It
+JSON logs produced when using the -jsonlog flag are compatible with the prettylog formatting tool.
+.It
+Deploying smart contracts: You must compile with the 'byzantium' EVM target to deploy on Aquachain mainnet.
+.El
+.Sh COMMANDS
+.Bl -tag -width "aquachain help" -compact
+.It aquachain help
+Print all help and flags
+.It aquachain version
+Print chain config and compilation information
+.It aquachain [--now] [--config path] daemon
+Run the node in daemon mode
+.It aquachain [--now] [--config path] console
+Run the node in console mode (default)
+.It aquachain attach [url]
+Run the console in client mode, connecting to a remote node
+.Sh OPTIONS
+.Pp
+A list of flags and their descriptions:
+.Bl -tag -width -indent  \" Differs from above in tag removed
+.It Fl config                 \"-a flag as a list item
+Path to a TOML config file. Use 'none' to skip an existing config from being auto-loaded
+.It Fl h
+Show all flags and subcommands
+.It Fl now
+Don't countdown to start
+.It Fl rpc
+Enable RPC server (by default only on 127.0.0.1)
+.It Fl ws
+Enable WS server (by default only on 127.0.0.1)
+.It Fl rpchost Ar ip
+Set the RPC server host (for example 0.0.0.0, but better to put behind a reverse proxy)
+.It Fl wshost Ar ip
+Set the WS server host
+.It Fl allowip Ar ip1,ip2,ip3
+Allow RPC and WS connections from these IPs (comma separated CIDR list)
+.It Fl behindproxy
+For logging, use the HTTP request's 'X-Forwarded-For' header as the client IP
+.It Fl jsonlog
+Log all output in JSON format
+.It Fl chain Ar chain
+Set the chain ID (default: aqua)
+.It Fl datadir Ar path
+Set the data directory
+.It Fl verbosity Ar level
+Set the verbosity level (default: 4)
+.It Fl aquabase Ar address
+Set the aquabase address
+.It Fl debug
+Enable debug mode
+.El 
+.Pp
+.Sh ENVIRONMENT      
+.Bl -tag -width "NO_SIGN=1" -indent \" ENV_VAR_1 is width of the string ENV_VAR_1
+.It Ev NO_SIGN=1
+Disable all signing methods from RPC clients
+.It Ev NO_KEYS=1
+Disable all keys functionality
+.It Ev DEBUG=1
+Enable debug mode
+.It Ev COLOR=1
+Try to force color output
+.It Ev RPC_BEHIND_PROXY=1
+Use the provided 'X-Forwarded-For' header as the client IP
+.It Ev DEBUG_RPC=1
+Enable debug mode for incoming RPC requests
+.El
+.Sh FILES                \" File used or created by the topic of the man page
+.Bl -tag -width "/Users/joeuser/Library/really_long_file_name" -compact
+.It Pa /var/lib/aquachain
+The directory where all the files are stored
+.It Pa /etc/default/aquachain
+Environment file for the systemd unit
+.It Pa ./aquachain.toml
+.It Pa ~/.aquachain/aquachain.toml
+.It Pa /etc/aquachain/aquachain.toml
+.El                      \" Ends the list
+.Sh SEE ALSO
+.Xr aquabootnode 1 ,
+.Xr aquaminer-gpu 1 ,
+.Xr open-aquachain-pool 1
+.Xr aquachain-proxy 1
+.Sh BUGS
+https://github.com/aquachain/aquachain/issues
+.Pp
+https://gitlab.com/aquachain/aquachain/issues
+
+
+
