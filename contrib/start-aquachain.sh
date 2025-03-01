@@ -27,6 +27,10 @@ VERBOSITY=${VERBOSITY-3}
 
 # Additional arguments for Aquachain
 AQUACHAIN_ARGS=${AQUACHAIN_ARGS}
+if [ "${RPC_ALLOW_IP}" = "none" ]; then
+    RPC_ALLOW_IP=""
+
+fi
 if [ -n "${RPC_ALLOW_IP}" ]; then
     AQUACHAIN_ARGS="${AQUACHAIN_ARGS} --rpcallowip \"${RPC_ALLOW_IP}\""
 fi
@@ -42,6 +46,8 @@ fi
 if [ -n "${VERBOSITY}" ]; then
     AQUACHAIN_ARGS="${AQUACHAIN_ARGS} -verbosity ${VERBOSITY}"
 fi
+if ["${PUBLIC_RPC_MODE}" = "1" ]; then
+    AQUACHAIN_ARGS="${AQUACHAIN_ARGS} --rpc --rpcaddr 0.0.0.0 --ws --wsaddr
 
 # RPC allow IP
 export RPC_ALLOW_IP=${RPC_ALLOW_IP}
@@ -55,4 +61,9 @@ echo "Starting Aquachain node with args: ${AQUACHAIN_ARGS}" 1>&2
 
 # lol TODO: fix this
 cmdline=$(echo exec /usr/local/bin/aquachain ${AQUACHAIN_ARGS} daemon)
+echo "${cmdline}"
+for i in $(seq 1 10); do
+   echo "Waiting for dev ..."
+   sleep 1
+done
 sh -c "${cmdline}"
