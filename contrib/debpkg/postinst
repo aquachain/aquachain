@@ -4,6 +4,7 @@ set -e
 # Source debconf library.
 . /usr/share/debconf/confmodule
 now=$(date)
+default_aqua_homedir=/var/lib/aquachain
 if ! which systemctl >/dev/null; then
     echo "warn: systemd not found, skipping aquachain.service installation"
     exit 0
@@ -14,7 +15,7 @@ if ! getent group aqua >/dev/null; then
     echo "created group: aqua"
 fi
 if ! getent passwd aqua >/dev/null; then
-    adduser --system --ingroup aqua --home $default_aqua_homedir --shell /usr/sbin/nologin aqua
+    adduser --system --ingroup aqua --home "$default_aqua_homedir" --shell /usr/sbin/nologin aqua
     echo "created user: aqua"
 fi
 RET=
@@ -31,7 +32,7 @@ db_go || true
 db_get aquachain/datadir || true
 datadir=$RET
 if [ -z "$datadir" ]; then
-    datadir=${default_aqua_datadir}
+    datadir=${default_aqua_homedir}
 fi
 
 db_input medium aquachain/chain || true
@@ -67,6 +68,7 @@ if [ -z "$verbosity" ]; then
 fi
 
 if [ ! -d $default_aqua_homedir ]; then
+    echo "warn: aqua homedir not found, creating"
     mkdir -v -p $default_aqua_homedir
     chown -v -R aqua:aqua $default_aqua_homedir
     chmod -v 700 $default_aqua_homedir
