@@ -114,6 +114,13 @@ build_deb() {
         echo "warn: missing contrib/aquachain.conf"
     fi
 
+    if [ -f contrib/start-aquachain.sh ]; then
+        cp contrib/start-aquachain.sh $tmpdir/usr/local/bin/start-aquachain.sh
+        chmod 755 $tmpdir/usr/local/bin/start-aquachain.sh
+    else
+        echo "warn: missing contrib/start-aquachain.sh"
+    fi
+
 
     # this creates warnings, but helps graceful shutdown when power-button is pressed
     cp $k01file $tmpdir/etc/init.d/K01aquachain
