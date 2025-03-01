@@ -1,20 +1,21 @@
 #!/bin/sh
 set -e
-if getent passwd aqua >/dev/null; then
-    echo "removing user and group"
-    userdel aqua || true
-fi
-if getent group aqua >/dev/null; then
-    echo "removing group"
-    groupdel aqua || true
-fi
-echo "warn: not removing keystore or datadir in /var/lib/aquachain, please remove manually"
-echo "warn: not removing /etc/default/aquachain, please remove manually"
-
-if ! which systemctl >/dev/null; then
-    echo "warn: systemctl not found, skipping aquachain.service uninstallation"
+echo aquachain.postrm: $@
+if [ "$1" = "upgrade" ]; then
+    echo "upgrade detected, skipping user and group removal"
     exit 0
 fi
+if [ "$1" = "remove" ]; then
+    echo "removing user and group"
+    if getent passwd aqua >/dev/null; then
+        echo "removing user and group"
+        userdel aqua || true
+    fi
+    if getent group aqua >/dev/null; then
+        echo "removing group"
+        groupdel aqua || true
+    fi
+    echo "warn: not removing keystore or datadir in /var/lib/aquachain, please remove manually"
+    echo "warn: not removing /etc/default/aquachain, please remove manually"
+fi
 
-# this fails if systemd isnt running etc
-systemctl daemon-reload || true
