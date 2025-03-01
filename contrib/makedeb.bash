@@ -166,6 +166,18 @@ if ! which systemctl >/dev/null; then
     exit 0
 fi
 systemctl disable --now aquachain
+if getent passwd aqua >/dev/null; then
+    userdel aqua || true
+fi
+if getent group aqua >/dev/null; then
+    groupdel aqua || true
+fi
+# if purge, remove homedir
+if [ "\$1" = "purge" ]; then
+    cp -vr ${default_aqua_homedir}/.aquachain/keystore /tmp/aquachain-keystore.$(date +%s) || true
+    rm -vrf $default_aqua_homedir
+fi
+
 EOF
     chmod 755 $tmpdir/DEBIAN/prerm
 
