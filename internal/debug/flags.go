@@ -35,19 +35,17 @@ var (
 	logcolorflag = &cli.BoolFlag{
 		Name:  "color",
 		Usage: "Force colored log output (COLOR env)",
-		Value: os.Getenv("COLOR") == "1",
+		Value: common.EnvBool("COLOR") || (os.Getenv("TERM") == "xterm" || os.Getenv("TERM") == "xterm-256color"),
 	}
 	logjsonflag = &cli.BoolFlag{
 		Name:  "jsonlog",
-		Usage: "Log in JSON format",
-		Value: false,
+		Usage: "Log in JSON format, env:JSONLOG=1 (compatible with prettylog, jq, etc.)",
+		Value: common.EnvBool("JSONLOG"),
 	}
-
 	verbosityFlag = &cli.IntFlag{
 		Name:  "verbosity",
 		Usage: "Logging verbosity: 0=silent, 1=error, 2=warn, 3=info, 4=debug, 5=detail",
 		Value: 3,
-			
 	}
 	vmoduleFlag = &cli.StringFlag{
 		Name:  "vmodule",
