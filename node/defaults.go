@@ -46,8 +46,8 @@ var DefaultConfig = &Config{
 		MaxPeers:   20,
 		NAT:        "none", // none
 	},
-	RPCBehindProxy: common.EnvBool("AQUA_RPC_BEHIND_PROXY"),
-	UserIdent:      os.Getenv("AQUA_USER_IDENT"),
+	RPCBehindProxy: common.EnvBool("RPC_BEHIND_PROXY"),
+	UserIdent:      os.Getenv("AQUA_USERIDENT"),
 	HTTPHost:       DefaultHTTPHost,
 	WSHost:         DefaultWSHost,
 	RPCNoSign:      common.EnvBool("NO_SIGN"), // doesnt do anything here. something needs to read it

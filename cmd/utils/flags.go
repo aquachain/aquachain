@@ -490,7 +490,7 @@ var (
 	}
 	RPCBehindProxyFlag = &cli.BoolFlag{
 		Name:  "behindproxy",
-		Usage: "If RPC is behind a reverse proxy. Changes the way IP is fetched when comparing to allowed IP addresses",
+		Usage: "If RPC is behind a reverse proxy. (RPC_BEHIND_PROXY env) Changes the way IP is fetched when comparing to allowed IP addresses",
 	}
 	ExecFlag = &cli.StringFlag{
 		Name:  "exec",
@@ -1174,7 +1174,7 @@ func SetNodeConfig(cmd *cli.Command, cfg *node.Config) error {
 	if cmd.IsSet(UseUSBFlag.Name) {
 		cfg.UseUSB = cmd.Bool(UseUSBFlag.Name)
 	}
-	if cmd.IsSet(RPCBehindProxyFlag.Name) || common.EnvBool("REVERSE_PROXY") {
+	if cmd.IsSet(RPCBehindProxyFlag.Name) || common.EnvBool("RPC_BEHIND_PROXY") {
 		cfg.RPCBehindProxy = cmd.Bool(RPCBehindProxyFlag.Name)
 	}
 	return nil
