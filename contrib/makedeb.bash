@@ -8,16 +8,14 @@ if [ ! -f contrib/makedeb.bash ]; then
 fi
 
 service_file=contrib/aquachain.service
-if [ ! -f $service_file ]; then
-    echo "fatal: missing $service_file"
-    exit 1
-fi
-
 k01file=contrib/K01aquachain
-if [ ! -f $k01file ]; then
-    echo "fatal: missing $k01file"
-    exit 1
-fi
+
+for file in $service_file $k01file; do
+    if [ ! -f $file ]; then
+        echo "fatal: missing $file"
+        exit 1
+    fi
+done
 
 if [ -z "$1" ]; then
     echo "usage: $0 goos-goarch"
@@ -26,7 +24,6 @@ if [ -z "$1" ]; then
 fi
 
 build_deb() {
-
     goos=$(echo $1 | cut -d- -f1)
     goarch=$(echo $1 | cut -d- -f2)
 
@@ -39,27 +36,21 @@ build_deb() {
         echo "fatal: windows not supported"
         exit 1
     fi
+
     bindir=bin/$goos-$goarch
-    if [ -z "$bindir" ]; then
-        echo "fatal: empty bindir"
-        exit 1
-    fi
     if [ ! -d $bindir ]; then
         echo "fatal: missing $bindir"
         echo "run 'make cross GOOS=$goos GOARCH=$goarch' first"
         exit 1
     fi
+
     binfile=$(ls -1 $bindir/aquachain 2>/dev/null | tail -n1)
-    if [ -z "$binfile" ]; then
+    if [ -z "$binfile" ] || [ ! -f $binfile ]; then
         echo "fatal: missing $bindir/aquachain"
         exit 1
     fi
-    if [ ! -f $binfile ]; then
-        echo "fatal: missing $binfile"
-        exit 1
-    fi
-    echo found: $binfile
 
+    echo found: $binfile
     echo "building debian package for $goos-$goarch"
 
     version=$(make print-version)
@@ -70,8 +61,6 @@ build_deb() {
 
     # fix umask
     umask 022
-
-    # files: K01aquachain, aquachain.service
 
     # create the debian package directory structure
     mkdir -p $tmpdir/DEBIAN
@@ -91,11 +80,9 @@ build_deb() {
     # add man page if exists in contrib/ dir when we make one
     manfile=contrib/aquachain.1
     if [ -f $manfile ]; then
-        mkdir -p $tmpdir/usr
-        mkdir -p $tmpdir/usr/share
-        mkdir
-        cp $manfile $tmpdir/usr/share
-        gzip -9 $tmpdir/usr/share/aquachain.1
+        mkdir -p $tmpdir/usr/share/man/man1
+        cp $manfile $tmpdir/usr/share/man/man1
+        gzip -9 $tmpdir/usr/share/man/man1/aquachain.1
     else
         echo "warn: missing $manfile"
     fi
@@ -113,10 +100,10 @@ Version: ${version#v}
 Architecture: $goarch
 Maintainer: Aquachain Core Developers <aquachain@riseup.net>
 Installed-Size: $(du -s $tmpdir | cut -f1)
-Depends: adduser systemd
+Depends: adduser, systemd
 Section: net
 Priority: optional
-Keywords: aquachain blockchain coin
+Keywords: aquachain, blockchain, coin
 Homepage: https://aquachain.github.io
 Description: Aquachain
  Aquachain RPC server
