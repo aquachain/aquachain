@@ -108,8 +108,8 @@ main_command_dir := ${aquachain_cmd}
 
 # cross compilation wizard target for testing different architectures
 cross:
-	test -n "$(GOOS)"
-	test -n "$(GOARCH)" 
+	@test -n "$(GOOS)"
+	@test -n "$(GOARCH)" 
 	@echo cross-compiling for $(GOOS)/$(GOARCH)
 	@echo warn: to build a real release, use "make clean release release=1"
 	@mkdir -p $(build_dir)/${GOOS}-${GOARCH}

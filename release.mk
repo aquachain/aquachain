@@ -1,4 +1,4 @@
-$(info loading release.mk ...)
+# $(info loading release.mk ...)
 
 releasetexts := README.md COPYING AUTHORS
 

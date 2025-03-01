@@ -53,7 +53,8 @@ build_deb() {
     echo found: $binfile
     echo "building debian package for $goos-$goarch"
 
-    version=$(make print-version)
+    # use -s to avoid 'make' output
+    version=$(make -s print-version)
 
     # create a temporary directory
     tmpdir=$(mktemp -d)
@@ -92,7 +93,7 @@ build_deb() {
     chmod 755 $tmpdir/etc/init.d/K01aquachain
 
     debianarch=$goarch
-    
+    echo "version: $version"
     # create the control file
     cat >$tmpdir/DEBIAN/control <<EOF
 Package: aquachain
@@ -161,6 +162,7 @@ EOF
     sha256sum "aquachain-$version-$goos-$goarch.deb"
 }
 
+# called as.. eg bash contrib/makedeb.bash linux-amd64 linux-arm linux-riscv64
 for goos_goarch in $@; do
     echo "building debian package for $goos_goarch"
     build_deb $goos_goarch
