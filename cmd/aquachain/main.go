@@ -267,7 +267,7 @@ func startNode(ctx context.Context, cmd *cli.Command, stack *node.Node) {
 		unlocks = []string{} // TODO?
 	}
 	if len(unlocks) > 0 && stack.Config().NoKeys {
-		utils.Fatalf("Unlocking accounts is not supported with --%s", utils.NoKeysFlag.Name)
+		utils.Fatalf("Unlocking accounts is not supported with NO_KEYS mode")
 	}
 	if !stack.Config().NoKeys {
 		for _, v := range unlocks {
