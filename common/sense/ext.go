@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+var main_argv = os.Args // allow test package to override
+
 // FeatureEnabled returns true if the os env is truthy, or flagname is found in command line
 func FeatureEnabled(envname string, flagname string) bool {
 	if EnvBool(envname) {
@@ -40,12 +42,17 @@ func FeatureDisabled(envname string, flagname string) bool {
 //	if found {
 //		// do something with value
 //	}
+//
+// Completely skips first arg for tests
 func FastParseArgs(flagname string) (bool, string) {
 	if strings.Contains(flagname, "-") {
 		panic("here, flagname should not contain -")
 	}
-	argc := len(os.Args)
-	argv := os.Args
+	argc := len(main_argv)
+	if argc == 0 {
+		panic("no args")
+	}
+	argv := main_argv
 	for i := 1; i < argc; i++ {
 		if strings.Contains(argv[i], "=") {
 			if strings.Split(argv[i], "=")[0] == "-"+flagname {
