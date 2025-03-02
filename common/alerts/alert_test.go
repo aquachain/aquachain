@@ -8,16 +8,19 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func TestAlert(t *testing.T) {
+func TestAlertSystem(t *testing.T) {
 	if _, err := os.Stat("../../Makefile"); err != nil {
 		t.Fatal("bad test; only run in root directory")
 	}
-	err := godotenv.Load("../../.env") // we are in ./common/alerts/
-	if err != nil {
-		t.Skipf("expected no error, got %v", err)
-		return
-	}
 	ac, err := ParseAlertConfig()
+	if err != nil {
+		err := godotenv.Load("../../.env") // we are in ./common/alerts/
+		if err != nil {
+			t.Skipf("expected no error, got %v", err)
+			return
+		}
+		ac, err = ParseAlertConfig()
+	}
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}

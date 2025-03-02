@@ -29,6 +29,9 @@ var mainCfg AlertConfig
 
 // Infof logs a warning message and sends an alert via ALERT_PLATFORM if configured (see ParseAlertConfig)
 func Infof(f string, i ...any) {
+	if os.Getenv("ALERTS_INFO") == "0" {
+		return
+	}
 	if !mainCfg.Enabled() {
 		log.Info("new alert system not configured", "msg", strings.TrimSpace(strings.Replace(fmt.Sprintf(f, i...), "\n", " ", -1)))
 		return
@@ -40,6 +43,9 @@ func Infof(f string, i ...any) {
 
 // Warnf logs a warning message and sends an alert via ALERT_PLATFORM if configured (see ParseAlertConfig)
 func Warnf(f string, i ...any) {
+	if os.Getenv("ALERTS_WARN") == "0" {
+		return
+	}
 	if !mainCfg.Enabled() {
 		log.Warn("new alert system not configured", "msg", strings.TrimSpace(strings.Replace(fmt.Sprintf(f, i...), "\n", " ", -1)))
 		return
