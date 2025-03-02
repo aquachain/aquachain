@@ -74,3 +74,4 @@ profile.cov
 *.json
 *.jsonl
 *.deb
+*.out

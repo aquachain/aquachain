@@ -160,9 +160,10 @@ type Config struct {
 	// fetch client's remote IP
 	RPCBehindProxy bool
 
-	CloseMain func(error)     `toml:"-"`
-	Context   context.Context `toml:"-"`
-	NoInProc  bool            `toml:",omitempty"`
+	CloseMain   func(error)     `toml:"-"`
+	Context     context.Context `toml:"-"`
+	NoInProc    bool            `toml:",omitempty"` // disable in-process node (for testing)
+	NoCountdown bool            `toml:",omitempty"` // disable countdown on startup
 }
 
 // IPCEndpoint resolves an IPC endpoint based on a configured value, taking into

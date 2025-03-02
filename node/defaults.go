@@ -53,7 +53,7 @@ var DefaultConfig = &Config{
 	WSHost:         DefaultWSHost,
 	RPCNoSign:      common.EnvBool("NO_SIGN"), // doesnt do anything here. something needs to read it
 	NoKeys:         common.EnvBool("NO_KEYS"), // doesnt do anything here. something needs to read it
-
+	NoCountdown:    common.EnvBool("NO_COUNTDOWN"),
 }
 
 // DefaultDataDir is the default data directory to use for the databases and other

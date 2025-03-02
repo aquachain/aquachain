@@ -118,7 +118,7 @@ func (s *Server) RegisterName(name string, rcvr interface{}) (methodNames []stri
 	for k, m := range methods {
 		coolname := fmt.Sprintf("%s_%s", name, strings.ToLower(m.method.Name[:1])+m.method.Name[1:])
 		if !unsafe_rpc_signing && isProtectedMethodName(m.method.Name) {
-			log.Warn("disabling HTTP method (no UNSAFE_RPC_SIGNING=1 env)", "service", name, "method", coolname)
+			log.Warn("disabling RPC method (no UNSAFE_RPC_SIGNING=1 env)", "server", s.handle, "service", name, "method", coolname)
 			delete(methods, k)
 			continue
 		}
@@ -158,6 +158,7 @@ func isProtectedMethodName(name string) bool {
 // an EOF). It executes requests in parallel when singleShot is false.
 func (s *Server) serveRequest(codec ServerCodec, singleShot bool, options CodecOption) error {
 	log.Info("serving request", "codec", fmt.Sprintf("%T", codec), "singleShot", singleShot, "options", common.ToJson(options), "run", atomic.LoadInt32(&s.run))
+	defer log.Info("serving request done", "codec", fmt.Sprintf("%T", codec), "singleShot", singleShot, "options", common.ToJson(options), "run", atomic.LoadInt32(&s.run))
 	var pend sync.WaitGroup
 
 	defer func() {
@@ -205,6 +206,9 @@ func (s *Server) serveRequest(codec ServerCodec, singleShot bool, options CodecO
 			return nil
 		}
 
+		for _, req := range reqs {
+			log.Info("got serving request", "id", req.id, "method", req.callb.method.Name, "batch", batch)
+		}
 		// check if server is ordered to shutdown and return an error
 		// telling the client that his request failed.
 		if atomic.LoadInt32(&s.run) != 1 {
@@ -294,6 +298,10 @@ func (s *Server) handle(ctx context.Context, codec ServerCodec, req *serverReque
 	if req.err != nil {
 		return codec.CreateErrorResponse(&req.id, req.err), nil
 	}
+	if ctx.Err() != nil {
+		log.Warn("server.handle shutting down", "request", req.id, "error", ctx.Err())
+		return codec.CreateErrorResponse(&req.id, &shutdownError{}), nil
+	}
 
 	if req.isUnsubscribe { // cancel subscription, first param must be the subscription id
 		if len(req.args) >= 1 && req.args[0].Kind() == reflect.String {
@@ -361,6 +369,9 @@ func (s *Server) handle(ctx context.Context, codec ServerCodec, req *serverReque
 
 // exec executes the given request and writes the result back using the codec.
 func (s *Server) exec(ctx context.Context, codec ServerCodec, req *serverRequest) {
+	if ctx.Err() != nil {
+		return
+	}
 	var response interface{}
 	var callback func()
 	if req.err != nil {

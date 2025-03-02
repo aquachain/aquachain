@@ -381,12 +381,15 @@ func (n *Node) startInProc(apis []rpc.API) error {
 	if n.config.NoInProc {
 		return nil
 	}
+	debugRpc := common.EnvBool("DEBUG_RPC")
 	handler := rpc.NewServer()
 	for _, api := range apis {
 		if _, err := handler.RegisterName(api.Namespace, api.Service); err != nil {
 			return err
 		}
-		n.log.Debug("InProc registered", "service", fmt.Sprintf("%T ( %s_ )", api.Service, api.Namespace))
+		if debugRpc {
+			n.log.Debug("InProc registered", "service", fmt.Sprintf("%T ( %s_ )", api.Service, api.Namespace))
+		}
 	}
 	n.inprocHandler = handler
 	return nil
@@ -406,13 +409,16 @@ func (n *Node) startIPC(apis []rpc.API) error {
 	if n.ipcEndpoint == "" {
 		return nil
 	}
+	debugRpc := common.EnvBool("DEBUG_RPC")
 	// Register all the APIs exposed by the services
 	handler := rpc.NewServer()
 	for _, api := range apis {
 		if _, err := handler.RegisterName(api.Namespace, api.Service); err != nil {
 			return err
 		}
-		n.log.Debug("IPC registered", "service", fmt.Sprintf("%T", api.Service), "namespace", api.Namespace)
+		if debugRpc {
+			n.log.Debug("IPC registered", "service", fmt.Sprintf("%T", api.Service), "namespace", api.Namespace)
+		}
 	}
 	// All APIs registered, start the IPC listener
 	var (
@@ -474,7 +480,7 @@ func (n *Node) startHTTP(endpoint string, apis []rpc.API, whitelistModules []str
 	}
 	// Generate the whitelist based on the allowed modules
 	whitelist := make(map[string]bool)
-	log.Info("HTTP whitelist", "modules", whitelistModules)
+	log.Info("HTTP whitelist", "endpoint", endpoint, "modules", whitelistModules, "signing-enabled", !n.config.RPCNoSign, "keystore-available", !n.config.NoKeys)
 	for _, module := range whitelistModules {
 		whitelist[module] = true
 	}

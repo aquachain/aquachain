@@ -31,11 +31,9 @@ import (
 
 	"gitlab.com/aquachain/aquachain/aqua"
 	"gitlab.com/aquachain/aquachain/common"
-	"gitlab.com/aquachain/aquachain/common/alerts"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/core"
 	"gitlab.com/aquachain/aquachain/core/types"
-	"gitlab.com/aquachain/aquachain/internal/debug"
 	"gitlab.com/aquachain/aquachain/node"
 	"gitlab.com/aquachain/aquachain/rlp"
 )
@@ -87,34 +85,35 @@ func Fatalf(format string, args ...interface{}) {
 }
 
 func StartNode(ctx context.Context, stack *node.Node) {
+	
 	if err := stack.Start(ctx); err != nil {
 		Fatalf("Error starting protocol stack: %v", err)
 	}
-	go func() {
-		log.Info("node.Node waiting for interrupt")
-		sigc := make(chan os.Signal, 1)
-		reason := ""
-		<-ctx.Done()
-		reason = context.Cause(ctx).Error()
-		// for force-panic on multiple interrupts
-		signal.Notify(sigc, syscall.SIGINT, syscall.SIGTERM)
-		defer signal.Stop(sigc)
-		go alerts.Warnf("Got %s, shutting down...", reason) // might not make it
-		log.Info("Got interrupt, shutting down...", "reason", reason)
-		go stack.Stop()
+	// go func() {
+	// 	log.Info("node.Node waiting for interrupt")
+	// 	sigc := make(chan os.Signal, 1)
+	// 	reason := ""
+	// 	<-ctx.Done()
+	// 	reason = context.Cause(ctx).Error()
+	// 	// for force-panic on multiple interrupts
+	// 	signal.Notify(sigc, syscall.SIGINT, syscall.SIGTERM)
+	// 	defer signal.Stop(sigc)
+	// 	go alerts.Warnf("Got %s, shutting down...", reason) // might not make it
+	// 	log.Info("Got interrupt, shutting down...", "reason", reason)
+	// 	go stack.Stop()
 
-		for i := 10; i > 0; i-- {
-			<-sigc // blocks, something should os.Exit(1) in the background
-			if i > 1 {
-				log.Warn("Already shutting down, interrupt more to panic.", "times", i-1)
-			}
-		}
+	// 	for i := 10; i > 0; i-- {
+	// 		<-sigc // blocks, something should os.Exit(1) in the background
+	// 		if i > 1 {
+	// 			log.Warn("Already shutting down, interrupt more to panic.", "times", i-1)
+	// 		}
+	// 	}
 
-		time.Sleep(time.Second) // TODO remove this
+	// 	time.Sleep(time.Second) // TODO remove this
 
-		debug.Exit() // ensure trace and CPU profile data is flushed.
-		debug.LoudPanic("boom")
-	}()
+	// 	debug.Exit() // ensure trace and CPU profile data is flushed.
+	// 	debug.LoudPanic("boom")
+	// }()
 }
 
 func ImportChain(chain *core.BlockChain, fn string) error {

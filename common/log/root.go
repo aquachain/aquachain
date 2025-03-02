@@ -112,7 +112,7 @@ func GracefulShutdown(cause error) {
 	} else {
 		println("fatal: ", cause.Error())
 	}
-	cancelcausefunc(cause)
+	// cancelcausefunc(cause)
 	go func() {
 		for i := 10; i > 0; i++ {
 			root.write("graceful shutdown initiated", LvlCrit, []any{"cause", cause, "seconds", i})
@@ -120,8 +120,7 @@ func GracefulShutdown(cause error) {
 		}
 		// panic big
 		debug.SetTraceback("all")
-		panic(cause.Error())
-		os.Exit(2)
+		panic(cause)
 	}()
 }
 

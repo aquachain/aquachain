@@ -240,6 +240,12 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+
+	if err := debug.WaitLoops(time.Second * 2); err != nil {
+		log.Warn("waiting for loops", "err", err)
+	} else {
+		log.Info("graceful shutdown achieved")
+	}
 }
 
 // daemonCommand is the main entry point into the system if the 'daemon' subcommand
@@ -283,7 +289,8 @@ func startNode(ctx context.Context, cmd *cli.Command, stack *node.Node) {
 			}
 		}
 	}
-	ctx = context.WithValue(ctx, "doitnow", cmd.Bool(utils.DoitNowFlag.Name)) // TODO
+	node.DefaultConfig.NoCountdown = cmd.Bool(utils.DoitNowFlag.Name)
+	// ctx = context.WithValue(ctx, "doitnow") // TODO
 	// Start up the node itself
 	utils.StartNode(ctx, stack)
 

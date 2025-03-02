@@ -17,15 +17,32 @@
 package log
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
 	"os"
 	"reflect"
 	"sync"
+	"time"
 
 	"github.com/go-stack/stack"
 )
+
+var debuglog = os.Getenv("DEBUG_LOG") == "1"
+
+func println(a ...any) {
+	if debuglog || os.Getenv("DEBUG_LOG") == "1" {
+		caller := Caller(2)
+		json.NewEncoder(os.Stderr).Encode(map[string]any{
+			"time":    time.Now().Unix(),
+			"level":   "debug",
+			"caller":  caller,
+			"message": fmt.Sprint(a...),
+		})
+		// fmt.Fprintln(os.Stderr, append([]any{caller}, a...)...)
+	}
+}
 
 // A Logger prints its log records by writing to a Handler.
 // The Handler interface defines where and how log records are written.
@@ -55,6 +72,7 @@ func (h funcHandler) Log(r *Record) error {
 // StreamHandler wraps itself with LazyHandler and SyncHandler
 // to evaluate Lazy objects and perform safe concurrent writes.
 func StreamHandler(wr io.Writer, fmtr Format) Handler {
+	println("new logging stream-handler")
 	h := FuncHandler(func(r *Record) error {
 		_, err := wr.Write(fmtr.Format(r))
 		return err
@@ -66,6 +84,7 @@ func StreamHandler(wr io.Writer, fmtr Format) Handler {
 // only a single Log operation can proceed at a time. It's necessary
 // for thread-safe concurrent writes.
 func SyncHandler(h Handler) Handler {
+	println("new logging sync-handler")
 	var mu sync.Mutex
 	return FuncHandler(func(r *Record) error {
 		defer mu.Unlock()
@@ -79,6 +98,7 @@ func SyncHandler(h Handler) Handler {
 // already exists, FileHandler will append to the given file. If it does not,
 // FileHandler will create the file with mode 0644.
 func FileHandler(path string, fmtr Format) (Handler, error) {
+	println("new logging file-handler")
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		return nil, err

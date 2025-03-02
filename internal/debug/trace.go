@@ -23,7 +23,10 @@ import (
 	"errors"
 	"os"
 	"runtime/trace"
+	"sync"
+	"time"
 
+	"github.com/go-stack/stack"
 	"gitlab.com/aquachain/aquachain/common/log"
 )
 
@@ -61,4 +64,52 @@ func (h *HandlerT) StopGoTrace() error {
 	h.traceW = nil
 	h.traceFile = ""
 	return nil
+}
+
+var loops = []loopinfo{}
+
+var loopwg sync.WaitGroup
+
+type loopinfo struct {
+	caller stack.Call // TODO: remove stack package
+}
+
+// AddLoop starts tracking a loop and must be closed
+func AddLoop() func() {
+	callerinfo := log.Caller(2)
+	loops = append(loops, loopinfo{caller: callerinfo})
+	loopwg.Add(1)
+	return loopwg.Done
+}
+
+// Loops returns a list of all loops for logging purposes
+func Loops() []string {
+	var out []string
+	for _, l := range loops {
+		out = append(out, l.caller.String())
+	}
+	return out
+}
+
+// WaitLoops waits for all loops to finish, should be called only once
+func WaitLoops(d time.Duration) error {
+	ch := make(chan struct{})
+	go func() {
+		loopwg.Wait()
+		close(ch)
+	}()
+	select {
+	case <-time.After(d):
+		return errors.New("timeout waiting for loops")
+	case <-ch:
+		return nil
+	}
+}
+func init() {
+	go func() {
+		for {
+			time.Sleep(5 * time.Second)
+			log.Info("Loops", "loops", Loops())
+		}
+	}()
 }

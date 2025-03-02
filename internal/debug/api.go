@@ -66,10 +66,14 @@ func SetGlogger(l *log.GlogHandler) {
 }
 
 func Initglogger(callerinfo bool, verbosityLvl64 int64, alwayscolor, isjson bool) *log.GlogHandler {
-	isjson = isjson && os.Getenv("JSONLOG") != "0" // allow override from init
+	isjson = isjson && os.Getenv("JSONLOG") != "0" && os.Getenv("JSONLOG") != "off" // allow override false from init, even if -jsonlog is set
 	verbosityLvl := log.Lvl(verbosityLvl64)
 	if verbosityLvl == 0 {
 		verbosityLvl = log.LvlInfo
+	}
+	if verbosityLvl < 0 {
+		verbosityLvl = 0
+		
 	}
 	usecolor := alwayscolor || os.Getenv("COLOR") == "1" || (term.IsTty(os.Stderr.Fd()) && os.Getenv("TERM") != "dumb")
 	output := io.Writer(os.Stderr)
