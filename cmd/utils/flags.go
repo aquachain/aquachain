@@ -1090,7 +1090,11 @@ func switchDatadir(cmd *cli.Command, chaincfg *params.ChainConfig) DirectoryConf
 	}
 	if cmd.IsSet(DataDirFlag.Name) {
 		cfg.DataDir = cmd.String(DataDirFlag.Name)
-		log.Info("set custom datadir", "path", cfg.DataDir)
+		chainName := "(none)"
+		if chaincfg != nil {
+			chainName = chaincfg.Name()
+		}
+		log.Info("set custom datadir", "path", cfg.DataDir, "chain", chainName)
 	}
 	if cfg.DataDir == "" && chaincfg == nil {
 		Fatalf("No chain and no data directory specified. Please specify a chain with --chain or a data directory with --datadir")
@@ -1099,7 +1103,9 @@ func switchDatadir(cmd *cli.Command, chaincfg *params.ChainConfig) DirectoryConf
 		// custom dir
 		return cfg
 	}
-	if chaincfg != params.MainnetChainConfig && cfg.DataDir != node.DefaultConfig.DataDir {
+	// only return custom testnet dir if custom dir is NOT mainnet default dir
+	// prevents genesis mismatch in dir when switching -chain flag without changing --datadir
+	if cfg.DataDir != "" && chaincfg != params.MainnetChainConfig && cfg.DataDir != node.DefaultConfig.DataDir {
 		return cfg
 	}
 	cfg.DataDir = node.DefaultDatadirByChain(chaincfg)

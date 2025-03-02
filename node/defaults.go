@@ -23,6 +23,7 @@ import (
 	"runtime"
 
 	"gitlab.com/aquachain/aquachain/common"
+	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/p2p"
 	"gitlab.com/aquachain/aquachain/params"
 )
@@ -77,6 +78,7 @@ func defaultDataDir() string {
 
 func DefaultDatadirByChain(cfg *params.ChainConfig) string {
 	if cfg == nil {
+		log.Warn("selecting default mainnet dir for nil chain config")
 		cfg = params.MainnetChainConfig
 	}
 	if cfg == params.MainnetChainConfig {
@@ -90,6 +92,7 @@ func DefaultDatadirByChain(cfg *params.ChainConfig) string {
 }
 
 func homeDir() string {
+	// use HOME first in case user wants to override
 	if home := os.Getenv("HOME"); home != "" {
 		return home
 	}
