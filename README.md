@@ -28,6 +28,7 @@ Aquachain: peer-to-peer programmable money, distributed code contract platform.
 ### Known Explorers:
 
 - https://aquachain.github.io/explorer/
+- https://chain.n-e-t.name/explorer/
 
 ### Known Pools:
 
