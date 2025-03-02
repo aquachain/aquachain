@@ -1180,10 +1180,11 @@ func SetNodeConfig(cmd *cli.Command, cfg *node.Config) error {
 	SetP2PConfig(cmd, cfg.P2P)
 	setIPC(cmd, cfg)
 	setHTTP(cmd, cfg)
-	setWS(cmd, cfg)
+setWS(cmd, cfg)
 	setNodeUserIdent(cmd, cfg)
 	if cmd.IsSet(NoKeysFlag.Name) {
 		cfg.NoKeys = cmd.Bool(NoKeysFlag.Name)
+		log.Info("no keys mode", "enabled", cfg.NoKeys)
 	}
 
 	if cfg.NoKeys {

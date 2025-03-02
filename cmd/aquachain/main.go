@@ -263,16 +263,16 @@ func daemonStart(ctx context.Context, cmd *cli.Command) error {
 // miner.
 func startNode(ctx context.Context, cmd *cli.Command, stack *node.Node) {
 	unlocks := strings.Split(strings.TrimSpace(cmd.String(utils.UnlockedAccountFlag.Name)), ",")
-	for _, v := range unlocks {
-		log.Info("Unlocking account", "account", v)
-	}
 	if len(unlocks) == 1 && unlocks[0] == "" {
-		unlocks = []string{} // TODO
+		unlocks = []string{} // TODO?
 	}
 	if len(unlocks) > 0 && stack.Config().NoKeys {
 		utils.Fatalf("Unlocking accounts is not supported with --%s", utils.NoKeysFlag.Name)
 	}
 	if !stack.Config().NoKeys {
+		for _, v := range unlocks {
+			log.Info("Unlocking account", "account", v)
+		}
 		if len(unlocks) > 0 && unlocks[0] != "" {
 			log.Warn("Unlocking account", "unlocks", unlocks)
 			passwords := utils.MakePasswordList(cmd)
