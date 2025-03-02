@@ -84,6 +84,9 @@ func StreamHandler(wr io.Writer, fmtr Format) Handler {
 // only a single Log operation can proceed at a time. It's necessary
 // for thread-safe concurrent writes.
 func SyncHandler(h Handler) Handler {
+	if NoSync {
+		return h
+	}
 	println("new logging sync-handler")
 	var mu sync.Mutex
 	return FuncHandler(func(r *Record) error {

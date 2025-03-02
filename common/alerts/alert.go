@@ -140,6 +140,7 @@ type Payload struct {
 	ChatID              string `json:"chat_id"`
 	Text                string `json:"text"`
 	DisableNotification bool   `json:"disable_notification"`
+	MarkdownMode        string `json:"parse_mode,omitempty"` // one of "Markdown" or "HTML" or "MarkdownV2"
 }
 
 func (p Payload) Bytes() []byte {
@@ -162,6 +163,8 @@ func sendTelegram(ctx context.Context, token string, channels string, msg string
 	}
 }
 
+var TelegramMarkdownMode = "" // default is telegram default
+
 func _sendTelegram(ctx context.Context, token string, channelsinput string, msg string) error {
 	channels := strings.Split(channelsinput, ",")
 	for _, channel := range channels {
@@ -170,6 +173,7 @@ func _sendTelegram(ctx context.Context, token string, channelsinput string, msg 
 			ChatID:              channel,
 			Text:                msg,
 			DisableNotification: false,
+			MarkdownMode:        TelegramMarkdownMode,
 		}
 		endpoint := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", token)
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, data.Reader())
