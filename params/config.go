@@ -95,7 +95,7 @@ var (
 		// 8: big.NewInt(0),
 	}
 
-	NoHF  = ForkMap{}
+	NoHF  = (ForkMap)(nil)
 	AllHF = ForkMap{
 		1: big.NewInt(0),
 		2: big.NewInt(0),
@@ -171,20 +171,6 @@ var (
 		HF:                   Testnet3HF,
 		DefaultPortNumber:    21306,
 		DefaultBootstrapPort: 21003,
-	}
-	EthnetChainConfig = &ChainConfig{
-		ChainId:             big.NewInt(1),
-		HomesteadBlock:      big.NewInt(1150000),
-		DAOForkBlock:        big.NewInt(1920000),
-		DAOForkSupport:      true,
-		EIP150Block:         big.NewInt(2463000),
-		EIP150Hash:          common.HexToHash("0x2086799aeebeae135c246c65021c82b4e15a2c451340993aacfd2751886514f0"),
-		EIP155Block:         big.NewInt(2675000),
-		EIP158Block:         big.NewInt(2675000),
-		ByzantiumBlock:      big.NewInt(4370000),
-		ConstantinopleBlock: nil,
-		Aquahash:            new(AquahashConfig),
-		HF:                  NoHF,
 	}
 
 	// AllAquahashProtocolChanges contains every protocol change (EIPs) introduced
@@ -352,8 +338,6 @@ func (c *ChainConfig) Name() string {
 		return "testnet2"
 	case c == Testnet3ChainConfig:
 		return "testnet3"
-	case c == EthnetChainConfig:
-		return "eth"
 	case c == AllAquahashProtocolChanges:
 		return "dev"
 	case c == TestChainConfig:

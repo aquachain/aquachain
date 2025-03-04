@@ -634,8 +634,6 @@ func GetChainConfig(db DatabaseReader, hash common.Hash) (*params.ChainConfig, e
 		return params.Testnet2ChainConfig, nil
 	case params.Testnet3ChainConfig.String():
 		return params.Testnet3ChainConfig, nil
-	case params.EthnetChainConfig.String():
-		return params.EthnetChainConfig, nil
 	case params.TestChainConfig.String():
 		return params.TestChainConfig, nil
 	}

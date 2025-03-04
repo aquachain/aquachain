@@ -131,11 +131,11 @@ func New(ctx context.Context, nodectx *node.ServiceContext, config *Config, node
 		bloomIndexer:   NewBloomIndexer(chainConfig, chainDb, params.BloomBitsBlocks),
 	}
 
-	if chainConfig == params.EthnetChainConfig {
-		ProtocolName = "eth"
-		ProtocolVersions = []uint{63, 62}
-		ProtocolLengths = []uint64{17, 8}
-	}
+	// if chainConfig == params.EthnetChainConfig {
+	// 	ProtocolName = "eth"
+	// 	ProtocolVersions = []uint{63, 62}
+	// 	ProtocolLengths = []uint64{17, 8}
+	// }
 
 	log.Info("Initialising Aquachain protocol", "versions", ProtocolVersions, "network", config.ChainId)
 
