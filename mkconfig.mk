@@ -1,15 +1,16 @@
 #$(info loading mkconfig.mk ...)
 # the actual go command
 GOCMD ?= $(shell which go)
-PWD != pwd
-# might be set by user or recursive make
-GOOS ?= $(shell ${GOCMD} env GOOS)
-ifeq (osx,$(GOOS))
-GOOS = darwin
+ifeq (x,x$(GOCMD))
+$(error "go command not found in PATH")
+exit 1
 endif
 
-GOARCH ?= $(shell ${GOCMD} env GOARCH)
-GOPATH ?= $(shell go env GOPATH)
+PWD != pwd
+# might be set by user or recursive make
+GOOS != ${GOCMD} env GOOS
+GOARCH != ${GOCMD} env GOARCH
+GOPATH != ${GOCMD} env GOPATH
 # rebuild target if *any* go file changes
 GOFILES ?= $(shell find . -name '*.go' -type f -not \( -path "./vendor/*" -o -path "./build/*" \))
 version  :=  $(shell git describe --tags --dirty --always 2>/dev/null || cat VERSION 2>/dev/null || echo "0.0.0")

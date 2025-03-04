@@ -1,5 +1,9 @@
 # edit mkconfig.mk if necessary
 include mkconfig.mk
+ifeq (,$(GOCMD))
+$(error "go command not found in PATH")
+exit 1
+endif
 gobindatacmd ?= $(shell which go-bindata)
 # for install target
 build_dir ?= bin
