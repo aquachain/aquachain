@@ -246,8 +246,7 @@ func (g *Genesis) configOrDefault(ghash common.Hash) *params.ChainConfig {
 	case ghash == params.AllGenesisHash:
 		return params.AllAquahashProtocolChanges
 	default:
-		log.Warn("unknown genesis hash", "hash", ghash)
-		// panic("nope")
+		log.Warn("unknown genesis hash, no config", "hash", ghash.Hex())
 		return params.AllAquahashProtocolChanges
 	}
 }

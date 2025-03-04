@@ -72,7 +72,7 @@ func TestSetupGenesis(t *testing.T) {
 	var (
 		customghash = common.HexToHash("0x92f036d05929e5762b8e83ce7c104b37881922732b32fd39253efe1e7e5c2b51")
 		customg     = Genesis{
-			Config: &params.ChainConfig{HomesteadBlock: big.NewInt(3), HF: params.NoHF, ChainId: big.NewInt(101)},
+			Config: &params.ChainConfig{HomesteadBlock: big.NewInt(3), HF: params.TestChainConfig.HF, ChainId: big.NewInt(101)},
 			Alloc: GenesisAlloc{
 				{1}: {Balance: big.NewInt(1), Storage: map[common.Hash]common.Hash{{1}: {1}}},
 			},
@@ -221,7 +221,7 @@ func TestSetupGenesis(t *testing.T) {
 			}
 		}
 		if !reflect.DeepEqual(config, test.wantConfig) {
-			t.Fatalf("%s:\nreturned %v\nwant     %v", test.name, config, test.wantConfig)
+			t.Fatalf("%s:\nreturned %#v\nwant     %#v", test.name, config, test.wantConfig)
 		}
 		if hash != test.wantHash {
 			t.Fatalf("%s: returned hash %s, want %s", test.name, hash.Hex(), test.wantHash.Hex())
