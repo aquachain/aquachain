@@ -174,11 +174,11 @@ func localConsole(ctx context.Context, cmd *cli.Command) error {
 	if args := cmd.Args(); args.Len() != 0 && args.First() != "console" {
 		return fmt.Errorf("invalid command: %q", args.First())
 	}
-	node := makeFullNode(ctx, cmd)
-	if !cmd.Root().Bool("now") {
+	nodeserver := makeFullNode(ctx, cmd)
+	if !node.DefaultConfig.NoCountdown && !cmd.Bool("now") && !cmd.Root().Bool("now") {
 		for i := 3; i > 0 && ctx.Err() == nil; i-- {
-			log.Info("starting in ...", "seconds", i, "bootnodes", len(node.Config().P2P.BootstrapNodes),
-				"static", len(node.Config().P2P.StaticNodes), "discovery", !node.Config().P2P.NoDiscovery)
+			log.Info("starting in ...", "seconds", i, "bootnodes", len(nodeserver.Config().P2P.BootstrapNodes),
+				"static", len(nodeserver.Config().P2P.StaticNodes), "discovery", !nodeserver.Config().P2P.NoDiscovery)
 			for i := 0; i < 10 && ctx.Err() == nil; i++ {
 				time.Sleep(time.Second / 10)
 			}
@@ -187,11 +187,11 @@ func localConsole(ctx context.Context, cmd *cli.Command) error {
 	if ctx.Err() != nil {
 		return context.Cause(ctx)
 	}
-	startNode(ctx, cmd, node)
-	defer node.Stop()
+	startNode(ctx, cmd, nodeserver)
+	defer nodeserver.Stop()
 
 	// Attach to the newly started node and start the JavaScript console
-	client, err := node.Attach("localConsole")
+	client, err := nodeserver.Attach("localConsole")
 	if err != nil {
 		return fmt.Errorf("failed to attach to the inproc aquachain: %v", err)
 	}

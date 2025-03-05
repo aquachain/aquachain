@@ -25,6 +25,7 @@ import (
 	"testing"
 	"time"
 
+	"gitlab.com/aquachain/aquachain/common/config"
 	"gitlab.com/aquachain/aquachain/crypto"
 	"gitlab.com/aquachain/aquachain/p2p"
 	"gitlab.com/aquachain/aquachain/rpc"
@@ -34,15 +35,17 @@ var (
 	testNodeKey, _ = crypto.GenerateKey()
 )
 
-func init() {
-
+// instead of waiting (eg. no -now flag)
+func contextBackground() context.Context {
+	return context.WithValue(context.Background(), config.CtxDoitNow, true)
 }
-
 func testNodeConfig() *Config {
 	return &Config{
 		Name:       "test node",
 		P2P:        &p2p.Config{PrivateKey: testNodeKey, ChainId: 1337},
 		RPCAllowIP: []string{"127.0.0.1"},
+		Context:    contextBackground(),
+		CloseMain:  func(err error) { println("CloseMain", err) },
 	}
 }
 

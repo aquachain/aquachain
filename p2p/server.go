@@ -423,25 +423,17 @@ func (srv *Server) Start(ctx context.Context) (err error) {
 	if srv.Config.Offline {
 		return nil
 	}
-
-	doitnow := ctx.Value("doitnow") // -now flag TODO
-	if doitnow == nil {
-		doitnow = false
-	}
+	doitnow := false
 	{
 		chaincfg := srv.Config.ChainConfig()
 		if chaincfg == nil {
 			log.Warn("Chain config not set, using test chainconfig")
 			chaincfg = params.TestChainConfig
 		}
-		if doitnow == nil && chaincfg == params.MainnetChainConfig || chaincfg == params.TestnetChainConfig || chaincfg == params.Testnet2ChainConfig || chaincfg == params.Testnet3ChainConfig { // for testing
+		if !doitnow && !(chaincfg == params.MainnetChainConfig || chaincfg == params.TestnetChainConfig || chaincfg == params.Testnet2ChainConfig || chaincfg == params.Testnet3ChainConfig) { // for testing
 			doitnow = true
-		} else if doitnow == nil {
-			log.Debug("P2P server starting", "offline", srv.Config.Offline, "chain", chaincfg.Name())
-			doitnow = false
 		}
-		now, _ := doitnow.(bool)
-		if !now && os.Getenv("TESTING_TEST") != "1" {
+		if !doitnow && os.Getenv("TESTING_TEST") != "1" {
 			for i := 5; i > 0 && ctx.Err() == nil; i-- {
 				log.Info("Starting P2P networking", "in", i, "on", srv.ListenAddr, "chain", chaincfg.Name())
 				for i := 0; i < 10 && ctx.Err() == nil; i++ {

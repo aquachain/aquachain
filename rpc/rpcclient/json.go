@@ -22,9 +22,13 @@ import (
 
 // isBatch returns true when the first non-whitespace characters is '['
 func isBatch(msg json.RawMessage) bool {
+	x := 0
 	for _, c := range msg {
-
 		if c == 0x20 || c == 0x09 || c == 0x0a || c == 0x0d {
+			x++
+			if x > 100 {
+				return false
+			}
 			continue
 		}
 		return c == '['

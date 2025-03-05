@@ -30,13 +30,9 @@ import (
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/crypto"
 	"gitlab.com/aquachain/aquachain/crypto/sha3"
+	"gitlab.com/aquachain/aquachain/node"
 	"gitlab.com/aquachain/aquachain/p2p/discover"
 )
-
-// instead of waiting (eg. no -now flag)
-func contextBackground() context.Context {
-	return context.WithValue(context.Background(), "doitnow", true)
-}
 
 func init() {
 	log.ResetForTesting()
@@ -73,6 +69,9 @@ func (c *testTransport) close(err error) {
 	c.closeErr = err
 }
 
+func init() {
+	node.DefaultConfig.NoCountdown = true
+}
 func startTestServer(t *testing.T, id discover.NodeID, pf func(*Peer)) *Server {
 	config := &Config{
 		Name:       "test",
@@ -86,7 +85,7 @@ func startTestServer(t *testing.T, id discover.NodeID, pf func(*Peer)) *Server {
 		newPeerHook:  pf,
 		newTransport: func(fd net.Conn) transport { return newTestTransport(id, fd) },
 	}
-	if err := server.Start(contextBackground()); err != nil {
+	if err := server.Start(context.Background()); err != nil {
 		t.Fatalf("Could not start server: %v", err)
 	}
 	return server

@@ -87,6 +87,12 @@ func (a *AquachainConfigFull) Copy() *AquachainConfigFull {
 	return &c
 }
 
+type ctxval string
+
+var (
+	CtxDoitNow ctxval = "doitnow"
+)
+
 //go:generate gencodec -type Aquaconfig -field-override AquaConfigMarshaling -formats toml -out gen_config.go
 
 type Aquaconfig struct {

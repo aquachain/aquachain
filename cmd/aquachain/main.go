@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"sort"
 	"strings"
 	"time"
 
@@ -139,15 +140,17 @@ var (
 )
 
 var noEnvFlag = &cli.BoolFlag{Name: "noenv", Usage: "Skip loading existing .env file"}
+var this_app *cli.Command
 
 func doinit() *cli.Command {
-	app := &cli.Command{
+	this_app = &cli.Command{
 		Name:    "aquachain",
 		Usage:   "the Aquachain command line interface",
 		Version: params.VersionWithCommit(gitCommit),
-		Flags:   []cli.Flag{noEnvFlag},
+		Flags:   append([]cli.Flag{noEnvFlag, utils.ConfigFileFlag, utils.ChainFlag}, debug.Flags...),
 		// UsageText: ,
 	}
+	app := this_app
 	// Initialize the CLI app and start Aquachain
 	app.Action = localConsole // default command is 'console'
 	app.HideVersion = true    // we have a command to print the version
@@ -184,11 +187,7 @@ func doinit() *cli.Command {
 		dumpConfigCommand,
 	}
 
-	app.Flags = append(app.Flags, nodeFlags...)
-	app.Flags = append(app.Flags, rpcFlags...)
-	app.Flags = append(app.Flags, consoleFlags...)
-	app.Flags = append(app.Flags, debug.Flags...)
-	// sort.Sort(cli.FlagsByName(app.Flags))
+	sort.Sort(cli.FlagsByName(app.Flags))
 
 	// func(context.Context, *Command) (context.Context, error)
 	app.Before = beforeFunc
@@ -198,7 +197,7 @@ func doinit() *cli.Command {
 
 func afterFunc(context.Context, *cli.Command) error {
 	debug.Exit()
-	console.Stdin.Close() // Resets terminal mode.
+	console.Stdin.Close()
 	return nil
 }
 
@@ -211,6 +210,12 @@ func beforeFunc(ctx context.Context, cmd *cli.Command) (context.Context, error) 
 	if x := cmd.Args().First(); x != "" && x != "daemon" || x != "console" { // is subcommand..
 		return ctx, nil
 	}
+	// app := this_app
+	// app.Flags = append(app.Flags, debug.Flags...)
+	// app.Flags = append(app.Flags, nodeFlags...)
+	// app.Flags = append(app.Flags, rpcFlags...)
+	// app.Flags = append(app.Flags, consoleFlags...)
+
 	// Start system runtime metrics collection
 	go metrics.CollectProcessMetrics(3 * time.Second)
 	if targetGasLimit := cmd.Uint(utils.TargetGasLimitFlag.Name); targetGasLimit > 0 {
@@ -288,8 +293,7 @@ func startNode(ctx context.Context, cmd *cli.Command, stack *node.Node) {
 			}
 		}
 	}
-	node.DefaultConfig.NoCountdown = cmd.Bool(utils.DoitNowFlag.Name)
-	// ctx = context.WithValue(ctx, "doitnow") // TODO
+	node.DefaultConfig.NoCountdown = node.DefaultConfig.NoCountdown || cmd.Bool(utils.DoitNowFlag.Name)
 	// Start up the node itself
 	utils.StartNode(ctx, stack)
 
