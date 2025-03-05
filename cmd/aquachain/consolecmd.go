@@ -125,8 +125,8 @@ var (
 		Description: "",
 	}
 	consoleCommand = &cli.Command{
-		// Action:   utils.MigrateFlags(localConsole),
-		Action:   localConsole,
+		Action: utils.MigrateFlags(localConsole),
+		// Action:   localConsole,
 		Name:     "console",
 		Usage:    "Start an interactive JavaScript environment",
 		Flags:    append(consoleFlags, daemonFlags...),

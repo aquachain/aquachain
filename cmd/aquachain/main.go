@@ -142,57 +142,87 @@ var (
 var noEnvFlag = &cli.BoolFlag{Name: "noenv", Usage: "Skip loading existing .env file"}
 var this_app *cli.Command
 
+var helpCommand = &cli.Command{
+	Name:  "help",
+	Usage: "show help",
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		cli.ShowAppHelp(cmd)
+		os.Exit(1)
+		return nil
+	},
+	UsageText: "aquachain help",
+}
+
 func doinit() *cli.Command {
 	this_app = &cli.Command{
 		Name:    "aquachain",
 		Usage:   "the Aquachain command line interface",
 		Version: params.VersionWithCommit(gitCommit),
-		Flags:   append([]cli.Flag{noEnvFlag, utils.ConfigFileFlag, utils.ChainFlag}, debug.Flags...),
+		Flags:   append([]cli.Flag{noEnvFlag, utils.DoitNowFlag, utils.ConfigFileFlag, utils.ChainFlag, utils.GCModeFlag}, debug.Flags...),
+		Suggest: true,
+		SuggestCommandFunc: func(commands []*cli.Command, provided string) string {
+			s := cli.SuggestCommand(commands, provided)
+			// log.Info("running SuggestCommand", "commands", commands, "provided", provided, "suggesting", s)
+			if s == provided {
+				return s
+			}
+
+			println("did you mean:", s)
+			os.Exit(1)
+			return s
+		},
+		Before:         beforeFunc,
+		After:          afterFunc,
+		DefaultCommand: "consoledefault",
+		Commands: []*cli.Command{
+			// See chaincmd.go:
+			helpCommand,
+			echoCommand,
+			initCommand,
+			importCommand,
+			exportCommand,
+			copydbCommand,
+			removedbCommand,
+			dumpCommand,
+			// See monitorcmd.go:
+			//monitorCommand,
+			// See accountcmd.go:
+			accountCommand,
+
+			// See walletcmd_lite.go
+			paperCommand,
+			// See consolecmd.go:
+			consoleCommand,
+			daemonCommand, // previously default
+			attachCommand,
+			javascriptCommand,
+			// See misccmd.go:
+			makecacheCommand,
+			makedagCommand,
+			versionCommand,
+			bugCommand,
+			licenseCommand,
+			// See config.go
+			dumpConfigCommand,
+		},
+		HideHelpCommand: true,
+		HideVersion:     true,
+		Copyright:       "Copyright 2018-2025 The Aquachain Authors",
+
+		// Action:  ,
 		// UsageText: ,
 	}
-	app := this_app
+	// app := this_app
 	// Initialize the CLI app and start Aquachain
-	app.Action = localConsole // default command is 'console'
-	app.HideVersion = true    // we have a command to print the version
-	app.Copyright = "Copyright 2018-2025 The Aquachain Authors"
+	// app.DefaultCommand = "consoledefault" // doesnt get flags... hmm
 
-	app.Commands = []*cli.Command{
-		// See chaincmd.go:
-		echoCommand,
-		initCommand,
-		importCommand,
-		exportCommand,
-		copydbCommand,
-		removedbCommand,
-		dumpCommand,
-		// See monitorcmd.go:
-		//monitorCommand,
-		// See accountcmd.go:
-		accountCommand,
-
-		// See walletcmd_lite.go
-		paperCommand,
-		// See consolecmd.go:
-		consoleCommand,
-		daemonCommand, // previously default
-		attachCommand,
-		javascriptCommand,
-		// See misccmd.go:
-		makecacheCommand,
-		makedagCommand,
-		versionCommand,
-		bugCommand,
-		licenseCommand,
-		// See config.go
-		dumpConfigCommand,
-	}
-
-	sort.Sort(cli.FlagsByName(app.Flags))
+	// app.Action = localConsole // default command is 'console'
+	// app.Commands =
+	sort.Sort((cli.FlagsByName)(this_app.Flags))
 
 	// func(context.Context, *Command) (context.Context, error)
-	app.Before = beforeFunc
-	app.After = afterFunc
-	return app
+
+	return this_app
 }
 
 func afterFunc(context.Context, *cli.Command) error {
@@ -202,6 +232,7 @@ func afterFunc(context.Context, *cli.Command) error {
 }
 
 func beforeFunc(ctx context.Context, cmd *cli.Command) (context.Context, error) {
+	log.Warn("beforeFunc", "cmd", cmd.Name, "cat", cmd.Category)
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	if err := debug.Setup(ctx, cmd); err != nil {
@@ -230,14 +261,20 @@ func beforeFunc(ctx context.Context, cmd *cli.Command) (context.Context, error) 
 
 func main() {
 	logpkg.SetFlags(logpkg.Lshortfile)
-	noenv := false
-	for _, v := range os.Args {
-		if strings.Contains(v, "-noenv") {
-			noenv = true
+	{
+		// check for .env file unless -noenv is in args
+		// (before flags are parsed)
+		noenv := false
+		for _, v := range os.Args {
+			if strings.Contains(v, "-noenv") {
+				noenv = true
+			}
 		}
-	}
-	if !noenv {
-		godotenv.Load(".env")
+		if !noenv {
+			godotenv.Load(".env")
+		} else {
+			log.Warn("Skipping .env file")
+		}
 	}
 	app := doinit()
 	if err := app.Run(mainctx, os.Args); err != nil {

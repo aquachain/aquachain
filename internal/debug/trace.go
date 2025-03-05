@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"github.com/go-stack/stack"
+	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/log"
 )
 
@@ -115,12 +116,13 @@ func Loops() []string {
 
 // WaitLoops waits for all loops to finish, should be called only once
 func WaitLoops(d time.Duration) error {
-	log.Warn("Waiting for loops to finish", "timeout", d, "numLoops", loopwg.Len())
+	log.Warn("Waiting for loops to finish", "timeout", d, "active", loopwg.Len(), "started", Loops())
 	ch := make(chan struct{})
 	go func() {
 		loopwg.Wait()
 		close(ch)
 	}()
+	// ctx is already done here
 	select {
 	case <-time.After(d):
 		return fmt.Errorf("timeout (%s) waiting for %d loops", d, len(loops))
@@ -129,10 +131,12 @@ func WaitLoops(d time.Duration) error {
 	}
 }
 func init() {
-	go func() {
-		for {
-			time.Sleep(5 * time.Second)
-			log.Info("Loops", "loops", Loops())
-		}
-	}()
+	if common.EnvBool("LOGLOOPS") {
+		go func() {
+			for {
+				time.Sleep(5 * time.Second)
+				log.Info("Loops", "loops", Loops())
+			}
+		}()
+	}
 }
