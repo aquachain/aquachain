@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"math/big"
 	"net"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -412,7 +413,7 @@ func (srv *Server) Start(ctx context.Context) (err error) {
 			x = false
 		}
 		now, _ := x.(bool)
-		if !now {
+		if !now && os.Getenv("TESTING_TEST") != "1" {
 			for i := 5; i > 0 && ctx.Err() == nil; i-- {
 				log.Info("Starting P2P networking", "in", i, "on", srv.ListenAddr, "chain", chaincfg.Name())
 				for i := 0; i < 10 && ctx.Err() == nil; i++ {

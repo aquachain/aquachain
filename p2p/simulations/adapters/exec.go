@@ -103,6 +103,7 @@ func (e *ExecAdapter) NewNode(config *NodeConfig) (Node, error) {
 	conf.Stack.P2P.EnableMsgEvents = false
 	conf.Stack.P2P.NoDiscovery = true
 	conf.Stack.P2P.NAT = "none"
+	conf.Stack.Name = config.Name
 
 	// listen on a random localhost port (we'll get the actual port after
 	// starting the node through the RPC admin.nodeInfo method)

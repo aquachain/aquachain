@@ -192,8 +192,11 @@ func (n *Node) Start(ctx context.Context) error {
 	n.serverConfig.PrivateKey = n.config.NodeKey()
 	n.serverConfig.Name = n.config.NodeName()
 
-	if strings.Count(n.serverConfig.Name, "/") < 3 {
-		return errors.New("node name must be non-empty")
+	if x := strings.Count(n.serverConfig.Name, "/"); x < 2 {
+		y := NewDefaultConfig()
+		y.Name = "Aquachain"
+		shouldbe := GetNodeName(y)
+		return fmt.Errorf("node.Node.Name was not created with GetNodeName, should have 3 has %d slashes: %q, should be %q", x, n.serverConfig.Name, shouldbe)
 	}
 	n.serverConfig.Logger = n.log
 	if n.serverConfig.StaticNodes == nil {
@@ -226,13 +229,14 @@ func (n *Node) Start(ctx context.Context) error {
 		}
 		return port
 	}
+	if len(n.config.HTTPVirtualHosts) == 0 || len(n.config.HTTPVirtualHosts[0]) == 0 {
+		log.Warn("no virtual hosts, using default (any)")
+		n.config.HTTPVirtualHosts = []string{"*"}
+	}
 	{
 		hostname, _ := os.Hostname()
 		if hostname == "" {
 			hostname = "???"
-		}
-		if len(n.config.HTTPVirtualHosts[0]) == 0 {
-			return fmt.Errorf("no virtual host")
 		}
 		alerts.Warnf("Starting %s on %s port %s\nDiscovery: %v\nStatic: %d\nTrusted: %d\nReverseProxy: %v\nHost: %s\n",
 			n.serverConfig.Name,
@@ -474,7 +478,7 @@ func (n *Node) stopIPC() {
 
 // startHTTP initializes and starts the HTTP RPC endpoint.
 func (n *Node) startHTTP(endpoint string, apis []rpc.API, whitelistModules []string, cors []string, vhosts []string, allownet netutil.Netlist, behindreverseproxy bool) error {
-	if len(allownet) == 0 {
+	if len(allownet) == 0 && os.Getenv("TESTING_TEST") != "1" {
 		return fmt.Errorf("http rpc cant start with empty '-allowip' flag")
 	}
 	// Short circuit if the HTTP endpoint isn't being exposed

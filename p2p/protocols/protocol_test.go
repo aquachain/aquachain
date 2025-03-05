@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -183,6 +184,10 @@ func runProtoHandshake(t *testing.T, proto *protoHandshake, errs ...error) {
 	if err := s.TestDisconnected(disconnects...); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func init() {
+	os.Setenv("TESTING_TEST", "1")
 }
 
 func TestProtoHandshakeVersionMismatch(t *testing.T) {

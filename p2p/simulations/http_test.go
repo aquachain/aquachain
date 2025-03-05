@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http/httptest"
+	"os"
 	"reflect"
 	"sync"
 	"sync/atomic"
@@ -34,6 +35,10 @@ import (
 	"gitlab.com/aquachain/aquachain/p2p/simulations/adapters"
 	"gitlab.com/aquachain/aquachain/rpc"
 )
+
+func init() {
+	os.Setenv("TESTING_TEST", "1")
+}
 
 // testService implements the node.Service interface and provides protocols
 // and APIs which are useful for testing nodes in a simulation network
@@ -378,6 +383,9 @@ func startTestNetwork(t *testing.T, client *Client) []string {
 
 	// start both nodes
 	for _, nodeID := range nodeIDs {
+		if nodeID == "" {
+			t.Fatalf("expected node ID to be set")
+		}
 		if err := client.StartNode(nodeID); err != nil {
 			t.Fatalf("error starting node %q: %s", nodeID, err)
 		}

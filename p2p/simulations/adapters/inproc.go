@@ -87,8 +87,10 @@ func (s *SimAdapter) NewNode(config *NodeConfig) (Node, error) {
 			Dialer:          s,
 			EnableMsgEvents: true,
 			ChainId:         220,
+			Name:            config.Name,
 		},
 		Logger: log.New("node.id", id.String()),
+		Name:   config.Name,
 	})
 	if err != nil {
 		return nil, err

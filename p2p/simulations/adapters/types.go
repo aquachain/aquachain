@@ -168,7 +168,7 @@ func RandomNodeConfig() *NodeConfig {
 	return &NodeConfig{
 		ID:         id,
 		PrivateKey: key,
-		Name:       "randomtestnode",
+		Name:       fmt.Sprintf("randomtestnode-%s", id.String()[:8]),
 	}
 }
 

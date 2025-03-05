@@ -84,7 +84,7 @@ func (d *DockerAdapter) NewNode(config *NodeConfig) (Node, error) {
 
 	// generate the config
 	conf := &execNodeConfig{
-		Stack: node.DefaultConfig,
+		Stack: node.NewDefaultConfig(),
 		Node:  config,
 	}
 	conf.Stack.DataDir = "/data"
@@ -95,6 +95,7 @@ func (d *DockerAdapter) NewNode(config *NodeConfig) (Node, error) {
 	conf.Stack.P2P.NoDiscovery = true
 	conf.Stack.P2P.NAT = "none"
 	conf.Stack.Logger = log.New("node.id", config.ID.String())
+	conf.Stack.Name = config.Name
 
 	node := &DockerNode{
 		ExecNode: ExecNode{
