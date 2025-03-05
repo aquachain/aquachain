@@ -375,7 +375,7 @@ func (hc *HeaderChain) GetHeader(hash common.Hash, number uint64) *types.Header 
 	}
 	header.Version = hc.Config().GetBlockVersion(header.Number)
 	if header.Hash() != hash {
-		log.Warn("header hash version mismatch", "dbhash", header.Hash().TerminalString(), "want", hash.TerminalString(), "config", hc.Config().Name(), "hf", hc.Config().HF)
+		log.Warn("header hash version mismatch", "dbhash", header.Hash().TerminalString(), "want", hash.TerminalString(), "config", hc.Config().Name(), "hf", hc.Config().HF, "algo", header.Version.String())
 		return nil
 	}
 	// Cache the found header for next time and return

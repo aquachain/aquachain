@@ -38,6 +38,9 @@ const (
 )
 
 type HasContext interface {
+	Context() context.Context
+}
+type HasGetContext interface {
 	GetContext() context.Context
 }
 
@@ -45,17 +48,23 @@ type HasContext interface {
 // chain. Depending on the full flag, if creates either a full block chain or a
 // header only chain.
 func newCanonical(engine consensus.Engine, n int, full bool) (aquadb.Database, *BlockChain, error) {
+	log.PrintOrigins(true)
 	// Initialize a fresh chain with only a genesis block
 	gspec := new(Genesis)
 	db := aquadb.NewMemDatabase()
 	genesis := gspec.MustCommit(db)
-	ctx := context.TODO()
-	if ctxer, ok := engine.(HasContext); ok {
+	var ctx context.Context
+	switch ctxer := engine.(type) {
+	case HasContext:
+		ctx = ctxer.Context()
+	case HasGetContext:
 		ctx = ctxer.GetContext()
-	} else {
-		log.Warn("no context in test chain maker")
+	default:
+		ctx = context.TODO()
+		log.Warn("no context in test chain maker consensus engine", "engine", fmt.Sprintf("%T", engine)) // TODO: add context or getcontext to all engines
 	}
-	blockchain, _ := NewBlockChain(ctx, db, nil, params.AllAquahashProtocolChanges, engine, vm.Config{
+
+	blockchain, _ := NewBlockChain(ctx, db, nil, params.TestChainConfig, engine, vm.Config{
 		Tracer: vm.NewStructLogger(nil),
 	})
 	if blockchain == nil {
@@ -101,12 +110,16 @@ func makeBlockChain(parent *types.Block, n int, engine consensus.Engine, db aqua
 	return blocks
 }
 
+func init() {
+	log.PrintOrigins(true)
+}
+
 func TestChainMaker(t *testing.T) {
 	genesis := new(Genesis)
 	db := aquadb.NewMemDatabase()
 	genesis.MustCommit(db)
 	engine := aquahash.NewFullFaker()
-	blockchain, err := NewBlockChain(context.TODO(), db, nil, params.AllAquahashProtocolChanges, engine, vm.Config{
+	blockchain, err := NewBlockChain(context.TODO(), db, nil, params.TestChainConfig, engine, vm.Config{
 		Tracer: vm.NewStructLogger(nil),
 	})
 	if err != nil {

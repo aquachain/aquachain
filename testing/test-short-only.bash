@@ -17,7 +17,7 @@
 		exit 0
 	fi
 	fails=$(cat $tmpfile | egrep -- '.*FAIL.*\..*')
-	echo "num_fails=$(echo "$fails" | wc -l)"
+	echo "num_fails=$(echo "$fails" | grep 'Test' | wc -l)"
 	echo "$fails" 1>&2
 	echo 1>&2
 	echo "----------------" 1>&2
