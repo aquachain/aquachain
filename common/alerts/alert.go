@@ -55,6 +55,30 @@ func Warnf(f string, i ...any) {
 	mainCfg.Send(msg)
 }
 
+type MissingConfigError struct {
+	MissingEnv string
+}
+
+func (m *MissingConfigError) Error() string {
+	return fmt.Sprintf("missing env %s", m.MissingEnv)
+}
+
+func NewMissingConfigError(missingEnv string) *MissingConfigError {
+	return &MissingConfigError{MissingEnv: missingEnv}
+}
+func IsMissingConfigError(err error) bool {
+	_, ok := err.(*MissingConfigError)
+	return ok
+}
+
+func (m *MissingConfigError) Is(err error) bool {
+	got, ok := err.(*MissingConfigError)
+	if !ok {
+		return false
+	}
+	return got.MissingEnv == m.MissingEnv
+}
+
 func ParseAlertConfig() (AlertConfig, error) {
 	if mainCfg.Enabled() {
 		panic("already configured")

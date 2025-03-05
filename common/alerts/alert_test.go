@@ -14,7 +14,7 @@ func TestAlertSystem(t *testing.T) {
 	}
 	ac, err := ParseAlertConfig()
 	if err != nil {
-		err := godotenv.Load("../../.env") // we are in ./common/alerts/
+		err = godotenv.Load("../../.env") // we are in ./common/alerts/
 		if err != nil {
 			t.Skipf("expected no error, got %v", err)
 			return
@@ -22,6 +22,10 @@ func TestAlertSystem(t *testing.T) {
 		ac, err = ParseAlertConfig()
 	}
 	if err != nil {
+		if IsMissingConfigError(err) {
+			t.Skipf("expected no error, got: %v", err)
+			return
+		}
 		t.Fatalf("expected no error, got %v", err)
 	}
 	if !ac.Enabled() {
