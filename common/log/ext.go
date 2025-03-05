@@ -1,5 +1,16 @@
 package log
 
-import "gitlab.com/aquachain/aquachain/common/sense"
+import (
+	"time"
 
-var NoSync = sense.EnvBool("LOG_NO_SYNC")
+	"gitlab.com/aquachain/aquachain/common/sense"
+)
+
+var NoSync = !sense.EnvBoolDisabled("NO_LOGSYNC")
+
+func init() {
+	go func() {
+		time.Sleep(time.Second * 2)
+		println("log nosync:", NoSync)
+	}()
+}

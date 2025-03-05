@@ -85,6 +85,7 @@ func StreamHandler(wr io.Writer, fmtr Format) Handler {
 // for thread-safe concurrent writes.
 func SyncHandler(h Handler) Handler {
 	if NoSync {
+		println("skip logging sync-handler (no sync)")
 		return h
 	}
 	println("new logging sync-handler")
@@ -152,34 +153,34 @@ func CallerFileHandler(h Handler) Handler {
 	})
 }
 
-// CallerFuncHandler returns a Handler that adds the calling function name to
-// the context with key "fn".
-func CallerFuncHandler(h Handler) Handler {
-	return FuncHandler(func(r *Record) error {
-		r.Ctx = append(r.Ctx, "fn", formatCall("%+n", r.Call))
-		return h.Log(r)
-	})
-}
+// // CallerFuncHandler returns a Handler that adds the calling function name to
+// // the context with key "fn".
+// func CallerFuncHandler(h Handler) Handler {
+// 	return FuncHandler(func(r *Record) error {
+// 		r.Ctx = append(r.Ctx, "fn", formatCall("%+n", r.Call))
+// 		return h.Log(r)
+// 	})
+// }
 
 // This function is here to please go vet on Go < 1.8.
 func formatCall(format string, c stack.Call) string {
 	return fmt.Sprintf(format, c)
 }
 
-// CallerStackHandler returns a Handler that adds a stack trace to the context
-// with key "stack". The stack trace is formated as a space separated list of
-// call sites inside matching []'s. The most recent call site is listed first.
-// Each call site is formatted according to format. See the documentation of
-// package github.com/go-stack/stack for the list of supported formats.
-func CallerStackHandler(format string, h Handler) Handler {
-	return FuncHandler(func(r *Record) error {
-		s := stack.Trace().TrimBelow(r.Call).TrimRuntime()
-		if len(s) > 0 {
-			r.Ctx = append(r.Ctx, "stack", fmt.Sprintf(format, s))
-		}
-		return h.Log(r)
-	})
-}
+// // CallerStackHandler returns a Handler that adds a stack trace to the context
+// // with key "stack". The stack trace is formated as a space separated list of
+// // call sites inside matching []'s. The most recent call site is listed first.
+// // Each call site is formatted according to format. See the documentation of
+// // package github.com/go-stack/stack for the list of supported formats.
+// func CallerStackHandler(format string, h Handler) Handler {
+// 	return FuncHandler(func(r *Record) error {
+// 		s := stack.Trace().TrimBelow(r.Call).TrimRuntime()
+// 		if len(s) > 0 {
+// 			r.Ctx = append(r.Ctx, "stack", fmt.Sprintf(format, s))
+// 		}
+// 		return h.Log(r)
+// 	})
+// }
 
 // FilterHandler returns a Handler that only writes records to the
 // wrapped Handler if the given function evaluates true. For example,
@@ -202,31 +203,31 @@ func FilterHandler(fn func(r *Record) bool, h Handler) Handler {
 	})
 }
 
-// MatchFilterHandler returns a Handler that only writes records
-// to the wrapped Handler if the given key in the logged
-// context matches the value. For example, to only log records
-// from your ui package:
-//
-//	log.MatchFilterHandler("pkg", "app/ui", log.StdoutHandler)
-func MatchFilterHandler(key string, value interface{}, h Handler) Handler {
-	return FilterHandler(func(r *Record) (pass bool) {
-		switch key {
-		case r.KeyNames.Lvl:
-			return r.Lvl == value
-		case r.KeyNames.Time:
-			return r.Time == value
-		case r.KeyNames.Msg:
-			return r.Msg == value
-		}
+// // MatchFilterHandler returns a Handler that only writes records
+// // to the wrapped Handler if the given key in the logged
+// // context matches the value. For example, to only log records
+// // from your ui package:
+// //
+// //	log.MatchFilterHandler("pkg", "app/ui", log.StdoutHandler)
+// func MatchFilterHandler(key string, value interface{}, h Handler) Handler {
+// 	return FilterHandler(func(r *Record) (pass bool) {
+// 		switch key {
+// 		case r.KeyNames.Lvl:
+// 			return r.Lvl == value
+// 		case r.KeyNames.Time:
+// 			return r.Time == value
+// 		case r.KeyNames.Msg:
+// 			return r.Msg == value
+// 		}
 
-		for i := 0; i < len(r.Ctx); i += 2 {
-			if r.Ctx[i] == key {
-				return r.Ctx[i+1] == value
-			}
-		}
-		return false
-	}, h)
-}
+// 		for i := 0; i < len(r.Ctx); i += 2 {
+// 			if r.Ctx[i] == key {
+// 				return r.Ctx[i+1] == value
+// 			}
+// 		}
+// 		return false
+// 	}, h)
+// }
 
 // LvlFilterHandler returns a Handler that only writes
 // records which are less than the given verbosity
