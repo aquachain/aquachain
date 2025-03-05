@@ -178,6 +178,7 @@ func (t *BlockTest) insertBlocks(blockchain *core.BlockChain) ([]btBlock, error)
 			}
 		}
 		// RLP decoding worked, try to insert into chain:
+		cb.SetVersionConfig(blockchain.Config())
 		blocks := types.Blocks{cb}
 		i, err := blockchain.InsertChain(blocks)
 		if err != nil {
