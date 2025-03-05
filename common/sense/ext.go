@@ -10,22 +10,36 @@ var main_argv = os.Args // allow test package to override
 
 // FeatureEnabled returns true if the os env is truthy, or flagname is found in command line
 func FeatureEnabled(envname string, flagname string) bool {
-	if EnvBool(envname) {
-		return true
+	if envname == "" && flagname == "" {
+		panic("FeatureEnabled called with no args")
 	}
-	if FastParseArgsBool(flagname) {
-		return true
+	if envname != "" {
+		if EnvBool(envname) {
+			return true
+		}
+	}
+	if flagname != "" {
+		if FastParseArgsBool(flagname) {
+			return true
+		}
 	}
 	return false
 }
 
 // FeatureDisabled returns true if the os env is falsy, or flagname is found in command line
 func FeatureDisabled(envname string, flagname string) bool {
-	if EnvBoolDisabled(envname) {
-		return true
+	if envname == "" && flagname == "" {
+		panic("FeatureDisabled called with no args")
 	}
-	if FastParseArgsBool(flagname) {
-		return true
+	if envname != "" {
+		if EnvBoolDisabled(envname) {
+			return true
+		}
+	}
+	if flagname != "" {
+		if FastParseArgsBool(flagname) {
+			return true
+		}
 	}
 	return false
 }

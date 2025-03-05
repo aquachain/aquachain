@@ -19,7 +19,6 @@ package tests
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"reflect"
 	"testing"
 
@@ -27,13 +26,14 @@ import (
 	"gitlab.com/aquachain/aquachain/core/vm"
 )
 
+func init() {
+	log.ResetForTesting()
+}
 func TestState(t *testing.T) {
-	log.SetRootHandler(log.LvlFilterHandler(log.LvlInfo, log.StreamHandler(os.Stderr, log.TerminalFormat(true))))
-	log.PrintOrigins(true)
-	if os.Getenv("DEBUG") == "1" {
-		log.SetRootHandler(log.LvlFilterHandler(log.LvlTrace, log.StreamHandler(os.Stderr, log.TerminalFormat(true))))
-		log.PrintOrigins(true)
-	}
+	// if os.Getenv("DEBUG") == "1" {
+	// 	log.SetRootHandler(log.LvlFilterHandler(log.LvlTrace, log.StreamHandler(os.Stderr, log.TerminalFormat(true))))
+	// 	log.PrintOrigins(true)
+	// }
 	// t.Parallel()
 
 	st := new(testMatcher)

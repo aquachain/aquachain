@@ -1,11 +1,15 @@
 package utils
 
 import (
-	"log"
 	"strings"
 	"testing"
+
+	"gitlab.com/aquachain/aquachain/common/log"
 )
 
+func init() {
+	log.ResetForTesting()
+}
 func TestDefaultNodeConfig(t *testing.T) {
 	got := DefaultNodeConfig("abcdefg", "aquachain")
 	log.Printf("got: %#v", got.P2P.Name)

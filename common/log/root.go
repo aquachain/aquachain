@@ -33,10 +33,10 @@ func newRoot() *logger {
 }
 
 var (
-	StderrHandler         = CallerFileHandler(StreamHandler(os.Stderr, JsonFormatEx(false, true)))
+	StderrHandler         = CallerFileHandler(StreamHandler(os.Stderr, JsonFormatEx(false, true))) // default jsonlog. main command changes this.
 	root          *logger = newRoot()
-	// StdoutHandler = StreamHandler(os.Stdout, LogfmtFormat())
-	// StderrHandler = StreamHandler(os.Stderr, LogfmtFormat())
+	// old: StdoutHandler = StreamHandler(os.Stdout, LogfmtFormat())
+	// old: StderrHandler = StreamHandler(os.Stderr, LogfmtFormat())
 )
 
 // func init() {
@@ -58,6 +58,10 @@ func SetRootHandler(h Handler) {
 		root = newRoot()
 	}
 	root.SetHandler(h)
+}
+
+func SetRoot(x *logger) {
+	root = x
 }
 
 // Root returns the root logger

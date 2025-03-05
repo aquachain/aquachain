@@ -12,12 +12,15 @@ import (
 	"gitlab.com/aquachain/aquachain/cmd/utils"
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/config"
+	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/common/toml"
 )
 
-type Config = config.Aquaconfig
+func init() {
+	log.ResetForTesting()
+}
 
-var DefaultConfig = aqua.DefaultConfig
+type Config = config.Aquaconfig
 
 func TestConfigEmpty(t *testing.T) {
 	var cfg Config
@@ -28,7 +31,7 @@ func TestConfigEmpty(t *testing.T) {
 	println(string(got))
 }
 func TestConfigDefault(t *testing.T) {
-	var cfg *Config = DefaultConfig
+	var cfg *Config = aqua.NewDefaultConfig()
 	got, err := toml.Marshal(cfg)
 	if err != nil {
 		t.Fatal(err)
@@ -37,8 +40,7 @@ func TestConfigDefault(t *testing.T) {
 }
 func TestConfigDefaultMainnet(t *testing.T) {
 	var cfg0 *utils.AquachainConfig = utils.Mkconfig("aqua", "", false, "100aa3", "aquachain")
-	cfg := cfg0.Aqua
-	got, err := toml.Marshal(&cfg)
+	got, err := toml.Marshal(cfg0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -61,15 +63,19 @@ func TestConfigDefaultEmptyCoinbase(t *testing.T) {
 }
 
 func TestConfigUnmarshalPartial(t *testing.T) {
-	var mainnetcfg *utils.AquachainConfig = utils.Mkconfig("aqua", "", false, "100aa3", "aquachain")
 	tomlStr := `
 	[Aqua]
 	ChainId = 12345
 	[Node]
 	UserIdent = "Foo"
 	`
+
+	var mainnetcfg *utils.AquachainConfig = utils.Mkconfig("aqua", "", false, "100aa3", "aquachain")
+	// compare with mainnetcfg after making the exact same changes
+	mainnetcfg.Aqua.ChainId = 12345
+	mainnetcfg.Node.UserIdent = "Foo"
 	var cfg0new *utils.AquachainConfig = utils.Mkconfig("aqua", "", false, "100aa3", "aquachain")
-	var cfg1copy *utils.AquachainConfig = mainnetcfg.Copy()
+	var cfg1copy *utils.AquachainConfig = utils.Mkconfig("aqua", "", false, "100aa3", "aquachain").Copy()
 
 	for _, cfg := range []*utils.AquachainConfig{cfg0new, cfg1copy} {
 		buf := strings.NewReader(tomlStr)
@@ -83,9 +89,6 @@ func TestConfigUnmarshalPartial(t *testing.T) {
 			t.Fatalf("NoPruning not set from default config")
 		}
 
-		// compare with mainnetcfg after making the same changes
-		mainnetcfg.Aqua.ChainId = 12345
-		mainnetcfg.Node.UserIdent = "Foo"
 		if l1, l2 := len(cfg.Aqua.ExtraData), len(mainnetcfg.Aqua.ExtraData); l1 != l2 {
 			t.Fatalf("len(cfg.Aqua.ExtraData) != len(mainnetcfg.Aqua.ExtraData): %d != %d", l1, l2)
 		}

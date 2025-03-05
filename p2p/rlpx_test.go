@@ -25,7 +25,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net"
-	"os"
 	"reflect"
 	"strings"
 	"sync"
@@ -62,10 +61,7 @@ func TestSharedSecret(t *testing.T) {
 }
 
 func init() {
-	if os.Getenv("DEBUG") == "1" {
-		log.SetRootHandler(log.LvlFilterHandler(log.LvlTrace, log.StreamHandler(os.Stderr, log.TerminalFormat(true))))
-		log.PrintOrigins(true)
-	}
+	log.ResetForTesting()
 }
 
 func TestEncHandshake(t *testing.T) {
