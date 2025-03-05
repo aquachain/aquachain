@@ -24,28 +24,7 @@ import (
 	"time"
 
 	"github.com/go-stack/stack"
-	"gitlab.com/aquachain/aquachain/common/sense"
 )
-
-func newRoot() *logger {
-	x := &logger{[]interface{}{}, new(swapHandler)}
-	x.SetHandler(StderrHandler)
-	return x
-}
-func newRootHandler() Handler {
-	x := CallerFileHandler(StreamHandler(os.Stderr, TerminalFormat(true)))
-	if sense.FeatureEnabled("JSONLOG", "jsonlog") {
-		return CallerFileHandler(StreamHandler(os.Stderr, JsonFormatEx(false, true)))
-	}
-	lvl := os.Getenv("LOGLEVEL")
-	if lvl == "" {
-		lvl = os.Getenv("TESTLOGLVL")
-	}
-	if lvl != "" {
-		x = LvlFilterHandler(MustParseLevel(lvl), x)
-	}
-	return x
-}
 
 var (
 	StderrHandler         = newRootHandler()

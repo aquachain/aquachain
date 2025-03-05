@@ -63,3 +63,34 @@ func MustParseLevel(s string) Lvl {
 		panic("bad TESTLOGLVL: " + s)
 	}
 }
+
+func newRoot() *logger {
+	x := &logger{[]interface{}{}, new(swapHandler)}
+	x.SetHandler(StderrHandler)
+	return x
+}
+
+var is_testing bool
+
+func levelFromEnv() Lvl {
+	lvl := os.Getenv("LOGLEVEL")
+	if lvl == "" {
+		lvl = os.Getenv("TESTLOGLVL")
+	}
+	if lvl == "" {
+		if is_testing {
+			return LvlWarn
+		}
+		return LvlInfo
+	}
+	return MustParseLevel(lvl)
+}
+func newRootHandler() Handler {
+	x := CallerFileHandler(StreamHandler(os.Stderr, TerminalFormat(true)))
+	if sense.FeatureEnabled("JSONLOG", "jsonlog") {
+		return CallerFileHandler(StreamHandler(os.Stderr, JsonFormatEx(false, true)))
+	}
+	lvl := levelFromEnv()
+	x = LvlFilterHandler(lvl, x)
+	return x
+}
