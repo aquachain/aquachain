@@ -131,6 +131,14 @@ var (
 	DoitNowFlag = &cli.BoolFlag{
 		Name:  "now",
 		Usage: "Start the node immediately, do not start countdown",
+		Action: func(ctx context.Context, cmd *cli.Command, v bool) error {
+			if v {
+				cmd.Set("now", "true")
+			}
+			p2p.NoCountdown = true
+			node.DefaultConfig.NoCountdown = true
+			return nil
+		},
 	}
 	ChainFlag = &cli.StringFlag{
 		Name:  "chain",
