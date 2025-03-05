@@ -104,7 +104,7 @@ func (aquahash *Aquahash) VerifyHeader(chain consensus.ChainReader, header *type
 // a results channel to retrieve the async verifications.
 func (aquahash *Aquahash) VerifyHeaders(chain consensus.ChainReader, headers []*types.Header, seals []bool) (chan<- struct{}, <-chan error) {
 	// If we're running a full engine faking, accept any input as valid
-	if aquahash.config.PowMode == ModeFullFake || len(headers) == 0 {
+	if aquahash.config != nil && aquahash.config.PowMode == ModeFullFake || len(headers) == 0 {
 		abort, results := make(chan struct{}), make(chan error, len(headers))
 		for i := 0; i < len(headers); i++ {
 			results <- nil
