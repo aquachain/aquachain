@@ -28,6 +28,7 @@ func TestCheckCompatible(t *testing.T) {
 		head        uint64
 		wantErr     *ConfigCompatError
 	}
+	wanthf := AllAquahashProtocolChanges.HF
 	tests := []test{
 		{stored: AllAquahashProtocolChanges, new: AllAquahashProtocolChanges, head: 0, wantErr: nil},
 		{stored: AllAquahashProtocolChanges, new: AllAquahashProtocolChanges, head: 100, wantErr: nil},
@@ -43,14 +44,14 @@ func TestCheckCompatible(t *testing.T) {
 			},
 		},
 		{
-			stored:  &ChainConfig{EIP150Block: big.NewInt(10)},
-			new:     &ChainConfig{EIP150Block: big.NewInt(20)},
+			stored:  &ChainConfig{EIP150Block: big.NewInt(10), HF: wanthf},
+			new:     &ChainConfig{EIP150Block: big.NewInt(20), HF: wanthf},
 			head:    9,
 			wantErr: nil,
 		},
 		{
 			stored: AllAquahashProtocolChanges,
-			new:    &ChainConfig{HomesteadBlock: nil},
+			new:    &ChainConfig{HomesteadBlock: nil, HF: wanthf},
 			head:   3,
 			wantErr: &ConfigCompatError{
 				What:         "Homestead fork block",
@@ -61,7 +62,7 @@ func TestCheckCompatible(t *testing.T) {
 		},
 		{
 			stored: AllAquahashProtocolChanges,
-			new:    &ChainConfig{HomesteadBlock: big.NewInt(1)},
+			new:    &ChainConfig{HomesteadBlock: big.NewInt(1), HF: wanthf},
 			head:   3,
 			wantErr: &ConfigCompatError{
 				What:         "Homestead fork block",
