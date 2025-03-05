@@ -42,7 +42,7 @@ func TestHTTPErrorResponseWithEmptyContentType(t *testing.T) {
 }
 
 func TestHTTPErrorResponseWithValidRequest(t *testing.T) {
-	testHTTPErrorResponse(t, http.MethodPost, contentType, "", 0)
+	testHTTPErrorResponse(t, http.MethodPost, contentType, "", 200)
 }
 
 func testHTTPErrorResponse(t *testing.T, method, contentType, body string, expected int) {
