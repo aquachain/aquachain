@@ -34,29 +34,36 @@ import (
 type Config = config.Aquaconfig // TODO remove
 
 // DefaultConfig contains default settings for use on the Aquachain main net.
-var DefaultConfig = &config.Aquaconfig{
-	SyncMode: downloader.FullSync,
-	Aquahash: aquahash.Config{
-		CacheDir:       "aquahash",
-		CachesInMem:    1,
-		CachesOnDisk:   0,
-		DatasetsInMem:  0,
-		DatasetsOnDisk: 0,
-	},
-	ChainId:       61717561,
-	DatabaseCache: 768,
-	TrieCache:     256,
-	TrieTimeout:   5 * time.Minute,
-	GasPrice:      big.NewInt(10000000), // 0.01 gwei
-	NoPruning:     true,
-	TxPool:        core.DefaultTxPoolConfig,
-	GPO: gasprice.Config{
-		Blocks:     20,
-		Percentile: 60,
-	},
+var DefaultConfig = NewDefaultConfig()
+
+func NewDefaultConfig() *Config {
+	return &config.Aquaconfig{
+		SyncMode: downloader.FullSync,
+		Aquahash: aquahash.Config{
+			CacheDir:       "aquahash",
+			CachesInMem:    1,
+			CachesOnDisk:   0,
+			DatasetsInMem:  0,
+			DatasetsOnDisk: 0,
+			DatasetDir:     DefaultDatasetDirByOS(),
+			PowMode:        aquahash.ModeNormal,
+			StartVersion:   0,
+		},
+		ChainId:       61717561,
+		DatabaseCache: 768,
+		TrieCache:     256,
+		TrieTimeout:   5 * time.Minute,
+		GasPrice:      big.NewInt(10000000), // 0.01 gwei
+		NoPruning:     true,
+		TxPool:        core.DefaultTxPoolConfig,
+		GPO: gasprice.Config{
+			Blocks:     20,
+			Percentile: 60,
+		},
+	}
 }
 
-func init() {
+func DefaultDatasetDirByOS() string {
 	home := os.Getenv("HOME")
 	if home == "" {
 		if user, err := user.Current(); err == nil {
@@ -64,8 +71,7 @@ func init() {
 		}
 	}
 	if runtime.GOOS == "windows" {
-		DefaultConfig.Aquahash.DatasetDir = filepath.Join(home, "AppData", "Aquahash")
-	} else {
-		DefaultConfig.Aquahash.DatasetDir = filepath.Join(home, ".aquahash")
+		return filepath.Join(home, "AppData", "Aquahash")
 	}
+	return filepath.Join(home, ".aquahash")
 }
