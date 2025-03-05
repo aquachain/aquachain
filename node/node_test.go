@@ -25,7 +25,6 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/aquachain/aquachain/common/config"
 	"gitlab.com/aquachain/aquachain/crypto"
 	"gitlab.com/aquachain/aquachain/p2p"
 	"gitlab.com/aquachain/aquachain/rpc"
@@ -35,16 +34,16 @@ var (
 	testNodeKey, _ = crypto.GenerateKey()
 )
 
-// instead of waiting (eg. no -now flag)
-func contextBackground() context.Context {
-	return context.WithValue(context.Background(), config.CtxDoitNow, true)
+func init() {
+	DefaultConfig.NoCountdown = true
 }
+
 func testNodeConfig() *Config {
 	return &Config{
 		Name:       "test node",
 		P2P:        &p2p.Config{PrivateKey: testNodeKey, ChainId: 1337},
 		RPCAllowIP: []string{"127.0.0.1"},
-		Context:    contextBackground(),
+		Context:    context.Background(),
 		CloseMain:  func(err error) { println("CloseMain", err) },
 	}
 }
@@ -553,7 +552,7 @@ func TestAPIGather(t *testing.T) {
 	defer stack.Stop()
 
 	// Connect to the RPC server and verify the various registered endpoints
-	client, err := stack.Attach("TestApiGather")
+	client, err := stack.Attach(stack.Context(), "TestApiGather")
 	if err != nil {
 		t.Fatalf("failed to connect to the inproc API server: %v", err)
 	}

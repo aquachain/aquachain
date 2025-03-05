@@ -304,7 +304,7 @@ func startNode(ctx context.Context, cmd *cli.Command, stack *node.Node) {
 		log.Info("Starting Account Manager")
 		go func() {
 			// Create an chain state reader for self-derivation
-			rpcClient, err := stack.Attach("accountManager")
+			rpcClient, err := stack.Attach(ctx, "accountManager")
 			if err != nil {
 				log.GracefulShutdown(log.Errorf("failed to attach to self: %v", err))
 				return

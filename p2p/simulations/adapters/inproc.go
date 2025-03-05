@@ -134,7 +134,7 @@ func (s *SimAdapter) DialRPC(id discover.NodeID) (*rpcclient.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return rpcclient.DialInProc(handler), nil
+	return rpcclient.DialInProc(context.TODO(), handler), nil
 }
 
 // GetNode returns the node with the given ID if it exists
@@ -270,7 +270,7 @@ func (self *SimNode) Start(snapshots map[string][]byte) error {
 	}
 
 	self.lock.Lock()
-	self.client = rpcclient.DialInProc(handler)
+	self.client = rpcclient.DialInProc(context.TODO(), handler)
 	self.lock.Unlock()
 
 	return nil

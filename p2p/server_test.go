@@ -30,12 +30,12 @@ import (
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/crypto"
 	"gitlab.com/aquachain/aquachain/crypto/sha3"
-	"gitlab.com/aquachain/aquachain/node"
 	"gitlab.com/aquachain/aquachain/p2p/discover"
 )
 
 func init() {
 	log.ResetForTesting()
+	NoCountdown = true
 }
 
 type testTransport struct {
@@ -69,9 +69,6 @@ func (c *testTransport) close(err error) {
 	c.closeErr = err
 }
 
-func init() {
-	node.DefaultConfig.NoCountdown = true
-}
 func startTestServer(t *testing.T, id discover.NodeID, pf func(*Peer)) *Server {
 	config := &Config{
 		Name:       "test",
@@ -379,7 +376,7 @@ func TestServerAtCap(t *testing.T) {
 			ChainId:      333,
 		},
 	}
-	if err := srv.Start(contextBackground()); err != nil {
+	if err := srv.Start(context.TODO()); err != nil {
 		t.Fatalf("could not start: %v", err)
 	}
 	defer srv.Stop()
@@ -486,7 +483,7 @@ func TestServerSetupConn(t *testing.T) {
 			log:          log.New(),
 		}
 		if !test.dontstart {
-			if err := srv.Start(contextBackground()); err != nil {
+			if err := srv.Start(context.TODO()); err != nil {
 				t.Fatalf("couldn't start server: %v", err)
 			}
 		}

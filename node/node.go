@@ -684,7 +684,7 @@ func (n *Node) Restart() error {
 }
 
 // Attach creates an RPC client attached to an in-process API handler.
-func (n *Node) Attach(name string) (*rpcclient.Client, error) {
+func (n *Node) Attach(ctx context.Context, name string) (*rpcclient.Client, error) {
 	n.log.Trace("Attaching new client", "name", name, "caller2", log.Caller(1), "caller3", log.Caller(2))
 	if n.config.NoInProc {
 		return nil, fmt.Errorf("inproc disabled")
@@ -695,7 +695,7 @@ func (n *Node) Attach(name string) (*rpcclient.Client, error) {
 	if n.server == nil {
 		return nil, ErrNodeStopped
 	}
-	return rpcclient.DialInProc(n.inprocHandler), nil
+	return rpcclient.DialInProc(ctx, n.inprocHandler), nil
 }
 
 // RPCHandler returns the in-process RPC request handler.

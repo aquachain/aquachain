@@ -39,7 +39,7 @@ import (
 func TestClientRequest(t *testing.T) {
 	server := newTestServer("service", new(Service))
 	defer server.Stop()
-	client := DialInProc(server)
+	client := DialInProc(context.TODO(), server)
 	defer client.Close()
 
 	var resp Result
@@ -54,7 +54,7 @@ func TestClientRequest(t *testing.T) {
 func TestClientBatchRequest(t *testing.T) {
 	server := newTestServer("service", new(Service))
 	defer server.Stop()
-	client := DialInProc(server)
+	client := DialInProc(context.TODO(), server)
 	defer client.Close()
 
 	batch := []BatchElem{
@@ -195,7 +195,7 @@ func testClientCancel(transport string, t *testing.T) {
 func TestClientSubscribeInvalidArg(t *testing.T) {
 	server := newTestServer("service", new(Service))
 	defer server.Stop()
-	client := DialInProc(server)
+	client := DialInProc(context.TODO(), server)
 	defer client.Close()
 
 	check := func(shouldPanic bool, arg interface{}) {
@@ -225,7 +225,7 @@ func TestClientSubscribeInvalidArg(t *testing.T) {
 func TestClientSubscribe(t *testing.T) {
 	server := newTestServer("aqua", new(NotificationTestService))
 	defer server.Stop()
-	client := DialInProc(server)
+	client := DialInProc(context.TODO(), server)
 	defer client.Close()
 
 	nc := make(chan int)
@@ -257,7 +257,7 @@ func TestClientSubscribeCustomNamespace(t *testing.T) {
 	namespace := "custom"
 	server := newTestServer(namespace, new(NotificationTestService))
 	defer server.Stop()
-	client := DialInProc(server)
+	client := DialInProc(context.TODO(), server)
 	defer client.Close()
 
 	nc := make(chan int)
@@ -294,7 +294,7 @@ func TestClientSubscribeClose(t *testing.T) {
 	}
 	server := newTestServer("aqua", service)
 	defer server.Stop()
-	client := DialInProc(server)
+	client := DialInProc(context.TODO(), server)
 	defer client.Close()
 
 	var (
@@ -332,7 +332,7 @@ func TestClientNotificationStorm(t *testing.T) {
 	defer server.Stop()
 
 	doTest := func(count int, wantError bool) {
-		client := DialInProc(server)
+		client := DialInProc(context.TODO(), server)
 		defer client.Close()
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()

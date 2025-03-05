@@ -125,7 +125,7 @@ func newTester(t *testing.T, confOverride func(*aqua.Config)) *tester {
 	if err = stack.Start(context.Background()); err != nil {
 		t.Fatalf("failed to start test stack: %v", err)
 	}
-	client, err := stack.Attach("newTester")
+	client, err := stack.Attach(context.TODO(), "newTester")
 	if err != nil {
 		t.Fatalf("failed to attach to node: %v", err)
 	}

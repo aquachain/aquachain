@@ -417,13 +417,15 @@ func (s *sharedUDPConn) Close() error {
 	return nil
 }
 
+var NoCountdown = false
+
 // Start starts running the server.
 // Servers can not be re-used after stopping.
 func (srv *Server) Start(ctx context.Context) (err error) {
 	if srv.Config.Offline {
 		return nil
 	}
-	doitnow := false
+	doitnow := NoCountdown
 	{
 		chaincfg := srv.Config.ChainConfig()
 		if chaincfg == nil {

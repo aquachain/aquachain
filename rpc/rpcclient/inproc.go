@@ -24,12 +24,11 @@ import (
 )
 
 // NewInProcClient attaches an in-process connection to the given RPC server.
-func DialInProc(handler *rpc.Server) *Client {
+func DialInProc(ctx context.Context, handler *rpc.Server) *Client {
 	if handler == nil {
 		panic("InProc handler is nil")
 	}
-	initctx := context.Background()
-	c, err := newClient(initctx, func(context.Context) (net.Conn, error) {
+	c, err := newClient(ctx, func(context.Context) (net.Conn, error) {
 		p1, p2 := net.Pipe()
 		go handler.ServeCodec(rpc.NewJSONCodec(p1), rpc.OptionMethodInvocation|rpc.OptionSubscriptions)
 		return p2, nil

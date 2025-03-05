@@ -191,7 +191,7 @@ func localConsole(ctx context.Context, cmd *cli.Command) error {
 	defer nodeserver.Stop()
 
 	// Attach to the newly started node and start the JavaScript console
-	client, err := nodeserver.Attach("localConsole")
+	client, err := nodeserver.Attach(ctx, "localConsole")
 	if err != nil {
 		return fmt.Errorf("failed to attach to the inproc aquachain: %v", err)
 	}
@@ -325,7 +325,7 @@ func ephemeralConsole(ctx context.Context, cmd *cli.Command) error {
 	defer node.Stop()
 
 	// Attach to the newly started node and start the JavaScript console
-	client, err := node.Attach("ephemeralConsole")
+	client, err := node.Attach(ctx, "ephemeralConsole")
 	if err != nil {
 		return fmt.Errorf("failed to attach to the inproc aquachain: %v", err)
 	}

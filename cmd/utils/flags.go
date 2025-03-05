@@ -1576,11 +1576,10 @@ type MigratedCommand struct {
 
 func (m *MigratedCommand) Run(ctx context.Context, cmd *cli.Command) error {
 	cmdmap := map[string]string{}
-	log.Warn("migrating command", "name", cmd.Name, "flags", cmd.Flags)
-	log.Warn("migrating command", "rootname", cmd.Root().Name, "rootflags", cmd.Root().Flags)
+	log.Debug("migrating command", "name", cmd.Name, "flags", cmd.FlagNames(), "rootname", cmd.Root().Name, "rootflags", cmd.Root().FlagNames(), "local", cmd.LocalFlagNames())
 	for _, c := range cmd.Commands {
 		cmdmap[c.Name] = c.Name
-		log.Warn("migrating command", "name", c.Name, "flags", c.Flags)
+		log.Warn("migrating subcommand", "name", c.Name)
 	}
 	for _, name := range cmd.FlagNames() {
 		if cmd.Root().IsSet(name) {
