@@ -1,6 +1,7 @@
 package aqua_test
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"reflect"
@@ -87,9 +88,21 @@ UserIdent = "Foo"
 	}
 
 	if !reflect.DeepEqual(&cfg, &mainnetcfg) {
+		got1, err := toml.Marshal(&cfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+		got2, err := toml.Marshal(mainnetcfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if bytes.Equal(got1, got2) {
+			return // false positive from reflect.DeepEqual
+		}
+		// try and show exact diff
 		fmt.Fprintf(os.Stderr,
 			"\n\ncfg1: %#v\n\ncfg0: %#v\n",
 			cfg.Aqua, mainnetcfg.Aqua)
-		t.Fatalf("cfg != mainnetcfg.Aqua")
+		t.Fatalf("cfg != mainnetcfg\n%s\n%s", got1, got2)
 	}
 }
