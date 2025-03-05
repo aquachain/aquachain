@@ -24,6 +24,8 @@ import (
 	"time"
 )
 
+var myrand = rand.New(rand.NewSource(time.Now().UnixNano()))
+
 const rescaleThreshold = time.Hour
 
 // Samples maintain a statistically-significant selection of values from
@@ -185,7 +187,7 @@ func (s *ExpDecaySample) update(t time.Time, v int64) {
 		s.values.Pop()
 	}
 	s.values.Push(expDecaySample{
-		k: math.Exp(t.Sub(s.t0).Seconds()*s.alpha) / rand.Float64(),
+		k: math.Exp(t.Sub(s.t0).Seconds()*s.alpha) / myrand.Float64(),
 		v: v,
 	})
 	if t.After(s.t1) {
@@ -527,7 +529,7 @@ func (s *UniformSample) Update(v int64) {
 	if len(s.values) < s.reservoirSize {
 		s.values = append(s.values, v)
 	} else {
-		r := rand.Int63n(s.count)
+		r := myrand.Int63n(s.count)
 		if r < int64(len(s.values)) {
 			s.values[int(r)] = v
 		}

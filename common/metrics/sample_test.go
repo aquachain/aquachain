@@ -17,11 +17,36 @@
 package metrics
 
 import (
-	"math/rand"
+	mrand "math/rand"
 	"runtime"
 	"testing"
 	"time"
 )
+
+func init() {
+	myrand = mrand.New(mrand.NewSource(1))
+}
+
+// test that the random number generator is deterministic (since go version update)
+func TestRand(t *testing.T) {
+	myrand.Seed(1)
+	var test_rand = []int64{
+		5577006791947779410, 8674665223082153551, 6129484611666145821, 4037200794235010051, 3916589616287113937, 6334824724549167320, 605394647632969758, 1443635317331776148, 894385949183117216, 2775422040480279449, 4751997750760398084, 7504504064263669287, 1976235410884491574, 3510942875414458836, 2933568871211445515, 4324745483838182873, 2610529275472644968, 2703387474910584091, 6263450610539110790, 2015796113853353331, 1874068156324778273, 3328451335138149956, 5263531936693774911, 7955079406183515637, 2703501726821866378, 2740103009342231109, 6941261091797652072, 1905388747193831650, 7981306761429961588, 6426100070888298971, 4831389563158288344, 261049867304784443, 1460320609597786623, 5600924393587988459, 8995016276575641803, 732830328053361739, 5486140987150761883, 545291762129038907, 6382800227808658932, 2781055864473387780, 1598098976185383115, 4990765271833742716, 5018949295715050020, 2568779411109623071, 3902890183311134652, 4893789450120281907, 2338498362660772719, 2601737961087659062, 7273596521315663110, 3337066551442961397, 8121576815539813105, 2740376916591569721, 8249030965139585917, 898860202204764712, 9010467728050264449, 685213522303989579, 2050257992909156333, 6281838661429879825, 2227583514184312746, 2873287401706343734, 8603989663476771718, 6842348953158377901, 7388428680384065704, 6735196588112087610, 1687184559264975024, 3950896730125624717, 8273290538659802269, 6296367092202729479, 9029029644282286269, 8505906760983331750, 837825985403119657, 4548432111829895923, 8549944162621642512, 8807817071862113702, 3209308858241334655, 6371863560482907257, 6556961545928831643, 5199948958991797301, 5990482929064819019, 5089134323978233018, 6971241403795498694, 3724427934598140041, 1205043859388862788, 9093919513921919021, 8267293389953062911, 2970700287221458280, 6651414131918424343, 5944830206637008055, 788787457839692041, 6175742077372812453, 5743654948930018631, 3409814636252858217, 2184302455902443631, 4937104021912138218, 1727040455672546632, 2202916659517317514, 5793183108815074904, 1169089424364679180, 2594813965004488500, 3784560248718450071,
+	}
+	for i, v := range test_rand {
+		if got := myrand.Int63(); got != v {
+			t.Errorf("test_rand[%d]: want %d got %d\n", i, v, got)
+		}
+	}
+	// to regen:
+	// limit := 100
+	// fmt.Printf("var test_rand = []int64{\n")
+	// for i := 0; i < limit; i++ {
+	// 	fmt.Printf("%d, ", myrand.Int63())
+	// }
+	// fmt.Printf("\n}\n")
+
+}
 
 // Benchmark{Compute,Copy}{1000,1000000} demonstrate that, even for relatively
 // expensive computations like Variance, the cost of copying the Sample, as
@@ -95,7 +120,7 @@ func BenchmarkUniformSample1028(b *testing.B) {
 }
 
 func TestExpDecaySample10(t *testing.T) {
-	rand.Seed(1)
+	myrand.Seed(1)
 	s := NewExpDecaySample(100, 0.99)
 	for i := 0; i < 10; i++ {
 		s.Update(int64(i))
@@ -117,7 +142,7 @@ func TestExpDecaySample10(t *testing.T) {
 }
 
 func TestExpDecaySample100(t *testing.T) {
-	rand.Seed(1)
+	myrand.Seed(1)
 	s := NewExpDecaySample(1000, 0.01)
 	for i := 0; i < 100; i++ {
 		s.Update(int64(i))
@@ -139,7 +164,7 @@ func TestExpDecaySample100(t *testing.T) {
 }
 
 func TestExpDecaySample1000(t *testing.T) {
-	rand.Seed(1)
+	myrand.Seed(1)
 	s := NewExpDecaySample(100, 0.99)
 	for i := 0; i < 1000; i++ {
 		s.Update(int64(i))
@@ -165,7 +190,7 @@ func TestExpDecaySample1000(t *testing.T) {
 // The priority becomes +Inf quickly after starting if this is done,
 // effectively freezing the set of samples until a rescale step happens.
 func TestExpDecaySampleNanosecondRegression(t *testing.T) {
-	rand.Seed(1)
+	myrand.Seed(1)
 	s := NewExpDecaySample(100, 0.99)
 	for i := 0; i < 100; i++ {
 		s.Update(10)
@@ -198,7 +223,7 @@ func TestExpDecaySampleRescale(t *testing.T) {
 
 func TestExpDecaySampleSnapshot(t *testing.T) {
 	now := time.Now()
-	rand.Seed(1)
+	myrand.Seed(1)
 	s := NewExpDecaySample(100, 0.99)
 	for i := 1; i <= 10000; i++ {
 		s.(*ExpDecaySample).update(now.Add(time.Duration(i)), int64(i))
@@ -210,7 +235,7 @@ func TestExpDecaySampleSnapshot(t *testing.T) {
 
 func TestExpDecaySampleStatistics(t *testing.T) {
 	now := time.Now()
-	rand.Seed(1)
+	myrand.Seed(1)
 	s := NewExpDecaySample(100, 0.99)
 	for i := 1; i <= 10000; i++ {
 		s.(*ExpDecaySample).update(now.Add(time.Duration(i)), int64(i))
@@ -219,7 +244,7 @@ func TestExpDecaySampleStatistics(t *testing.T) {
 }
 
 func TestUniformSample(t *testing.T) {
-	rand.Seed(1)
+	myrand.Seed(1)
 	s := NewUniformSample(100)
 	for i := 0; i < 1000; i++ {
 		s.Update(int64(i))
@@ -241,7 +266,7 @@ func TestUniformSample(t *testing.T) {
 }
 
 func TestUniformSampleIncludesTail(t *testing.T) {
-	rand.Seed(1)
+	myrand.Seed(1)
 	s := NewUniformSample(100)
 	max := 100
 	for i := 0; i < max; i++ {
@@ -269,7 +294,7 @@ func TestUniformSampleSnapshot(t *testing.T) {
 }
 
 func TestUniformSampleStatistics(t *testing.T) {
-	rand.Seed(1)
+	myrand.Seed(1)
 	s := NewUniformSample(100)
 	for i := 1; i <= 10000; i++ {
 		s.Update(int64(i))
@@ -364,7 +389,7 @@ func TestUniformSampleConcurrentUpdateCount(t *testing.T) {
 		for {
 			select {
 			case <-t.C:
-				s.Update(rand.Int63())
+				s.Update(myrand.Int63())
 			case <-quit:
 				t.Stop()
 				return
