@@ -36,25 +36,29 @@ const (
 )
 
 // DefaultConfig contains reasonable default settings.
-var DefaultConfig = &Config{
-	Name:        "", // must be set before GetNodeName
-	DataDir:     defaultDataDir(),
-	HTTPPort:    DefaultHTTPPort,
-	HTTPModules: []string{"aqua", "eth", "net", "web3"},
-	WSPort:      DefaultWSPort,
-	WSModules:   []string{"aqua", "eth", "net", "web3"},
-	P2P: &p2p.Config{
-		ListenAddr: "0.0.0.0:21303", // tcp+udp, ipv4 only
-		MaxPeers:   20,
-		NAT:        "none", // none
-	},
-	RPCBehindProxy: common.EnvBool("RPC_BEHIND_PROXY"),
-	UserIdent:      os.Getenv("AQUA_USERIDENT"),
-	HTTPHost:       DefaultHTTPHost,
-	WSHost:         DefaultWSHost,
-	RPCNoSign:      common.EnvBool("NO_SIGN"), // doesnt do anything here. something needs to read it
-	NoKeys:         common.EnvBool("NO_KEYS"), // doesnt do anything here. something needs to read it
-	NoCountdown:    common.EnvBool("NO_COUNTDOWN"),
+var DefaultConfig = NewDefaultConfig()
+
+func NewDefaultConfig() *Config {
+	return &Config{
+		Name:        "", // must be set before GetNodeName
+		DataDir:     defaultDataDir(),
+		HTTPPort:    DefaultHTTPPort,
+		HTTPModules: []string{"aqua", "eth", "net", "web3"},
+		WSPort:      DefaultWSPort,
+		WSModules:   []string{"aqua", "eth", "net", "web3"},
+		P2P: &p2p.Config{
+			ListenAddr: "0.0.0.0:21303", // tcp+udp, ipv4 only
+			MaxPeers:   20,
+			NAT:        "none", // none
+		},
+		RPCBehindProxy: common.EnvBool("RPC_BEHIND_PROXY"),
+		UserIdent:      os.Getenv("AQUA_USERIDENT"),
+		HTTPHost:       DefaultHTTPHost,
+		WSHost:         DefaultWSHost,
+		RPCNoSign:      common.EnvBool("NO_SIGN"), // doesnt do anything here. something needs to read it
+		NoKeys:         common.EnvBool("NO_KEYS"), // doesnt do anything here. something needs to read it
+		NoCountdown:    common.EnvBool("NO_COUNTDOWN"),
+	}
 }
 
 // DefaultDataDir is the default data directory to use for the databases and other
