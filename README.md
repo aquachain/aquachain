@@ -6,8 +6,23 @@ Mirrored: https://github.com/aquachain/aquachain
 
 View or Improve the Documentation online: https://aquachain.github.io/docs/
 
+[![Website](https://img.shields.io/badge/Website-aqua.github.io-blue.svg)](https://aquachain.github.io)
+[![Explorer](https://img.shields.io/badge/Block_Explorer-aquachain.github.io/explorer-blue.svg)](https://aquachain.github.io/explorer/)
+
 [![Build and Test](https://github.com/aquachain/aquachain/actions/workflows/test.yml/badge.svg)](https://github.com/aquachain/aquachain/actions/workflows/test.yml)
 [![Release](https://github.com/aquachain/aquachain/actions/workflows/release.yml/badge.svg)](https://github.com/aquachain/aquachain/releases/)
+
+[![Chat on Matrix](https://matrix.to/img/matrix-badge.svg)](https://matrix.to/#/!ZIGUfKJVCVhrCjBRfz:matrix.org/lobby?via=matrix.org)
+[![Chat on Discord](https://img.shields.io/badge/chat-on%20discord-blue.svg)](https://discordapp.com/invite/J7jBhZf)
+[![Chat on Telegram](https://img.shields.io/badge/chat-on%20telegram-blue.svg)](https://t.me/AquaCrypto)
+[![Telegram News](https://img.shields.io/badge/telegram-news-blue.svg)](https://t.me/Aquachain)
+[![Twitter](https://img.shields.io/twitter/follow/aquacrypto?style=social)](https://twitter.com/aquacrypto)
+
+
+[![SafeTrade](https://img.shields.io/badge/SafeTrade-AQUA/BTC-green.svg)](https://safetrade.com/exchange/AQUA-BTC?type=pro?aqua)
+[![DexScreener](https://img.shields.io/badge/DexScreener-AQUA_BEP20-green.svg)](https://dexscreener.com/bsc/0x38fab266089aaf3bc2f11b791213840ea3d587c7)
+
+
 
 ** Found a bug **in this software**? Documentation lacking?
 See https://gitlab.com/aquachain/aquachain/wikis/bugs **
@@ -234,7 +249,7 @@ Solidity developers take note: the Aquachain EVM is not the same as other chains
 
 Certain opcodes simply do not exist here such as CREATE2 and CHAINID and others.
 
-When compiling solidity, use 'Byzantium' EVM target and enable optimization.
+When compiling solidity code, use 'Byzantium' EVM target and enable optimization.
 
 If you think there should be a change to our EVM, submit a pull request or join chat.
 
@@ -294,11 +309,11 @@ Godoc - https://godoc.org/gitlab.com/aquachain/aquachain#pkg-subdirectories
 
 Report bugs - https://github.com/aquachain/aquachain/issues
 
+Matrix: https://matrix.to/#/!ZIGUfKJVCVhrCjBRfz:matrix.org/lobby?via=matrix.org
+
 Telegram Chat: https://t.me/AquaCrypto
 
 Discord: https://discordapp.com/invite/J7jBhZf
-
-IRC: #aquachain on freenode
 
 Bugs: https://gitlab.com/aquachain/aquachain/wikis/bugs
 
@@ -309,7 +324,7 @@ Aquachain is free open source software and your contributions are welcome.
 ### Some tips and tricks for hacking on Aquachain core:
 
 - Always `gofmt -w -l -s` before commiting. If you forget, adding a simple
-  'gofmt -w -l -s' commit works.
+  'gofmt -w -l -s' commit message works.
 - Before making a merge request, try `make test` to run all tests. If any
   tests pass, the PR can not be merged into the master branch.
 - Rebase: Don't `git pull` to update your branch. instead, from your branch, type `git rebase -i master` and resolve any conflicts (do this often and there wont be any!)
