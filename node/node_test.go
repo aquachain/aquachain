@@ -105,7 +105,7 @@ func TestNodeUsedDataDir(t *testing.T) {
 	defer os.RemoveAll(dir)
 
 	// Create a new node based on the data directory
-	original, err := NewTestNew(&Config{DataDir: dir, P2P: testp2p})
+	original, err := NewTestNew(&Config{DataDir: dir, P2P: testp2p, RPCAllowIP: []string{"127.0.0.2"}})
 	if err != nil {
 		t.Fatalf("failed to create original protocol stack: %v", err)
 	}
@@ -115,7 +115,7 @@ func TestNodeUsedDataDir(t *testing.T) {
 	defer original.Stop()
 
 	// Create a second node based on the same data directory and ensure failure
-	duplicate, err := NewTestNew(&Config{DataDir: dir, P2P: testp2p})
+	duplicate, err := NewTestNew(&Config{DataDir: dir, P2P: testp2p, RPCAllowIP: []string{"127.0.0.2"}})
 	if err != nil {
 		t.Fatalf("failed to create duplicate protocol stack: %v", err)
 	}
