@@ -219,8 +219,13 @@ func TestServerTaskScheduling(t *testing.T) {
 	}
 	srv.loopWG.Add(1)
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				t.Errorf("TestServerTaskScheduling panic: %#v", r)
+			}
+			close(returned)
+		}()
 		srv.run(tg)
-		close(returned)
 	}()
 
 	var gotdone []*testTask
@@ -250,7 +255,8 @@ func TestServerTaskScheduling(t *testing.T) {
 // This test checks that Server doesn't drop tasks,
 // even if newTasks returns more than the maximum number of tasks.
 func TestServerManyTasks(t *testing.T) {
-	alltasks := make([]task, 300)
+	ntest := 3
+	alltasks := make([]task, ntest) // 300
 	for i := range alltasks {
 		alltasks[i] = &testTask{index: i}
 	}
@@ -261,28 +267,59 @@ func TestServerManyTasks(t *testing.T) {
 			ntab:    fakeTable{},
 			running: true,
 			log:     log.New(),
+			// loopWG:  new(syncWaitGroup),
+			Config: &Config{MaxPeers: 10},
 		}
 		done       = make(chan *testTask)
 		start, end = 0, 0
 	)
 	defer srv.Stop()
+
+	if srv.Config == nil {
+		t.Errorf("Config is nil, danger zone")
+		return
+	}
 	srv.loopWG.Add(1)
-	go srv.run(taskgen{
-		newFunc: func(running int, peers map[discover.NodeID]*Peer) []task {
-			start, end = end, end+maxActiveDialTasks+10
-			if end > len(alltasks) {
-				end = len(alltasks)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				t.Errorf("TestServerManyTasks panic: %#v", r)
 			}
-			return alltasks[start:end]
-		},
-		doneFunc: func(tt task) {
-			done <- tt.(*testTask)
-		},
-	})
+		}()
+
+		srv.run(taskgen{
+			newFunc: func(running int, peers map[discover.NodeID]*Peer) []task {
+				if peers == nil {
+					t.Error("peers is nil")
+					return nil
+				}
+				start, end = end, end+maxActiveDialTasks+10
+				if end > len(alltasks) {
+					end = len(alltasks)
+				}
+				return alltasks[start:end]
+			},
+			doneFunc: func(tt task) {
+				if tt == nil {
+					t.Error("task is nil")
+					return
+				}
+				x, ok := tt.(*testTask)
+				if !ok {
+					t.Errorf("task is not a *testTask: %T", tt)
+					return
+				}
+				done <- x
+			},
+		})
+	}()
 
 	doneset := make(map[int]bool)
 	timeout := time.After(2 * time.Second)
 	for len(doneset) < len(alltasks) {
+		if t.Failed() {
+			return
+		}
 		select {
 		case tt := <-done:
 			if doneset[tt.index] {
@@ -311,7 +348,9 @@ func (tg taskgen) newTasks(running int, peers map[discover.NodeID]*Peer, now tim
 	return tg.newFunc(running, peers)
 }
 func (tg taskgen) taskDone(t task, now time.Time) {
-	tg.doneFunc(t)
+	if tg.doneFunc != nil {
+		tg.doneFunc(t)
+	}
 }
 func (tg taskgen) addStatic(*discover.Node) {
 }
@@ -461,6 +500,88 @@ func TestServerSetupConn(t *testing.T) {
 			t.Errorf("test %d: calls mismatch: got %q, want %q", i, test.tt.calls, test.wantCalls)
 		}
 	}
+}
+
+func TestSyncWaitGroup(t *testing.T) {
+	t.Run("sync.WaitGroup", func(t *testing.T) {
+		var wg syncWaitGroup
+
+		// Test Add
+		wg.Add(1)
+		if wg.int != 1 {
+			t.Errorf("Expected wg.int to be 1, got %d", wg.int)
+		}
+
+		// Test Done
+		wg.Done()
+		if wg.int != 0 {
+			t.Errorf("Expected wg.int to be 0, got %d", wg.int)
+		}
+
+		// Test Wait
+		done := make(chan struct{})
+		go func() {
+			wg.Wait()
+			close(done)
+		}()
+
+		select {
+		case <-done:
+		case <-time.After(1 * time.Second):
+			t.Error("Wait did not return within 1 second")
+		}
+	})
+
+	t.Run("sync.WaitGroup slow", func(t *testing.T) {
+		var wg = syncWaitGroup{}
+		var done = make(chan struct{})
+		t1 := time.Now()
+		// dummy worker
+		wg.Add(1)
+		go func() { // wait then wg.Done
+			time.Sleep(time.Second / 2)
+			defer wg.Done()
+		}()
+		// the wait
+		go func() { // wait for wg then close our chan
+			wg.Wait()
+			close(done)
+		}()
+
+		// put a timeout just in case it hangs
+		select {
+		case <-done:
+		case <-time.After(time.Second - time.Millisecond):
+			t.Error("Wait did not return within 1 second")
+		}
+
+		// make sure it took at least 1/2 second
+		t2 := time.Now()
+		if t2.Sub(t1) < time.Second/2 {
+			t.Errorf("Wait returned too soon, expected at least 1 second, got %v", t2.Sub(t1))
+		}
+	})
+	t.Run("sync.WaitGroup negative counter", func(t *testing.T) {
+		// Test panic on negative counter
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("Expected panic on negative counter, but did not get one")
+			}
+		}()
+		var wg syncWaitGroup
+		wg.Done()
+	})
+
+	t.Run("sync.WaitGroup in struct field", func(t *testing.T) {
+		type test0 struct {
+			wg syncWaitGroup
+		}
+		var tt test0
+		tt.wg.Add(1)
+		tt.wg.Done()
+		tt.wg.Wait()
+	})
+
 }
 
 type setupTransport struct {

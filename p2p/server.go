@@ -176,9 +176,36 @@ type Server struct {
 	posthandshake chan *conn
 	addpeer       chan *conn
 	delpeer       chan peerDrop
-	loopWG        sync.WaitGroup // loop, listenLoop
+	loopWG        syncWaitGroup // loop, listenLoop
 	peerFeed      event.Feed
 	log           log.LoggerI
+}
+
+type syncWaitGroup struct {
+	sync.WaitGroup
+	int
+}
+
+func (wg *syncWaitGroup) Add(delta int) {
+	wg.WaitGroup.Add(delta)
+	wg.int += delta
+}
+
+func (wg *syncWaitGroup) Done() {
+	wg.WaitGroup.Done()
+	if wg.int == 0 {
+		panic("negative WaitGroup counter")
+	}
+	wg.int--
+}
+
+func (wg *syncWaitGroup) Wait() {
+	if wg.int == 0 {
+		log.Warn("No p2p threads to wait for")
+	} else {
+		log.Warn("Waiting for p2p threads", "n", wg.int)
+	}
+	wg.WaitGroup.Wait()
 }
 
 type peerOpFunc func(map[discover.NodeID]*Peer)
@@ -396,9 +423,10 @@ func (srv *Server) Start(ctx context.Context) (err error) {
 	if srv.Config.Offline {
 		return nil
 	}
-	x := ctx.Value("doitnow") // -now flag
-	if x == nil {
-		x = false
+
+	doitnow := ctx.Value("doitnow") // -now flag TODO
+	if doitnow == nil {
+		doitnow = false
 	}
 	{
 		chaincfg := srv.Config.ChainConfig()
@@ -406,13 +434,13 @@ func (srv *Server) Start(ctx context.Context) (err error) {
 			log.Warn("Chain config not set, using test chainconfig")
 			chaincfg = params.TestChainConfig
 		}
-		if x == nil && chaincfg == params.AllAquahashProtocolChanges { // for testing
-			x = true
-		} else if x == nil {
-			log.Debug("P2P server not starting", "offline", srv.Config.Offline, "chain", chaincfg.Name())
-			x = false
+		if doitnow == nil && chaincfg == params.MainnetChainConfig || chaincfg == params.TestnetChainConfig || chaincfg == params.Testnet2ChainConfig || chaincfg == params.Testnet3ChainConfig { // for testing
+			doitnow = true
+		} else if doitnow == nil {
+			log.Debug("P2P server starting", "offline", srv.Config.Offline, "chain", chaincfg.Name())
+			doitnow = false
 		}
-		now, _ := x.(bool)
+		now, _ := doitnow.(bool)
 		if !now && os.Getenv("TESTING_TEST") != "1" {
 			for i := 5; i > 0 && ctx.Err() == nil; i-- {
 				log.Info("Starting P2P networking", "in", i, "on", srv.ListenAddr, "chain", chaincfg.Name())
@@ -422,6 +450,7 @@ func (srv *Server) Start(ctx context.Context) (err error) {
 			}
 		}
 	}
+
 	srv.lock.Lock()
 	defer srv.lock.Unlock()
 	if srv.running {
@@ -556,11 +585,20 @@ type dialer interface {
 }
 
 func (srv *Server) run(dialstate dialer) {
+	if dialstate == nil {
+		panic("nil dialer")
+	}
+	if srv == nil {
+		panic("nil p2p.Server")
+	}
+	if srv.Config == nil {
+		panic("nil p2p.Server.Config")
+	}
 	defer srv.loopWG.Done()
 	var (
 		peers        = make(map[discover.NodeID]*Peer)
 		inboundCount = 0
-		trusted      = make(map[discover.NodeID]bool, len(srv.TrustedNodes))
+		trusted      = make(map[discover.NodeID]bool)
 		taskdone     = make(chan task, maxActiveDialTasks)
 		runningTasks []task
 		queuedTasks  []task // tasks that can't run yet
@@ -568,8 +606,10 @@ func (srv *Server) run(dialstate dialer) {
 	// Put trusted nodes into a map to speed up checks.
 	// Trusted peers are loaded on startup and cannot be
 	// modified while the server is running.
-	for _, n := range srv.TrustedNodes {
-		trusted[n.ID] = true
+	if len(srv.TrustedNodes) > 0 {
+		for _, n := range srv.TrustedNodes {
+			trusted[n.ID] = true
+		}
 	}
 
 	// removes t from runningTasks
