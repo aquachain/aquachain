@@ -86,7 +86,11 @@ func TestCheckCompatible(t *testing.T) {
 	for i, test := range tests {
 		err := test.stored.CheckCompatible(test.new, test.head)
 		if !reflect.DeepEqual(err, test.wantErr) {
-			t.Errorf("test #%v error mismatch:\nstored: %v\nnew: %v\nhead: %v\nerr: %v\nwant: %v", i, test.stored, test.new, test.head, err, test.wantErr)
+			name := "???"
+			if test.wantErr != nil {
+				name = test.wantErr.What
+			}
+			t.Errorf("test #%v (%s) error mismatch:\nstored: %v\nnew: %v\nhead: %v\nerr: %v\nwant: %v", i, name, test.stored, test.new, test.head, err, test.wantErr)
 		}
 	}
 }
