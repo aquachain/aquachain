@@ -25,6 +25,7 @@ import (
 	"testing"
 
 	"github.com/cespare/cp"
+	"gitlab.com/aquachain/aquachain/common/log"
 )
 
 // These tests are 'smoke tests' for the account related
@@ -43,6 +44,7 @@ func tmpDatadirWithKeystore(t *testing.T) (string, func(t *testing.T)) {
 
 	keystore := filepath.Join(datadir, "keystore")
 	source := filepath.Join("..", "..", "aqua", "accounts", "keystore", "testdata", "keystore")
+	log.Warn("copying keystore files from", source, "to", keystore)
 	if err := cp.CopyAll(keystore, source); err != nil {
 		t.Fatal(err)
 	}

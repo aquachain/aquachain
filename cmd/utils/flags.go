@@ -1463,12 +1463,6 @@ func RegisterAquaStatsService(stack *node.Node, url string) {
 	}
 }
 
-// SetupNetwork configures the system for either the main net or some test network.
-func SetupNetworkGasLimit(cmd *cli.Command) {
-	// TODO(fjl): move target gas limit into config
-	params.TargetGasLimit = cmd.Uint(TargetGasLimitFlag.Name)
-}
-
 // MakeChainDatabase open an LevelDB using the flags passed to the client and will hard crash if it fails.
 func MakeChainDatabase(cmd *cli.Command, stack *node.Node) aquadb.Database {
 	var (
@@ -1573,7 +1567,6 @@ func MigrateFlags(action func(_ context.Context, cmd *cli.Command) error) func(c
 	migrated := &MigratedCommand{
 		Action: action,
 	}
-
 	return migrated.Run
 }
 
@@ -1583,6 +1576,8 @@ type MigratedCommand struct {
 
 func (m *MigratedCommand) Run(ctx context.Context, cmd *cli.Command) error {
 	cmdmap := map[string]string{}
+	log.Warn("migrating command", "name", cmd.Name, "flags", cmd.Flags)
+	log.Warn("migrating command", "rootname", cmd.Root().Name, "rootflags", cmd.Root().Flags)
 	for _, c := range cmd.Commands {
 		cmdmap[c.Name] = c.Name
 		log.Warn("migrating command", "name", c.Name, "flags", c.Flags)

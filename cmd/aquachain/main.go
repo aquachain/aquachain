@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"os"
 	"runtime"
-	"sort"
 	"strings"
 	"time"
 
@@ -185,12 +184,11 @@ func doinit() *cli.Command {
 		dumpConfigCommand,
 	}
 
-	sort.Sort(cli.FlagsByName(app.Flags))
-
 	app.Flags = append(app.Flags, nodeFlags...)
 	app.Flags = append(app.Flags, rpcFlags...)
 	app.Flags = append(app.Flags, consoleFlags...)
 	app.Flags = append(app.Flags, debug.Flags...)
+	// sort.Sort(cli.FlagsByName(app.Flags))
 
 	// func(context.Context, *Command) (context.Context, error)
 	app.Before = beforeFunc
@@ -215,8 +213,9 @@ func beforeFunc(ctx context.Context, cmd *cli.Command) (context.Context, error) 
 	}
 	// Start system runtime metrics collection
 	go metrics.CollectProcessMetrics(3 * time.Second)
-
-	utils.SetupNetworkGasLimit(cmd)
+	if targetGasLimit := cmd.Uint(utils.TargetGasLimitFlag.Name); targetGasLimit > 0 {
+		params.TargetGasLimit = targetGasLimit
+	}
 	_, autoalertmode := os.LookupEnv("ALERT_PLATFORM")
 	if autoalertmode {
 		cmd.Set(utils.AlertModeFlag.Name, "true")
