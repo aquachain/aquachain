@@ -329,7 +329,7 @@ func (c *Config) instanceDir() string {
 // data folder. If no key can be found, a new one is generated.
 func (c *Config) NodeKey() *btcec.PrivateKey {
 	// Use any specifically configured key.
-	if c.P2P.PrivateKey != nil {
+	if c.P2P != nil && c.P2P.PrivateKey != nil {
 		return c.P2P.PrivateKey
 	}
 	// Generate ephemeral key if no datadir is being used.

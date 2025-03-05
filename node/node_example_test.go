@@ -44,7 +44,8 @@ func (s *SampleService) Stop() error               { fmt.Println("Service stoppi
 func ExampleService() {
 	// Create a network node to run protocols with the default values. A unique chain id
 	// is required for side chains
-	minimalConfig := &node.Config{P2P: &p2p.Config{ChainId: 12345}, Name: "test", RPCAllowIP: []string{"127.0.0.1"}}
+	ctx, closemain := context.WithCancelCause(context.Background())
+	minimalConfig := &node.Config{P2P: &p2p.Config{ChainId: 12345}, Name: "test", RPCAllowIP: []string{"127.0.0.1"}, Context: ctx, CloseMain: closemain}
 	stack, err := node.New(minimalConfig)
 
 	if err != nil {
