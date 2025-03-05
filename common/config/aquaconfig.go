@@ -101,7 +101,7 @@ type Aquaconfig struct {
 	Aquabase     common.Address `toml:",omitempty"`
 	MinerThreads int            `toml:",omitempty"`
 	ExtraData    hexutil.Bytes  `toml:",omitempty"`
-	GasPrice     *big.Int
+	GasPrice     *big.Int       // TODO use uint64 since it wont go above 1e18 anyways
 
 	// Aquahash options
 	Aquahash aquahash.Config
