@@ -41,12 +41,12 @@ func TestDatadirCreation(t *testing.T) {
 	defer os.RemoveAll(dir)
 	ctx := t.Context()
 	closemain := func(error) {}
-	if _, err := New(&Config{DataDir: dir, P2P: testp2p, Context: ctx, CloseMain: closemain}); err != nil {
+	if _, err := New(&Config{Name: "tester", DataDir: dir, P2P: testp2p, Context: ctx, CloseMain: closemain}); err != nil {
 		t.Fatalf("failed to create stack with existing datadir: %v", err)
 	}
 	// Generate a long non-existing datadir path and check that it gets created by a node
 	dir = filepath.Join(dir, "a", "b", "c", "d", "e", "f")
-	if _, err := New(&Config{DataDir: dir, P2P: testp2p, Context: ctx, CloseMain: closemain}); err != nil {
+	if _, err := New(&Config{Name: "tester", DataDir: dir, P2P: testp2p, Context: ctx, CloseMain: closemain}); err != nil {
 		t.Fatalf("failed to create stack with creatable datadir: %v", err)
 	}
 	if _, err := os.Stat(dir); err != nil {
@@ -60,7 +60,7 @@ func TestDatadirCreation(t *testing.T) {
 	defer os.Remove(file.Name())
 
 	dir = filepath.Join(file.Name(), "invalid/path")
-	if _, err := New(&Config{DataDir: dir, P2P: testp2p, Context: ctx, CloseMain: closemain}); err == nil {
+	if _, err := New(&Config{Name: "tester", DataDir: dir, P2P: testp2p, Context: ctx, CloseMain: closemain}); err == nil {
 		t.Fatalf("protocol stack created with an invalid datadir")
 	}
 }
