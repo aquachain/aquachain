@@ -26,15 +26,15 @@ import (
 
 	"gitlab.com/aquachain/aquachain/aqua/downloader"
 	"gitlab.com/aquachain/aquachain/aqua/gasprice"
-	"gitlab.com/aquachain/aquachain/common"
-	"gitlab.com/aquachain/aquachain/common/alerts"
-	"gitlab.com/aquachain/aquachain/common/hexutil"
+	"gitlab.com/aquachain/aquachain/common/config"
 	"gitlab.com/aquachain/aquachain/consensus/aquahash"
 	"gitlab.com/aquachain/aquachain/core"
 )
 
+type Config = config.Aquaconfig // TODO remove
+
 // DefaultConfig contains default settings for use on the Aquachain main net.
-var DefaultConfig = &Config{
+var DefaultConfig = &config.Aquaconfig{
 	SyncMode: downloader.FullSync,
 	Aquahash: aquahash.Config{
 		CacheDir:       "aquahash",
@@ -68,55 +68,4 @@ func init() {
 	} else {
 		DefaultConfig.Aquahash.DatasetDir = filepath.Join(home, ".aquahash")
 	}
-}
-
-//go:generate gencodec -type Config -field-override ConfigMarshaling -formats toml -out gen_config.go
-
-type Config struct {
-	// The genesis block, which is inserted if the database is empty.
-	// If nil, the Aquachain main net block is used.
-	Genesis *core.Genesis `toml:",omitempty"`
-
-	// Protocol options
-	ChainId   uint64 // Network ID to use for selecting peers to connect to
-	SyncMode  downloader.SyncMode
-	NoPruning bool `toml:"NoPruning"`
-
-	// Database options
-	SkipBcVersionCheck bool `toml:"-"`
-	DatabaseHandles    int  `toml:"-"`
-	DatabaseCache      int
-	TrieCache          int
-	TrieTimeout        time.Duration
-
-	// Mining-related options
-	Aquabase     common.Address `toml:",omitempty"`
-	MinerThreads int            `toml:",omitempty"`
-	ExtraData    hexutil.Bytes  `toml:",omitempty"`
-	GasPrice     *big.Int
-
-	// Aquahash options
-	Aquahash aquahash.Config
-
-	// Transaction pool options
-	TxPool core.TxPoolConfig
-
-	// Gas Price Oracle options
-	GPO gasprice.Config
-
-	// Enables tracking of SHA3 preimages in the VM
-	EnablePreimageRecording bool
-
-	// Miscellaneous options
-
-	JavascriptDirectory string `toml:"-"` // for console/attach only
-
-	// Alert options
-	Alerts      alerts.AlertConfig `toml:",omitempty"`
-	p2pnodename string             `toml:"-"`
-}
-
-// ConfigMarshaling must be changed if the Config struct changes.
-type ConfigMarshaling struct {
-	ExtraData hexutil.Bytes
 }

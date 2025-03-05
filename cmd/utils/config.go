@@ -11,6 +11,7 @@ import (
 
 	"github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/aqua"
+	"gitlab.com/aquachain/aquachain/common/config"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/common/toml"
 	"gitlab.com/aquachain/aquachain/node"
@@ -100,6 +101,9 @@ func MakeConfigNode(ctx context.Context, cmd *cli.Command, gitCommit string, cli
 }
 
 func DefaultNodeConfig(gitCommit, clientIdentifier string) *node.Config {
+	if clientIdentifier == "" {
+		panic("clientIdentifier must be set")
+	}
 	cfg := node.DefaultConfig
 	cfg.Name = clientIdentifier
 	cfg.Version = params.VersionWithCommit(gitCommit)
@@ -163,3 +167,5 @@ func Mkconfig(chainName string, configFileOptional string, checkDefaultConfigFil
 	node.DefaultConfig = cfgptr.Node
 	return cfgptr
 }
+
+type AquachainConfig = config.AquachainConfigFull

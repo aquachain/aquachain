@@ -37,6 +37,7 @@ const (
 
 // DefaultConfig contains reasonable default settings.
 var DefaultConfig = &Config{
+	Name:        "", // must be set before GetNodeName
 	DataDir:     defaultDataDir(),
 	HTTPPort:    DefaultHTTPPort,
 	HTTPModules: []string{"aqua", "eth", "net", "web3"},

@@ -34,6 +34,7 @@ import (
 	"gitlab.com/aquachain/aquachain/aqua/gasprice"
 	"gitlab.com/aquachain/aquachain/aquadb"
 	"gitlab.com/aquachain/aquachain/common"
+	"gitlab.com/aquachain/aquachain/common/config"
 	"gitlab.com/aquachain/aquachain/common/hexutil"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/consensus"
@@ -56,7 +57,7 @@ import (
 // Aquachain implements the Aquachain full node service.
 type Aquachain struct {
 	ctx         context.Context // TODO use
-	config      *Config
+	config      *config.Aquaconfig
 	chainConfig *params.ChainConfig
 
 	// Channel for shutting down the service
@@ -91,7 +92,7 @@ type Aquachain struct {
 
 // New creates a new Aquachain object (including the
 // initialisation of the common Aquachain object)
-func New(ctx context.Context, nodectx *node.ServiceContext, config *Config, nodename string) (*Aquachain, error) {
+func New(ctx context.Context, nodectx *node.ServiceContext, config *config.Aquaconfig, nodename string) (*Aquachain, error) {
 	if !config.SyncMode.IsValid() {
 		return nil, fmt.Errorf("invalid sync mode %d", config.SyncMode)
 	}
@@ -99,7 +100,7 @@ func New(ctx context.Context, nodectx *node.ServiceContext, config *Config, node
 		return nil, fmt.Errorf("invalid node name %s", nodename)
 	}
 	log.Info("Node name", "name", nodename)
-	config.p2pnodename = nodename
+	config.SetNodeName(nodename)
 	chainDb, err := CreateDB(nodectx, config, "chaindata")
 	if err != nil {
 		return nil, err
@@ -253,7 +254,7 @@ func DecodeExtraData(extra []byte) (version [3]uint8, osname string, extradata [
 }
 
 // CreateDB creates the chain database.
-func CreateDB(ctx *node.ServiceContext, config *Config, name string) (aquadb.Database, error) {
+func CreateDB(ctx *node.ServiceContext, config *config.Aquaconfig, name string) (aquadb.Database, error) {
 	db, err := ctx.OpenDatabase(name, config.DatabaseCache, config.DatabaseHandles)
 	if err != nil {
 		return nil, err
@@ -356,7 +357,7 @@ func (s *Aquachain) APIs() []rpc.API {
 		}, {
 			Namespace: "testing",
 			Version:   "1.0",
-			Service:   NewPublicTestingAPI(s.chainConfig, s, s.config.p2pnodename),
+			Service:   NewPublicTestingAPI(s.chainConfig, s, s.config.GetNodeName()),
 		}, {
 			Namespace: "net",
 			Version:   "1.0",
