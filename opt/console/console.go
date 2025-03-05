@@ -476,7 +476,7 @@ func (c *Console) Interactive(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			// User forcefully quite the console
-			fmt.Fprintln(c.printer, "caught interrupt, exiting")
+			fmt.Fprintf(c.printer, "caught interrupt: %s\n, exiting", context.Cause(ctx))
 			return
 
 		case line, ok := <-scheduler:
