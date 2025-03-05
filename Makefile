@@ -43,6 +43,7 @@ $(shorttarget): $(GOFILES)
 	@echo Compiled: $(shorttarget)
 	@sha256sum $(shorttarget) 2>/dev/null || echo "warn: 'sha256sum' command not found"
 	@file $(shorttarget) 2>/dev/null || echo "warn: 'file' command not found"
+	@ls -lh $(shorttarget) 2>/dev/null
 # if on windows, this would become .exe.exe but whatever
 $(shorttarget).exe: $(GOFILES)
 	$(info Building... $@)
