@@ -21,7 +21,9 @@ package debug
 
 import (
 	"errors"
+	"fmt"
 	"os"
+	"path/filepath"
 	"runtime/trace"
 	"sync"
 	"time"
@@ -66,9 +68,29 @@ func (h *HandlerT) StopGoTrace() error {
 	return nil
 }
 
+// loops holds all the started loops (not only running)
 var loops = []loopinfo{}
 
-var loopwg sync.WaitGroup
+var loopwg syncWaitGroup
+
+type syncWaitGroup struct {
+	sync.WaitGroup
+	int
+}
+
+func (wg *syncWaitGroup) Add(i int) {
+	wg.int += i
+	wg.WaitGroup.Add(i)
+}
+
+func (wg *syncWaitGroup) Done() {
+	wg.int--
+	wg.WaitGroup.Done()
+}
+
+func (wg *syncWaitGroup) Len() int {
+	return wg.int
+}
 
 type loopinfo struct {
 	caller stack.Call // TODO: remove stack package
@@ -86,13 +108,14 @@ func AddLoop() func() {
 func Loops() []string {
 	var out []string
 	for _, l := range loops {
-		out = append(out, l.caller.String())
+		out = append(out, fmt.Sprintf("%s at %+v", filepath.Base(l.caller.Frame().Function), l.caller))
 	}
 	return out
 }
 
 // WaitLoops waits for all loops to finish, should be called only once
 func WaitLoops(d time.Duration) error {
+	log.Warn("Waiting for loops to finish", "timeout", d, "numLoops", loopwg.Len())
 	ch := make(chan struct{})
 	go func() {
 		loopwg.Wait()
@@ -100,7 +123,7 @@ func WaitLoops(d time.Duration) error {
 	}()
 	select {
 	case <-time.After(d):
-		return errors.New("timeout waiting for loops")
+		return fmt.Errorf("timeout (%s) waiting for %d loops", d, len(loops))
 	case <-ch:
 		return nil
 	}

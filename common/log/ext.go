@@ -34,7 +34,11 @@ func ResetForTesting() {
 		return
 	}
 	lvl := LvlWarn
-	if x := os.Getenv("TESTLOGLVL"); x != "" && x != "0" { // so TESTLOGLVL=0 is the same as not setting it (0=crit, which is silent)
+	envlvl := os.Getenv("TESTLOGLVL")
+	if envlvl == "" {
+		envlvl = os.Getenv("LOGLEVEL")
+	}
+	if x := envlvl; x != "" && x != "0" { // so TESTLOGLVL=0 is the same as not setting it (0=crit, which is silent)
 		Info("setting custom TESTLOGLVL log level", "loglevel", x)
 		lvl = MustParseLevel(x)
 	} else {
@@ -47,6 +51,8 @@ func ResetForTesting() {
 
 func MustParseLevel(s string) Lvl {
 	switch s {
+	case "":
+		return LvlInfo
 	case "trace", "5", "6", "7", "8", "9":
 		return LvlTrace
 	case "debug", "4":
@@ -72,10 +78,13 @@ func newRoot() *logger {
 
 var is_testing bool
 
-func levelFromEnv() Lvl {
+func GetLevelFromEnv() Lvl {
 	lvl := os.Getenv("LOGLEVEL")
 	if lvl == "" {
 		lvl = os.Getenv("TESTLOGLVL")
+	}
+	if lvl == "" {
+		lvl = os.Getenv("LOGLVL")
 	}
 	if lvl == "" {
 		if is_testing {
@@ -90,7 +99,7 @@ func newRootHandler() Handler {
 	if sense.FeatureEnabled("JSONLOG", "jsonlog") {
 		return CallerFileHandler(StreamHandler(os.Stderr, JsonFormatEx(false, true)))
 	}
-	lvl := levelFromEnv()
+	lvl := GetLevelFromEnv()
 	x = LvlFilterHandler(lvl, x)
 	return x
 }

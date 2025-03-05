@@ -80,26 +80,26 @@ func (l Lvl) String() string {
 	}
 }
 
-// Returns the appropriate Lvl from a string name.
-// Useful for parsing command line args and configuration files.
-func LvlFromString(lvlString string) (Lvl, error) {
-	switch lvlString {
-	case "trace", "trce":
-		return LvlTrace, nil
-	case "debug", "dbug":
-		return LvlDebug, nil
-	case "info":
-		return LvlInfo, nil
-	case "warn":
-		return LvlWarn, nil
-	case "error", "eror":
-		return LvlError, nil
-	case "crit":
-		return LvlCrit, nil
-	default:
-		return LvlDebug, fmt.Errorf("Unknown level: %v", lvlString)
-	}
-}
+// // Returns the appropriate Lvl from a string name.
+// // Useful for parsing command line args and configuration files.
+// func LvlFromString(lvlString string) (Lvl, error) {
+// 	switch lvlString {
+// 	case "trace", "trce":
+// 		return LvlTrace, nil
+// 	case "debug", "dbug":
+// 		return LvlDebug, nil
+// 	case "info":
+// 		return LvlInfo, nil
+// 	case "warn":
+// 		return LvlWarn, nil
+// 	case "error", "eror":
+// 		return LvlError, nil
+// 	case "crit":
+// 		return LvlCrit, nil
+// 	default:
+// 		return LvlDebug, fmt.Errorf("unknown level: %v", lvlString)
+// 	}
+// }
 
 // A Record is what a Logger asks its handler to write
 type Record struct {

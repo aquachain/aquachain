@@ -54,7 +54,7 @@ type GlogHandler struct {
 func NewGlogHandler(h Handler) *GlogHandler {
 	return &GlogHandler{
 		origin: h,
-		level:  uint32(LvlInfo),
+		level:  uint32(GetLevelFromEnv()),
 	}
 }
 

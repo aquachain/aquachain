@@ -27,7 +27,6 @@ import (
 	"reflect"
 	"strings"
 	"sync"
-	"time"
 
 	"gitlab.com/aquachain/aquachain/aqua/accounts"
 	"gitlab.com/aquachain/aquachain/aqua/event"
@@ -294,7 +293,7 @@ func (n *Node) Start(ctx context.Context) error {
 		started = append(started, kind)
 	}
 	// Lastly start the configured RPC interfaces
-	if err := n.startRPC(services); err != nil {
+	if err := n.startRPC(services, debug.AddLoop()); err != nil {
 		for _, service := range services {
 			service.Stop()
 		}
@@ -335,8 +334,9 @@ func parseAllowNet(allowIPmasks []string) netutil.Netlist {
 			cidr = "0.0.0.0/0"
 		}
 		if cidr == "0.0.0.0/0" {
-			log.Warn("Allowing public RPC access. Be sure to run with -nokeys flag!!!")
-			time.Sleep(time.Second * 2)
+			log.Warn("Allowing public RPC access. Automatically enabling NO_KEYS=1 and NO_SIGN=1")
+			DefaultConfig.NoKeys = true
+			DefaultConfig.RPCNoSign = true
 		}
 		if !strings.Contains(cidr, "/") {
 			cidr += "/32" // helper for single IPs
@@ -349,7 +349,8 @@ func parseAllowNet(allowIPmasks []string) netutil.Netlist {
 // startRPC is a helper method to start all the various RPC endpoint during node
 // startup. It's not meant to be called at any time afterwards as it makes certain
 // assumptions about the state of the node.
-func (n *Node) startRPC(services map[reflect.Type]Service) error {
+func (n *Node) startRPC(services map[reflect.Type]Service, donefunc func()) error {
+	defer donefunc()
 	// gather allownet
 	allownet := parseAllowNet(n.config.RPCAllowIP)
 
@@ -358,6 +359,13 @@ func (n *Node) startRPC(services map[reflect.Type]Service) error {
 	for _, service := range services {
 		apis = append(apis, service.APIs()...)
 	}
+	if len(apis) == 0 {
+		return errors.New("no APIs offered by the services")
+	}
+	if !n.config.RPCNoSign {
+		log.Warn("RPC signing enabled", "allowip", n.config.RPCAllowIP, "rpchost", n.config.HTTPHost, "rpcport", n.config.HTTPPort)
+	}
+
 	// Start the various API endpoints, terminating all in case of errors
 	if err := n.startInProc(apis); err != nil {
 		return err

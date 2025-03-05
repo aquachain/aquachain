@@ -53,8 +53,8 @@ func NewDefaultConfig() *Config {
 		},
 		RPCBehindProxy: common.EnvBool("RPC_BEHIND_PROXY"),
 		UserIdent:      os.Getenv("AQUA_USERIDENT"),
-		HTTPHost:       DefaultHTTPHost,
-		WSHost:         DefaultWSHost,
+		HTTPHost:       "",
+		WSHost:         "",
 		RPCNoSign:      common.EnvBool("NO_SIGN"), // doesnt do anything here. something needs to read it
 		NoKeys:         common.EnvBool("NO_KEYS"), // doesnt do anything here. something needs to read it
 		NoCountdown:    common.EnvBool("NO_COUNTDOWN"),

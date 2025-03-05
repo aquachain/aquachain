@@ -19,7 +19,7 @@ package rpc
 import (
 	"context"
 	"fmt"
-	"os"
+	"path/filepath"
 	"reflect"
 	"runtime"
 	"strings"
@@ -27,6 +27,7 @@ import (
 	"sync/atomic"
 
 	set "github.com/deckarep/golang-set"
+	"github.com/go-stack/stack"
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/log"
 )
@@ -78,7 +79,9 @@ func (s *RPCService) Modules() map[string]string {
 	return modules
 }
 
-var unsafe_rpc_signing = parseBool(os.Getenv("UNSAFE_RPC_SIGNING"))
+var allow_all_rpc_signing = common.EnvBool("UNSAFE_RPC_SIGNING")   // needed even with localhost http
+var allow_sign_ipc = common.EnvBool("UNSAFE_ALLOW_SIGN_IPC")       // safer than localhost http
+var allow_sign_inProc = common.EnvBool("UNSAFE_ALLOW_SIGN_INPROC") // testing
 
 func parseBool(s string) bool {
 	return strings.ToLower(s) == "true" || s == "1"
@@ -115,11 +118,35 @@ func (s *Server) RegisterName(name string, rcvr interface{}) (methodNames []stri
 	}
 
 	methodNames = make([]string, 0, len(methods))
+	st := stack.Caller(2)
+	st1 := stack.Caller(1)
+	funcname := filepath.Base(st1.Frame().Function)
+	callertype := "HTTP"
+	if strings.HasSuffix(funcname, ".startIPC") {
+		callertype = "IPC"
+	}
+	if strings.HasSuffix(funcname, ".startInProc") {
+		callertype = "InProc"
+	}
+	if strings.HasSuffix(funcname, ".startHTTP") {
+		callertype = "HTTP"
+	}
+	if strings.HasSuffix(funcname, ".startWS") {
+		callertype = "WS"
+	}
+
 	for k, m := range methods {
 		coolname := fmt.Sprintf("%s_%s", name, strings.ToLower(m.method.Name[:1])+m.method.Name[1:])
-		if !unsafe_rpc_signing && isProtectedMethodName(m.method.Name) {
-			log.Warn("disabling RPC method (no UNSAFE_RPC_SIGNING=1 env)", "server", s.handle, "service", name, "method", coolname)
-			delete(methods, k)
+		if !allow_all_rpc_signing && isProtectedMethodName(m.method.Name) {
+			if strings.HasSuffix(funcname, ".startIPC") && allow_sign_ipc {
+				log.Warn(fmt.Sprintf("allowing %s method (UNSAFE_ALLOW_SIGN_IPC=1 env)", callertype), "service", name, "method", coolname, "caller", fmt.Sprintf("%v", st), "callerf", funcname)
+			} else if strings.HasSuffix(funcname, ".startInProc") && allow_sign_inProc {
+				log.Warn(fmt.Sprintf("allowing %s method (UNSAFE_ALLOW_SIGN_INPROC=1 env)", callertype), "service", name, "method", coolname, "caller", fmt.Sprintf("%v", st), "callerf", funcname)
+			} else {
+				log.Warn(fmt.Sprintf("disabling %s method (no UNSAFE_RPC_SIGNING=1 env)", callertype), "service", name, "method", coolname, "caller", fmt.Sprintf("%v", st), "callerf", funcname)
+				delete(methods, k)
+				continue
+			}
 			continue
 		}
 		methodNames = append(methodNames, coolname)

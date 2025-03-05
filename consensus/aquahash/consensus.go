@@ -415,11 +415,11 @@ func (aquahash *Aquahash) VerifySeal(chain consensus.ChainReader, header *types.
 			log.Warn("ethashdag not initialized, creating new")
 			aquahash.ethashdag = ethashdag.New(aquahash.config)
 		}
+		log.Warn("ethashdag verifyseal", "block", header.Number.Uint64())
 		_, digest, result, err = aquahash.ethashdag.VerifySeal(header.Number.Uint64(), header)
 		if err != nil {
 			return err
 		}
-
 	default:
 		seed := make([]byte, 40)
 		copy(seed, header.HashNoNonce().Bytes())
