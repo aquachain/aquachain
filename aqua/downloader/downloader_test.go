@@ -29,6 +29,7 @@ import (
 	"gitlab.com/aquachain/aquachain/aqua/event"
 	"gitlab.com/aquachain/aquachain/aquadb"
 	"gitlab.com/aquachain/aquachain/common"
+	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/consensus/aquahash"
 	"gitlab.com/aquachain/aquachain/core"
 	"gitlab.com/aquachain/aquachain/core/types"
@@ -36,6 +37,10 @@ import (
 	"gitlab.com/aquachain/aquachain/params"
 	"gitlab.com/aquachain/aquachain/trie"
 )
+
+func init() {
+	log.ResetForTesting()
+}
 
 var (
 	testKey, _  = crypto.HexToBtcec("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
