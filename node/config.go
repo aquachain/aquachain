@@ -250,7 +250,7 @@ func (c *Config) NodeName() string {
 func GetNodeName(cfg *Config) string {
 	name := cfg.Name // main name of program
 	if name == "" {
-		panic("empty name fiven to GetNodeName")
+		panic("empty name given to GetNodeName")
 	}
 	if name == "aquachain" {
 		name = "Aquachain"

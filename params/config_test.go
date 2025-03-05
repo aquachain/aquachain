@@ -92,7 +92,7 @@ func TestCheckCompatible(t *testing.T) {
 }
 
 func TestChainConfigs(t *testing.T) {
-	all := AllChainConfigs()
+	all := allChainConfigs
 	for _, v := range all {
 		if v == nil {
 			t.Error("nil config")
@@ -111,12 +111,16 @@ func TestChainConfigs(t *testing.T) {
 			t.Error("GetChainConfigByChainId mismatch")
 		}
 		name := v.Name()
-		should := name != "dev" && name != "test"
-		if v.DefaultBootstrapPort == 0 == should {
-			t.Errorf("missing default bootstrap port for %v", name)
+		chainid := v.ChainId.Uint64()
+		shouldBeZero := name == "dev" || name == "test"
+		if name == "" {
+			t.Error("missing name")
 		}
-		if v.DefaultPortNumber == 0 == should {
-			t.Errorf("missing default discovery port for %v", name)
+		if (v.DefaultBootstrapPort == 0) && !shouldBeZero {
+			t.Errorf("missing default bootstrap port for % 10v %d port=%d", name, chainid, v.DefaultBootstrapPort)
+		}
+		if (v.DefaultPortNumber == 0) && !shouldBeZero {
+			t.Errorf("missing default discovery port for % 10v %d port=%d", name, chainid, v.DefaultPortNumber)
 		}
 	}
 }

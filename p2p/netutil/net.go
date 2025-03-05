@@ -73,6 +73,10 @@ type Netlist []net.IPNet
 func ParseNetlist(s string) (Netlist, error) {
 	ws := strings.NewReplacer(" ", "", "\n", "", "\t", "")
 	masks := strings.Split(ws.Replace(s), ",")
+	if len(masks) == 0 {
+
+		return Netlist{}, nil
+	}
 	l := make(Netlist, 0)
 	for _, mask := range masks {
 		if mask == "" {

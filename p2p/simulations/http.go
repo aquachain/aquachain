@@ -180,7 +180,9 @@ func (c *Client) CreateNode(config *adapters.NodeConfig) (*p2p.NodeInfo, error) 
 		log.Warn("no config provided, using random config")
 		config = adapters.RandomNodeConfig()
 	}
-	node := &p2p.NodeInfo{}
+	node := &p2p.NodeInfo{
+		Name: config.Name,
+	}
 	return node, c.Post("/nodes", config, node)
 }
 

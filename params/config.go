@@ -286,7 +286,7 @@ func GetChainConfig(name string) *ChainConfig {
 }
 
 func GetChainConfigByChainId(chainid *big.Int) *ChainConfig {
-	for _, v := range AllChainConfigs() {
+	for _, v := range allChainConfigs {
 		if v.ChainId.Cmp(chainid) == 0 {
 			return v
 		}
@@ -323,6 +323,13 @@ func AllChainConfigs() []*ChainConfig {
 		AllAquahashProtocolChanges,
 		TestChainConfig,
 	}
+}
+
+var allChainConfigs = AllChainConfigs()
+
+func SetAllChainConfigs(cfgs []*ChainConfig) {
+	log.Warn("setting all chain configs", "count", len(cfgs))
+	allChainConfigs = cfgs
 }
 
 // Name returns the name of the chain config. (mainnet, testnet, etc)

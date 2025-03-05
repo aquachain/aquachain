@@ -97,13 +97,16 @@ func New(conf *Config) (*Node, error) {
 		panic("CloseMain not set")
 		// return nil, errors.New("CloseMain not set")
 	}
+
 	chaincfg := conf.P2P.ChainConfig()
 	if chaincfg == nil {
 		chaincfg = params.GetChainConfigByChainId(big.NewInt(int64(conf.P2P.ChainId)))
 	}
-	if chaincfg == nil && conf.P2P.ChainConfig() == nil {
-		log.Warn("chaincfg is nil and conf.P2P.ChainConfig() is nil, missing stuff")
-		return nil, fmt.Errorf("unknown chain id %d", conf.P2P.ChainId)
+	if chaincfg == nil {
+		log.Warn("node: no chain config for chainID", "chainID", conf.P2P.ChainId)
+	}
+	if conf.Name == "" {
+		return nil, errors.New("node.Config.Name not set")
 	}
 
 	// Copy config and resolve the datadir so future changes to the current

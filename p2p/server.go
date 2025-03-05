@@ -399,22 +399,25 @@ func (srv *Server) Start(ctx context.Context) (err error) {
 	if x == nil {
 		x = false
 	}
-	chaincfg := srv.Config.ChainConfig()
-	if chaincfg == nil {
-		return fmt.Errorf("chain config not set")
-	}
-	if x == nil && chaincfg == params.AllAquahashProtocolChanges { // for testing
-		x = true
-	} else if x == nil {
-		log.Debug("P2P server not starting", "offline", srv.Config.Offline, "chain", chaincfg.Name())
-		x = false
-	}
-	now, _ := x.(bool)
-	if !now {
-		for i := 5; i > 0 && ctx.Err() == nil; i-- {
-			log.Info("Starting P2P networking", "in", i, "on", srv.ListenAddr, "chain", chaincfg.Name())
-			for i := 0; i < 10 && ctx.Err() == nil; i++ {
-				time.Sleep(time.Second / 10)
+	{
+		chaincfg := srv.Config.ChainConfig()
+		if chaincfg == nil {
+			log.Warn("Chain config not set, using test chainconfig")
+			chaincfg = params.TestChainConfig
+		}
+		if x == nil && chaincfg == params.AllAquahashProtocolChanges { // for testing
+			x = true
+		} else if x == nil {
+			log.Debug("P2P server not starting", "offline", srv.Config.Offline, "chain", chaincfg.Name())
+			x = false
+		}
+		now, _ := x.(bool)
+		if !now {
+			for i := 5; i > 0 && ctx.Err() == nil; i-- {
+				log.Info("Starting P2P networking", "in", i, "on", srv.ListenAddr, "chain", chaincfg.Name())
+				for i := 0; i < 10 && ctx.Err() == nil; i++ {
+					time.Sleep(time.Second / 10)
+				}
 			}
 		}
 	}

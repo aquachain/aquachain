@@ -67,6 +67,7 @@ func NewProtocolTester(t *testing.T, id discover.NodeID, n int, run func(*p2p.Pe
 		ID:              id,
 		EnableMsgEvents: true,
 		Services:        []string{"test"},
+		Name:            fmt.Sprintf("randomnode%d", n),
 	}); err != nil {
 		panic(err.Error())
 	}

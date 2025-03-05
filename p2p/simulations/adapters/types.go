@@ -168,6 +168,7 @@ func RandomNodeConfig() *NodeConfig {
 	return &NodeConfig{
 		ID:         id,
 		PrivateKey: key,
+		Name:       "randomtestnode",
 	}
 }
 

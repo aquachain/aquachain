@@ -30,16 +30,16 @@ func TestParseNetlist(t *testing.T) {
 	var tests = []struct {
 		input    string
 		wantErr  error
-		wantList *Netlist
+		wantList Netlist
 	}{
 		{
 			input:    "",
-			wantList: &Netlist{},
+			wantList: Netlist{},
 		},
 		{
 			input:    "127.0.0.0/8",
 			wantErr:  nil,
-			wantList: &Netlist{{IP: net.IP{127, 0, 0, 0}, Mask: net.CIDRMask(8, 32)}},
+			wantList: Netlist{{IP: net.IP{127, 0, 0, 0}, Mask: net.CIDRMask(8, 32)}},
 		},
 		{
 			input:   "127.0.0.0/44",
@@ -47,7 +47,7 @@ func TestParseNetlist(t *testing.T) {
 		},
 		{
 			input: "127.0.0.0/16, 23.23.23.23/24,",
-			wantList: &Netlist{
+			wantList: Netlist{
 				{IP: net.IP{127, 0, 0, 0}, Mask: net.CIDRMask(16, 32)},
 				{IP: net.IP{23, 23, 23, 0}, Mask: net.CIDRMask(24, 32)},
 			},
@@ -56,14 +56,18 @@ func TestParseNetlist(t *testing.T) {
 
 	for _, test := range tests {
 		l, err := ParseNetlist(test.input)
-		if !reflect.DeepEqual(err, test.wantErr) {
-			t.Errorf("%q: got error %q, want %q", test.input, err, test.wantErr)
+		if err != nil && test.wantErr == nil {
+			t.Fatalf("%q: got error %q, want %q", test.input, err, test.wantErr)
+			continue
+		}
+		if err != nil && err.Error() != test.wantErr.Error() {
+			t.Fatalf("%q: got error %q, want %q", test.input, err, test.wantErr)
 			continue
 		}
 		if !reflect.DeepEqual(l, test.wantList) {
 			spew.Dump(l)
 			spew.Dump(test.wantList)
-			t.Errorf("%q: got %v, want %v", test.input, l, test.wantList)
+			t.Fatalf("%q: got %#v, want %#v", test.input, l, test.wantList)
 		}
 	}
 }
