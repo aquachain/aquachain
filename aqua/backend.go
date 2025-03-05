@@ -126,7 +126,7 @@ func New(ctx context.Context, nodectx *node.ServiceContext, config *config.Aquac
 		engine:         CreateConsensusEngine(nodectx, &config.Aquahash, chainConfig, chainDb, nodename),
 		shutdownChan:   make(chan bool),
 		stopDbUpgrade:  stopDbUpgrade,
-		gasPrice:       config.GasPrice,
+		gasPrice:       new(big.Int).SetUint64(config.GasPrice),
 		aquabase:       config.Aquabase,
 		bloomRequests:  make(chan chan *bloombits.Retrieval),
 		bloomIndexer:   NewBloomIndexer(chainConfig, chainDb, params.BloomBitsBlocks),
@@ -177,7 +177,7 @@ func New(ctx context.Context, nodectx *node.ServiceContext, config *config.Aquac
 	aqua.ApiBackend = &AquaApiBackend{aqua, nil}
 	gpoParams := config.GPO
 	if gpoParams.Default == nil {
-		gpoParams.Default = config.GasPrice
+		gpoParams.Default = new(big.Int).SetUint64(config.GasPrice)
 	}
 	aqua.ApiBackend.gpo = gasprice.NewOracle(aqua.ApiBackend, gpoParams)
 

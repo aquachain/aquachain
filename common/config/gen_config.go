@@ -3,7 +3,6 @@
 package config
 
 import (
-	"math/big"
 	"time"
 
 	"gitlab.com/aquachain/aquachain/aqua/downloader"
@@ -32,7 +31,7 @@ func (a Aquaconfig) MarshalTOML() (interface{}, error) {
 		Aquabase                common.Address `toml:",omitempty"`
 		MinerThreads            int            `toml:",omitempty"`
 		ExtraData               hexutil.Bytes  `toml:",omitempty"`
-		GasPrice                *big.Int
+		GasPrice                uint64
 		Aquahash                ethashdag.Config
 		TxPool                  core.TxPoolConfig
 		GPO                     gasprice.Config
@@ -78,7 +77,7 @@ func (a *Aquaconfig) UnmarshalTOML(unmarshal func(interface{}) error) error {
 		Aquabase                *common.Address `toml:",omitempty"`
 		MinerThreads            *int            `toml:",omitempty"`
 		ExtraData               *hexutil.Bytes  `toml:",omitempty"`
-		GasPrice                *big.Int
+		GasPrice                *uint64
 		Aquahash                *ethashdag.Config
 		TxPool                  *core.TxPoolConfig
 		GPO                     *gasprice.Config
@@ -127,7 +126,7 @@ func (a *Aquaconfig) UnmarshalTOML(unmarshal func(interface{}) error) error {
 		a.ExtraData = *dec.ExtraData
 	}
 	if dec.GasPrice != nil {
-		a.GasPrice = dec.GasPrice
+		a.GasPrice = *dec.GasPrice
 	}
 	if dec.Aquahash != nil {
 		a.Aquahash = *dec.Aquahash

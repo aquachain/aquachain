@@ -17,7 +17,6 @@
 package aqua
 
 import (
-	"math/big"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -53,7 +52,7 @@ func NewDefaultConfig() *Config {
 		DatabaseCache: 768,
 		TrieCache:     256,
 		TrieTimeout:   5 * time.Minute,
-		GasPrice:      big.NewInt(10000000), // 0.01 gwei
+		GasPrice:      1_000_000_000, // 1.00 gwei
 		NoPruning:     true,
 		TxPool:        core.DefaultTxPoolConfig,
 		GPO: gasprice.Config{

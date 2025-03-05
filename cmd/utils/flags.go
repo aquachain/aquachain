@@ -374,10 +374,10 @@ var (
 		Usage: "Public address for block mining rewards (default = first account created)",
 		Value: "0",
 	}
-	GasPriceFlag = &cli.GenericFlag{
+	GasPriceFlag = &cli.UintFlag{
 		Name:  "gasprice",
 		Usage: "Minimal gas price to accept for mining a transactions",
-		Value: (*bigValue)(aqua.DefaultConfig.GasPrice),
+		Value: aqua.DefaultConfig.GasPrice,
 	}
 	ExtraDataFlag = &cli.StringFlag{
 		Name:  "extradata",
@@ -1180,7 +1180,7 @@ func SetNodeConfig(cmd *cli.Command, cfg *node.Config) error {
 	SetP2PConfig(cmd, cfg.P2P)
 	setIPC(cmd, cfg)
 	setHTTP(cmd, cfg)
-setWS(cmd, cfg)
+	setWS(cmd, cfg)
 	setNodeUserIdent(cmd, cfg)
 	if cmd.IsSet(NoKeysFlag.Name) {
 		cfg.NoKeys = cmd.Bool(NoKeysFlag.Name)
@@ -1377,7 +1377,7 @@ func SetAquaConfig(cmd *cli.Command, stack *node.Node, cfg *aqua.Config) {
 		cfg.ExtraData = []byte(cmd.String(ExtraDataFlag.Name))
 	}
 	if cmd.IsSet(GasPriceFlag.Name) {
-		cfg.GasPrice = GlobalBig(cmd, GasPriceFlag.Name)
+		cfg.GasPrice = cmd.Uint(GasPriceFlag.Name)
 	}
 	if cmd.IsSet(VMEnableDebugFlag.Name) {
 		// TODO(fjl): force-enable this in --dev mode

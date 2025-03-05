@@ -1,24 +1,36 @@
 // config package for all other packages to enjoy
+//
+// preferably it should only import hexutil.
+// (this package and the branch using it is a work in progress)
 package config
 
 import (
-	"math/big"
 	"time"
 
-	"gitlab.com/aquachain/aquachain/aqua/downloader"
-	"gitlab.com/aquachain/aquachain/aqua/gasprice"
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/alerts"
 	"gitlab.com/aquachain/aquachain/common/hexutil"
 	"gitlab.com/aquachain/aquachain/consensus/aquahash"
-	"gitlab.com/aquachain/aquachain/core"
-	"gitlab.com/aquachain/aquachain/node"
-	"gitlab.com/aquachain/aquachain/p2p"
+
+	// these imports should be reversed, and instead import this package
+	"gitlab.com/aquachain/aquachain/aqua/downloader" // TODO remove
+	"gitlab.com/aquachain/aquachain/aqua/gasprice"
+
+	// TODO remove
+	// TODO remove
+	"gitlab.com/aquachain/aquachain/core" // TODO remove
+	"gitlab.com/aquachain/aquachain/node" // TODO remove
+	"gitlab.com/aquachain/aquachain/p2p"  // TODO remove
 )
 
-// type Aquaconfig = aqua.Config
-type Nodeconfig = node.Config
-type P2pconfig = p2p.Config
+type Nodeconfig = node.Config // TODO remove
+type P2pconfig = p2p.Config   // TODO remove
+
+type AquahashConfig = aquahash.Config
+
+type GaspriceConfig = gasprice.Config
+
+type TxPoolConfig = core.TxPoolConfig
 
 type EthstatsConfig struct {
 	URL string `toml:",omitempty"`
@@ -61,9 +73,6 @@ func (a *AquachainConfigFull) Copy() *AquachainConfigFull {
 
 	if c.Aqua != nil {
 		c.Aqua.Genesis = a.Aqua.Genesis // same pointer
-		if a.Aqua.GasPrice != nil {
-			c.Aqua.GasPrice = new(big.Int).Set(a.Aqua.GasPrice)
-		}
 		if a.Aqua.ExtraData != nil {
 			c.Aqua.ExtraData = make(hexutil.Bytes, len(a.Aqua.ExtraData))
 			copy(c.Aqua.ExtraData, a.Aqua.ExtraData)
@@ -101,16 +110,16 @@ type Aquaconfig struct {
 	Aquabase     common.Address `toml:",omitempty"`
 	MinerThreads int            `toml:",omitempty"`
 	ExtraData    hexutil.Bytes  `toml:",omitempty"`
-	GasPrice     *big.Int       // TODO use uint64 since it wont go above 1e18 anyways
+	GasPrice     uint64         // TODO use uint64 since it wont go above 1e18 anyways
 
 	// Aquahash options
-	Aquahash aquahash.Config
+	Aquahash AquahashConfig
 
 	// Transaction pool options
-	TxPool core.TxPoolConfig
+	TxPool TxPoolConfig
 
 	// Gas Price Oracle options
-	GPO gasprice.Config
+	GPO GaspriceConfig
 
 	// Enables tracking of SHA3 preimages in the VM
 	EnablePreimageRecording bool
