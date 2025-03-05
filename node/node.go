@@ -602,10 +602,7 @@ func (n *Node) Stop() error {
 	n.lock.Lock()
 	defer n.lock.Unlock()
 	if n.closemain != nil {
-		log.Info("got closemain signal")
 		n.closemain()
-	} else {
-		log.Warn("no closemain signal")
 	}
 
 	// Short circuit if the node's not running
