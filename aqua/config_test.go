@@ -63,46 +63,50 @@ func TestConfigDefaultEmptyCoinbase(t *testing.T) {
 func TestConfigUnmarshalPartial(t *testing.T) {
 	var mainnetcfg *utils.AquachainConfig = utils.Mkconfig("aqua", "", false, "100aa3", "aquachain")
 	tomlStr := `
-[Aqua]
-ChainId = 12345
-[Node]
-UserIdent = "Foo"
-`
-	var cfg *utils.AquachainConfig = mainnetcfg.Copy()
-	buf := strings.NewReader(tomlStr)
-	if _, err := toml.NewDecoder(buf).Decode(cfg); err != nil {
-		t.Fatal(err)
-	}
-	if cfg.Aqua.ChainId != 12345 {
-		t.Fatal("ChainId not set from given toml")
-	}
-	if !cfg.Aqua.NoPruning {
-		t.Fatalf("NoPruning not set from default config")
-	}
+	[Aqua]
+	ChainId = 12345
+	[Node]
+	UserIdent = "Foo"
+	`
+	var cfg0new *utils.AquachainConfig = utils.Mkconfig("aqua", "", false, "100aa3", "aquachain")
+	var cfg1copy *utils.AquachainConfig = mainnetcfg.Copy()
 
-	// compare with mainnetcfg after making the same changes
-	mainnetcfg.Aqua.ChainId = 12345
-	mainnetcfg.Node.UserIdent = "Foo"
-	if l1, l2 := len(cfg.Aqua.ExtraData), len(mainnetcfg.Aqua.ExtraData); l1 != l2 {
-		t.Fatalf("len(cfg.Aqua.ExtraData) != len(mainnetcfg.Aqua.ExtraData): %d != %d", l1, l2)
-	}
-
-	if !reflect.DeepEqual(&cfg, &mainnetcfg) {
-		got1, err := toml.Marshal(&cfg)
-		if err != nil {
+	for _, cfg := range []*utils.AquachainConfig{cfg0new, cfg1copy} {
+		buf := strings.NewReader(tomlStr)
+		if _, err := toml.NewDecoder(buf).Decode(cfg); err != nil {
 			t.Fatal(err)
 		}
-		got2, err := toml.Marshal(mainnetcfg)
-		if err != nil {
-			t.Fatal(err)
+		if cfg.Aqua.ChainId != 12345 {
+			t.Fatal("ChainId not set from given toml")
 		}
-		if bytes.Equal(got1, got2) {
-			return // false positive from reflect.DeepEqual
+		if !cfg.Aqua.NoPruning {
+			t.Fatalf("NoPruning not set from default config")
 		}
-		// try and show exact diff
-		fmt.Fprintf(os.Stderr,
-			"\n\ncfg1: %#v\n\ncfg0: %#v\n",
-			cfg.Aqua, mainnetcfg.Aqua)
-		t.Fatalf("cfg != mainnetcfg\n%s\n%s", got1, got2)
+
+		// compare with mainnetcfg after making the same changes
+		mainnetcfg.Aqua.ChainId = 12345
+		mainnetcfg.Node.UserIdent = "Foo"
+		if l1, l2 := len(cfg.Aqua.ExtraData), len(mainnetcfg.Aqua.ExtraData); l1 != l2 {
+			t.Fatalf("len(cfg.Aqua.ExtraData) != len(mainnetcfg.Aqua.ExtraData): %d != %d", l1, l2)
+		}
+
+		if !reflect.DeepEqual(&cfg, &mainnetcfg) {
+			got1, err := toml.Marshal(&cfg)
+			if err != nil {
+				t.Fatal(err)
+			}
+			got2, err := toml.Marshal(mainnetcfg)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if bytes.Equal(got1, got2) {
+				return // false positive from reflect.DeepEqual
+			}
+			// try and show exact diff
+			fmt.Fprintf(os.Stderr,
+				"\n\ncfg1: %#v\n\ncfg0: %#v\n",
+				cfg.Aqua, mainnetcfg.Aqua)
+			t.Fatalf("cfg != mainnetcfg\n%s\n%s", got1, got2)
+		}
 	}
 }
