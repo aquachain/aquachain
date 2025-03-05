@@ -73,6 +73,10 @@ ifeq (1,$(verbose))
 GO_FLAGS += -x
 endif
 
+ifeq (1,$(release))
+GO_FLAGS += -a
+endif
+
 # cgo specific flags
 ifeq (1,$(cgo))
 GO_FLAGS += -installsuffix cgo
