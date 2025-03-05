@@ -18,7 +18,6 @@ require (
 	github.com/huin/goupnp v1.3.0
 	github.com/jackpal/go-nat-pmp v1.0.2
 	github.com/joho/godotenv v1.5.1
-	github.com/julienschmidt/httprouter v1.3.0
 	github.com/mattn/go-colorable v0.1.14
 	github.com/pborman/uuid v1.2.1
 	github.com/peterh/liner v1.2.2
