@@ -79,7 +79,11 @@ internal/jsre/deps/bindata.go: internal/jsre/deps/web3.js  internal/jsre/deps/bi
 	@test -x "$(gobindatacmd)" || echo 'warn: go-bindata not found in PATH. run make devtools to install required development dependencies'
 	@test -x "$(gobindatacmd)" || exit 0
 	@echo "regenerating embedded javascript assets"
-	@test ! -x "$(gobindatacmd)" || go generate -v ./$(shell dirname $@)/...
+	@test ! -x "$(gobindatacmd)" || go generate -x ./internal/jsre/deps/...
+regen:
+	@echo "regenerating embedded assets"
+	@test -x "$(gobindatacmd)" || echo 'warn: go-bindata not found in PATH. run make devtools to install required development dependencies'
+	@test ! -x "$(gobindatacmd)" || go generate -x ./...
 all:
 	mkdir -p $(build_dir)
 	cd $(build_dir) && \
@@ -144,10 +148,10 @@ devtools:
 	${GOCMD} install github.com/fjl/gencodec@latest
 #	env GOBIN= ${GOCMD} get github.com/golang/protobuf/protoc-gen-go@latest
 	${GOCMD} install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-#	${GOCMD} install gitlab.com/aquachain/x/cmd/aqua-abigen@latest
-	@type "npm" 2> /dev/null || echo 'Please install node.js and npm (eg. https://github.com/nvm-sh/nvm)'
-	@type "solc" 2> /dev/null || echo 'Please install solc (eg. https://github.com/ethereum/solidity/releases)'
-	@type "protoc" 2> /dev/null || echo 'Please install protoc (eg. apt install protobuf-compiler)'
+#	${GOCMD} install gitlab.com/aquachain/x/cmd/aqua-abigen@latest # TODO: fix the x repo (it should depend on this repo)
+	@type "protoc" 1>/dev/null || echo 'Please install protoc (eg. apt install protobuf-compiler)'
+	@type "npm" 1>/dev/null || echo 'Consider installing node.js and npm (eg. https://github.com/nvm-sh/nvm)'
+	@type "solc" 1>/dev/null || echo 'Consider installing solc (eg. https://github.com/ethereum/solidity/releases)'
 
 generate: devtools
 	${GOCMD} generate ./...
