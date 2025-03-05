@@ -4,7 +4,7 @@
 		echo "go not found in PATH"
 		exit 3
 	}
-	packagelist=${TESTPACKAGELIST-$(go list ./... 2>/dev/null | egrep -v 'p2p|fetchers|downloader|peer|simulation')}
+	packagelist=${TESTPACKAGELIST-$(go list ./... 2>/dev/null | egrep -v 'p2p|fetchers|downloader|peer|simulation|opt\/console')}
 	tmpfile=$(mktemp tmpaqua-short-tests.XXXXXX.tmp)
 	echo testshorttmpfile=$tmpfile
 	echo "running short tests for packages: $packagelist" 1>&2
