@@ -19,7 +19,7 @@ package tests
 import (
 	"bytes"
 	"fmt"
-	"reflect"
+	"os"
 	"testing"
 
 	"gitlab.com/aquachain/aquachain/common/log"
@@ -79,23 +79,38 @@ func withTrace(t *testing.T, gasLimit uint64, test func(vm.Config) error) {
 	if err == nil {
 		return
 	}
-	t.Error(err)
+	skiplog := os.Getenv("NOTRACE") == "1"
+
 	if gasLimit > traceErrorLimit {
 		t.Log("gas limit too high for EVM trace")
 		return
 	}
+	t.Logf("re-running with EVM trace: err=%v", err)
 	tracer := vm.NewStructLogger(nil)
 	err2 := test(vm.Config{Debug: true, Tracer: tracer})
-	if !reflect.DeepEqual(err, err2) {
+	if (err != nil) != (err2 != nil) {
+		t.Errorf("err != nil: %v, err2 != nil: %v", err, err2)
+		return
+	}
+	if err.Error() != err2.Error() {
 		t.Errorf("different error for second run: %v", err2)
 	}
 	buf := new(bytes.Buffer)
 	vm.WriteTrace(buf, tracer.StructLogs())
 	if buf.Len() == 0 {
 		t.Log("no EVM operation logs generated")
+	} else if skiplog {
+		t.Logf("EVM operation log: %s", shorten(buf.String(), 100))
 	} else {
 		t.Log("EVM operation log:\n" + buf.String())
 	}
 	t.Logf("EVM output: 0x%x", tracer.Output())
 	t.Logf("EVM error: %v", tracer.Error())
+}
+
+func shorten(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	return s[:n] + "..."
 }
