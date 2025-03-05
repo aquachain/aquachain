@@ -207,7 +207,11 @@ func (s *Server) serveRequest(codec ServerCodec, singleShot bool, options CodecO
 		}
 
 		for _, req := range reqs {
-			log.Info("got serving request", "id", req.id, "method", req.callb.method.Name, "batch", batch)
+			name := "???"
+			if req.callb != nil {
+				name = req.callb.method.Name
+			}
+			log.Info("got serving request", "id", req.id, "method", name, "batch", batch)
 		}
 		// check if server is ordered to shutdown and return an error
 		// telling the client that his request failed.
