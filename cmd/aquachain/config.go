@@ -16,11 +16,7 @@
 
 package main
 
-import (
-	"gitlab.com/aquachain/aquachain/cmd/aquachain/mainctxs"
-)
-
-var mainctx, maincancel = mainctxs.Main(), mainctxs.MainCancelCause()
+// var mainctx, maincancel = mainctxs.Main(), mainctxs.MainCancelCause()
 
 // // These settings ensure that TOML keys use the same names as Go struct fields.
 // var tomlSettings = toml.Config{
