@@ -64,6 +64,16 @@ echo:
 clean:
 	rm -rf bin release docs tmprelease
 bootnode: bin/aquabootnode
+run/%${maybeext}: bin/%${maybeext}
+	$(info Running... $<)
+ifeq (,$(args))
+	$(info No arguments provided, use something like make run args='-h' $@ to add args)
+endif
+ifeq ($(GOOS),windows)
+	$< $(args)
+else
+	./$< ${args}
+endif
 bin/%${maybeext}: $(GOFILES)
 	$(info Building command ... ./cmd/$*)
 	$(info $(LOGO))
