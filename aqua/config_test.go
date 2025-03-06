@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"gitlab.com/aquachain/aquachain/aqua"
+	"gitlab.com/aquachain/aquachain/cmd/aquachain/subcommands"
 	"gitlab.com/aquachain/aquachain/cmd/utils"
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/config"
@@ -39,7 +40,7 @@ func TestConfigDefault(t *testing.T) {
 	println(string(got))
 }
 func TestConfigDefaultMainnet(t *testing.T) {
-	var cfg0 *utils.AquachainConfig = utils.Mkconfig("aqua", "", false, "100aa3", "aquachain")
+	var cfg0 *utils.AquachainConfig = subcommands.Mkconfig("aqua", "", false, "100aa3", "aquachain")
 	got, err := toml.Marshal(cfg0)
 	if err != nil {
 		t.Fatal(err)
