@@ -10,7 +10,6 @@ import (
 	mrand "math/rand"
 	"os"
 	"path/filepath"
-	"reflect"
 	"runtime"
 	"strconv"
 	"sync"
@@ -116,11 +115,9 @@ func memoryMapFile(file *os.File, write bool) (mmap.MMap, []uint32, error) {
 		return nil, nil, err
 	}
 	// Yay, we managed to memory map the file, here be dragons
-	header := *(*reflect.SliceHeader)(unsafe.Pointer(&mem))
-	header.Len /= 4
-	header.Cap /= 4
+	header := unsafe.Slice((*uint32)(unsafe.Pointer(&mem[0])), len(mem)/4)
 
-	return mem, *(*[]uint32)(unsafe.Pointer(&header)), nil
+	return mem, header, nil
 }
 
 // memoryMapAndGenerate tries to memory map a temporary file of uint32s for write
@@ -556,10 +553,7 @@ func generateCache(dest []uint32, epoch uint64, seed []byte) {
 	}()
 	// Convert our destination slice to a byte buffer
 	// Convert our destination slice to a byte buffer
-	header := *(*reflect.SliceHeader)(unsafe.Pointer(&dest))
-	header.Len *= 4
-	header.Cap *= 4
-	cache := *(*[]byte)(unsafe.Pointer(&header))
+	cache := unsafe.Slice((*byte)(unsafe.Pointer(&dest[0])), len(dest)*4)
 
 	// Calculate the number of theoretical rows (we'll store in one buffer nonetheless)
 	size := uint64(len(cache))
@@ -686,11 +680,7 @@ func generateDataset(dest []uint32, epoch uint64, cache []uint32, logging bool) 
 	// Figure out whether the bytes need to be swapped for the machine
 	swapped := !isLittleEndian()
 
-	dataset := *(*[]byte)(unsafe.Pointer(&reflect.SliceHeader{
-		Data: uintptr(unsafe.Pointer(&dest[0])),
-		Len:  len(dest) * 4,
-		Cap:  len(dest) * 4,
-	}))
+	dataset := unsafe.Slice((*byte)(unsafe.Pointer(&dest[0])), len(dest)*4)
 
 	// Generate the dataset on many goroutines since it takes a while
 	threads := runtime.NumCPU()
