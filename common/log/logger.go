@@ -209,7 +209,7 @@ func (l *logger) GetHandler() Handler {
 
 func (l *logger) SetHandler(h Handler) {
 	old := l.h.Swap(h)
-	if old != nil {
+	if debuglog && old != nil {
 		go l.Warn("Handler reset", "old", fmt.Sprintf("%T", old), "handler", fmt.Sprintf("%T", h), "caller2", stack.Caller(2), "caller3", stack.Caller(3))
 	}
 }
