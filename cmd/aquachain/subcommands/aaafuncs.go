@@ -1065,19 +1065,22 @@ type MigratedCommand struct {
 
 func (m *MigratedCommand) Run(ctx context.Context, cmd *cli.Command) error {
 	cmdmap := map[string]string{}
-	log.Debug("migrating command", "name", cmd.Name,
+	log.Info("migrating command", "name", cmd.Name,
 		"flags", cmd.FlagNames(), "rootname", cmd.Root().Name, "rootflags", cmd.Root().FlagNames(),
 		"local", cmd.LocalFlagNames(), "args", cmd.Arguments)
 	for _, c := range cmd.Commands {
 		cmdmap[c.Name] = c.Name
-		log.Warn("migrating subcommand", "name", c.Name)
 	}
-	for _, name := range cmd.FlagNames() {
-		if cmd.Root().IsSet(name) {
+	for _, name := range cmd.Root().FlagNames() {
+		if cmd.Root().IsSet(name) { // set all flags just in case
+			if !cmd.IsSet(name) {
+				log.Debug("migrating flag from global to subcommand", "name", name, "value", cmd.Root().String(name))
+			}
 			cmd.Set(name, cmd.Root().String(name))
 		}
+
 	}
-	log.Info("running migrated action", "name", cmd.Name)
+	// log.Warn("running migrated action", "name", cmd.Name, "args", cmd.Args().Slice(), "flagsEnabled", cmd.LocalFlagNames())
 	return m.Action(ctx, cmd)
 }
 
