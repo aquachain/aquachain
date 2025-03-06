@@ -79,13 +79,12 @@ func (s *RPCService) Modules() map[string]string {
 	return modules
 }
 
+// these can not not be in .env file
 var allow_all_rpc_signing = common.EnvBool("UNSAFE_RPC_SIGNING")   // needed even with localhost http
 var allow_sign_ipc = common.EnvBool("UNSAFE_ALLOW_SIGN_IPC")       // safer than localhost http
+var allow_sign_http = common.EnvBool("UNSAFE_RPC_SIGNING_HTTP")    //
+var allow_sign_ws = common.EnvBool("UNSAFE_RPC_SIGNING_WS")        //
 var allow_sign_inProc = common.EnvBool("UNSAFE_ALLOW_SIGN_INPROC") // testing
-
-func parseBool(s string) bool {
-	return strings.ToLower(s) == "true" || s == "1"
-}
 
 // RegisterName will create a service for the given rcvr type under the given name. When no methods on the given rcvr
 // match the criteria to be either a RPC method or a subscription an error is returned. Otherwise a new service is
@@ -96,6 +95,7 @@ func parseBool(s string) bool {
 // - Sign
 // - SendTransaction
 func (s *Server) RegisterName(name string, rcvr interface{}) (methodNames []string, err error) {
+
 	if s.services == nil {
 		s.services = make(serviceRegistry)
 	}
@@ -121,33 +121,40 @@ func (s *Server) RegisterName(name string, rcvr interface{}) (methodNames []stri
 	st := stack.Caller(2)
 	st1 := stack.Caller(1)
 	funcname := filepath.Base(st1.Frame().Function)
-	callertype := "HTTP"
+	callertype := "???"
+	envname := "UNSAFE_RPC_SIGNING"
+	is_allowed := false
 	if strings.HasSuffix(funcname, ".startIPC") {
 		callertype = "IPC"
+		envname = "UNSAFE_ALLOW_SIGN_IPC"
+		is_allowed = allow_sign_ipc
 	}
 	if strings.HasSuffix(funcname, ".startInProc") {
 		callertype = "InProc"
+		envname = "UNSAFE_ALLOW_SIGN_INPROC"
+		is_allowed = allow_sign_inProc
 	}
 	if strings.HasSuffix(funcname, ".startHTTP") {
 		callertype = "HTTP"
+		envname = "UNSAFE_RPC_SIGNING_HTTP"
+		is_allowed = allow_sign_http
 	}
 	if strings.HasSuffix(funcname, ".startWS") {
 		callertype = "WS"
+		envname = "UNSAFE_RPC_SIGNING_WS"
+		is_allowed = allow_sign_ws
 	}
 
-	for k, m := range methods {
+	for k, m := range methods { // methods is a map
 		coolname := fmt.Sprintf("%s_%s", name, strings.ToLower(m.method.Name[:1])+m.method.Name[1:])
-		if !allow_all_rpc_signing && isProtectedMethodName(m.method.Name) {
-			if strings.HasSuffix(funcname, ".startIPC") && allow_sign_ipc {
-				log.Warn(fmt.Sprintf("allowing %s method (UNSAFE_ALLOW_SIGN_IPC=1 env)", callertype), "service", name, "method", coolname, "caller", fmt.Sprintf("%v", st), "callerf", funcname)
-			} else if strings.HasSuffix(funcname, ".startInProc") && allow_sign_inProc {
-				log.Warn(fmt.Sprintf("allowing %s method (UNSAFE_ALLOW_SIGN_INPROC=1 env)", callertype), "service", name, "method", coolname, "caller", fmt.Sprintf("%v", st), "callerf", funcname)
-			} else {
-				log.Warn(fmt.Sprintf("disabling %s method (no UNSAFE_RPC_SIGNING=1 env)", callertype), "service", name, "method", coolname, "caller", fmt.Sprintf("%v", st), "callerf", funcname)
+		if isProtectedMethodName(m.method.Name) {
+			if !is_allowed {
+				log.Warn(fmt.Sprintf("disabling %s method (%s=0 env)", callertype, envname), "service", name, "method", coolname, "caller", fmt.Sprintf("%v", st), "callerf", funcname)
 				delete(methods, k)
 				continue
+			} else {
+				log.Warn(fmt.Sprintf("allowing %s method (%s=1 env)", callertype, envname), "service", name, "method", coolname, "caller", fmt.Sprintf("%v", st), "callerf", funcname)
 			}
-			continue
 		}
 		methodNames = append(methodNames, coolname)
 	}

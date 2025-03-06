@@ -362,10 +362,6 @@ func (n *Node) startRPC(services map[reflect.Type]Service, donefunc func()) erro
 	if len(apis) == 0 {
 		return errors.New("no APIs offered by the services")
 	}
-	if !n.config.RPCNoSign {
-		log.Warn("RPC signing enabled", "allowip", n.config.RPCAllowIP, "rpchost", n.config.HTTPHost, "rpcport", n.config.HTTPPort)
-	}
-
 	// Start the various API endpoints, terminating all in case of errors
 	if err := n.startInProc(apis); err != nil {
 		return err
