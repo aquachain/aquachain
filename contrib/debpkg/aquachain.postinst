@@ -26,13 +26,8 @@ echo "Data Directory: $AQUACHAIN_DATADIR"
 echo "Chain: $AQUACHAIN_CHAIN"
 echo "Verbosity: $VERBOSITY"
 echo "Additional Arguments: $AQUACHAIN_ARGS"
-echo "RPC Enabled: $RPC"
-
-mayberpc=""
-if [ "$RPC" = "1" ]; then
-    mayberpc="-rpc -ws --rpccorsdomain='*' --rpcvhosts='*' -wsorigins '*'"
-fi
-
+echo "RPC_ALLOW_IP: $RPC_ALLOW_IP"
+echo "PUBLIC_RPC_MODE: $PUBLIC_RPC_MODE"
 
 if [ ! -d $default_aqua_homedir ]; then
     echo "aqua homedir not found, creating it: $default_aqua_homedir"
