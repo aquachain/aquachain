@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with aquachain. If not, see <http://www.gnu.org/licenses/>.
 
-package main
+package subcommands
 
 import (
 	"context"
@@ -28,7 +28,7 @@ import (
 
 	"github.com/aerth/tgun"
 	cli "github.com/urfave/cli/v3"
-	"gitlab.com/aquachain/aquachain/cmd/utils"
+	"gitlab.com/aquachain/aquachain/cmd/aquachain/aquaflags"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/node"
 	"gitlab.com/aquachain/aquachain/opt/console"
@@ -36,88 +36,24 @@ import (
 	rpc "gitlab.com/aquachain/aquachain/rpc/rpcclient"
 )
 
-var mainctx, maincancelreal = mkmainctx()
-
-func parseTypicalDuration(s string) time.Duration {
-	if s == "" {
-		return 0
-	}
-	// if all digits
-	if strings.Trim(s, "0123456789") == "" {
-		s += "s"
-	}
-	d, err := time.ParseDuration(s)
-	if err != nil {
-		log.Error("failed to parse duration", "duration", s, "error", err)
-	}
-	return d // 0 if error
-
-}
-
-func mkmainctx() (context.Context, context.CancelCauseFunc) {
-	c := context.Background()
-	tm := parseTypicalDuration(os.Getenv("SCHEDULE_TIMEOUT"))
-	var maybenoop, stopSignals context.CancelFunc
-	var cancelCause context.CancelCauseFunc
-
-	// first, timeout
-	if tm != 0 {
-		log.Warn("main timeout set", "timeout", tm)
-		c, maybenoop = context.WithTimeoutCause(c, tm, fmt.Errorf("on schedule"))
-	}
-
-	// then, various function callers (eg utils.Fatalf or common/log.Fatal)
-	c, cancelCause = context.WithCancelCause(c)
-
-	// finally signals which does not set cause
-	c, stopSignals = signal.NotifyContext(c, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
-	multi := multicancelcause{
-		cancel1: cancelCause,
-		cancels: []context.CancelFunc{maybenoop, stopSignals},
-	}
-	log.RegisterCancelCause(multi.CancelCause) // when common/log.Fatal is called, this will be called
-	return c, cancelCause
-}
-
-// helper to free all the resources attached to contexts
-type multicancelcause struct {
-	cancel1 context.CancelCauseFunc // the only one exposed to callers, the first one cancelled
-	cancels []context.CancelFunc
-}
-
-func (x multicancelcause) CancelCause(err error) {
-	log.Warn("shutting down everything: interrupted", "err", err)
-	x.cancel1(err)
-	for _, c := range x.cancels {
-		if c != nil {
-			c()
-		}
-	}
-}
-
-func maincancel(err error) {
-	log.Warn("calling main cancel: interrupted", "err", err)
-	maincancelreal(err)
-}
-
 // // ATM the url is left to the user and deployment to
 //
-//	JSpathFlag = &cli.StringFlag{
+//	aquaflags.JSpathFlag = &cli.aquaflags.StringFlag{
 //		Name:  "jspath",
 //		Usage: "JavaScript root path for `loadScript`",
 //		Value: ".",
 //	}
 
 var (
-	socksClientFlag = &cli.StringFlag{
-		Name:  "socks",
-		Value: "",
-		Usage: "SOCKS5 proxy for outgoing RPC connections (eg: -socks socks5h://localhost:1080)",
-	}
-	consoleFlags  = []cli.Flag{utils.JavascriptDirectoryFlag, utils.ExecFlag, utils.PreloadJSFlag, socksClientFlag}
-	daemonFlags   = append(nodeFlags, rpcFlags...)
+	daemonFlags  = aquaflags.DaemonFlags
+	consoleFlags = aquaflags.ConsoleFlags
+	nodeFlags    = aquaflags.NodeFlags
+	rpcFlags     = aquaflags.RPCFlags
+)
+
+var (
 	daemonCommand = &cli.Command{
-		Action:      utils.MigrateFlags(daemonStart),
+		Action:      MigrateFlags(daemonStart),
 		Name:        "daemon",
 		Flags:       daemonFlags,
 		Usage:       "Start a full node",
@@ -125,7 +61,7 @@ var (
 		Description: "",
 	}
 	consoleCommand = &cli.Command{
-		Action: utils.MigrateFlags(localConsole),
+		Action: MigrateFlags(localConsole),
 		// Action:   localConsole,
 		Name:     "console",
 		Usage:    "Start an interactive JavaScript environment",
@@ -138,11 +74,11 @@ See https://gitlab.com/aquachain/aquachain/wiki/JavaScript-Console.`,
 	}
 
 	attachCommand = &cli.Command{
-		Action:    utils.MigrateFlags(remoteConsole),
+		Action:    MigrateFlags(remoteConsole),
 		Name:      "attach",
 		Usage:     "Start an interactive JavaScript environment (connect to node)",
 		ArgsUsage: "[endpoint]",
-		Flags:     append(consoleFlags, utils.DataDirFlag),
+		Flags:     append(consoleFlags, aquaflags.DataDirFlag),
 		Category:  "CONSOLE COMMANDS",
 		Description: `
 The Aquachain console is an interactive shell for the JavaScript runtime environment
@@ -152,7 +88,7 @@ This command allows to open a console on a running aquachain node.`,
 	}
 
 	javascriptCommand = &cli.Command{
-		Action:    utils.MigrateFlags(ephemeralConsole),
+		Action:    MigrateFlags(ephemeralConsole),
 		Name:      "js",
 		Usage:     "Execute the specified JavaScript files",
 		ArgsUsage: "<jsfile> [jsfile...]",
@@ -174,7 +110,7 @@ func localConsole(ctx context.Context, cmd *cli.Command) error {
 	if args := cmd.Args(); args.Len() != 0 && args.First() != "console" {
 		return fmt.Errorf("invalid command: %q", args.First())
 	}
-	nodeserver := makeFullNode(ctx, cmd)
+	nodeserver := MakeFullNode(ctx, cmd)
 	if !node.DefaultConfig.NoCountdown && !cmd.Bool("now") && !cmd.Root().Bool("now") {
 		for i := 3; i > 0 && ctx.Err() == nil; i-- {
 			log.Info("starting in ...", "seconds", i, "bootnodes", len(nodeserver.Config().P2P.BootstrapNodes),
@@ -196,20 +132,20 @@ func localConsole(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("failed to attach to the inproc aquachain: %v", err)
 	}
 	config := console.Config{
-		DataDir:          utils.MakeDataDir(cmd),
-		WorkingDirectory: cmd.String(utils.JavascriptDirectoryFlag.Name),
+		DataDir:          MakeDataDir(cmd),
+		WorkingDirectory: cmd.String(aquaflags.JavascriptDirectoryFlag.Name),
 		Client:           client,
-		Preload:          utils.MakeConsolePreloads(cmd),
+		Preload:          MakeConsolePreloads(cmd),
 	}
 
 	console, err := console.New(config)
 	if err != nil {
-		utils.Fatalf("Failed to start the JavaScript console: %v", err)
+		Fatalf("Failed to start the JavaScript console: %v", err)
 	}
 	defer console.Stop(false)
 
 	// If only a short execution was requested, evaluate and return
-	if script := cmd.String(utils.ExecFlag.Name); script != "" {
+	if script := cmd.String(aquaflags.ExecFlag.Name); script != "" {
 		console.Evaluate(script)
 		return nil
 	}
@@ -223,23 +159,23 @@ func localConsole(ctx context.Context, cmd *cli.Command) error {
 // for 'attach' with no arg
 func assumeEndpoint(_ context.Context, cmd *cli.Command) string {
 
-	chaincfg := params.GetChainConfig(cmd.String(utils.ChainFlag.Name))
+	chaincfg := params.GetChainConfig(cmd.String(aquaflags.ChainFlag.Name))
 	defaultpath := node.DefaultDatadirByChain(chaincfg)
 	path := defaultpath
-	if cmd.Bool(utils.TestnetFlag.Name) {
+	if cmd.Bool(aquaflags.TestnetFlag.Name) {
 		path = filepath.Join(path, "testnet")
-	} else if cmd.Bool(utils.Testnet2Flag.Name) {
+	} else if cmd.Bool(aquaflags.Testnet2Flag.Name) {
 		path = filepath.Join(path, "testnet2")
-	} else if cmd.Bool(utils.Testnet3Flag.Name) {
+	} else if cmd.Bool(aquaflags.Testnet3Flag.Name) {
 		path = filepath.Join(path, "testnet3")
-	} else if cmd.Bool(utils.NetworkEthFlag.Name) {
+	} else if cmd.Bool(aquaflags.NetworkEthFlag.Name) {
 		path = filepath.Join(path, "ethereum")
-	} else if cmd.Bool(utils.DeveloperFlag.Name) {
+	} else if cmd.Bool(aquaflags.DeveloperFlag.Name) {
 		path = filepath.Join(path, "develop")
 	}
 
-	if cmd.IsSet(utils.DataDirFlag.Name) {
-		got := cmd.String(utils.DataDirFlag.Name)
+	if cmd.IsSet(aquaflags.DataDirFlag.Name) {
+		got := cmd.String(aquaflags.DataDirFlag.Name)
 		// handle case where /var/lib/aquachain is passed with testnet and incompatible genesis block
 		if got != "" && got != path && got != defaultpath {
 			path = got // will be a subdirectory because Joined above
@@ -262,25 +198,26 @@ func remoteConsole(ctx context.Context, cmd *cli.Command) error {
 	if endpoint == "" {
 		return fmt.Errorf("no endpoint specified")
 	}
-	socks := cmd.String(socksClientFlag.Name) // ignored if IPC endpoint is the endpoint, maybe ignored if 127
+	socks := cmd.String(aquaflags.SocksClientFlag.Name) // ignored if IPC endpoint is the endpoint, maybe ignored if 127
+	clientIdentifier := cmd.String("clientIdentifier")
 	client, err := dialRPC(endpoint, socks, clientIdentifier)
 	if err != nil {
-		utils.Fatalf("Unable to attach to remote aquachain: %v", err)
+		Fatalf("Unable to attach to remote aquachain: %v", err)
 	}
 	config := console.Config{
-		DataDir:          utils.MakeDataDir(cmd),
-		WorkingDirectory: cmd.String(utils.JavascriptDirectoryFlag.Name),
+		DataDir:          MakeDataDir(cmd),
+		WorkingDirectory: cmd.String(aquaflags.JavascriptDirectoryFlag.Name),
 		Client:           client,
-		Preload:          utils.MakeConsolePreloads(cmd),
+		Preload:          MakeConsolePreloads(cmd),
 	}
 
 	console, err := console.New(config)
 	if err != nil {
-		utils.Fatalf("Failed to start the JavaScript console: %v", err)
+		Fatalf("Failed to start the JavaScript console: %v", err)
 	}
 	defer console.Stop(false)
 
-	if script := cmd.String(utils.ExecFlag.Name); script != "" {
+	if script := cmd.String(aquaflags.ExecFlag.Name); script != "" {
 		console.Evaluate(script)
 		return nil
 	}
@@ -320,8 +257,8 @@ func dialRPC(endpoint string, socks string, clientIdentifier string) (*rpc.Clien
 // everything down.
 func ephemeralConsole(ctx context.Context, cmd *cli.Command) error {
 	// Create and start the node based on the CLI flags
-	node := makeFullNode(ctx, cmd)
-	startNode(ctx, cmd, node)
+	node := MakeFullNode(ctx, cmd)
+	StartNodeCommand(ctx, cmd, node)
 	defer node.Stop()
 
 	// Attach to the newly started node and start the JavaScript console
@@ -330,15 +267,15 @@ func ephemeralConsole(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("failed to attach to the inproc aquachain: %v", err)
 	}
 	config := console.Config{
-		DataDir:          utils.MakeDataDir(cmd),
-		WorkingDirectory: cmd.String(utils.JavascriptDirectoryFlag.Name),
+		DataDir:          MakeDataDir(cmd),
+		WorkingDirectory: cmd.String(aquaflags.JavascriptDirectoryFlag.Name),
 		Client:           client,
-		Preload:          utils.MakeConsolePreloads(cmd),
+		Preload:          MakeConsolePreloads(cmd),
 	}
 
 	console, err := console.New(config)
 	if err != nil {
-		utils.Fatalf("Failed to start the JavaScript console: %v", err)
+		Fatalf("Failed to start the JavaScript console: %v", err)
 	}
 	defer console.Stop(false)
 
@@ -347,7 +284,7 @@ func ephemeralConsole(ctx context.Context, cmd *cli.Command) error {
 	// Evaluate each of the specified JavaScript files
 	for _, file := range files {
 		if err = console.ExecuteFile(file); err != nil {
-			utils.Fatalf("Failed to execute %s: %v", file, err)
+			Fatalf("Failed to execute %s: %v", file, err)
 		}
 	}
 	// Wait for pending callbacks, but stop for Ctrl-C.

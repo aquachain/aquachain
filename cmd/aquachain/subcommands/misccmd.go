@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with aquachain. If not, see <http://www.gnu.org/licenses/>.
 
-package main
+package subcommands
 
 import (
 	"context"
@@ -26,6 +26,8 @@ import (
 
 	"github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/aqua"
+	"gitlab.com/aquachain/aquachain/cmd/aquachain/aquaflags"
+	"gitlab.com/aquachain/aquachain/cmd/aquachain/buildinfo"
 	"gitlab.com/aquachain/aquachain/cmd/utils"
 	"gitlab.com/aquachain/aquachain/consensus/aquahash/ethashdag"
 	"gitlab.com/aquachain/aquachain/params"
@@ -33,7 +35,7 @@ import (
 
 var (
 	makecacheCommand = &cli.Command{
-		Action:    utils.MigrateFlags(makecache),
+		Action:    MigrateFlags(makecache),
 		Name:      "makecache",
 		Usage:     "Generate aquahash verification cache (for testing)",
 		ArgsUsage: "<blockNum> <outputDir>",
@@ -46,7 +48,7 @@ Regular users do not need to execute it.
 `,
 	}
 	makedagCommand = &cli.Command{
-		Action:    utils.MigrateFlags(makedag),
+		Action:    MigrateFlags(makedag),
 		Name:      "makedag",
 		Usage:     "Generate aquahash mining DAG (for testing)",
 		ArgsUsage: "<blockNum> <outputDir>",
@@ -59,7 +61,7 @@ Regular users do not need to execute it.
 `,
 	}
 	versionCommand = &cli.Command{
-		Action:    utils.MigrateFlags(printVersion),
+		Action:    MigrateFlags(printVersion),
 		Name:      "version",
 		Usage:     "Print version numbers",
 		ArgsUsage: " ",
@@ -69,7 +71,7 @@ The output of this command is supposed to be machine-readable.
 `,
 	}
 	licenseCommand = &cli.Command{
-		Action:    utils.MigrateFlags(license),
+		Action:    MigrateFlags(license),
 		Name:      "license",
 		Usage:     "Display license information",
 		ArgsUsage: " ",
@@ -106,6 +108,10 @@ func makedag(_ context.Context, cmd *cli.Command) error {
 	return nil
 }
 
+var gitCommit, clientIdentifier = "unknown", "unknown"
+var gitTag = "???"
+var buildDate = ""
+
 func printVersion(_ context.Context, cmd *cli.Command) error {
 	fmt.Println(strings.Title(clientIdentifier), params.Version)
 	if gitCommit != "" {
@@ -125,7 +131,7 @@ func printVersion(_ context.Context, cmd *cli.Command) error {
 
 	// chaincfg := params.MainnetChainConfig
 
-	chainName := cmd.String(utils.ChainFlag.Name)
+	chainName := cmd.String(aquaflags.ChainFlag.Name)
 	chaincfg := params.GetChainConfig(chainName)
 	if chaincfg == nil {
 		utils.Fatalf("invalid chain name: %q, try one of %q", chainName, params.ValidChainNames())
@@ -135,7 +141,7 @@ func printVersion(_ context.Context, cmd *cli.Command) error {
 	// utils.SetFParams(ctx, chaincfg)
 
 	fmt.Println("Architecture:", runtime.GOARCH)
-	fmt.Printf("Pure Go: %v\n", !CGO)
+	fmt.Printf("Pure Go: %v\n", !buildinfo.CGO)
 	fmt.Println("Go Version:", runtime.Version())
 	fmt.Println("Operating System:", runtime.GOOS)
 	fmt.Printf("Build Tags: %q\n", params.BuildTags())

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with aquachain. If not, see <http://www.gnu.org/licenses/>.
 
-package utils
+package aquaflags
 
 import (
 	"os"

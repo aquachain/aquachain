@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with aquachain. If not, see <http://www.gnu.org/licenses/>.
 
-package main
+package subcommands
 
 import (
 	"context"
@@ -29,7 +29,7 @@ import (
 	"sync/atomic"
 
 	cli "github.com/urfave/cli/v3"
-	"gitlab.com/aquachain/aquachain/cmd/utils"
+	"gitlab.com/aquachain/aquachain/cmd/aquachain/aquaflags"
 	"gitlab.com/aquachain/aquachain/crypto"
 )
 
@@ -37,7 +37,7 @@ var (
 	paperCommand = &cli.Command{
 		Name:      "paper",
 		Usage:     `Generate paper wallet keypair`,
-		Flags:     []cli.Flag{utils.JsonFlag, utils.VanityFlag, utils.VanityEndFlag, paperthreadsFlag},
+		Flags:     []cli.Flag{aquaflags.JsonFlag, aquaflags.VanityFlag, aquaflags.VanityEndFlag, paperthreadsFlag},
 		ArgsUsage: "[number of wallets]",
 		Category:  "ACCOUNT COMMANDS",
 		Action:    paper,

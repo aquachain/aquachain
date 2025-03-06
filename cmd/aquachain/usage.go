@@ -23,7 +23,8 @@ import (
 	"sort"
 
 	"github.com/urfave/cli/v3"
-	"gitlab.com/aquachain/aquachain/cmd/utils"
+	"gitlab.com/aquachain/aquachain/cmd/aquachain/aquaflags"
+	"gitlab.com/aquachain/aquachain/cmd/aquachain/subcommands"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/internal/debug"
 )
@@ -74,137 +75,137 @@ var AppHelpFlagGroups = []flagGroup{
 	{
 		Name: "Aquachain",
 		Flags: []cli.Flag{
-			utils.ConfigFileFlag,
-			utils.DataDirFlag,
-			utils.KeyStoreDirFlag,
-			utils.UseUSBFlag,
+			aquaflags.ConfigFileFlag,
+			aquaflags.DataDirFlag,
+			aquaflags.KeyStoreDirFlag,
+			aquaflags.UseUSBFlag,
 
-			utils.SyncModeFlag,
-			utils.ChainFlag,
-			utils.GCModeFlag,
-			utils.AquaStatsURLFlag,
-			utils.IdentityFlag,
-			utils.HF8MainnetFlag,
-			utils.AlertModeFlag,
-			utils.DoitNowFlag,
-			utils.NoKeysFlag,
-			utils.RPCBehindProxyFlag,
+			aquaflags.SyncModeFlag,
+			aquaflags.ChainFlag,
+			aquaflags.GCModeFlag,
+			aquaflags.AquaStatsURLFlag,
+			aquaflags.IdentityFlag,
+			aquaflags.HF8MainnetFlag,
+			aquaflags.AlertModeFlag,
+			aquaflags.DoitNowFlag,
+			aquaflags.NoKeysFlag,
+			aquaflags.RPCBehindProxyFlag,
 		},
 	},
 	{Name: "DEVELOPER CHAIN",
 		Flags: []cli.Flag{
-			utils.DeveloperFlag,
-			utils.DeveloperPeriodFlag,
+			aquaflags.DeveloperFlag,
+			aquaflags.DeveloperPeriodFlag,
 		},
 	},
 	{
 		Name: "AQUAHASH",
 		Flags: []cli.Flag{
-			utils.AquahashCacheDirFlag,
-			utils.AquahashCachesInMemoryFlag,
-			utils.AquahashCachesOnDiskFlag,
-			utils.AquahashDatasetDirFlag,
-			utils.AquahashDatasetsInMemoryFlag,
-			utils.AquahashDatasetsOnDiskFlag,
+			aquaflags.AquahashCacheDirFlag,
+			aquaflags.AquahashCachesInMemoryFlag,
+			aquaflags.AquahashCachesOnDiskFlag,
+			aquaflags.AquahashDatasetDirFlag,
+			aquaflags.AquahashDatasetsInMemoryFlag,
+			aquaflags.AquahashDatasetsOnDiskFlag,
 		},
 	},
 	{
 		Name: "TRANSACTION POOL",
 		Flags: []cli.Flag{
-			utils.TxPoolNoLocalsFlag,
-			utils.TxPoolJournalFlag,
-			utils.TxPoolRejournalFlag,
-			utils.TxPoolPriceLimitFlag,
-			utils.TxPoolPriceBumpFlag,
-			utils.TxPoolAccountSlotsFlag,
-			utils.TxPoolGlobalSlotsFlag,
-			utils.TxPoolAccountQueueFlag,
-			utils.TxPoolGlobalQueueFlag,
-			utils.TxPoolLifetimeFlag,
+			aquaflags.TxPoolNoLocalsFlag,
+			aquaflags.TxPoolJournalFlag,
+			aquaflags.TxPoolRejournalFlag,
+			aquaflags.TxPoolPriceLimitFlag,
+			aquaflags.TxPoolPriceBumpFlag,
+			aquaflags.TxPoolAccountSlotsFlag,
+			aquaflags.TxPoolGlobalSlotsFlag,
+			aquaflags.TxPoolAccountQueueFlag,
+			aquaflags.TxPoolGlobalQueueFlag,
+			aquaflags.TxPoolLifetimeFlag,
 		},
 	},
 	{
 		Name: "PERFORMANCE TUNING",
 		Flags: []cli.Flag{
-			utils.CacheFlag,
-			utils.CacheDatabaseFlag,
-			utils.CacheGCFlag,
-			utils.TrieCacheGenFlag,
+			aquaflags.CacheFlag,
+			aquaflags.CacheDatabaseFlag,
+			aquaflags.CacheGCFlag,
+			aquaflags.TrieCacheGenFlag,
 		},
 	},
 	{
 		Name: "ACCOUNT",
 		Flags: []cli.Flag{
-			utils.UnlockedAccountFlag,
-			utils.PasswordFileFlag,
+			aquaflags.UnlockedAccountFlag,
+			aquaflags.PasswordFileFlag,
 		},
 	},
 	{
 		Name: "API AND CONSOLE",
 		Flags: []cli.Flag{
-			utils.RPCEnabledFlag,
-			utils.RPCListenAddrFlag,
-			utils.RPCPortFlag,
-			utils.RPCApiFlag,
-			utils.WSEnabledFlag,
-			utils.WSListenAddrFlag,
-			utils.WSPortFlag,
-			utils.WSApiFlag,
-			utils.WSAllowedOriginsFlag,
-			utils.IPCDisabledFlag,
-			utils.IPCPathFlag,
-			utils.RPCCORSDomainFlag,
-			utils.RPCVirtualHostsFlag,
-			utils.JavascriptDirectoryFlag,
-			utils.ExecFlag,
-			utils.PreloadJSFlag,
+			aquaflags.RPCEnabledFlag,
+			aquaflags.RPCListenAddrFlag,
+			aquaflags.RPCPortFlag,
+			aquaflags.RPCApiFlag,
+			aquaflags.WSEnabledFlag,
+			aquaflags.WSListenAddrFlag,
+			aquaflags.WSPortFlag,
+			aquaflags.WSApiFlag,
+			aquaflags.WSAllowedOriginsFlag,
+			aquaflags.IPCDisabledFlag,
+			aquaflags.IPCPathFlag,
+			aquaflags.RPCCORSDomainFlag,
+			aquaflags.RPCVirtualHostsFlag,
+			aquaflags.JavascriptDirectoryFlag,
+			aquaflags.ExecFlag,
+			aquaflags.PreloadJSFlag,
 		},
 	},
 	{
 		Name: "NETWORKING",
 		Flags: []cli.Flag{
-			utils.BootnodesFlag,
-			utils.ListenPortFlag,
-			utils.MaxPeersFlag,
-			utils.MaxPendingPeersFlag,
-			utils.NATFlag,
-			utils.NoDiscoverFlag,
-			utils.OfflineFlag,
-			utils.NetrestrictFlag,
-			utils.NodeKeyFileFlag,
-			utils.NodeKeyHexFlag,
+			aquaflags.BootnodesFlag,
+			aquaflags.ListenPortFlag,
+			aquaflags.MaxPeersFlag,
+			aquaflags.MaxPendingPeersFlag,
+			aquaflags.NATFlag,
+			aquaflags.NoDiscoverFlag,
+			aquaflags.OfflineFlag,
+			aquaflags.NetrestrictFlag,
+			aquaflags.NodeKeyFileFlag,
+			aquaflags.NodeKeyHexFlag,
 		},
 	},
 	{
 		Name: "MINER",
 		Flags: []cli.Flag{
-			utils.MiningEnabledFlag,
-			utils.MinerThreadsFlag,
-			utils.AquabaseFlag,
-			utils.TargetGasLimitFlag,
-			utils.GasPriceFlag,
-			utils.ExtraDataFlag,
+			aquaflags.MiningEnabledFlag,
+			aquaflags.MinerThreadsFlag,
+			aquaflags.AquabaseFlag,
+			aquaflags.TargetGasLimitFlag,
+			aquaflags.GasPriceFlag,
+			aquaflags.ExtraDataFlag,
 		},
 	},
 	{
 		Name: "GAS PRICE ORACLE",
 		Flags: []cli.Flag{
-			utils.GpoBlocksFlag,
-			utils.GpoPercentileFlag,
+			aquaflags.GpoBlocksFlag,
+			aquaflags.GpoPercentileFlag,
 		},
 	},
 	{
 		Name: "VIRTUAL MACHINE",
 		Flags: []cli.Flag{
-			utils.VMEnableDebugFlag,
+			aquaflags.VMEnableDebugFlag,
 		},
 	},
 	{
 		Name: "LOGGING AND DEBUGGING",
 		Flags: append([]cli.Flag{
-			utils.MetricsEnabledFlag,
-			utils.FakePoWFlag,
-			utils.NoCompactionFlag,
+			aquaflags.MetricsEnabledFlag,
+			aquaflags.FakePoWFlag,
+			aquaflags.NoCompactionFlag,
 		}, debug.Flags...),
 	},
 
@@ -213,7 +214,7 @@ var AppHelpFlagGroups = []flagGroup{
 	},
 	{
 		Name:  "MISC",
-		Flags: []cli.Flag{utils.FastSyncFlag},
+		Flags: []cli.Flag{aquaflags.FastSyncFlag},
 	},
 }
 
@@ -310,7 +311,7 @@ func initHelp() {
 			}
 			// Render out custom usage screen
 			originalHelpPrinter(w, tmpl, helpData{data, AppHelpFlagGroups})
-		} else if tmpl == utils.CommandHelpTemplate {
+		} else if tmpl == subcommands.CommandHelpTemplate {
 			// Iterate over all command specific flags and categorize them
 			categorized := make(map[string][]cli.Flag)
 			for _, flag := range data.(cli.Command).Flags {

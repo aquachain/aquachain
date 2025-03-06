@@ -76,3 +76,4 @@ profile.cov
 *.deb
 *.out
 TODO*
+*.no

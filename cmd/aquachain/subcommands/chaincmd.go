@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with aquachain. If not, see <http://www.gnu.org/licenses/>.
 
-package main
+package subcommands
 
 import (
 	"context"
@@ -32,7 +32,8 @@ import (
 	"gitlab.com/aquachain/aquachain/aqua/downloader"
 	"gitlab.com/aquachain/aquachain/aqua/event"
 	"gitlab.com/aquachain/aquachain/aquadb"
-	"gitlab.com/aquachain/aquachain/cmd/utils"
+	"gitlab.com/aquachain/aquachain/cmd/aquachain/aquaflags"
+	"gitlab.com/aquachain/aquachain/cmd/aquachain/mainctxs"
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/core"
@@ -59,12 +60,12 @@ var (
 		Description: "echo flag set",
 	}
 	initCommand = &cli.Command{
-		Action:    utils.MigrateFlags(initGenesis),
+		Action:    MigrateFlags(initGenesis),
 		Name:      "init",
 		Usage:     "Bootstrap and initialize a new genesis block",
 		ArgsUsage: "<genesisPath>",
 		Flags: []cli.Flag{
-			utils.DataDirFlag,
+			aquaflags.DataDirFlag,
 		},
 		Category: "BLOCKCHAIN COMMANDS",
 		Description: `
@@ -75,16 +76,16 @@ participating.
 It expects the genesis file as argument.`,
 	}
 	importCommand = &cli.Command{
-		Action:    utils.MigrateFlags(importChain),
+		Action:    MigrateFlags(importChain),
 		Name:      "import",
 		Usage:     "Import a blockchain file",
 		ArgsUsage: "<filename> (<filename 2> ... <filename N>) ",
 		Flags: []cli.Flag{
-			utils.DataDirFlag,
-			utils.CacheFlag,
-			utils.GCModeFlag,
-			utils.CacheDatabaseFlag,
-			utils.CacheGCFlag,
+			aquaflags.DataDirFlag,
+			aquaflags.CacheFlag,
+			aquaflags.GCModeFlag,
+			aquaflags.CacheDatabaseFlag,
+			aquaflags.CacheGCFlag,
 		},
 		Category: "BLOCKCHAIN COMMANDS",
 		Description: `
@@ -95,13 +96,13 @@ If only one file is used, import error will result in failure. If several files 
 processing will proceed even if an individual RLP-file import failure occurs.`,
 	}
 	exportCommand = &cli.Command{
-		Action:    utils.MigrateFlags(exportChain),
+		Action:    MigrateFlags(exportChain),
 		Name:      "export",
 		Usage:     "Export blockchain into file",
 		ArgsUsage: "<filename> [<blockNumFirst> <blockNumLast>]",
 		Flags: []cli.Flag{
-			utils.DataDirFlag,
-			utils.CacheFlag,
+			// aquaflags.DataDirFlag,
+			aquaflags.CacheFlag,
 		},
 		Category: "BLOCKCHAIN COMMANDS",
 		Description: `
@@ -111,42 +112,42 @@ last block to write. In this mode, the file will be appended
 if already existing.`,
 	}
 	copydbCommand = &cli.Command{
-		Action:    utils.MigrateFlags(copyDb),
+		Action:    MigrateFlags(copyDb),
 		Name:      "copydb",
 		Usage:     "Create a local chain from a target chaindata folder",
 		ArgsUsage: "<sourceChaindataDir>",
 		Flags: []cli.Flag{
-			utils.DataDirFlag,
-			utils.CacheFlag,
-			utils.SyncModeFlag,
-			utils.FakePoWFlag,
-			utils.ChainFlag,
+			// aquaflags.DataDirFlag,
+			aquaflags.CacheFlag,
+			aquaflags.SyncModeFlag,
+			aquaflags.FakePoWFlag,
+			// aquaflags.ChainFlag,
 		},
 		Category: "BLOCKCHAIN COMMANDS",
 		Description: `
 The first argument must be the directory containing the blockchain to download from`,
 	}
 	removedbCommand = &cli.Command{
-		Action:    utils.MigrateFlags(removeDB),
+		Action:    MigrateFlags(removeDB),
 		Name:      "removedb",
 		Usage:     "Remove blockchain and state databases",
 		ArgsUsage: " ",
-		Flags: []cli.Flag{
-			utils.DataDirFlag,
-			utils.ChainFlag,
+		Flags:     []cli.Flag{
+			// aquaflags.DataDirFlag,
+			// aquaflags.ChainFlag,
 		},
 		Category: "BLOCKCHAIN COMMANDS",
 		Description: `
 Remove blockchain and state databases`,
 	}
 	dumpCommand = &cli.Command{
-		Action:    utils.MigrateFlags(dump),
+		Action:    MigrateFlags(dump),
 		Name:      "dump",
 		Usage:     "Dump a specific block from storage",
 		ArgsUsage: "[<blockHash> | <blockNum>]...",
 		Flags: []cli.Flag{
-			utils.DataDirFlag,
-			utils.CacheFlag,
+			aquaflags.DataDirFlag,
+			aquaflags.CacheFlag,
 		},
 		Category: "BLOCKCHAIN COMMANDS",
 		Description: `
@@ -161,33 +162,33 @@ func initGenesis(ctx context.Context, cmd *cli.Command) error {
 	// Make sure we have a valid genesis JSON
 	genesisPath := cmd.Args().First()
 	if len(genesisPath) == 0 {
-		utils.Fatalf("Must supply path to genesis JSON file")
+		Fatalf("Must supply path to genesis JSON file")
 	}
 	file, err := os.Open(genesisPath)
 	if err != nil {
-		utils.Fatalf("Failed to read genesis file: %v", err)
+		Fatalf("Failed to read genesis file: %v", err)
 	}
 	defer file.Close()
 
 	genesis := new(core.Genesis)
 	if err := json.NewDecoder(file).Decode(genesis); err != nil {
-		utils.Fatalf("invalid genesis file: %v", err)
+		Fatalf("invalid genesis file: %v", err)
 	}
 
 	if genesis.Config == nil || genesis.Config.ChainId == nil {
-		utils.Fatalf("invalid genesis file: no chainid")
+		Fatalf("invalid genesis file: no chainid")
 	}
 
 	// Open an initialise db
-	stack := makeFullNode(ctx, cmd)
+	stack := MakeFullNode(ctx, cmd)
 	for _, name := range []string{"chaindata"} {
 		chaindb, err := stack.OpenDatabase(name, 0, 0)
 		if err != nil {
-			utils.Fatalf("Failed to open database: %v", err)
+			Fatalf("Failed to open database: %v", err)
 		}
 		_, hash, err := core.SetupGenesisBlock(chaindb, genesis)
 		if err != nil {
-			utils.Fatalf("Failed to write genesis block: %v", err)
+			Fatalf("Failed to write genesis block: %v", err)
 		}
 		log.Info("Successfully wrote genesis state", "database", name, "hash", hash)
 	}
@@ -196,10 +197,10 @@ func initGenesis(ctx context.Context, cmd *cli.Command) error {
 
 func importChain(ctx context.Context, cmd *cli.Command) error {
 	if cmd.Args().Len() < 1 {
-		utils.Fatalf("This command requires an argument.")
+		Fatalf("This command requires an argument.")
 	}
-	stack := makeFullNode(ctx, cmd)
-	chain, chainDb := utils.MakeChain(cmd, stack)
+	stack := MakeFullNode(ctx, cmd)
+	chain, chainDb := MakeChain(cmd, stack)
 	defer chainDb.Close()
 
 	// Start periodically gathering memory profiles
@@ -222,13 +223,13 @@ func importChain(ctx context.Context, cmd *cli.Command) error {
 	exitcode := 0
 
 	if cmd.Args().Len() == 1 {
-		if err := utils.ImportChain(chain, cmd.Args().First()); err != nil {
+		if err := ImportChain(chain, cmd.Args().First()); err != nil {
 			log.Error("Import error", "err", err)
 			exitcode = 111
 		}
 	} else {
 		for _, arg := range cmd.Args().Slice() {
-			if err := utils.ImportChain(chain, arg); err != nil {
+			if err := ImportChain(chain, arg); err != nil {
 				log.Error("Import error", "file", arg, "err", err)
 			}
 		}
@@ -241,7 +242,7 @@ func importChain(ctx context.Context, cmd *cli.Command) error {
 
 	stats, err := db.LDB().GetProperty("leveldb.stats")
 	if err != nil {
-		utils.Fatalf("Failed to read database stats: %v", err)
+		Fatalf("Failed to read database stats: %v", err)
 	}
 	fmt.Println(stats)
 	fmt.Printf("Trie cache misses:  %d\n", trie.CacheMisses())
@@ -256,7 +257,7 @@ func importChain(ctx context.Context, cmd *cli.Command) error {
 	fmt.Printf("Allocations:   %.3f million\n", float64(mem.Mallocs)/1000000)
 	fmt.Printf("GC pause:      %v\n\n", time.Duration(mem.PauseTotalNs))
 
-	if cmd.IsSet(utils.NoCompactionFlag.Name) {
+	if cmd.IsSet(aquaflags.NoCompactionFlag.Name) {
 		return nil
 	}
 
@@ -264,13 +265,13 @@ func importChain(ctx context.Context, cmd *cli.Command) error {
 	start = time.Now()
 	fmt.Println("Compacting entire database...")
 	if err = db.LDB().CompactRange(util.Range{}); err != nil {
-		utils.Fatalf("Compaction failed: %v", err)
+		Fatalf("Compaction failed: %v", err)
 	}
 	fmt.Printf("Compaction done in %v.\n\n", time.Since(start))
 
 	stats, err = db.LDB().GetProperty("leveldb.stats")
 	if err != nil {
-		utils.Fatalf("Failed to read database stats: %v", err)
+		Fatalf("Failed to read database stats: %v", err)
 	}
 	fmt.Println(stats)
 
@@ -283,31 +284,31 @@ func importChain(ctx context.Context, cmd *cli.Command) error {
 
 func exportChain(ctx context.Context, cmd *cli.Command) error {
 	if cmd.Args().Len() < 1 {
-		utils.Fatalf("This command requires an argument.")
+		Fatalf("This command requires an argument.")
 	}
-	stack := makeFullNode(ctx, cmd)
-	chain, _ := utils.MakeChain(cmd, stack)
+	stack := MakeFullNode(ctx, cmd)
+	chain, _ := MakeChain(cmd, stack)
 	start := time.Now()
 
 	var err error
 	fp := cmd.Args().First()
 	if cmd.Args().Len() < 3 {
-		err = utils.ExportChain(chain, fp)
+		err = ExportChain(chain, fp)
 	} else {
 		// This can be improved to allow for numbers larger than 9223372036854775807
 		first, ferr := strconv.ParseInt(cmd.Args().Get(1), 10, 64)
 		last, lerr := strconv.ParseInt(cmd.Args().Get(2), 10, 64)
 		if ferr != nil || lerr != nil {
-			utils.Fatalf("Export error in parsing parameters: block number not an integer\n")
+			Fatalf("Export error in parsing parameters: block number not an integer\n")
 		}
 		if first < 0 || last < 0 {
-			utils.Fatalf("Export error: block number must be greater than 0\n")
+			Fatalf("Export error: block number must be greater than 0\n")
 		}
-		err = utils.ExportAppendChain(chain, fp, uint64(first), uint64(last))
+		err = ExportAppendChain(chain, fp, uint64(first), uint64(last))
 	}
 
 	if err != nil {
-		utils.Fatalf("Export error: %v\n", err)
+		Fatalf("Export error: %v\n", err)
 	}
 	fmt.Printf("Export done in %v\n", time.Since(start))
 	return nil
@@ -316,22 +317,22 @@ func exportChain(ctx context.Context, cmd *cli.Command) error {
 func copyDb(ctx context.Context, cmd *cli.Command) error {
 	// Ensure we have a source chain directory to copy
 	if cmd.Args().Len() != 1 {
-		utils.Fatalf("Source chaindata directory path argument missing")
+		Fatalf("Source chaindata directory path argument missing")
 	}
 	// Initialize a new chain for the running node to sync into
-	stack := makeFullNode(ctx, cmd)
-	chain, chainDb := utils.MakeChain(cmd, stack)
+	stack := MakeFullNode(ctx, cmd)
+	chain, chainDb := MakeChain(cmd, stack)
 
 	var syncmode downloader.SyncMode
 
-	err := syncmode.UnmarshalText([]byte(cmd.String(utils.SyncModeFlag.Name)))
+	err := syncmode.UnmarshalText([]byte(cmd.String(aquaflags.SyncModeFlag.Name)))
 	if err != nil {
-		utils.Fatalf("%v", err)
+		Fatalf("%v", err)
 	}
 	dl := downloader.New(syncmode, chainDb, new(event.TypeMux), chain, nil, nil)
 
 	// Create a source peer to satisfy downloader requests from
-	db, err := aquadb.NewLDBDatabase(cmd.Args().First(), int(cmd.Int(utils.CacheFlag.Name)), 256)
+	db, err := aquadb.NewLDBDatabase(cmd.Args().First(), int(cmd.Int(aquaflags.CacheFlag.Name)), 256)
 	if err != nil {
 		return err
 	}
@@ -359,7 +360,7 @@ func copyDb(ctx context.Context, cmd *cli.Command) error {
 	start = time.Now()
 	fmt.Println("Compacting entire database...")
 	if err = chainDb.(*aquadb.LDBDatabase).LDB().CompactRange(util.Range{}); err != nil {
-		utils.Fatalf("Compaction failed: %v", err)
+		Fatalf("Compaction failed: %v", err)
 	}
 	fmt.Printf("Compaction done in %v.\n\n", time.Since(start))
 
@@ -367,7 +368,8 @@ func copyDb(ctx context.Context, cmd *cli.Command) error {
 }
 
 func removeDB(ctx context.Context, cmd *cli.Command) error {
-	stack, _ := utils.MakeConfigNode(ctx, cmd, gitCommit, clientIdentifier, closeMain)
+	gitCommit, clientIdentifier := cmd.String("gitCommit"), cmd.String("clientIdentifier")
+	stack, _ := MakeConfigNode(ctx, cmd, gitCommit, clientIdentifier, mainctxs.MainCancelCause())
 
 	name := "chaindata"
 	// Ensure the database exists in the first place
@@ -384,17 +386,17 @@ func removeDB(ctx context.Context, cmd *cli.Command) error {
 	confirm, err := console.Stdin.PromptConfirm("Remove this database?")
 	switch {
 	case err != nil:
-		utils.Fatalf("%v", err)
+		Fatalf("%v", err)
 	case !confirm:
 		logger.Warn("Database deletion aborted")
 	default:
 		start := time.Now()
 		// if err := os.RemoveAll(dbdir); err != nil {
-		// 	utils.Fatalf("Failed to remove database: %v", err)
+		// 	Fatalf("Failed to remove database: %v", err)
 		// 	return nil
 		// }
 		if err := removeExtensions(dbdir, []string{".ldb", "LOG", ".bak", ".log", ""}, []string{"MANIFEST-", "CURRENT"}); err != nil {
-			utils.Fatalf("Failed to remove database: %v", err)
+			Fatalf("Failed to remove database: %v", err)
 			return nil
 		}
 		logger.Info("Database successfully deleted", "elapsed", common.PrettyDuration(time.Since(start)))
@@ -439,8 +441,8 @@ Files:
 }
 
 func dump(ctx context.Context, cmd *cli.Command) error {
-	stack := makeFullNode(ctx, cmd)
-	chain, chainDb := utils.MakeChain(cmd, stack)
+	stack := MakeFullNode(ctx, cmd)
+	chain, chainDb := MakeChain(cmd, stack)
 	for _, arg := range cmd.Args().Slice() {
 		var block *types.Block
 		if hashish(arg) {
@@ -451,11 +453,11 @@ func dump(ctx context.Context, cmd *cli.Command) error {
 		}
 		if block == nil {
 			fmt.Println("{}")
-			utils.Fatalf("block not found")
+			Fatalf("block not found")
 		} else {
 			state, err := state.New(block.Root(), state.NewDatabase(chainDb))
 			if err != nil {
-				utils.Fatalf("could not create new state: %v", err)
+				Fatalf("could not create new state: %v", err)
 			}
 			fmt.Printf("%s\n", state.Dump())
 		}

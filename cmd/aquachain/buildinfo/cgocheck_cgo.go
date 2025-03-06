@@ -1,6 +1,6 @@
 //go:build cgo
 // +build cgo
 
-package main
+package buildinfo
 
 var CGO = true

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with aquachain. If not, see <http://www.gnu.org/licenses/>.
 
-package main
+package subcommands
 
 import (
 	"bytes"
@@ -29,11 +29,10 @@ import (
 	"gitlab.com/aquachain/aquachain/params"
 
 	cli "github.com/urfave/cli/v3"
-	"gitlab.com/aquachain/aquachain/cmd/utils"
 )
 
 var bugCommand = &cli.Command{
-	Action:    utils.MigrateFlags(reportBug),
+	Action:    MigrateFlags(reportBug),
 	Name:      "bug",
 	Usage:     "opens a window to report a bug on the aquachain repo",
 	ArgsUsage: " ",

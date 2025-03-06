@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with aquachain. If not, see <http://www.gnu.org/licenses/>.
 
-package main
+package subcommands
 
 import (
 	"context"
@@ -23,7 +23,8 @@ import (
 	cli "github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/aqua/accounts"
 	"gitlab.com/aquachain/aquachain/aqua/accounts/keystore"
-	"gitlab.com/aquachain/aquachain/cmd/utils"
+	"gitlab.com/aquachain/aquachain/cmd/aquachain/aquaflags"
+	"gitlab.com/aquachain/aquachain/cmd/aquachain/mainctxs"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/crypto"
 	"gitlab.com/aquachain/aquachain/opt/console"
@@ -58,10 +59,10 @@ Make sure you backup your keys regularly.`,
 			{
 				Name:   "list",
 				Usage:  "Print summary of existing accounts",
-				Action: utils.MigrateFlags(accountList),
+				Action: MigrateFlags(accountList),
 				Flags: []cli.Flag{
-					utils.DataDirFlag,
-					utils.KeyStoreDirFlag,
+					aquaflags.DataDirFlag,
+					aquaflags.KeyStoreDirFlag,
 				},
 				Description: `
 Print a short summary of all accounts`,
@@ -69,11 +70,11 @@ Print a short summary of all accounts`,
 			{
 				Name:   "new",
 				Usage:  "Create a new account",
-				Action: utils.MigrateFlags(accountCreate),
+				Action: MigrateFlags(accountCreate),
 				Flags: []cli.Flag{
-					utils.DataDirFlag,
-					utils.KeyStoreDirFlag,
-					utils.PasswordFileFlag,
+					aquaflags.DataDirFlag,
+					aquaflags.KeyStoreDirFlag,
+					aquaflags.PasswordFileFlag,
 				},
 				Description: `
     aquachain account new
@@ -92,11 +93,11 @@ password to file or expose in any other way.
 			}, {
 				Name:   "generatePhrase",
 				Usage:  "Create a new mnemonic account",
-				Action: utils.MigrateFlags(accountGenerateMnemonic),
+				Action: MigrateFlags(accountGenerateMnemonic),
 				Flags: []cli.Flag{
-					utils.DataDirFlag,
-					utils.KeyStoreDirFlag,
-					utils.PasswordFileFlag,
+					aquaflags.DataDirFlag,
+					aquaflags.KeyStoreDirFlag,
+					aquaflags.PasswordFileFlag,
 				},
 				Description: `
     This only prints! Does not store key.
@@ -105,11 +106,11 @@ password to file or expose in any other way.
 			{
 				Name:      "update",
 				Usage:     "Update an existing account",
-				Action:    utils.MigrateFlags(accountUpdate),
+				Action:    MigrateFlags(accountUpdate),
 				ArgsUsage: "<address>",
 				Flags: []cli.Flag{
-					utils.DataDirFlag,
-					utils.KeyStoreDirFlag,
+					aquaflags.DataDirFlag,
+					aquaflags.KeyStoreDirFlag,
 				},
 				Description: `
     aquachain account update <address>
@@ -133,11 +134,11 @@ changing your password is only possible interactively.
 			{
 				Name:   "import",
 				Usage:  "Import a private key into a new account",
-				Action: utils.MigrateFlags(accountImport),
+				Action: MigrateFlags(accountImport),
 				Flags: []cli.Flag{
-					utils.DataDirFlag,
-					utils.KeyStoreDirFlag,
-					utils.PasswordFileFlag,
+					aquaflags.DataDirFlag,
+					aquaflags.KeyStoreDirFlag,
+					aquaflags.PasswordFileFlag,
 				},
 				ArgsUsage: "<keyFile>",
 				Description: `
@@ -167,10 +168,12 @@ nodes.
 )
 
 func accountList(ctx context.Context, cmd *cli.Command) error {
-	if cmd.Bool(utils.NoKeysFlag.Name) {
-		utils.Fatalf("Listing accounts is disabled (-nokeys)")
+	if cmd.Bool(aquaflags.NoKeysFlag.Name) {
+		Fatalf("Listing accounts is disabled (-nokeys)")
 	}
-	stack, _ := utils.MakeConfigNode(ctx, cmd, gitCommit, clientIdentifier, closeMain)
+	gitCommit := cmd.String("gitcommit")
+	clientIdentifier := cmd.String("clientIdentifier")
+	stack, _ := MakeConfigNode(ctx, cmd, gitCommit, clientIdentifier, mainctxs.MainCancelCause())
 	var index int
 	for _, wallet := range stack.AccountManager().Wallets() {
 		for _, account := range wallet.Accounts() {
@@ -183,12 +186,12 @@ func accountList(ctx context.Context, cmd *cli.Command) error {
 
 // tries unlocking the specified account a few times.
 func unlockAccount(cmd *cli.Command, ks *keystore.KeyStore, address string, i int, passwords []string) (accounts.Account, string) {
-	if cmd.Bool(utils.NoKeysFlag.Name) {
-		utils.Fatalf("Unlocking accounts is disabled")
+	if cmd.Bool(aquaflags.NoKeysFlag.Name) {
+		Fatalf("Unlocking accounts is disabled")
 	}
-	account, err := utils.MakeAddress(ks, address)
+	account, err := MakeAddress(ks, address)
 	if err != nil {
-		utils.Fatalf("Could not list accounts: %v", err)
+		Fatalf("Could not list accounts: %v", err)
 	}
 	for trials := 0; trials < 3; trials++ {
 		prompt := fmt.Sprintf("Unlocking account %s | Attempt %d/%d", address, trials+1, 3)
@@ -208,7 +211,7 @@ func unlockAccount(cmd *cli.Command, ks *keystore.KeyStore, address string, i in
 		}
 	}
 	// All trials expended to unlock account, bail out
-	utils.Fatalf("Failed to unlock account %s (%v)", address, err)
+	Fatalf("Failed to unlock account %s (%v)", address, err)
 
 	return accounts.Account{}, ""
 }
@@ -229,15 +232,15 @@ func getPassPhrase(prompt string, confirmation bool, i int, passwords []string) 
 	}
 	password, err := console.Stdin.PromptPassword("Passphrase: ")
 	if err != nil {
-		utils.Fatalf("Failed to read passphrase: %v", err)
+		Fatalf("Failed to read passphrase: %v", err)
 	}
 	if confirmation {
 		confirm, err := console.Stdin.PromptPassword("Repeat passphrase: ")
 		if err != nil {
-			utils.Fatalf("Failed to read passphrase confirmation: %v", err)
+			Fatalf("Failed to read passphrase confirmation: %v", err)
 		}
 		if password != confirm {
-			utils.Fatalf("Passphrases do not match")
+			Fatalf("Passphrases do not match")
 		}
 	}
 	return password
@@ -257,7 +260,7 @@ func ambiguousAddrRecovery(ks *keystore.KeyStore, err *keystore.AmbiguousAddrErr
 		}
 	}
 	if match == nil {
-		utils.Fatalf("None of the listed files could be unlocked.")
+		Fatalf("None of the listed files could be unlocked.")
 	}
 	fmt.Printf("Your passphrase unlocked %s\n", match.URL)
 	fmt.Println("In order to avoid this warning, you need to remove the following duplicate key files:")
@@ -271,26 +274,27 @@ func ambiguousAddrRecovery(ks *keystore.KeyStore, err *keystore.AmbiguousAddrErr
 
 // accountCreate creates a new account into the keystore defined by the CLI flags.
 func accountCreate(_ context.Context, cmd *cli.Command) error {
-	cfg := utils.AquachainConfig{Node: utils.DefaultNodeConfig(gitCommit, clientIdentifier)}
+	gitCommit, clientIdentifier := cmd.String("gitcommit"), cmd.String("clientIdentifier")
+	cfg := AquachainConfig{Node: DefaultNodeConfig(gitCommit, clientIdentifier)}
 	// Load config file.
-	if file := cmd.String(utils.ConfigFileFlag.Name); file != "" {
-		if err := utils.LoadConfigFromFile(file, &cfg); err != nil {
-			utils.Fatalf("%v", err)
+	if file := cmd.String(aquaflags.ConfigFileFlag.Name); file != "" {
+		if err := LoadConfigFromFile(file, &cfg); err != nil {
+			Fatalf("%v", err)
 		}
 	}
-	utils.SetNodeConfig(cmd, cfg.Node)
+	SetNodeConfig(cmd, cfg.Node)
 	scryptN, scryptP, keydir, err := cfg.Node.AccountConfig()
 
 	if err != nil {
-		utils.Fatalf("Failed to read configuration: %v", err)
+		Fatalf("Failed to read configuration: %v", err)
 	}
 
-	password := getPassPhrase("Your new account is locked with a password. Please give a password. Do not forget this password. Backup your keystore directory.", true, 0, utils.MakePasswordList(cmd))
+	password := getPassPhrase("Your new account is locked with a password. Please give a password. Do not forget this password. Backup your keystore directory.", true, 0, MakePasswordList(cmd))
 
 	address, err := keystore.StoreKey(keydir, password, scryptN, scryptP)
 
 	if err != nil {
-		utils.Fatalf("Failed to create account: %v", err)
+		Fatalf("Failed to create account: %v", err)
 	}
 	fmt.Printf("Address: {0x%x}\n", address)
 	return nil
@@ -300,16 +304,17 @@ func accountCreate(_ context.Context, cmd *cli.Command) error {
 // one, also providing the possibility to change the pass-phrase.
 func accountUpdate(ctx context.Context, cmd *cli.Command) error {
 	if cmd.Args().Len() == 0 {
-		utils.Fatalf("No accounts specified to update")
+		Fatalf("No accounts specified to update")
 	}
-	stack, _ := utils.MakeConfigNode(ctx, cmd, gitCommit, clientIdentifier, closeMain)
+	gitCommit, clientIdentifier := cmd.String("gitcommit"), cmd.String("clientIdentifier")
+	stack, _ := MakeConfigNode(ctx, cmd, gitCommit, clientIdentifier, mainctxs.MainCancelCause())
 	ks := stack.AccountManager().Backends(keystore.KeyStoreType)[0].(*keystore.KeyStore)
 
 	for _, addr := range cmd.Args().Slice() {
 		account, oldPassword := unlockAccount(cmd, ks, addr, 0, nil)
 		newPassword := getPassPhrase("Please give a new password. Do not forget this password.", true, 0, nil)
 		if err := ks.Update(account, oldPassword, newPassword); err != nil {
-			utils.Fatalf("Could not update the account: %v", err)
+			Fatalf("Could not update the account: %v", err)
 		}
 	}
 	return nil
@@ -318,19 +323,19 @@ func accountUpdate(ctx context.Context, cmd *cli.Command) error {
 func accountImport(ctx context.Context, cmd *cli.Command) error {
 	keyfile := cmd.Args().First()
 	if len(keyfile) == 0 {
-		utils.Fatalf("keyfile must be given as argument")
+		Fatalf("keyfile must be given as argument")
 	}
 	key, err := crypto.LoadECDSA(keyfile)
 	if err != nil {
-		utils.Fatalf("Failed to load the private key: %v", err)
+		Fatalf("Failed to load the private key: %v", err)
 	}
-	stack, _ := utils.MakeConfigNode(ctx, cmd, gitCommit, clientIdentifier, closeMain)
-	passphrase := getPassPhrase("Your new account is locked with a password. Please give a password. Do not forget this password.", true, 0, utils.MakePasswordList(cmd))
+	stack, _ := MakeConfigNode(ctx, cmd, cmd.String("gitCommit"), cmd.String("clientIdentifier"), mainctxs.MainCancelCause())
+	passphrase := getPassPhrase("Your new account is locked with a password. Please give a password. Do not forget this password.", true, 0, MakePasswordList(cmd))
 
 	ks := stack.AccountManager().Backends(keystore.KeyStoreType)[0].(*keystore.KeyStore)
 	acct, err := ks.ImportECDSA(key, passphrase)
 	if err != nil {
-		utils.Fatalf("Could not create the account: %v", err)
+		Fatalf("Could not create the account: %v", err)
 	}
 	fmt.Printf("Address: {%x}\n", acct.Address)
 	return nil

@@ -103,11 +103,16 @@ var Flags = []cli.Flag{
 	memprofilerateFlag, blockprofilerateFlag, cpuprofileFlag, traceFlag,
 }
 
+func SetupLog(ctx context.Context, cmd *cli.Command) error {
+	SetGlogger(Initglogger(cmd.Bool(debugFlag.Name), cmd.Int(verbosityFlag.Name), cmd.Bool(logcolorflag.Name), cmd.Bool(logjsonflag.Name)))
+	return nil
+}
+
 // Setup initializes profiling and logging based on the CLI flags.
 // It should be called as early as possible in the program.
 func Setup(ctx_ context.Context, cmd *cli.Command) error {
 	// do this asap
-	SetGlogger(Initglogger(cmd.Bool(debugFlag.Name), cmd.Int(verbosityFlag.Name), cmd.Bool(logcolorflag.Name), cmd.Bool(logjsonflag.Name)))
+	SetupLog(ctx_, cmd)
 	// profiling, tracing
 	runtime.MemProfileRate = int(cmd.Int(memprofilerateFlag.Name))
 	Handler.SetBlockProfileRate(int(cmd.Int(blockprofilerateFlag.Name)))

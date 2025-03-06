@@ -17,29 +17,10 @@
 package main
 
 import (
-	"context"
-	"io"
-	"os"
-
-	cli "github.com/urfave/cli/v3"
-
-	"gitlab.com/aquachain/aquachain/cmd/utils"
-	"gitlab.com/aquachain/aquachain/common/log"
-	"gitlab.com/aquachain/aquachain/common/toml"
-	"gitlab.com/aquachain/aquachain/node"
+	"gitlab.com/aquachain/aquachain/cmd/aquachain/mainctxs"
 )
 
-var (
-	dumpConfigCommand = &cli.Command{
-		Action:      utils.MigrateFlags(dumpConfig),
-		Name:        "dumpconfig",
-		Usage:       "Show configuration values",
-		ArgsUsage:   "",
-		Flags:       append(nodeFlags, rpcFlags...),
-		Category:    "MISCELLANEOUS COMMANDS",
-		Description: `The dumpconfig command shows configuration values.`,
-	}
-)
+var mainctx, maincancel = mainctxs.Main(), mainctxs.MainCancelCause()
 
 // // These settings ensure that TOML keys use the same names as Go struct fields.
 // var tomlSettings = toml.Config{
@@ -58,36 +39,7 @@ var (
 // 	},
 // }
 
-func closeMain(err error) {
-	log.Warn("got closemain signal", "err", err)
-	maincancel(err)
-}
-func makeFullNode(ctx context.Context, cmd *cli.Command) *node.Node {
-	stack, cfg := utils.MakeConfigNode(ctx, cmd, gitCommit, clientIdentifier, closeMain)
-	utils.RegisterAquaService(mainctx, stack, cfg.Aqua, cfg.Node.NodeName())
-
-	// Add the Aquachain Stats daemon if requested.
-	if cfg.Aquastats.URL != "" {
-		utils.RegisterAquaStatsService(stack, cfg.Aquastats.URL)
-	}
-	return stack
-}
-
-// dumpConfig is the dumpconfig command.
-func dumpConfig(ctx context.Context, cmd *cli.Command) error {
-	_, cfg := utils.MakeConfigNode(ctx, cmd, gitCommit, clientIdentifier, closeMain, utils.NoPreviousConfig)
-	comment := ""
-
-	if cfg.Aqua.Genesis != nil {
-		cfg.Aqua.Genesis = nil
-		comment += "# Note: this config doesn't contain the genesis block.\n\n"
-	}
-
-	out, err := toml.Marshal(&cfg)
-	if err != nil {
-		return err
-	}
-	io.WriteString(os.Stdout, comment)
-	os.Stdout.Write(out)
-	return nil
-}
+//	func closeMain(err error) {
+//		log.Warn("got closemain signal", "err", err)
+//		maincancel(err)
+//	}
