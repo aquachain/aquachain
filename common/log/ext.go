@@ -3,6 +3,7 @@ package log
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"gitlab.com/aquachain/aquachain/common/sense"
 )
@@ -19,11 +20,29 @@ var PrintfDefaultLevel = LvlInfo
 
 func (l *logger) Printf(msg string, stuff ...any) {
 	msg = fmt.Sprintf(msg, stuff...)
-	l.write(msg, PrintfDefaultLevel, []any{"todo", "oldlog"}) // add todo to log to know we should migrate it
+	l.writeskip(0, msg, PrintfDefaultLevel, []any{"todo", "oldlog"}) // add todo to log to know we should migrate it
+}
+func (l *logger) Infof(msg string, stuff ...any) {
+	msg = fmt.Sprintf(msg, stuff...)
+	l.writeskip(0, msg, LvlInfo, nil)
+}
+func (l *logger) Warnf(msg string, stuff ...any) {
+	msg = fmt.Sprintf(msg, stuff...)
+	l.writeskip(0, msg, LvlWarn, nil)
 }
 
 func Printf(msg string, stuff ...any) {
 	root.Printf(msg, stuff...)
+}
+func Infof(msg string, stuff ...any) {
+	msg = strings.TrimSuffix(msg, "\n")
+	msg = fmt.Sprintf(msg, stuff...)
+	root.writeskip(0, msg, LvlInfo, nil)
+}
+func Warnf(msg string, stuff ...any) {
+	msg = strings.TrimSuffix(msg, "\n")
+	msg = fmt.Sprintf(msg, stuff...)
+	root.writeskip(0, msg, LvlWarn, nil)
 }
 
 var testloghandler Handler
@@ -70,9 +89,9 @@ func MustParseLevel(s string) Lvl {
 	}
 }
 
-func newRoot() *logger {
+func newRoot(handler Handler) *logger {
 	x := &logger{[]interface{}{}, new(swapHandler)}
-	x.SetHandler(StderrHandler)
+	x.SetHandler(handler)
 	return x
 }
 

@@ -28,7 +28,7 @@ import (
 
 var (
 	StderrHandler         = newRootHandler()
-	root          *logger = newRoot()
+	root          *logger = newRoot(StderrHandler)
 	// old: StdoutHandler = StreamHandler(os.Stdout, LogfmtFormat())
 	// old: StderrHandler = StreamHandler(os.Stderr, LogfmtFormat())
 )
@@ -49,13 +49,15 @@ func New(ctx ...interface{}) LoggerI {
 
 func SetRootHandler(h Handler) {
 	if root == nil {
-		root = newRoot()
+		root = newRoot(h)
+		return
 	}
 	root.SetHandler(h)
 }
 
 func SetRoot(x *logger) {
 	root = x
+	Info("root logger set", "log", fmt.Sprintf("%T", root))
 }
 
 // Root returns the root logger

@@ -147,12 +147,15 @@ type logger struct {
 var _ LoggerI = (*logger)(nil)
 
 func (l *logger) write(msg string, lvl Lvl, ctx []interface{}) {
+	l.writeskip(1, msg, lvl, ctx)
+}
+func (l *logger) writeskip(skip int, msg string, lvl Lvl, ctx []interface{}) {
 	l.h.Log(&Record{
 		Time: time.Now(),
 		Lvl:  lvl,
 		Msg:  msg,
 		Ctx:  newContext(l.ctx, ctx),
-		Call: stack.Caller(2),
+		Call: stack.Caller(skip + 2),
 		KeyNames: RecordKeyNames{
 			Time: timeKey,
 			Msg:  msgKey,
