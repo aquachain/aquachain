@@ -1,3 +1,4 @@
+export CGO_ENABLED=${CGO_ENABLED-0}
 (
 	set -o pipefail
 	which go >/dev/null || {
