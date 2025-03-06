@@ -14,9 +14,10 @@ export JSONLOG
 export NO_SIGN
 export NO_KEYS
 export COLOR
-# Aquachain RPC allow IP
-RPC_ALLOW_IP=${RPC_ALLOW_IP}
-
+if [ -z "${RPC_ALLOW_IP}" ]; then
+    RPC_ALLOW_IP="${RPCALLOWIP}"
+fi
+export RPC_ALLOW_IP
 # Aquachain coinbase address
 AQUABASE=${AQUABASE}
 
