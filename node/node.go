@@ -668,7 +668,12 @@ func (n *Node) Wait() {
 	stop := n.stop
 	n.lock.RUnlock()
 
-	<-stop
+	select {
+	case <-stop:
+		log.GracefulShutdown(fmt.Errorf("node is out"))
+	case <-n.ctx.Done():
+		n.Stop()
+	}
 }
 
 // Restart terminates a running node and boots up a new one in its place. If the
