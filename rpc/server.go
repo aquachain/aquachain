@@ -152,9 +152,8 @@ func (s *Server) RegisterName(name string, rcvr interface{}) (methodNames []stri
 				log.Warn(fmt.Sprintf("disabling %s method (%s=0 env)", callertype, envname), "service", name, "method", coolname, "caller", fmt.Sprintf("%v", st), "callerf", funcname)
 				delete(methods, k)
 				continue
-			} else {
-				log.Warn(fmt.Sprintf("allowing %s method (%s=1 env)", callertype, envname), "service", name, "method", coolname, "caller", fmt.Sprintf("%v", st), "callerf", funcname)
 			}
+			log.Warn(fmt.Sprintf("allowing %s method (%s=1 env)", callertype, envname), "service", name, "method", coolname, "caller", fmt.Sprintf("%v", st), "callerf", funcname)
 		}
 		methodNames = append(methodNames, coolname)
 	}
