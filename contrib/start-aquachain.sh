@@ -7,7 +7,14 @@
 # e.g. sudo -u aqua /usr/local/bin/start-aquachain.sh
 set -ex
 if [ "$1" = "stop" ]; then
-    exec aquachain attach -exec 'admin.shutdown();'
+    (aquachain -verbosity -1 attach -exec 'admin.shutdown();' 2>&1 | grep -q 'connection refused' && exit 0)
+    if [ $? -ne 0 ]; then
+    got=$(aquachain -verbosity -1 attach -exec 'admin.shutdown();' 2>&1 | grep -q 'connection refused' && exit 0)
+    if [ $? -ne 0 ]; then
+        echo error: failed to stop aquachain 1>&2
+        exit 100
+    fi
+
 fi
 if [ "$1" = "restart" ]; then
     aquachain attach -exec 'admin.shutdown();'
