@@ -22,6 +22,7 @@ package: $(release_dir)/$(maincmd_name)-windows-amd64.zip \
 
 debs:
 	bash contrib/makedeb.bash linux-amd64 linux-arm linux-riscv64
+	mv *.deb $(release_dir)/
 
 # for not cross-compile
 aquachain_$(version)_$(GOOS)_$(GOARCH).deb:

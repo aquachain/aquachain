@@ -154,7 +154,7 @@ ifneq (1,$(release))
 endif
 release: checkrelease package hash
 release/SHA384.txt:
-	$(hashfn) release/*.tar.gz release/*.zip | tee $@
+	$(hashfn) release/*.tar.gz release/*.zip release/*.deb | tee $@
 hash: release/SHA384.txt
 .PHONY += hash
 devtools:
