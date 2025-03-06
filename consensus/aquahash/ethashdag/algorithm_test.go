@@ -629,7 +629,7 @@ func TestDatasetGeneration(t *testing.T) {
 		generateCache(cache, tt.epoch, seedHash(tt.epoch*epochLength+1, 0))
 
 		dataset := make([]uint32, tt.datasetSize/4)
-		generateDataset(dataset, tt.epoch, cache)
+		generateDataset(dataset, tt.epoch, cache, false)
 
 		want := make([]uint32, tt.datasetSize/4)
 		prepare(want, tt.dataset)
@@ -648,7 +648,7 @@ func TestHashimoto(t *testing.T) {
 	generateCache(cache, 0, make([]byte, 32))
 
 	dataset := make([]uint32, 32*1024/4)
-	generateDataset(dataset, 0, cache)
+	generateDataset(dataset, 0, cache, false)
 
 	// Create a block to verify
 	hash := hexutil.MustDecode("0xc9149cc0386e689d789a1c2f3d5d169a61a6218ed30e74414dc736e442ef3d1f")
@@ -689,7 +689,7 @@ func BenchmarkSmallDatasetGeneration(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		dataset := make([]uint32, 32*65536/4)
-		generateDataset(dataset, 0, cache)
+		generateDataset(dataset, 0, cache, false)
 	}
 }
 
@@ -712,7 +712,7 @@ func BenchmarkHashimotoFullSmall(b *testing.B) {
 	generateCache(cache, 0, make([]byte, 32))
 
 	dataset := make([]uint32, 32*65536/4)
-	generateDataset(dataset, 0, cache)
+	generateDataset(dataset, 0, cache, false)
 
 	hash := hexutil.MustDecode("0xc9149cc0386e689d789a1c2f3d5d169a61a6218ed30e74414dc736e442ef3d1f")
 

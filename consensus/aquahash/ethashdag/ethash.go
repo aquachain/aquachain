@@ -324,6 +324,23 @@ const (
 	ModeFullFake
 )
 
+func (m Mode) String() string {
+	switch m {
+	case ModeNormal:
+		return "normal"
+	case ModeShared:
+		return "shared"
+	case ModeTest:
+		return "test"
+	case ModeFake:
+		return "fake"
+	case ModeFullFake:
+		return "fullfake"
+	default:
+		return "unknown"
+	}
+}
+
 // Config are the configuration parameters of the aquahash.
 type Config struct {
 	CacheDir       string
@@ -422,7 +439,7 @@ func (d *dataset) generate(dir string, limit int, test bool) {
 			generateCache(cache, d.epoch, seed)
 
 			d.dataset = make([]uint32, dsize/4)
-			generateDataset(d.dataset, d.epoch, cache)
+			generateDataset(d.dataset, d.epoch, cache, !test)
 		}
 		// Disk storage is needed, this will get fancy
 		var endian string
@@ -448,12 +465,12 @@ func (d *dataset) generate(dir string, limit int, test bool) {
 		cache := make([]uint32, csize/4)
 		generateCache(cache, d.epoch, seed)
 
-		d.dump, d.mmap, d.dataset, err = memoryMapAndGenerate(path, dsize, func(buffer []uint32) { generateDataset(buffer, d.epoch, cache) })
+		d.dump, d.mmap, d.dataset, err = memoryMapAndGenerate(path, dsize, func(buffer []uint32) { generateDataset(buffer, d.epoch, cache, !test) })
 		if err != nil {
 			logger.Error("Failed to generate mapped aquahash dataset", "err", err)
 
 			d.dataset = make([]uint32, dsize/2)
-			generateDataset(d.dataset, d.epoch, cache)
+			generateDataset(d.dataset, d.epoch, cache, !test)
 		}
 		// Iterate over all previous instances and delete old ones
 		for ep := int(d.epoch) - limit; ep >= 0; ep-- {
@@ -652,9 +669,9 @@ func generateDatasetItem(cache []uint32, index uint32, keccak512 hasher) []byte 
 
 // generateDataset generates the entire aquahash dataset for mining.
 // This method places the result into dest in machine byte order.
-func generateDataset(dest []uint32, epoch uint64, cache []uint32) {
+func generateDataset(dest []uint32, epoch uint64, cache []uint32, logging bool) {
 	// Print some debug logs to allow analysis on low end devices
-	logger := log.New("epoch", epoch)
+	var logger log.LoggerI = log.New("epoch", epoch)
 
 	start := time.Now()
 	defer func() {
@@ -708,9 +725,10 @@ func generateDataset(dest []uint32, epoch uint64, cache []uint32) {
 					swap(item)
 				}
 				copy(dataset[index*hashBytes:], item)
-
-				if status := atomic.AddUint32(&progress, 1); status%percent == 0 {
-					logger.Info("Generating DAG in progress", "percentage", uint64(status*100)/(size/hashBytes), "elapsed", common.PrettyDuration(time.Since(start)))
+				if logging {
+					if status := atomic.AddUint32(&progress, 1); status%percent == 0 {
+						logger.Info("Generating DAG in progress", "percentage", uint64(status*100)/(size/hashBytes), "elapsed", common.PrettyDuration(time.Since(start)))
+					}
 				}
 			}
 		}(i)

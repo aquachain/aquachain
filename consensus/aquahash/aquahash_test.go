@@ -17,11 +17,13 @@
 package aquahash
 
 import (
+	"encoding/hex"
 	"io/ioutil"
 	"log"
 	"math/big"
 	"math/rand"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 
@@ -104,7 +106,7 @@ func TestConcurrentDiskCacheGeneration(t *testing.T) {
 		GasLimit:    4015682,
 		GasUsed:     0,
 		Time:        big.NewInt(1488928920),
-		Extra:       []byte("www.bw.com"),
+		Extra:       mustHexDecode("0x7777772e62772e636f6d"),
 		MixDigest:   common.HexToHash("0x3e140b0784516af5e5ec6730f2fb20cca22f32be399b9e4ad77d32541f798cd0"),
 		Nonce:       types.EncodeNonce(0xf400cd0006070c49),
 		Version:     types.H_KECCAK256,
@@ -117,11 +119,20 @@ func TestConcurrentDiskCacheGeneration(t *testing.T) {
 
 		go func(idx int) {
 			defer pend.Done()
-			aquahash := New(&Config{CacheDir: cachedir, CachesOnDisk: 1, PowMode: ModeTest, StartVersion: 1})
+			aquahash := New(&Config{CacheDir: cachedir, CachesOnDisk: 1, PowMode: ModeNormal, StartVersion: 1})
 			if err := aquahash.VerifySeal(nil, block.Header()); err != nil {
 				t.Errorf("proc %d: block verification failed: %+v", idx, err)
 			}
 		}(i)
 	}
 	pend.Wait()
+}
+
+func mustHexDecode(s string) []byte {
+	s = strings.TrimPrefix(s, "0x")
+	b, err := hex.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+	return b
 }
