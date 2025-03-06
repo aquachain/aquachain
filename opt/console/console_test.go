@@ -450,9 +450,31 @@ func TestBigSmall(t *testing.T) {
 	}
 	println(got)
 
+}
+
+func TestBigSmall2(t *testing.T) {
+	input := "1234500000000000000000" // wei
+	output := "1234.5"                // coin
+	bigconsole := newTester(t, nil)
+	defer bigconsole.Close(t)
+	// jsre := New("", os.Stdout)
+	// defer jsre.Stop(false)
+
+	jsre := bigconsole.console.jsre
+	var err error
+	_, err = jsre.Run("var big = new BigNumber('" + input + "');")
+	if err != nil {
+		t.Fatal("cannot run big:", err)
+	}
+
+	_, err = jsre.Run("var small = web3.fromWei(big, 'aqua');")
+	if err != nil {
+		t.Fatal("cannot run fromWei:", err)
+	}
+
 	var jstest = `
-var inwei = '1234000000000000000000';
-var incoin = '1234';
+var inwei = '` + input + `';
+var incoin = '` + output + `';
 var small = web3.fromWei(inwei, 'aqua');
 var big = web3.toWei(incoin, 'aqua');
 if (small.toString() != incoin) throw 'small ' + small.toString() + ' ' + incoin;
@@ -461,7 +483,7 @@ if (big.toString() != inwei) throw 'big ' + big.toString() + ' ' + inwei;
 `
 	_, err = jsre.Run(jstest)
 	if err != nil {
-		t.Fatal("cannot run bigsmall:", err)
+		t.Fatal("error:", err)
 	}
 
 }
