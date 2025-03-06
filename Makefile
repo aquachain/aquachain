@@ -73,6 +73,11 @@ bin/%${maybeext}: $(GOFILES)
 	@sha256sum $@ 2>/dev/null || echo "warn: 'sha256sum' command not found"
 	@file $@ 2>/dev/null || echo "warn: 'file' command not found"
 	@ls -lh $@ 2>/dev/null
+# helper target to list all available bin/ commands
+# TODO: remove internal and utils from this list
+commandlist:
+	@echo "Available commands:"
+	@ls -1 cmd/ | egrep -v '^_|^internal|^utils' | sed -E 's/^(.*)$$/make bin\/\1${maybeext}/'
 .PHONY += default bootnode hash
 deb: aquachain_$(version)_$(GOOS)_$(GOARCH).deb
 internal/jsre/deps/bindata.go: internal/jsre/deps/web3.js  internal/jsre/deps/bignumber.js
