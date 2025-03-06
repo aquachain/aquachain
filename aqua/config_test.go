@@ -50,7 +50,7 @@ func TestConfigDefaultMainnet(t *testing.T) {
 
 // instead of 0x0000000 address, it should be a empty quoted string
 func TestConfigDefaultEmptyCoinbase(t *testing.T) {
-	var cfg0 *utils.AquachainConfig = utils.Mkconfig("aqua", "", false, "100aa3", "nonempty")
+	var cfg0 *utils.AquachainConfig = subcommands.Mkconfig("aqua", "", false, "100aa3", "nonempty")
 	// println("node name:", cfg0.Node.NodeName())
 	cfg0.Aqua.Aquabase = common.Address{}
 	got, err := toml.Marshal(cfg0)
@@ -71,12 +71,12 @@ func TestConfigUnmarshalPartial(t *testing.T) {
 	UserIdent = "Foo"
 	`
 
-	var mainnetcfg *utils.AquachainConfig = utils.Mkconfig("aqua", "", false, "100aa3", "aquachain")
+	var mainnetcfg *utils.AquachainConfig = subcommands.Mkconfig("aqua", "", false, "100aa3", "aquachain")
 	// compare with mainnetcfg after making the exact same changes
 	mainnetcfg.Aqua.ChainId = 12345
 	mainnetcfg.Node.UserIdent = "Foo"
-	var cfg0new *utils.AquachainConfig = utils.Mkconfig("aqua", "", false, "100aa3", "aquachain")
-	var cfg1copy *utils.AquachainConfig = utils.Mkconfig("aqua", "", false, "100aa3", "aquachain").Copy()
+	var cfg0new *utils.AquachainConfig = subcommands.Mkconfig("aqua", "", false, "100aa3", "aquachain")
+	var cfg1copy *utils.AquachainConfig = subcommands.Mkconfig("aqua", "", false, "100aa3", "aquachain").Copy()
 
 	for _, cfg := range []*utils.AquachainConfig{cfg0new, cfg1copy} {
 		buf := strings.NewReader(tomlStr)
