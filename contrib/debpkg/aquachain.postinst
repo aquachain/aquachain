@@ -27,7 +27,7 @@ echo "Chain: $AQUACHAIN_CHAIN"
 echo "Verbosity: $VERBOSITY"
 echo "Additional Arguments: $AQUACHAIN_ARGS"
 echo "RPC_ALLOW_IP: $RPC_ALLOW_IP"
-echo "PUBLIC_RPC_MODE: $PUBLIC_RPC_MODE"
+echo "PUBLIC_RPC_MODE: ${PUBLIC_RPC_MODE-0}"
 
 if [ ! -d $default_aqua_homedir ]; then
     echo "aqua homedir not found, creating it: $default_aqua_homedir"

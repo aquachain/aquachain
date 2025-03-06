@@ -74,10 +74,6 @@ fi
 if [ "${RPC_ALLOW_IP}" = "0.0.0.0/0" ]; then
     USE_RPC=0
     PUBLIC_RPC_MODE=1
-    export NO_KEYS=1
-    export NO_SIGN=1
-    echo warn: public rpc mode enabled, no keys or signing allowed
-    echo warn: public rpc mode enabled, no keys or signing allowed 1>&2
 fi
 if [ -n "${RPC_ALLOW_IP}" ]; then
     AQUACHAIN_ARGS="${AQUACHAIN_ARGS} --allowip \"${RPC_ALLOW_IP}\""
@@ -97,6 +93,10 @@ fi
 # use public rpc
 if [ "${PUBLIC_RPC_MODE}" = "1" ]; then
     echo "warn: Serving public HTTP and WS RPC on all interfaces" 1>&2
+    export NO_KEYS=1
+    export NO_SIGN=1
+    echo warn: public rpc mode enabled, no keys or signing allowed 1>&2
+    echo warn: public rpc mode enabled, no keys or signing allowed 1>&2
     AQUACHAIN_ARGS="${AQUACHAIN_ARGS} --rpc --rpcaddr 0.0.0.0 --ws --wsaddr 0.0.0.0 -nokeys"
 fi
 # use default localhost rpc
@@ -109,4 +109,5 @@ echo "Starting Aquachain node with args: ${AQUACHAIN_ARGS}" 1>&2
 
 # lol TODO: fix this arg expansion
 cmdline=$(echo exec /usr/local/bin/aquachain ${AQUACHAIN_ARGS} daemon)
+/bin/sh -c 'echo NO_SIGN=${NO_SIGN} NO_KEYS=${NO_KEYS}'
 exec /bin/sh -c "${cmdline}"
