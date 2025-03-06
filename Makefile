@@ -76,8 +76,8 @@ bin/%${maybeext}: $(GOFILES)
 # helper target to list all available bin/ commands
 # TODO: remove internal and utils from this list
 commandlist:
-	@echo "Available commands:"
-	@ls -1 cmd/ | egrep -v '^_|^internal|^utils' | sed -E 's/^(.*)$$/make bin\/\1${maybeext}/'
+	@echo "Available commands to compile:"
+	@ls -1 cmd/ | egrep -v '^_|^internal|^utils' | sed -E 's/^(.*)$$/    make bin\/\1${maybeext}/'
 .PHONY += default bootnode hash
 deb: aquachain_$(version)_$(GOOS)_$(GOARCH).deb
 internal/jsre/deps/bindata.go: internal/jsre/deps/web3.js  internal/jsre/deps/bignumber.js
@@ -107,7 +107,7 @@ cross:
 	cd $(build_dir)/${GOOS}-${GOARCH} && GOOS=${GOOS} GOARCH=${GOARCH} \
 		CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build -o . $(GO_FLAGS) ../.${main_command_dir}
 
-help:
+help: commandlist
 	@echo Variables:
 	@echo PREFIX="$(PREFIX)/"
 	@echo INSTALL_DIR="$(INSTALL_DIR)/"
