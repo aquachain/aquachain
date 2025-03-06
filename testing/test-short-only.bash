@@ -4,6 +4,11 @@
 		echo "go not found in PATH"
 		exit 3
 	}
+	go vet ./...
+	if [ $? -ne 0 ]; then
+		echo "go vet failed"
+		exit 1
+	fi
 	packagelist=${TESTPACKAGELIST-$(go list ./... 2>/dev/null | egrep -v 'p2p|fetchers|downloader|peer|simulation|opt\/console')}
 	tmpfile=$(mktemp tmpaqua-short-tests.XXXXXX.tmp)
 	echo testshorttmpfile=$tmpfile
