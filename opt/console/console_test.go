@@ -395,8 +395,8 @@ func TestIndenting(t *testing.T) {
 
 func TestBigSmall(t *testing.T) {
 	// test web3.fromWei and web3.toWei
-	input := "1234000000000000000000" // wei
-	output := "1234"                  // coin
+	input := "1234500000000000000000" // wei
+	output := "1234.5"                // coin
 	bigconsole := newTester(t, nil)
 	defer bigconsole.Close(t)
 	// jsre := New("", os.Stdout)
@@ -449,5 +449,19 @@ func TestBigSmall(t *testing.T) {
 		t.Errorf("expected '%v', got '%v'", input, got)
 	}
 	println(got)
+
+	var jstest = `
+var inwei = '1234000000000000000000';
+var incoin = '1234';
+var small = web3.fromWei(inwei, 'aqua');
+var big = web3.toWei(incoin, 'aqua');
+if (small.toString() != incoin) throw 'small ' + small.toString() + ' ' + incoin;
+if (big.toString() != inwei) throw 'big ' + big.toString() + ' ' + inwei;
+
+`
+	_, err = jsre.Run(jstest)
+	if err != nil {
+		t.Fatal("cannot run bigsmall:", err)
+	}
 
 }
