@@ -28,6 +28,7 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2"
 	"gitlab.com/aquachain/aquachain/aqua/accounts"
 	"gitlab.com/aquachain/aquachain/aqua/accounts/keystore"
+	"gitlab.com/aquachain/aquachain/cmd/aquachain/buildinfo"
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/crypto"
@@ -262,6 +263,10 @@ func GetNodeName(cfg *Config) string {
 	}
 
 	// version info
+	if cfg.Version == "" {
+		// guess from buildinfo
+		cfg.Version = buildinfo.GetBuildInfo().GitTag
+	}
 	if cfg.Version != "" {
 		name += "/v" + strings.TrimPrefix(cfg.Version, "v") // eg: Aquachain-supercoolpool/v1.7.17-sometag
 	}

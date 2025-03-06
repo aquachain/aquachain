@@ -701,7 +701,9 @@ func (n *Node) Attach(ctx context.Context, name string) (*rpcclient.Client, erro
 	if n.server == nil {
 		return nil, ErrNodeStopped
 	}
-	return rpcclient.DialInProc(ctx, n.inprocHandler), nil
+	cl := rpcclient.DialInProc(ctx, n.inprocHandler)
+	cl.Name = name
+	return cl, nil
 }
 
 // RPCHandler returns the in-process RPC request handler.

@@ -204,6 +204,7 @@ func remoteConsole(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		Fatalf("Unable to attach to remote aquachain: %v", err)
 	}
+	client.Name = "remoteConsole"
 	config := console.Config{
 		DataDir:          MakeDataDir(cmd),
 		WorkingDirectory: cmd.String(aquaflags.JavascriptDirectoryFlag.Name),

@@ -2781,7 +2781,9 @@ Batch.prototype.execute = function () {
             return results[index] || {};
         }).forEach(function (result, index) {
             if (requests[index].callback) {
-
+if (result.error !== undefined) {
+                    return requests[index].callback(new Error(result.error));
+                }
                 if (!Jsonrpc.isValidResponse(result)) {
                     return requests[index].callback(errors.InvalidResponse(result));
                 }

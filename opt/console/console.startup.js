@@ -1,4 +1,9 @@
-//{
+// console.startup.js
+// this file is embedded and executed on boot
+// it might look like web.version.node exists but its a getter
+// lets call getinfo once and format the output
+
+// friendly name for algo
 function algoname(version) {
     switch (version) {
         case 1: return "Ethash";
@@ -9,66 +14,66 @@ function algoname(version) {
     }
 }
 
+// fetch the info from the node
 function getinfo() {
-    var head = aqua.getBlock('latest');
+    try {
+        var instance = web3.version.node;
+    } catch (e) {
+        console.log("error getting instance: " + e);
+        var instance = "unknown";
+    }
     var info = {
-        "instance": web3.version.node,
-        "block": head.number,
-        "timestamp": head.timestamp,
-        "hash": head.hash,
-        "coinbase": aqua.coinbase,
-        "gasPrice": web3.fromWei(aqua.gasPrice, 'gwei'),
-        "gasLimit": head.gasLimit,
-        "difficulty": head.difficulty,
+        "instance": instance,
         "chainId": Number(aqua.chainId(), 16), // hex->dec
-        "algo": head.version,
-        "algoname": algoname(head.version)
-    };
+        "gasPrice": web3.fromWei(aqua.gasPrice, 'gwei'),
+    }
+    try {
+        info["coinbase"] = aqua.coinbase;
+    } catch (e) {
+        console.log("getting coinbase:", e);
+        info["coinbase"] = undefined;
+     }
+     var head = aqua.getBlock('latest');
+     var headinfo = {
+         "block": head.number,
+         "timestamp": head.timestamp,
+         "hash": head.hash,
+         "gasLimit": head.gasLimit,
+         "difficulty": head.difficulty,
+         "algo": head.version,
+         "algoname": algoname(head.version)
+        };
+    info["headinfo"] = headinfo;
+
+    try {
+        this.admin && (info["datadir"] = this.admin.datadir);
+    } catch (e) { }
+
     return info;
 }
 
 
 function welcome() {
     var info = getinfo();
-    console.log("instance: " + info.instance);
-    console.log("at block: " + info.block + " (" + new Date(1000 * info.timestamp) + ")");
-    console.log("  head: " + info.hash);
-    console.log("coinbase:  " + info.coinbase);
+    var headinfo = info.headinfo;
+    console.log("instance:   " + info.instance);
+    console.log("at block:   " + headinfo.block + " (" + new Date(1000 * headinfo.timestamp) + ")");
+    console.log("    head:   " + headinfo.hash);
+    console.log("coinbase:   " + info.coinbase);
     console.log("  gasPrice: " + info.gasPrice + " gigawei");
-    console.log("  gasLimit: " + info.gasLimit + " units");
-    console.log("  difficulty: " + (info.difficulty / 1000000.0).toFixed(2) + " MH");
-    console.log("  chainId: " + info.chainId);
-    console.log("    algo: " + info.algo + " (" + info.algoname + ")");
-    try {
-        this.admin && console.log(" datadir: " + admin.datadir);
-    } catch (e) { }
-    try {
-        this.admin && console.log("  client: " + admin.clientVersion);
-    } catch (e) { }
+    console.log("  gasLimit: " + headinfo.gasLimit + " units");
+    console.log("difficulty: " + (headinfo.difficulty / 1000000.0).toFixed(2) + " MH");
+    console.log("   chainId: " + info.chainId);
+    console.log("      algo: " + headinfo.algo + " (" + headinfo.algoname + ")");
+    if (info.datadir !== undefined) {
+    console.log("   datadir: " + info.datadir);
+    }
 }
 
-function oldwelcome() {
-    var head = aqua.getBlock('latest');
-    version = head.version
-    console.log("instance: " + web3.version.node);
-    console.log("at block: " + head.number + " (" + new Date(1000 * head.timestamp) + ")");
-    console.log("  head: " + head.hash);
+if (true) {
     try {
-        var coinbase = aqua.coinbase;
-        console.log("coinbase:  " + coinbase);
-    } catch (e) { }
-    console.log("  gasPrice: " + web3.fromWei(aqua.gasPrice, 'gwei') + " gigawei");
-    console.log("  gasLimit: " + head.gasLimit + " units");
-    console.log("  difficulty: " + (head.difficulty / 1000000.0).toFixed(2) + " MH");
-    console.log("  chainId: " + Number(aqua.chainId(), 16).toString());
-    console.log("    algo: " + version + " (" + algoname(version) + ")");
-
-    try {
-        this.admin && console.log(" datadir: " + admin.datadir);
-        this.admin && console.log("  client: " + admin.clientVersion);
-    } catch (e) { }
-}
-
-if (false) {
     welcome();
+    } catch (e) {
+        console.log("error in welcome: " + e);
+    }
 }

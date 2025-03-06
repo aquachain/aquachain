@@ -114,6 +114,7 @@ func (msg *jsonrpcMessage) String() string {
 
 // Client represents a connection to an RPC server.
 type Client struct {
+	Name        string
 	idCounter   uint32
 	connectFunc func(ctx context.Context) (net.Conn, error)
 	isHTTP      bool

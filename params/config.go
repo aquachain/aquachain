@@ -332,26 +332,43 @@ func SetAllChainConfigs(cfgs []*ChainConfig) {
 	allChainConfigs = cfgs
 }
 
+func AddChainConfig(name string, cfg *ChainConfig) {
+	if GetChainConfigByChainId(cfg.ChainId) != nil {
+		panic("a chain with that chainId is already defined")
+	}
+	if _, ok := chainNames[name]; ok {
+		panic("a chain with that name is already defined")
+	}
+	log.Warn("adding chain config", "name", name, "chainid", cfg.ChainId.String(), "HF", cfg.HF.String())
+	allChainConfigs = append(allChainConfigs, cfg)
+	newChainnames := make(map[string]*ChainConfig)
+	for k, v := range chainNames {
+		newChainnames[k] = v
+	}
+	newChainnames[name] = cfg
+	chainNames = newChainnames
+}
+
+// this map might be swapped when adding custom chains
+var chainNames = map[string]*ChainConfig{
+	"mainnet":  MainnetChainConfig,
+	"testnet":  TestnetChainConfig,
+	"testnet2": Testnet2ChainConfig,
+	"testnet3": Testnet3ChainConfig,
+	"dev":      AllAquahashProtocolChanges,
+	"test":     TestChainConfig,
+}
+
 // Name returns the name of the chain config. (mainnet, testnet, etc)
 //
 // This is used for '-chain <name>' flag and default datadir.
 func (c *ChainConfig) Name() string {
-	switch {
-	case c == MainnetChainConfig:
-		return "aqua"
-	case c == TestnetChainConfig:
-		return "testnet"
-	case c == Testnet2ChainConfig:
-		return "testnet2"
-	case c == Testnet3ChainConfig:
-		return "testnet3"
-	case c == AllAquahashProtocolChanges:
-		return "dev"
-	case c == TestChainConfig:
-		return "test"
-	default:
-		return "unknown"
+	for k, v := range chainNames {
+		if v == c {
+			return k
+		}
 	}
+	return "unknown"
 }
 
 // AquahashConfig is the consensus engine configs for proof-of-work based sealing.

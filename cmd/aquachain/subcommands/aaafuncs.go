@@ -583,12 +583,12 @@ func switchDatadir(cmd *cli.Command, chaincfg *params.ChainConfig) DirectoryConf
 	if !cmd.Bool(aquaflags.NoKeysFlag.Name) && cmd.IsSet(aquaflags.KeyStoreDirFlag.Name) {
 		cfg.KeyStoreDir = cmd.String(aquaflags.KeyStoreDirFlag.Name)
 	}
+	chainName := "(none)"
+	if chaincfg != nil {
+		chainName = chaincfg.Name()
+	}
 	if cmd.IsSet(aquaflags.DataDirFlag.Name) {
 		cfg.DataDir = cmd.String(aquaflags.DataDirFlag.Name)
-		chainName := "(none)"
-		if chaincfg != nil {
-			chainName = chaincfg.Name()
-		}
 		log.Info("set custom datadir", "path", cfg.DataDir, "chain", chainName)
 	}
 	if cfg.DataDir == "" && chaincfg == nil {
@@ -603,7 +603,6 @@ func switchDatadir(cmd *cli.Command, chaincfg *params.ChainConfig) DirectoryConf
 	if cfg.DataDir != "" && chaincfg != params.MainnetChainConfig && cfg.DataDir != node.DefaultConfig.DataDir {
 		return cfg
 	}
-	cfg.DataDir = node.DefaultDatadirByChain(chaincfg)
 	return cfg
 
 	// switch {
@@ -667,7 +666,6 @@ func SetNodeConfig(cmd *cli.Command, cfg *node.Config) error {
 	chainName, chaincfg, bootstrapNodes, directoryCfg = getStuff(cmd)
 	log.Info("Loading...", "Chain Select", chainName, "ChainID", chaincfg.ChainId, "Datadir", directoryCfg.DataDir)
 	cfg.DataDir = directoryCfg.DataDir
-	node.DefaultConfig.DataDir = directoryCfg.DataDir // in case something uses it
 	cfg.KeyStoreDir = directoryCfg.KeyStoreDir
 	cfg.P2P.ChainId = chaincfg.ChainId.Uint64()
 	cfg.P2P.BootstrapNodes = bootstrapNodes

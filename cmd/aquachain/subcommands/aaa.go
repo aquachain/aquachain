@@ -11,6 +11,7 @@ import (
 	"gitlab.com/aquachain/aquachain/aqua/accounts"
 	"gitlab.com/aquachain/aquachain/aqua/accounts/keystore"
 	"gitlab.com/aquachain/aquachain/cmd/aquachain/aquaflags"
+	"gitlab.com/aquachain/aquachain/cmd/aquachain/buildinfo"
 	"gitlab.com/aquachain/aquachain/cmd/aquachain/mainctxs"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/common/toml"
@@ -27,6 +28,12 @@ func SetBuildInfo(commit, date, tag string, clientIdentifier0 string) {
 	buildDate = date
 	gitTag = tag
 	clientIdentifier = clientIdentifier0
+	buildinfo.SetBuildInfo(buildinfo.BuildInfo{
+		GitCommit: commit,
+		BuildDate: date,
+		GitTag:    tag,
+		BuildTags: "",
+	})
 }
 
 func Subcommands() []*cli.Command {

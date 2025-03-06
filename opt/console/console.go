@@ -146,6 +146,13 @@ func New(config Config) (*Console, error) {
 		config.Printer = colorable.NewColorableStdout()
 	}
 	// Initialize the console and return
+	if config.Client == nil {
+		return nil, fmt.Errorf("rpc client not set")
+	}
+
+	if config.Client.Name == "" {
+		config.Client.Name = "unknownConsole"
+	}
 	console := &Console{
 		client:   config.Client,
 		jsre:     jsre.New(config.WorkingDirectory, config.Printer),
@@ -154,9 +161,15 @@ func New(config Config) (*Console, error) {
 		printer:  config.Printer,
 		histPath: filepath.Join(config.DataDir, HistoryFile),
 	}
-	if err := os.MkdirAll(config.DataDir, 0700); err != nil {
-		return nil, err
+
+	// for history file
+	if config.DataDir != "" {
+		if err := os.MkdirAll(config.DataDir, 0700); err != nil {
+			return nil, err
+		}
 	}
+
+	// initialize the jsre
 	if err := console.init(config.Preload); err != nil {
 		return nil, err
 	}
@@ -399,7 +412,7 @@ function balance() {
 			modules = append(modules, fmt.Sprintf("%s:%s", api, version))
 		}
 		sort.Strings(modules)
-		fmt.Fprintln(c.printer, " modules:", strings.Join(modules, " "))
+		fmt.Fprintln(c.printer, "   modules:", strings.Join(modules, " "))
 	}
 	fmt.Fprintln(c.printer)
 }

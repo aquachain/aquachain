@@ -21,8 +21,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"math/big"
+	mrand "math/rand"
 	"os"
 	"strings"
 	"testing"
@@ -35,11 +36,12 @@ import (
 	"gitlab.com/aquachain/aquachain/internal/jsre"
 	"gitlab.com/aquachain/aquachain/node"
 	"gitlab.com/aquachain/aquachain/p2p"
+	"gitlab.com/aquachain/aquachain/params"
 )
 
 const (
-	testInstance = "console-tester"
-	testAddress  = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
+	testInstancePrefix = "TestWelcome"
+	testAddress        = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
 )
 
 // hookedPrompter implements UserPrompter to simulate use input via channels.
@@ -88,44 +90,65 @@ type tester struct {
 // Please ensure you call Close() on the returned tester to avoid leaks.
 func newTester(t *testing.T, confOverride func(*aqua.Config)) *tester {
 	// Create a temporary storage for the node keys and initialize it
-	workspace, err := ioutil.TempDir("", "console-tester-")
+	workspace, err := os.MkdirTemp("", "console-tester-")
 	if err != nil {
 		t.Fatalf("failed to create temporary keystore: %v", err)
 	}
 
+	ctx, cancel := context.WithTimeoutCause(context.Background(), time.Second*10, fmt.Errorf("test timeout"))
+	defer cancel()
+
+	chainId := mrand.Uint64()%1000 + 100
+
+	// inject a chaincfg
+	chaincfg := &params.ChainConfig{}
+	*chaincfg = *params.TestChainConfig
+	chaincfg.ChainId = new(big.Int).SetUint64(chainId)
+	params.AddChainConfig(t.Name(), chaincfg)
+
 	// Create a networkless protocol stack and start an Aquachain service within
 	stack, err := node.New(&node.Config{
-		Context:           context.TODO(),
+		Context:           ctx,
 		CloseMain:         func(err error) { panic(err.Error()) },
 		DataDir:           workspace,
 		UseLightweightKDF: true,
-		Name:              testInstance,
-		P2P:               &p2p.Config{ChainId: 220},
+		Name:              t.Name(),
+		P2P:               &p2p.Config{ChainId: chainId},
 		RPCAllowIP:        []string{"127.0.0.1/32"},
 	})
 	if err != nil {
 		t.Fatalf("failed to create node: %v", err)
 	}
+
+	genesis := core.DeveloperGenesisBlock(15, common.Address{})
+	genesis.Config = chaincfg // inject chaincfg into genesis
 	ethConf := &aqua.Config{
-		Genesis:  core.DeveloperGenesisBlock(15, common.Address{}),
+		Genesis:  genesis,
 		Aquabase: common.HexToAddress(testAddress),
 		Aquahash: aquahash.Config{
 			PowMode: aquahash.ModeTest,
 		},
+		ChainId: chainId,
 	}
 	if confOverride != nil {
 		confOverride(ethConf)
 	}
-	if err = stack.Register(func(ctx *node.ServiceContext) (node.Service, error) {
-		return aqua.New(context.TODO(), ctx, ethConf, "test-console")
+
+	p2pnodename := func() string {
+		def := node.NewDefaultConfig()
+		def.Name = t.Name()
+		return def.NodeName()
+	}
+	if err = stack.Register(func(nodectx *node.ServiceContext) (node.Service, error) {
+		return aqua.New(ctx, nodectx, ethConf, p2pnodename())
 	}); err != nil {
 		t.Fatalf("failed to register Aquachain protocol: %v", err)
 	}
 	// Start the node and assemble the JavaScript console around it
-	if err = stack.Start(context.Background()); err != nil {
+	if err = stack.Start(ctx); err != nil {
 		t.Fatalf("failed to start test stack: %v", err)
 	}
-	client, err := stack.Attach(context.TODO(), "newTester")
+	client, err := stack.Attach(ctx, "newTester")
 	if err != nil {
 		t.Fatalf("failed to attach to node: %v", err)
 	}
@@ -181,7 +204,7 @@ func TestWelcome(t *testing.T) {
 	if want := "Welcome"; !strings.Contains(output, want) {
 		t.Fatalf("console output missing welcome message: have\n%s\nwant also %s", output, want)
 	}
-	if want := fmt.Sprintf("instance: %s", testInstance); !strings.Contains(output, want) {
+	if want := fmt.Sprintf("instance: %s", testInstancePrefix); !strings.Contains(output, want) {
 		t.Fatalf("console output missing instance: have\n%s\nwant also %s", output, want)
 	}
 	if want := fmt.Sprintf("coinbase: %s", testAddress); !strings.Contains(output, want) {
@@ -368,4 +391,63 @@ func TestIndenting(t *testing.T) {
 			t.Errorf("test %d: invalid indenting: have %d, want %d", i, counted, tt.expectedIndentCount)
 		}
 	}
+}
+
+func TestBigSmall(t *testing.T) {
+	// test web3.fromWei and web3.toWei
+	input := "1234000000000000000000" // wei
+	output := "1234"                  // coin
+	bigconsole := newTester(t, nil)
+	defer bigconsole.Close(t)
+	// jsre := New("", os.Stdout)
+	// defer jsre.Stop(false)
+
+	jsre := bigconsole.console.jsre
+	var err error
+	_, err = jsre.Run("var big = new BigNumber('" + input + "');")
+	if err != nil {
+		t.Fatal("cannot run big:", err)
+	}
+
+	_, err = jsre.Run("var small = web3.fromWei(big, 'aqua');")
+	if err != nil {
+		t.Fatal("cannot run fromWei:", err)
+	}
+
+	val, err := jsre.Run("small.toString();")
+	if err != nil {
+		t.Fatal("cannot run small:", err)
+	}
+
+	if !val.IsString() {
+		t.Errorf("expected string value, got %v", val)
+	}
+
+	got, _ := val.ToString()
+	if output != got {
+		t.Errorf("expected '%v', got '%v'", output, got)
+	}
+
+	// now back to wei
+
+	_, err = jsre.Run("var big = web3.toWei(\"" + output + "\", 'aqua');")
+	if err != nil {
+		t.Fatal("cannot run toWei:", err)
+	}
+
+	val, err = jsre.Run("big.toString();")
+	if err != nil {
+		t.Fatal("cannot run big:", err)
+	}
+
+	if !val.IsString() {
+		t.Errorf("expected string value, got %v", val)
+	}
+
+	got, _ = val.ToString()
+	if input != got {
+		t.Errorf("expected '%v', got '%v'", input, got)
+	}
+	println(got)
+
 }

@@ -96,14 +96,14 @@ func New(ctx context.Context, nodectx *node.ServiceContext, config *config.Aquac
 	if !config.SyncMode.IsValid() {
 		return nil, fmt.Errorf("invalid sync mode %d", config.SyncMode)
 	}
-	if strings.Count(nodename, "/") < 3 {
-		return nil, fmt.Errorf("invalid node name %s", nodename)
+	if strings.Count(nodename, "/") < 3 && !strings.HasPrefix(nodename, "test") {
+		return nil, fmt.Errorf("invalid node name %s, this indicates a bad compilation mode. please report bug", nodename)
 	}
 	log.Info("Node name", "name", nodename)
 	config.SetNodeName(nodename)
 	chainDb, err := CreateDB(nodectx, config, "chaindata")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating db: %w", err)
 	}
 	stopDbUpgrade := upgradeDeduplicateData(chainDb)
 	chainConfig, genesisHash, genesisErr := core.SetupGenesisBlock(chainDb, config.Genesis)
