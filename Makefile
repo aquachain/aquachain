@@ -36,14 +36,7 @@ endef
 # apt install file 
 
 # targets
-$(shorttarget): $(GOFILES)
-	$(info $(LOGO))
-	$(info Building... $@)
-	CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build -tags '$(tags)' $(GO_FLAGS) -o $@ $(aquachain_cmd)
-	@echo Compiled: $(shorttarget)
-	@sha256sum $(shorttarget) 2>/dev/null || echo "warn: 'sha256sum' command not found"
-	@file $(shorttarget) 2>/dev/null || echo "warn: 'file' command not found"
-	@ls -lh $(shorttarget) 2>/dev/null
+$(shorttarget):
 # if on windows, this would become .exe.exe but whatever
 $(shorttarget).exe: $(GOFILES)
 	$(info Building... $@)
@@ -71,9 +64,15 @@ echo:
 clean:
 	rm -rf bin release docs tmprelease
 bootnode: bin/aquabootnode
-bin/%: $(GOFILES)
+bin/%${maybeext}: $(GOFILES)
 	$(info Building command ... ./cmd/$*)
-	CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build -tags '$(tags)' $(GO_FLAGS) -o bin/$* ./cmd/$*
+	$(info $(LOGO))
+	$(info Building... $@)
+	CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build -tags '$(tags)' $(GO_FLAGS) -o $@ ./cmd/$*
+	@echo Compiled: $@
+	@sha256sum $@ 2>/dev/null || echo "warn: 'sha256sum' command not found"
+	@file $@ 2>/dev/null || echo "warn: 'file' command not found"
+	@ls -lh $@ 2>/dev/null
 .PHONY += default bootnode hash
 deb: aquachain_$(version)_$(GOOS)_$(GOARCH).deb
 internal/jsre/deps/bindata.go: internal/jsre/deps/web3.js  internal/jsre/deps/bignumber.js
