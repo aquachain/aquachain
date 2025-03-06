@@ -18,10 +18,11 @@ run_aquachain_cmd(){
 if [ "$1" = "stop" ] || [ "$1" = "restart" ]; then
     got=$(run_aquachain_cmd -verbosity -1 attach -exec 'admin.shutdown();' 2>&1 | grep -q 'connection refused' && exit 0)
     if [ $? -ne 0 ]; then
-        got=$(run_aquachain_cmd -verbosity -1 attach -exec 'admin.shutdown();' 2>&1 | grep -q 'connection refused' && exit 0)
+        got2=$(run_aquachain_cmd -verbosity -1 attach -exec 'admin.shutdown();' 2>&1 | grep -q 'connection refused' && exit 0)
         if [ $? -ne 0 ]; then
             echo error: failed to stop aquachain 1>&2
             echo "got: $got" 1>&2
+            echo "got2:" $got2 1>&2
             exit 100
         fi
     fi
