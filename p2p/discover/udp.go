@@ -28,6 +28,7 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/crypto"
+	"gitlab.com/aquachain/aquachain/internal/debug"
 	"gitlab.com/aquachain/aquachain/p2p/netutil"
 	"gitlab.com/aquachain/aquachain/rlp"
 )
@@ -266,6 +267,8 @@ func ListenUDP(c conn, cfg Config) (*Table, error) {
 }
 
 func newUDP(c conn, cfg Config) (*Table, *udp, error) {
+	closer := debug.AddLoop()
+	defer closer()
 	udp := &udp{
 		conn:        c,
 		priv:        cfg.PrivateKey,
@@ -638,9 +641,9 @@ func (t *udp) handlePacket(from *net.UDPAddr, buf []byte) error {
 
 	}
 	err = packet.handle(t, from, fromID, hash)
-	if err != nil {
+	bug1 := err == errUnsolicitedReply && from.IP.String() == t.self.IP.String()
+	if !bug1 && err != nil {
 		log.Error("Failed to handle discv4 packet", "addr", from, "err", err)
-		return err
 	}
 	return err
 }
