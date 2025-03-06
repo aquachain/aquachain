@@ -5,28 +5,32 @@
 #
 # for testing, run as aqua user (or have permissions for /var/lib/aquachain etc)
 # e.g. sudo -u aqua /usr/local/bin/start-aquachain.sh
-set -ex
-if [ "$1" = "stop" ]; then
-    (aquachain -verbosity -1 attach -exec 'admin.shutdown();' 2>&1 | grep -q 'connection refused' && exit 0)
-    if [ $? -ne 0 ]; then
-    got=$(aquachain -verbosity -1 attach -exec 'admin.shutdown();' 2>&1 | grep -q 'connection refused' && exit 0)
-    if [ $? -ne 0 ]; then
-        echo error: failed to stop aquachain 1>&2
-        exit 100
-    fi
 
-fi
-if [ "$1" = "restart" ]; then
-    aquachain attach -exec 'admin.shutdown();'
-    exitcode=$?
-    if [ $exitcode -ne 0 ]; then
-        echo error: failed to stop aquachain 1>&2
+# systemd ExecStop runs as 'aqua', but just in case...
+iamroot=$(id -u)
+run_aquachain_cmd(){
+    if [ $iamroot -eq 0 ]; then
+        sudo -u aqua /usr/local/bin/aquachain "$@"
+    else
+        /usr/local/bin/aquachain "$@"
     fi
-    sleep 1
-    # continue below etc
+}
+if [ "$1" = "stop" ] || [ "$1" = "restart" ]; then
+    got=$(run_aquachain_cmd -verbosity -1 attach -exec 'admin.shutdown();' 2>&1 | grep -q 'connection refused' && exit 0)
+    if [ $? -ne 0 ]; then
+        got=$(run_aquachain_cmd -verbosity -1 attach -exec 'admin.shutdown();' 2>&1 | grep -q 'connection refused' && exit 0)
+        if [ $? -ne 0 ]; then
+            echo error: failed to stop aquachain 1>&2
+            echo "got: $got" 1>&2
+            exit 100
+        fi
+    fi
+    if [ "$1" = "stop" ]; then
+        exit 0
+    fi
 fi
 if [ "$1" = "status" ]; then
-    sudo -u aqua aquachain attach -exec 'console.log("number of peers:", net.peerCount); console.log("chain height:", aqua.blockNumber); '  2>/dev/null
+    run_aquachain_cmd attach -exec 'console.log("number of peers:", net.peerCount); console.log("chain height:", aqua.blockNumber); '  2>/dev/null
     exit $?
 fi
 if [ -f /etc/default/aquachain ]; then
@@ -101,7 +105,6 @@ if [ "${PUBLIC_RPC_MODE}" = "1" ]; then
 fi
 # use default localhost rpc
 if [ "${USE_RPC}" = "1" ]; then
-
     AQUACHAIN_ARGS="${AQUACHAIN_ARGS} --rpc --ws"
 fi
 export AQUACHAIN_ARGS=${AQUACHAIN_ARGS}
@@ -109,5 +112,5 @@ echo "Starting Aquachain node with args: ${AQUACHAIN_ARGS}" 1>&2
 
 # lol TODO: fix this arg expansion
 cmdline=$(echo exec /usr/local/bin/aquachain ${AQUACHAIN_ARGS} daemon)
-/bin/sh -c 'echo NO_SIGN=${NO_SIGN} NO_KEYS=${NO_KEYS}'
+# /bin/sh -c 'echo NO_SIGN=${NO_SIGN} NO_KEYS=${NO_KEYS}' # test that the export worked
 exec /bin/sh -c "${cmdline}"
