@@ -20,6 +20,15 @@ import (
 
 var mainctx, maincancel = mainctxs.Main(), mainctxs.MainCancelCause()
 
+var gitCommit, buildDate, gitTag, clientIdentifier string
+
+func SetBuildInfo(commit, date, tag string, clientIdentifier0 string) {
+	gitCommit = commit
+	buildDate = date
+	gitTag = tag
+	clientIdentifier = clientIdentifier0
+}
+
 func Subcommands() []*cli.Command {
 	return []*cli.Command{
 		echoCommand,
@@ -73,8 +82,6 @@ var dumpConfigCommand = &cli.Command{
 
 // dumpConfig is the dumpconfig command.
 func dumpConfig(ctx context.Context, cmd *cli.Command) error {
-	gitCommit := cmd.String("gitCommit")
-	clientIdentifier := cmd.String("clientIdentifier")
 	var opts []Cfgopt
 	if cmd.String("config") == "none" {
 		opts = append(opts, NoPreviousConfig)
@@ -99,7 +106,6 @@ func dumpConfig(ctx context.Context, cmd *cli.Command) error {
 var StartNodeCommand = startNode
 
 func MakeFullNode(ctx context.Context, cmd *cli.Command) *node.Node {
-	gitCommit, clientIdentifier := cmd.String("gitCommit"), cmd.String("clientIdentifier")
 	stack, cfg := MakeConfigNode(ctx, cmd, gitCommit, clientIdentifier, maincancel)
 	RegisterAquaService(mainctx, stack, cfg.Aqua, cfg.Node.NodeName())
 

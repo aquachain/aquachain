@@ -368,7 +368,6 @@ func copyDb(ctx context.Context, cmd *cli.Command) error {
 }
 
 func removeDB(ctx context.Context, cmd *cli.Command) error {
-	gitCommit, clientIdentifier := cmd.String("gitCommit"), cmd.String("clientIdentifier")
 	stack, _ := MakeConfigNode(ctx, cmd, gitCommit, clientIdentifier, mainctxs.MainCancelCause())
 
 	name := "chaindata"

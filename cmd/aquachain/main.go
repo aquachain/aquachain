@@ -49,6 +49,10 @@ var (
 )
 var this_app *cli.Command
 
+func init() {
+	subcommands.SetBuildInfo(buildDate, gitTag, gitCommit, clientIdentifier)
+}
+
 var helpCommand = &cli.Command{
 	Name:  "help",
 	Usage: "show help",
@@ -87,10 +91,11 @@ func doinit() *cli.Command {
 		Before:         beforeFunc,
 		After:          afterFunc,
 		DefaultCommand: "consoledefault",
-		Commands: []*cli.Command{
+		Commands: append([]*cli.Command{
 			// See chaincmd.go:
 			helpCommand,
-		},
+			consoledefault,
+		}, subcommands.Subcommands()...),
 		HideHelpCommand: true,
 		HideVersion:     true,
 		Copyright:       "Copyright 2018-2025 The Aquachain Authors",
@@ -104,6 +109,18 @@ func doinit() *cli.Command {
 	}
 	sort.Sort((cli.FlagsByName)(this_app.Flags))
 	return this_app
+}
+
+var consoledefault = &cli.Command{
+	Name:  "consoledefault",
+	Usage: "Start full interactive console",
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		x := subcommands.SubcommandByName("console")
+		if x.Root() == nil {
+			return fmt.Errorf("woops")
+		}
+		return x.Run(ctx, cmd.Args().Slice())
+	},
 }
 
 func afterFunc(context.Context, *cli.Command) error {

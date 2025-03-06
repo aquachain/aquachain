@@ -108,10 +108,6 @@ func makedag(_ context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-var gitCommit, clientIdentifier = "unknown", "unknown"
-var gitTag = "???"
-var buildDate = ""
-
 func printVersion(_ context.Context, cmd *cli.Command) error {
 	fmt.Println(strings.Title(clientIdentifier), params.Version)
 	if gitCommit != "" {
