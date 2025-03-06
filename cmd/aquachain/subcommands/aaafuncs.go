@@ -66,19 +66,19 @@ GLOBAL OPTIONS:
    {{end}}{{end}}
 `
 
-// // NewApp creates an app with sane defaults.
-// func NewApp(gitCommit, usage string) *cli.Command {
-// 	app := &cli.Command{
-// 		Name:    filepath.Base(os.Args[0]),
-// 		Usage:   usage,
-// 		Version: params.Version,
-// 	}
-// 	//app.Flags
-// 	app.Name = filepath.Base(os.Args[0])
-// 	app.Version = params.Version
-// 	app.Usage = usage
-// 	return app
-// }
+// NewApp creates an app with sane defaults.
+func NewApp(gitCommit, usage string) *cli.Command {
+	app := &cli.Command{
+		Name:    filepath.Base(os.Args[0]),
+		Usage:   usage,
+		Version: params.Version,
+	}
+	//app.Flags
+	app.Name = filepath.Base(os.Args[0])
+	app.Version = params.VersionWithCommit(gitCommit)
+	app.Usage = usage
+	return app
+}
 
 // MakeDataDir retrieves the currently requested data directory, terminating
 // if none (or the empty string) is specified. If the node is starting a testnet,
