@@ -10,12 +10,6 @@ import (
 
 var NoSync = !sense.EnvBoolDisabled("NO_LOGSYNC")
 
-func init() {
-	go func() {
-		Warn("log nosync:", "noSync", NoSync)
-	}()
-}
-
 var PrintfDefaultLevel = LvlInfo
 
 func (l *logger) Printf(msg string, stuff ...any) {
