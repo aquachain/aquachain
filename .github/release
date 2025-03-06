@@ -1,4 +1,6 @@
 type zip 2>/dev/null || (apt update && apt install -y zip)
+type file 2>/dev/null || (apt update && apt install -y file)
+type make 2>/dev/null || (apt update && apt install -y make)
 ls -l
 whoami
 id -u
