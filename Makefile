@@ -111,7 +111,11 @@ cross:
 	@test -n "$(GOOS)"
 	@test -n "$(GOARCH)" 
 	@echo cross-compiling for $(GOOS)/$(GOARCH)
-	@echo warn: to build a real release, use "make clean release release=1"
+ifneq (1,$(release))
+	$(info warn: to build a real release, use "make clean release release=1")
+else
+	$(info Building release version for $(GOOS)/$(GOARCH) (release=1))
+endif
 	@mkdir -p $(build_dir)/${GOOS}-${GOARCH}
 	$(info Building to directory: $(build_dir)/${GOOS}-${GOARCH})
 	cd $(build_dir)/${GOOS}-${GOARCH} && GOOS=${GOOS} GOARCH=${GOARCH} \
