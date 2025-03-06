@@ -1,97 +1,44 @@
 # How to Host a Public RPC
 
-To set up a private RPC, run with `-rpc` flag.
+To set up a private RPC, run with `-rpc` and/or `-ws` flags. To make it public, either forward it using a reverse proxy, or use `-rpcaddr` and `wsaddr` flags to bind to a public interface.
 
-To set up a public RPC, follow this guide.
+For serving public RPC, you will want to disable keystore and signing, and keep private keys away from it in general. We have 'NO_SIGN' and 'NO_KEYS' environmental variables for this purpose.
 
-### About Public RPC Nodes
-
-The network is able to function without any public RPC nodes, but they add convenience to end-users.
-
-What they do is provide a JSON RPC over HTTP(s). Applications such as explorers and wallets can use public RPCs to fetch data and submit transactions.
-
-Public RPC Nodes do not need any private keys. They should not be on the same machine as private keys.
-
-Currently, the aquachain command doesn't use TLS/HTTPS to provide a secure RPC. For now, it is necessary to use a reverse proxy for this purpose.
-
-### The setup
-
-Here is *one of many* setups that can provide a public https endpoint, offering a public RPC for the world to use.
-
-  * For SSL (recommended), setup your subdomain DNS to your IP, before this.
-  * It is recommended to use a machine with 2GB or more RAM.
-  * Need at least 50GB disk space, recommended SSD but not necessary.
-  * Preferably a dedicated machine, such as a VPS with no other uses.
-  * A newer version of `caddy` or `go` may have arrived since this was published.
-
-You can follow this guide which uses a fresh VPS. The OS is Ubuntu.
-
-All commands as root user... lets go!
-
-```
-# add users
-adduser --system aqua
-adduser --system caddy
-
-# install go (can skip if download aquachain binary)
-mkdir -p /root/dl
-cd /root/dl
-wget -4 'https://golang.org/dl/go1.15.6.linux-amd64.tar.gz'
-tar xvf go1.15.6*.tar.gz -C /usr/local/
-ln -s /usr/local/go/bin/* /usr/local/bin/
-
-# install caddy (reverse proxy, ssl, web server)
-cd /root/dl
-wget -4 -O /usr/local/bin/caddy 'https://caddyserver.com/api/download?os=linux&arch=amd64'
-chmod +x /usr/local/bin/caddy
-setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/caddy
-
-# setup clean reboots for database health
-wget -4 -O /etc/rc0.d/K01aquachain https://github.com/aquachain/aquachain/raw/master/contrib/K01aquachain
-chmod +x /etc/rc0.d/K01aquachain
-
-# setup aquachain rpc
-cd /home/aqua
-sudo -u aqua git clone https://gitlab.com/aquachain/aquachain src/aquachain
-cd src/aquachain
-sudo -u aqua make
-mv /home/aqua/src/aquachain/bin/aquachain /usr/local/bin/aquachain
-
-# setup aqua reboot
-cat <<EOF >/home/aqua/reboot.bash
-#!/bin/bash
-TERM=xterm
-# can modify these for example --config or something
-AQUAFLAGS="-nokeys -gcmode archive -rpc -rpccorsdomain='*' -rpcvhosts='*'"
-tmux new-session -n aqua -d /usr/local/bin/aquachain $AQUAFLAGS
-EOF
-
-chmod +x /home/aqua/reboot.bash
-echo '@reboot bash /home/aqua/reboot.bash' | crontab -u aqua
-
-# setup caddy reverse proxy
-cd /home/caddy
-wget -4 https://github.com/aquachain/aquachain/raw/master/contrib/Caddyfile
-echo "/usr/local/bin/caddy start" >> /home/caddy/reboot.bash
-chmod +x /home/caddy/reboot.bash
-echo '@reboot bash /home/caddy/reboot.bash' | crontab -u caddy
+```bash
+# for direct connections to the internet without reverse proxy
+NO_SIGN=1 NO_KEYS=1 aquachain -rpc -rpcaddr 0.0.0.0 -rpcvhosts '*' -ws -wsorigins '*' -wsaddr 0.0.0.0 -aquabase '0x1234...5678' -allowip 0.0.0.0/0 
 ```
 
-### Now customize the Caddyfile with your domain name
+It is better to run behind a proxy, such as caddy, thatcan serve https and handle rate limiting.
 
-Don't forget to edit /home/caddy/Caddyfile and replace the dummy domain name.
+```bash
+# for running behind reverse proxy (listens on 127.0.0.1, port 8543/8544)
+NO_SIGN=1 NO_KEYS=1 aquachain -rpc -rpcvhosts '*' -ws -wsorigins '*' -aquabase '0x1234...5678' -allowip 0.0.0.0/0 -behindproxy
+```
 
-### Putting it all together
+```bash
+# first, clone the explorer website
+mkdir -p /var/www/aqua-explorer
+git clone https://github.com/aquachain/explorer.git /var/www/aquachain/explorer
+# edit the endpoints config
+editor /var/www/aquachain/explorer/endpoints.json
+```
 
-Now you have a machine that will automatically launch caddy and aquachain, accepting secure requests from anyone on the internet. The machine has no keys, never uses keys, never signs anything.
+Here is a Caddyfile snippet for a public reverse proxy with explorer GET
 
-If this is all you are using the server for, you are probably done with your setup.
+```caddy
+aquachain.example.com {
+    reverse_proxy /rpc localhost:8543 {
+        header_up Content-Type application/json
+    }
+    reverse_proxy /ws localhost:8544
+    file_server /explorer/* {
+        root /var/www/aquachain/explorer
+    }
+}        
+```
 
-Restart the VPS machine. (as root, `reboot`)
 
-Open up a terminal and run: `aquachain attach https://mydomain.examplename`
 
-Use your domain name instead of the dummy name.
 
-If you get an AQUA console, you have achieved your goal, a public https rpc server..
 

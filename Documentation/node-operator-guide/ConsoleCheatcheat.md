@@ -20,6 +20,9 @@ now = function () { return Math.floor(new Date().getTime() / 1000)}
 
 // for example exporting chain to a timestamped file
 admin.exportChain('aquachain-bootstrap'+now()+'.dat')
+
+// shutdown the server
+admin.shutdown();
 ```
 
 

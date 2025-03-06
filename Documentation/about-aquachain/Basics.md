@@ -36,6 +36,14 @@ See [Mining](../../user-mining-guide/Mining/)
 
 ### **Help**
 
+[Website](https://aquachain.github.io)
+
+[Gitlab](https://github.com/aquachain/aquachain)
+
+[GitHub](https://github.com/aquachain/aquachain)
+
 [Telegram](https://t.me/AquaCrypto)
 
 [Discord](https://discordapp.com/invite/J7jBhZf)
+
+[Matrix](https://matrix.to/#/!ZIGUfKJVCVhrCjBRfz:matrix.org?via=matrix.org)
