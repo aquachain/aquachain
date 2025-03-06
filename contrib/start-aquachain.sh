@@ -15,19 +15,30 @@ run_aquachain_cmd(){
         /usr/local/bin/aquachain "$@"
     fi
 }
-if [ "$1" = "stop" ] || [ "$1" = "restart" ]; then
-    got=$(run_aquachain_cmd -verbosity -1 attach -exec 'admin.shutdown();' 2>&1 | grep -q 'connection refused' && exit 0)
-    if [ $? -ne 0 ]; then
-        got2=$(run_aquachain_cmd -verbosity -1 attach -exec 'admin.shutdown();' 2>&1 | grep -q 'connection refused' && exit 0)
-        if [ $? -ne 0 ]; then
-            echo error: failed to stop aquachain 1>&2
-            echo "got: $got" 1>&2
-            echo "got2:" $got2 1>&2
-            exit 100
-        fi
+stop_aquachain_gracefully(){
+    output=$(run_aquachain_cmd -debug -verbosity 4 attach -exec 'admin.shutdown();' 2>&1)
+    ec=$?
+    if [ $ec -ne 0 ]; then
+        echo "error: failed to stop aquachain, exit code $ec" 1>&2
+        return 1
     fi
+    echo $output | egrep 'no such file|connection refused' 1>&2
+    if [ $? -eq 0 ]; then
+        echo "warn: aquachain is not running" 1>&2
+        return 0
+    fi
+    if [ -n "$1" ]; then # wait for shutdown
+        echo "waiting for aquachain to stop..."
+        sleep 1
+        stop_aquachain_gracefully again
+    fi
+    echo "aquachain stopped"
+    return 0
+}
+if [ "$1" = "stop" ] || [ "$1" = "restart" ]; then
+    stop_aquachain_gracefully
     if [ "$1" = "stop" ]; then
-        exit 0
+        exit $?
     fi
 fi
 if [ "$1" = "status" ]; then
