@@ -62,7 +62,7 @@ echo:
 				$(info $V=$($V)) )))
 	$(info  )
 clean:
-	rm -rf bin release docs tmprelease
+	rm -rf bin release docs tmprelease tmpaqua-short-tests.*.tmp
 bootnode: bin/aquabootnode
 run/%${maybeext}: bin/%${maybeext}
 	$(info Running... $<)
