@@ -763,11 +763,7 @@ func setAquahash(cmd *cli.Command, cfg *aqua.Config) {
 func checkExclusive(cmd *cli.Command, args ...cli.Flag) {
 	set := make([]string, 0, 1)
 	for i := 0; i < len(args); i++ {
-		// Make sure the next argument is a flag and skip if not set
-		flag, ok := args[i].(cli.Flag)
-		if !ok {
-			panic(fmt.Sprintf("invalid argument, not cli.aquaflags.Flag type: %T", args[i]))
-		}
+		flag := args[i]
 		// Check if next arg extends current and expand its name if so
 		names := flag.Names()
 		name := names[0]
@@ -1225,5 +1221,3 @@ func daemonStart(ctx context.Context, cmd *cli.Command) error {
 	node.Wait()
 	return nil
 }
-
-var DaemonStartCommand = daemonStart

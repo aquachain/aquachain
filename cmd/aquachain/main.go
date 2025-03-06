@@ -181,8 +181,3 @@ func main() {
 		log.Info("graceful shutdown achieved")
 	}
 }
-
-var startNode = subcommands.StartNodeCommand
-var makeFullNode = subcommands.MakeFullNode
-
-var daemonStart = subcommands.DaemonStartCommand
