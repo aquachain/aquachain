@@ -50,7 +50,7 @@ var (
 var this_app *cli.Command
 
 func init() {
-	subcommands.SetBuildInfo(buildDate, gitTag, gitCommit, clientIdentifier)
+	subcommands.SetBuildInfo(gitCommit, buildDate, gitTag, clientIdentifier)
 }
 
 var helpCommand = &cli.Command{
