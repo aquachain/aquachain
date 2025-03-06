@@ -22,8 +22,6 @@ View or Improve the Documentation online: https://aquachain.github.io/docs/
 [![SafeTrade](https://img.shields.io/badge/SafeTrade-AQUA/BTC-green.svg)](https://safetrade.com/exchange/AQUA-BTC?type=pro?aqua)
 [![DexScreener](https://img.shields.io/badge/DexScreener-AQUA_BEP20-green.svg)](https://dexscreener.com/bsc/0x38fab266089aaf3bc2f11b791213840ea3d587c7)
 
-
-
 ** Found a bug **in this software**? Documentation lacking?
 See https://gitlab.com/aquachain/aquachain/wikis/bugs **
 
