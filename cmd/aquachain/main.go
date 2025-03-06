@@ -132,11 +132,6 @@ func afterFunc(context.Context, *cli.Command) error {
 }
 
 func beforeFunc(ctx context.Context, cmd *cli.Command) (context.Context, error) {
-	log.Warn("beforeFunc", "cmd", cmd.Name, "cat", cmd.Category)
-	// go func() {
-	// 	<-ctx.Done()
-	// 	log.Warn("context done", "err", ctx.Err())
-	// }()
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	if err := debug.Setup(ctx, cmd); err != nil {
 		return ctx, err
@@ -162,6 +157,7 @@ func main() {
 	{
 		// check for .env file unless -noenv is in args
 		// (before flags are parsed)
+		// todo: use sense package
 		noenv := false
 		for _, v := range os.Args {
 			if strings.Contains(v, "-noenv") {
@@ -174,6 +170,10 @@ func main() {
 			log.Warn("Skipping .env file")
 		}
 	}
+	// go func() {
+	// 	<-ctx.Done()
+	// 	log.Warn("context done", "err", ctx.Err())
+	// }()
 	app := doinit()
 	if err := app.Run(mainctxs.Main(), os.Args); err != nil {
 		fmt.Fprintln(os.Stderr, err)
