@@ -22,12 +22,10 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net/url"
 	"os/exec"
 	"runtime"
 	"strings"
 
-	"gitlab.com/aquachain/aquachain/cmd/internal/browser"
 	"gitlab.com/aquachain/aquachain/params"
 
 	cli "github.com/urfave/cli/v3"
@@ -57,9 +55,7 @@ func reportBug(_ context.Context, cmd *cli.Command) error {
 	printOSDetails(&buff)
 
 	// open a new GH issue
-	if !browser.Open(issueUrl + "?body=" + url.QueryEscape(buff.String())) {
-		fmt.Printf("Please file a new issue at %s using this template:\n%s", issueUrl, buff.String())
-	}
+	fmt.Printf("Bug template: %s\n\nPlease file a new issue at %s using the above template.\n", buff.String(), issueUrl)
 	return nil
 }
 
