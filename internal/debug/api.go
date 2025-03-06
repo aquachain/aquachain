@@ -101,7 +101,7 @@ func Initglogger(callerinfo bool, verbosityLvl64 int64, alwayscolor, isjson bool
 	}
 	x := log.NewGlogHandler(h)
 	x.Verbosity(verbosityLvl)
-	go log.Warn("new glogger", "verbosity", verbosityLvl, "color", alwayscolor, "json", isjson, "caller2", log.Caller(2))
+	// go log.Trace("new glogger", "verbosity", verbosityLvl, "color", alwayscolor, "json", isjson, "caller2", log.Caller(2))
 	return x
 }
 
