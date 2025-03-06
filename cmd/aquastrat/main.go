@@ -28,7 +28,7 @@ import (
 	"time"
 
 	cli "github.com/urfave/cli/v3"
-	"gitlab.com/aquachain/aquachain/cmd/utils"
+	"gitlab.com/aquachain/aquachain/cmd/aquachain/subcommands"
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/consensus/aquahash"
 	"gitlab.com/aquachain/aquachain/consensus/lightvalid"
@@ -70,7 +70,7 @@ func main() {
 	ctx := context.Background()
 
 	var (
-		app = utils.NewApp(gitCommit, "usage")
+		app = subcommands.NewApp(gitCommit, "usage")
 	)
 
 	app.Name = "aquastrat"
@@ -78,14 +78,16 @@ func main() {
 	_ = filepath.Join
 	app.Flags = append(debug.Flags, []cli.Flag{
 		&cli.StringFlag{
-			Value: filepath.Join(node.DefaultDatadirByChain(Config), "aquachain.ipc"),
-			Name:  "rpc",
-			Usage: "path or url to rpc",
+			Value:    filepath.Join(node.DefaultDatadirByChain(Config), "aquachain.ipc"),
+			Name:     "rpc",
+			Usage:    "path or url to rpc",
+			Category: "AQUASTRAT",
 		},
 		&cli.StringFlag{
-			Value: "",
-			Name:  "coinbase",
-			Usage: "address for mining rewards",
+			Value:    "",
+			Name:     "coinbase",
+			Usage:    "address for mining rewards",
+			Category: "AQUASTRAT",
 		},
 	}...)
 
@@ -147,7 +149,9 @@ func runit(ctx context.Context, cmd *cli.Command) error {
 			return err
 		}
 	}
-	encoded, err = aqua.GetBlockTemplate(ctx, coinbaseAddr)
+	if len(encoded) != 0 {
+		encoded, err = aqua.GetBlockTemplate(ctx, coinbaseAddr)
+	}
 	if err != nil {
 		println("gbt")
 		return err

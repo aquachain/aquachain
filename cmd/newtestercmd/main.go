@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/urfave/cli/v3"
-	"gitlab.com/aquachain/aquachain/cmd/utils"
+	"gitlab.com/aquachain/aquachain/cmd/aquachain/aquaflags"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/internal/debug"
 )
@@ -29,10 +29,10 @@ func main() {
 		Name:  "newtester",
 		Usage: "newtester is a command line tool for testing",
 		Flags: append([]cli.Flag{
-			utils.ChainFlag,
-			utils.DoitNowFlag,
-			utils.ConfigFileFlag,
-			utils.DataDirFlag}, debug.Flags...),
+			aquaflags.ChainFlag,
+			aquaflags.DoitNowFlag,
+			aquaflags.ConfigFileFlag,
+			aquaflags.DataDirFlag}, debug.Flags...),
 		Action: func(ctx context.Context, cmd *cli.Command) error { // cli.ActionFunc
 			for ctx.Err() == nil {
 				log.Infof("reticulating splines (name=%s chain=%s)", cmd.Name, appconfig.chain)
@@ -45,7 +45,7 @@ func main() {
 			return nil
 		},
 		Before: func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
-			appconfig.chain = cmd.String(utils.ChainFlag.Name)
+			appconfig.chain = cmd.String(aquaflags.ChainFlag.Name)
 			return ctx, nil
 		},
 		Commands: []*cli.Command{},
