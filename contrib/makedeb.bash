@@ -155,7 +155,7 @@ EOF
     chmod 755 $tmpdir/DEBIAN/postrm
     test ! -f contrib/debpkg/conffiles || cp -v contrib/debpkg/conffiles $tmpdir/DEBIAN/conffiles
     test ! -f contrib/debpkg/conffiles || chmod 644 $tmpdir/DEBIAN/conffiles
-
+    chown -R root:root $tmpdir
     # build the debian package
     if [ -f "aquachain-$version-$goos-$goarch.deb" ]; then
         echo "warn: removing existing aquachain-$version-$goos-$goarch.deb"
