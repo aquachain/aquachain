@@ -367,7 +367,10 @@ func (t *discoverTask) Do(srv *Server) {
 	// event loop spins too fast.
 	next := srv.lastLookup.Add(lookupInterval)
 	if now := time.Now(); now.Before(next) {
-		time.Sleep(next.Sub(now))
+select {
+		case <-mainctxs.Main().Done():
+		case <-		time.After(next.Sub(now)):
+		}
 	}
 	srv.lastLookup = time.Now()
 	var target discover.NodeID
