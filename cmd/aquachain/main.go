@@ -23,18 +23,17 @@ import (
 	"os"
 	"runtime"
 	"sort"
-	"strings"
 	"time"
 
 	logpkg "log"
 
-	"github.com/joho/godotenv"
 	cli "github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/cmd/aquachain/aquaflags"
 	"gitlab.com/aquachain/aquachain/cmd/aquachain/mainctxs"
 	"gitlab.com/aquachain/aquachain/cmd/aquachain/subcommands"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/common/metrics"
+	"gitlab.com/aquachain/aquachain/common/sense"
 	"gitlab.com/aquachain/aquachain/internal/debug"
 	"gitlab.com/aquachain/aquachain/opt/console"
 	"gitlab.com/aquachain/aquachain/params"
@@ -145,7 +144,7 @@ func beforeFunc(ctx context.Context, cmd *cli.Command) (context.Context, error) 
 	if targetGasLimit := cmd.Uint(aquaflags.TargetGasLimitFlag.Name); targetGasLimit > 0 {
 		params.TargetGasLimit = targetGasLimit
 	}
-	_, autoalertmode := os.LookupEnv("ALERT_PLATFORM")
+	_, autoalertmode := sense.LookupEnv("ALERT_PLATFORM")
 	if autoalertmode {
 		cmd.Set(aquaflags.AlertModeFlag.Name, "true")
 	}
@@ -154,21 +153,9 @@ func beforeFunc(ctx context.Context, cmd *cli.Command) (context.Context, error) 
 
 func main() {
 	logpkg.SetFlags(logpkg.Lshortfile)
-	{
-		// check for .env file unless -noenv is in args
-		// (before flags are parsed)
-		// todo: use sense package
-		noenv := false
-		for _, v := range os.Args {
-			if strings.Contains(v, "-noenv") {
-				noenv = true
-			}
-		}
-		if !noenv {
-			godotenv.Load(".env")
-		} else {
-			log.Warn("Skipping .env file")
-		}
+	if err := sense.DotEnv(); err != nil {
+		println("dot env:", err.Error())
+		os.Exit(1)
 	}
 	// go func() {
 	// 	<-ctx.Done()
@@ -176,13 +163,13 @@ func main() {
 	// }()
 	app := doinit()
 	if err := app.Run(mainctxs.Main(), os.Args); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintf(os.Stderr, "fatal: run failed with error %+v\n", err)
 		os.Exit(1)
 	}
 
 	if err := debug.WaitLoops(time.Second * 2); err != nil {
 		log.Warn("waiting for loops", "err", err)
 	} else {
-		log.Info("graceful shutdown achieved")
+		log.Info("graceful shutdown achieved", "subcommand", app.Name)
 	}
 }
