@@ -6,7 +6,7 @@ defaultwhat:
 	@echo "release mk file :)"
 
 # TODO remove this line after fixing release directory issue
-.PRECIOUS: bin/% tmprelease/bin/%/aquachain tmprelease/bin/%/aquachain.exe
+.PRECIOUS: bin/% tmprelease/bin/%/aquachain tmprelease/bin/%/aquachain.exe tmprelease/bin/%
 
 ## package above binaries (eg release/aquachain-0.0.1-windows-amd64/)
 .PHONY: debs package package-win deb
@@ -49,7 +49,7 @@ tmprelease/bin/%: $(GOFILES)
 	file $@/aquachain* || true
 tmprelease/bin/%/aquachain.exe: tmprelease/bin/%/aquachain
 
-release/$(maincmd_name)-%.tar.gz: tmprelease/bin/release/%
+release/$(maincmd_name)-%.tar.gz: tmprelease/bin/%
 	mkdir -p release
 	rm -rf tmprelease/${maincmd_name}-$*
 	mkdir -p tmprelease/${maincmd_name}-$*
