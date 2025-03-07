@@ -69,6 +69,11 @@ func doinit() *cli.Command {
 }
 
 func Doinit() *cli.Command {
+
+	if !sense.EnvBool("HELP2") {
+		subcommands.InitHelp()
+	}
+
 	defaults := subcommands.NewApp(clientIdentifier, gitCommit, "the Aquachain command line interface")
 	this_app = &cli.Command{
 		Name:    defaults.Name,

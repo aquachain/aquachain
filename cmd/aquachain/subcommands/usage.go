@@ -16,7 +16,7 @@
 
 // Contains the aquachain command usage template and generator.
 
-package main
+package subcommands
 
 import (
 	"io"
@@ -24,7 +24,6 @@ import (
 
 	"github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/cmd/aquachain/aquaflags"
-	"gitlab.com/aquachain/aquachain/cmd/aquachain/subcommands"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/internal/debug"
 )
@@ -263,9 +262,7 @@ func flagCategory(flag cli.Flag) string {
 	return "MISC"
 }
 
-var _ = initHelp // TODO
-
-func initHelp() {
+func InitHelp() {
 	// Override the default app help template
 	cli.RootCommandHelpTemplate = AppHelpTemplate
 
@@ -311,7 +308,7 @@ func initHelp() {
 			}
 			// Render out custom usage screen
 			originalHelpPrinter(w, tmpl, helpData{data, AppHelpFlagGroups})
-		} else if tmpl == subcommands.CommandHelpTemplate {
+		} else if tmpl == CommandHelpTemplate {
 			// Iterate over all command specific flags and categorize them
 			categorized := make(map[string][]cli.Flag)
 			for _, flag := range data.(cli.Command).Flags {
