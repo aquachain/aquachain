@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"math/big"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -210,6 +209,37 @@ func web3toWei(call jsruntime.FunctionCall) jsruntime.Value {
 	return out
 }
 
+func web3fromWei(call jsruntime.FunctionCall) jsruntime.Value {
+	log.Info("js.fromWei", "args", call.ArgumentList)
+	weiString, err := call.Argument(0).ToString() // eg: "1230000000000000000"
+	if err != nil {
+		return jsruntime.New().MakeCustomError("Error", err.Error())
+	}
+	var unit = "aqua"
+	if call.Argument(1) != jsruntime.UndefinedValue() {
+		unit, err = call.Argument(1).ToString()
+		if err != nil {
+			return jsruntime.New().MakeCustomError("Error", err.Error())
+		}
+	}
+
+	unitval, ok := params.UnitDenomination(unit)
+	if !ok {
+		return jsruntime.New().MakeCustomError("Error", "invalid unit")
+	}
+
+	wei, err := decimal.NewFromString(weiString)
+	if err != nil {
+		return jsruntime.New().MakeCustomError("Error", err.Error())
+	}
+	coinamt := wei.Div(unitval)
+	coinAmt, err := call.Otto.ToValue(coinamt.String())
+	if err != nil {
+		return jsruntime.New().MakeCustomError("Error", err.Error())
+	}
+	return coinAmt
+}
+
 // init retrieves the available APIs from the remote RPC provider and initializes
 // the console's JavaScript namespaces based on the exposed modules.
 func (c *Console) init(preload []string) error {
@@ -219,21 +249,6 @@ func (c *Console) init(preload []string) error {
 	jethObj, _ := c.jsre.Get("jeth")
 	jethObj.Object().Set("send", bridge.Send)
 	jethObj.Object().Set("sendAsync", bridge.Send)
-
-	web3fromWei := func(call jsruntime.FunctionCall) jsruntime.Value {
-		log.Info("js.fromWei", "args", call.ArgumentList)
-		wei, _ := call.Argument(0).ToString() // eg: "1230000000000000000"
-		f, ok := big.NewFloat(0).SetString(wei)
-		if !ok {
-			return jsruntime.New().MakeCustomError("Error", "invalid number")
-		}
-		f.Quo(f, big.NewFloat(1e18)) // eg: 1.23
-		x, err := jsruntime.ToValue(f.Text('f', 18))
-		if err != nil {
-			return jsruntime.New().MakeCustomError("Error", err.Error())
-		}
-		return x
-	}
 
 	consoleObj, _ := c.jsre.Get("console")
 	consoleObj.Object().Set("log", c.consoleOutput)
