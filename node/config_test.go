@@ -18,6 +18,7 @@ package node
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -69,6 +70,7 @@ func TestDatadirCreation(t *testing.T) {
 // Tests that IPC paths are correctly resolved to valid endpoints of different
 // platforms. Test 2 os for the randomized temporary path in the rare case of empty ("") datadir.
 func TestIPCPathResolution(t *testing.T) {
+	ephwant := "aquachain-xxxxxxxx"
 	var tests = []struct {
 		DataDir  string
 		IPCPath  string
@@ -77,7 +79,7 @@ func TestIPCPathResolution(t *testing.T) {
 	}{
 		{"", "", false, ""},
 		{"data", "", false, ""},
-		{"", "aquachain.ipc", false, filepath.Join(os.TempDir(), "aquachain-xxxxxxxxxx", "aquachain.ipc")},
+		{"", "aquachain.ipc", false, filepath.Join(os.TempDir(), ephwant, "aquachain.ipc")},
 		{"data", "aquachain.ipc", false, "data/aquachain.ipc"},
 		{"data", "./aquachain.ipc", false, "./aquachain.ipc"},
 		{"data", "/aquachain.ipc", false, "/aquachain.ipc"},
@@ -91,26 +93,18 @@ func TestIPCPathResolution(t *testing.T) {
 		// Only run when platform/test match
 		if (runtime.GOOS == "windows") == test.Windows {
 			endpoint := (&Config{DataDir: test.DataDir, IPCPath: test.IPCPath, P2P: testp2p}).IPCEndpoint()
-			ephwant := "aquachain-xxxxxxxxxx"
 			istmp := strings.Contains(test.Endpoint, ephwant)
 			if (endpoint != test.Endpoint) && (!istmp) {
-				t.Errorf("test %d: IPC endpoint mismatchA: have %s, want %s", i, endpoint, test.Endpoint)
+				t.Errorf("test %d: IPC endpoint mismatchA: have %q, want %q", i, endpoint, test.Endpoint)
 			}
 			if istmp {
-				l := len(ephwant)
-				at := strings.Index(test.Endpoint, ephwant)
-				if at == -1 {
-					panic("bad test")
+				var gotrand int
+				if _, err := fmt.Sscanf(endpoint, strings.Replace(test.Endpoint, "xxxxxxxx", "%d", 1), &gotrand); err != nil {
+					t.Errorf("test %d: IPC endpoint mismatchB: have %q, want %q", i, endpoint, test.Endpoint)
 				}
-				if len(endpoint) != len(test.Endpoint) {
-					t.Errorf("test %d: IPC endpoint mismatchC: have %s, want something like %s", i, endpoint, test.Endpoint)
-					return
-				}
-				if !strings.HasPrefix(endpoint[:at], test.Endpoint[:at]) {
-					t.Errorf("test %d: IPC endpoint mismatchA: have %s, want something like %s", i, endpoint, test.Endpoint)
-				}
-				if !strings.HasSuffix(endpoint[at+l:], test.Endpoint[at+l:]) {
-					t.Errorf("test %d: IPC endpoint mismatchB: have %s, want something like %s", i, endpoint, test.Endpoint)
+				// fmt.Fprintf(os.Stderr, "test %d: IPC endpoint: %q gotrand=%d\n", i, endpoint, gotrand)
+				if endpoint != strings.Replace(test.Endpoint, "xxxxxxxx", fmt.Sprintf("%d", gotrand), 1) {
+					t.Errorf("test %d: IPC endpoint mismatchC: have %q, want %q", i, endpoint, test.Endpoint)
 				}
 			}
 		}
