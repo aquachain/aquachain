@@ -65,10 +65,20 @@ var helpCommand = &cli.Command{
 }
 
 func doinit() *cli.Command {
+	return Doinit()
+}
+
+func Doinit() *cli.Command {
+	defaults := subcommands.NewApp(clientIdentifier, gitCommit, "the Aquachain command line interface")
 	this_app = &cli.Command{
-		Name:    "aquachain",
-		Usage:   "the Aquachain command line interface",
-		Version: params.VersionWithCommit(gitCommit),
+		Name:    defaults.Name,
+		Usage:   defaults.Usage,
+		Version: defaults.Version,
+
+		EnableShellCompletion:      defaults.EnableShellCompletion,
+		ShellCompletionCommandName: defaults.ShellCompletionCommandName,
+		Suggest:                    defaults.Suggest,
+
 		Flags: append([]cli.Flag{
 			aquaflags.NoEnvFlag,
 			aquaflags.DoitNowFlag,
@@ -76,7 +86,6 @@ func doinit() *cli.Command {
 			aquaflags.ChainFlag,
 			aquaflags.GCModeFlag,
 		}, debug.Flags...),
-		Suggest: true,
 		SuggestCommandFunc: func(commands []*cli.Command, provided string) string {
 			s := cli.SuggestCommand(commands, provided)
 			// log.Info("running SuggestCommand", "commands", commands, "provided", provided, "suggesting", s)
@@ -92,7 +101,6 @@ func doinit() *cli.Command {
 		After:          afterFunc,
 		DefaultCommand: "consoledefault",
 		Commands: append([]*cli.Command{
-			// See chaincmd.go:
 			helpCommand,
 			consoledefault,
 		}, subcommands.Subcommands()...),
@@ -169,7 +177,7 @@ func main() {
 
 	if err := debug.WaitLoops(time.Second * 2); err != nil {
 		log.Warn("waiting for loops", "err", err)
-	} else {
-		log.Info("graceful shutdown achieved", "subcommand", app.Name)
+	} else if time.Since(subcommands.GetStartTime()) > time.Second*4 {
+		log.Debug("graceful shutdown achieved", "subcommand", app.Name)
 	}
 }

@@ -68,16 +68,29 @@ GLOBAL OPTIONS:
 `
 
 // NewApp creates an app with sane defaults.
-func NewApp(gitCommit, usage string) *cli.Command {
-	app := &cli.Command{
-		Name:    filepath.Base(os.Args[0]),
-		Usage:   usage,
-		Version: params.Version,
+func NewApp(name, gitCommit, usage string) *cli.Command {
+	if name == "" {
+		name = filepath.Base(os.Args[0])
 	}
-	//app.Flags
-	app.Name = filepath.Base(os.Args[0])
-	app.Version = params.VersionWithCommit(gitCommit)
-	app.Usage = usage
+	app := &cli.Command{
+		Name:                       name,
+		Usage:                      usage,
+		Version:                    params.VersionWithCommit(gitCommit),
+		ReadArgsFromStdin:          false,
+		EnableShellCompletion:      true,
+		Suggest:                    true,
+		ShellCompletionCommandName: "generate-shell-completion",
+		ShellComplete: func(ctx context.Context, cmd *cli.Command) {
+			// This will complete if no args are passed
+			if cmd.NArg() > 0 {
+				fmt.Println("complete")
+				return
+			}
+			for _, c := range cmd.VisibleCommands() {
+				fmt.Println(c.Name)
+			}
+		},
+	}
 	return app
 }
 
