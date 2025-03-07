@@ -185,7 +185,13 @@ func (c *Config) IPCEndpoint() string {
 	// Resolve names into the data directory full paths otherwise
 	if filepath.Base(c.IPCPath) == c.IPCPath {
 		if c.DataDir == "" {
-			return filepath.Join(os.TempDir(), c.IPCPath)
+			log.Warn("No datadir set, IPCPath will be ephemeral")
+			dir, err := os.MkdirTemp("", "aquachain-")
+			if err != nil {
+				log.GracefulShutdown(fmt.Errorf("mkdirtemp: %v", err))
+
+			}
+			return filepath.Join(dir, c.IPCPath)
 		}
 		return filepath.Join(c.DataDir, c.IPCPath)
 	}
