@@ -4,26 +4,18 @@ import "github.com/robertkrimen/otto"
 
 type (
 	FunctionCall = otto.FunctionCall
+	Value        = otto.Value
+	Otto         = otto.Otto
+	Script       = otto.Script
+	Object       = otto.Object
+	Error        = otto.Error
 )
 
-var NullValue = otto.NullValue
-
-var UndefinedValue = otto.UndefinedValue
-
-var TrueValue = otto.TrueValue
-
-var FalseValue = otto.FalseValue
-
-type Value = otto.Value
-
-type Otto = otto.Otto
-
-var New = otto.New
-
-type Script = otto.Script
-
-var ToValue = otto.ToValue
-
-type Object = otto.Object
-
-type Error = otto.Error
+var (
+	New            = otto.New
+	NullValue      = otto.NullValue
+	UndefinedValue = otto.UndefinedValue
+	TrueValue      = otto.TrueValue
+	FalseValue     = otto.FalseValue
+	ToValue        = otto.ToValue
+)

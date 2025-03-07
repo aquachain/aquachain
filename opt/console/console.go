@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/big"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -30,10 +31,12 @@ import (
 
 	colorable "github.com/mattn/go-colorable"
 	"github.com/peterh/liner"
+	"github.com/shopspring/decimal"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/internal/jsre"
 	"gitlab.com/aquachain/aquachain/internal/web3ext"
 	"gitlab.com/aquachain/aquachain/opt/console/jsruntime"
+	"gitlab.com/aquachain/aquachain/params"
 	rpc "gitlab.com/aquachain/aquachain/rpc/rpcclient"
 )
 
@@ -176,6 +179,35 @@ func New(config Config) (*Console, error) {
 	return console, nil
 }
 
+func web3toWei(call jsruntime.FunctionCall) jsruntime.Value {
+	var input1 = call.Argument(0)
+	if input1 == jsruntime.UndefinedValue() {
+		return jsruntime.New().MakeCustomError("Error", "expected 1 or 2 args (amount, unit)")
+	}
+	var input2 = call.Argument(1)
+	var unit = "aqua"
+	if input2 != jsruntime.UndefinedValue() && input2.IsString() {
+		unit, _ = input2.ToString()
+	}
+	input, err := decimal.NewFromString(input1.String())
+	if err != nil {
+		return jsruntime.New().MakeCustomError("Error", "invalid number: "+err.Error())
+	}
+	if input.IsNegative() {
+		return jsruntime.New().MakeCustomError("Error", "number is negative")
+	}
+	unitval, ok := params.UnitDenomination(unit)
+	if !ok {
+		return jsruntime.New().MakeCustomError("Error", "invalid unit")
+	}
+
+	out, err := call.Otto.ToValue(input.Mul(unitval).String())
+	if err != nil {
+		return jsruntime.New().MakeCustomError("Error", err.Error())
+	}
+	return out
+}
+
 // init retrieves the available APIs from the remote RPC provider and initializes
 // the console's JavaScript namespaces based on the exposed modules.
 func (c *Console) init(preload []string) error {
@@ -185,6 +217,21 @@ func (c *Console) init(preload []string) error {
 	jethObj, _ := c.jsre.Get("jeth")
 	jethObj.Object().Set("send", bridge.Send)
 	jethObj.Object().Set("sendAsync", bridge.Send)
+
+	web3fromWei := func(call jsruntime.FunctionCall) jsruntime.Value {
+		log.Info("js.fromWei", "args", call.ArgumentList)
+		wei, _ := call.Argument(0).ToString() // eg: "1230000000000000000"
+		f, ok := big.NewFloat(0).SetString(wei)
+		if !ok {
+			return jsruntime.New().MakeCustomError("Error", "invalid number")
+		}
+		f.Quo(f, big.NewFloat(1e18)) // eg: 1.23
+		x, err := jsruntime.ToValue(f.Text('f', 18))
+		if err != nil {
+			return jsruntime.New().MakeCustomError("Error", err.Error())
+		}
+		return x
+	}
 
 	consoleObj, _ := c.jsre.Get("console")
 	consoleObj.Object().Set("log", c.consoleOutput)
@@ -202,6 +249,14 @@ func (c *Console) init(preload []string) error {
 	}
 	if _, err := c.jsre.Run("var web3 = new Web3(jeth);"); err != nil {
 		return fmt.Errorf("web3 provider: %v", err)
+	}
+
+	{ // bugfix for web3.toWei otto truncate float
+		c.jsre.Set("_toWei", web3toWei)
+		c.jsre.Set("_fromWei", web3fromWei)
+		c.jsre.Run(`web3.toWei = _toWei;`)
+		c.jsre.Run(`web3.fromWei = _fromWei;`)
+
 	}
 	// NEW: add 'print' function alias for console.log("...")
 	if _, err := c.jsre.Run("var print = console.log;"); err != nil {
@@ -567,11 +622,50 @@ func handleSend(c *Console) error {
 		return fmt.Errorf("input error: %v", err)
 	}
 
+	toweistr := "web3.toWei(" + amount + ",'aqua')"
+	toweijsval, err := c.jsre.Run(toweistr)
+	if err != nil {
+		return fmt.Errorf("error: %v", err)
+	}
+	toweival, err := toweijsval.ToString()
+	if err != nil {
+		return fmt.Errorf("error: %v", err)
+	}
+	toweistr = toweival
+	if toweistr == "undefined" || toweistr == "null" {
+		return fmt.Errorf("error converting to wei in js: %s", toweijsval.String())
+	}
+	cont, err = c.prompter.PromptConfirm(fmt.Sprintf("warning: we are using new technique for toWei. Does this look correct: %s AQUA = %s wei ?", amount, toweistr))
+	if err != nil {
+		return fmt.Errorf("input error: %v", err)
+	}
+	if !cont {
+		return fmt.Errorf("transaction canceled")
+	}
+
 	fmt.Fprintf(c.printer, "Send %q to whom?", amount)
 
 	destination, err := c.prompter.PromptInput("Where to send? (With 0x prefix): ")
 	if err != nil {
 		return fmt.Errorf("input error: %v", err)
+	}
+	if destination == "" {
+		return fmt.Errorf("empty destination")
+	}
+	// might be a variable
+	if !strings.HasPrefix(destination, "0x") {
+		val, err := c.jsre.Run(destination)
+		if err != nil {
+			return fmt.Errorf("invalid address: %v", err)
+		}
+		destination, err = val.ToString()
+		if err != nil {
+			return fmt.Errorf("invalid address: %v", err)
+		}
+
+	}
+	if !strings.HasPrefix(destination, "0x") {
+		return fmt.Errorf("destination does not have 0x prefix")
 	}
 
 	cont, err = c.prompter.PromptConfirm(fmt.Sprintf("Send %s to %s?", amount, destination))
@@ -593,7 +687,7 @@ func handleSend(c *Console) error {
 	if !strings.HasPrefix(destination, "0x") && !strings.HasPrefix(destination, "aqua.accounts[") {
 		return fmt.Errorf("does not have 0x prefix")
 	}
-	_, err = c.jsre.Run(`aqua.sendTransaction({from: aqua.coinbase, to: '` + destination + `', value: web3.toWei(` + amount + `,'aqua')});`)
+	_, err = c.jsre.Run(`aqua.sendTransaction({from: aqua.coinbase, to: '` + destination + `', ` + toweistr + `});`)
 	if err != nil {
 		return fmt.Errorf("error: %v", err)
 	}

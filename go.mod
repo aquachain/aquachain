@@ -37,6 +37,7 @@ require (
 require (
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/rogpeppe/go-internal v1.13.1 // indirect
+	github.com/shopspring/decimal v1.4.0 // indirect
 )
 
 require (

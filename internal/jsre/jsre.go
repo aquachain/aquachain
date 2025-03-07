@@ -23,11 +23,12 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
+
 	"math/rand"
 	"time"
 
 	"gitlab.com/aquachain/aquachain/common"
+	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/internal/jsre/deps"
 	"gitlab.com/aquachain/aquachain/opt/console/jsruntime"
 )
@@ -154,6 +155,7 @@ func (self *JSRE) runEventLoop() {
 		}
 		return jsruntime.UndefinedValue()
 	}
+
 	vm.Set("_setTimeout", setTimeout)
 	vm.Set("_setInterval", setInterval)
 	vm.Run(`var setTimeout = function(args) {
@@ -251,7 +253,7 @@ func (self *JSRE) ExecFile(file string) error {
 	self.Do(func(vm *jsruntime.Otto) {
 		script, err = vm.Compile(file, code)
 		if err != nil {
-			log.Printf("failed to compile: %+v", err)
+			log.Error("failed to compile js", err, fmt.Sprintf("%+v", err))
 			return
 		}
 		_, err = vm.Run(script)
@@ -267,6 +269,9 @@ func (self *JSRE) Bind(name string, v interface{}) error {
 
 // Run runs a piece of JS code.
 func (self *JSRE) Run(code string) (v jsruntime.Value, err error) {
+	if debugJsre {
+		log.Info("JSRE.Run", "code", code)
+	}
 	self.Do(func(vm *jsruntime.Otto) { v, err = vm.Run(code) })
 	return v, err
 }

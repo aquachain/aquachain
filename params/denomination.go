@@ -16,6 +16,8 @@
 
 package params
 
+import "github.com/shopspring/decimal"
+
 const (
 	// These are the multipliers for ether denominations.
 	// Example: To get the wei value of an amount in 'douglas', use
@@ -31,5 +33,32 @@ const (
 	Aquaer   = 1e18
 	Aqua     = 1e18
 	Einstein = 1e21
-	Douglas  = 1e42
+	Douglas  = 1e42 // truncates in int64
 )
+
+func UnitDenomination(s string) (decimal.Decimal, bool) {
+	switch s {
+	case "wei":
+		return decimal.New(Wei, 0), true
+	case "ada":
+		return decimal.New(Ada, 0), true
+	case "babbage":
+		return decimal.New(Babbage, 0), true
+	case "shannon", "gwei":
+		return decimal.New(Shannon, 0), true
+	case "szabo":
+		return decimal.New(Szabo, 0), true
+	case "finney":
+		return decimal.New(Finney, 0), true
+	case "aqua", "ether", "eth", "coin":
+		return decimal.New(Aqua, 0), true
+	case "einstein":
+		return decimal.NewFromFloat(Einstein), true
+	case "douglas":
+		return decimal.NewFromFloat(Douglas), true
+	default:
+		return decimal.Decimal{}, false
+
+	}
+
+}

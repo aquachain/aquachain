@@ -24,6 +24,8 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"gitlab.com/aquachain/aquachain/common/log"
+	"gitlab.com/aquachain/aquachain/common/sense"
 	"gitlab.com/aquachain/aquachain/opt/console/jsruntime"
 )
 
@@ -82,7 +84,12 @@ func (ctx ppctx) indent(level int) string {
 	return strings.Repeat(indentString, level)
 }
 
+var debugJsre = sense.EnvBool("DEBUG_JSRE")
+
 func (ctx ppctx) printValue(v jsruntime.Value, level int, inArray bool) {
+	if debugJsre {
+		log.Infof("printValue: %v (%T) [%#v]", v, v, v)
+	}
 	switch {
 	case v.IsObject():
 		ctx.printObject(v.Object(), level, inArray)
