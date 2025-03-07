@@ -196,3 +196,9 @@ docs: mkdocs.yml Documentation/*/*
 
 docker:
 	docker build -t aquachain/aquachain .
+
+doc-print-env:
+	@echo Bool Env:
+	@egrep -rn 'EnvBool\("([^"]+)"\)' | sed -e 's/.*EnvBool("\([^"]\+\)").*/\1/' | sort -u
+	@echo String Env:
+	@egrep -rn 'sense.(LookupEnv|Getenv)\("([^"]+)"\)' | sed -e 's/.*("\([^"]\+\)").*/\1/' | sort -u
