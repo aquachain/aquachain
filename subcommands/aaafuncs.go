@@ -687,6 +687,10 @@ func SetNodeConfig(cmd *cli.Command, cfg *node.Config) error {
 	log.Info("Loading...", "Chain Select", chainName, "ChainID", chaincfg.ChainId, "Datadir", directoryCfg.DataDir)
 	cfg.DataDir = directoryCfg.DataDir
 	cfg.KeyStoreDir = directoryCfg.KeyStoreDir
+	if cfg.KeyStoreDir == "" {
+		cfg.NoKeys = true
+		os.Setenv("NO_KEYS", "true") // might be too late
+	}
 	cfg.P2P.ChainId = chaincfg.ChainId.Uint64()
 	cfg.P2P.BootstrapNodes = bootstrapNodes
 
