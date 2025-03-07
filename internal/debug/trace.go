@@ -116,13 +116,16 @@ func Loops() []string {
 
 // WaitLoops waits for all loops to finish, should be called only once
 func WaitLoops(d time.Duration) error {
-	log.Warn("Waiting for loops to finish", "timeout", d, "active", loopwg.Len(), "started", Loops())
 	ch := make(chan struct{})
 	go func() {
 		loopwg.Wait()
 		close(ch)
 	}()
 	// ctx is already done here
+	go func() {
+		time.Sleep(time.Second)
+		log.Warn("Waiting for loops to finish", "timeout", d, "active", loopwg.Len(), "started", Loops())
+	}()
 	select {
 	case <-time.After(d):
 		return fmt.Errorf("timeout (%s) waiting for %d loops", d, len(loops))
