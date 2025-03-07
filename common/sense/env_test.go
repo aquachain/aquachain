@@ -16,7 +16,7 @@ func TestEnv1(t *testing.T) {
 }
 
 func TestEnv2(t *testing.T) {
-	restore, shouldRestore := os.LookupEnv("NO_KEYS")
+	restore, shouldRestore := LookupEnv("NO_KEYS")
 	if shouldRestore {
 		defer os.Setenv("NO_KEYS", restore)
 	}

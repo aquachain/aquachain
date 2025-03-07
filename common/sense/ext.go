@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync/atomic"
+
+	"github.com/joho/godotenv"
 )
 
 var main_argv = os.Args // allow test package to override
@@ -112,9 +115,40 @@ func boolString(s string, unset bool, unparsable bool) bool {
 
 }
 
+var _dotenvdone atomic.Bool
+
+func DotEnv(extras ...string) error {
+	if len(extras) == 0 && !_dotenvdone.CompareAndSwap(false, true) {
+		return nil
+	}
+	// check for .env file unless -noenv is in args
+	// (before flags are parsed)
+	// todo: use sense package
+	noenv := false
+	for _, v := range os.Args {
+		if strings.Contains(v, "-noenv") {
+			noenv = true
+		}
+	}
+	var err error
+	if !noenv {
+		err = godotenv.Load(".env")
+	} else {
+		println("Skipping .env file")
+	}
+	return err
+}
+
+var LookupEnv = osLookupEnv
+
+func osLookupEnv(name string) (string, bool) {
+	DotEnv()                  // noop if already done
+	return os.LookupEnv(name) // should be the only os.LookupEnv call in the codebase to make sure a .env file is sourced before any env vars are read
+}
+
 // EnvBool returns false if empty/unset/falsy, true if otherwise non-empty
 func EnvBool(name string) bool {
-	x, ok := os.LookupEnv(name)
+	x, ok := osLookupEnv(name)
 	if !ok {
 		return false
 	}
@@ -125,7 +159,7 @@ func EnvBool(name string) bool {
 //
 // a bit different logic than !EnvBool
 func EnvBoolDisabled(name string) bool {
-	x, ok := os.LookupEnv(name)
+	x, ok := osLookupEnv(name)
 	if !ok {
 		return false
 	}
@@ -138,7 +172,7 @@ func isFalsy(s string) bool {
 
 // EnvOr returns the value of the environment variable, or the default if unset
 func EnvOr(name, def string) string {
-	x, ok := os.LookupEnv(name)
+	x, ok := osLookupEnv(name)
 	if !ok {
 		return def
 	}
