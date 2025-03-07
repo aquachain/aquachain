@@ -14,14 +14,12 @@ GOPATH != ${GOCMD} env GOPATH
 # rebuild target if *any* go file changes
 GOFILES ?= $(shell find . -name '*.go' -type f -not \( -path "./vendor/*" -o -path "./build/*" \))
 COMMITHASH ?= $(shell git rev-parse --short=6 HEAD)
-version ?= $(shell git tag | sort -V | tail -n 1 || echo "0.0.0")
-patches_sinces ?= $(shell git rev-list $(version)..HEAD --count)
-version := $(version)-$(COMMITHASH)
-is_dirty ?= $(shell git diff --quiet || echo "-dirty")
-ifeq (-dirty,$(is_dirty))
-version := $(version)-dirty
-endif
-
+version ?= $(shell git describe --tags --always --dirty)
+# patches_sinces ?= $(shell git rev-list ..HEAD --count)
+# is_dirty ?= $(shell git diff --quiet || echo "-dirty")
+# ifeq (-dirty,$(is_dirty))
+# version := $(version)-dirty
+# endif
 # #$(info GOCMD = $(GOCMD))
 # #$(info GOOS = $(GOOS))
 # #$(info GOARCH = $(GOARCH))
@@ -94,7 +92,7 @@ LINKER_FLAGS += -X gitlab.com/aquachain/aquachain/params.buildtags=${TAGS64}
 # codename to be used in version string
 ifeq (,$(codename))
 ifeq (1,$(release))
-codename=release)
+codename=release
 endif
 endif
 LINKER_FLAGS += -X gitlab.com/aquachain/aquachain/params.VersionMeta=${codename}

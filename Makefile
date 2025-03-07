@@ -16,7 +16,7 @@ maybeext := .exe
 endif
 
 # the main target is bin/aquachain or bin/aquachain.exe
-shorttarget := $(build_dir)/aquachain$(maybeext)
+shorttarget := bin/aquachain$(maybeext)
 # $(info shorttarget = $(shorttarget))
 
 define LOGO
@@ -36,7 +36,6 @@ endef
 # apt install file 
 
 # targets
-$(info $(shorttarget))
 $(shorttarget):
 # if on windows, this would become .exe.exe but whatever
 $(shorttarget).exe: $(GOFILES)
@@ -47,7 +46,7 @@ $(shorttarget).exe: $(GOFILES)
 	@file $(shorttarget) 2>/dev/null || true
 .PHONY += install
 install:
-	install -v $(build_dir)/aquachain $(INSTALL_DIR)/
+	install -v bin/aquachain $(INSTALL_DIR)/
 .PHONY += install commandlist default print-version
 default: $(shorttarget)
 version: print-version
@@ -103,8 +102,8 @@ regen:
 	@test -x "$(gobindatacmd)" || echo 'warn: go-bindata not found in PATH. run make devtools to install required development dependencies'
 	@test ! -x "$(gobindatacmd)" || go generate -x ./...
 all:
-	mkdir -p $(build_dir)
-	cd $(build_dir) && \
+	mkdir -p bin
+	cd bin && \
 		CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build -o . $(GO_FLAGS) ../cmd/...
 
 main_command_dir := ${aquachain_cmd}
@@ -120,9 +119,9 @@ ifneq (1,$(release))
 else
 	$(info Building release version for $(GOOS)/$(GOARCH) (release=1))
 endif
-	@mkdir -p $(build_dir)/${GOOS}-${GOARCH}
-	$(info Building to directory: $(build_dir)/${GOOS}-${GOARCH})
-	cd $(build_dir)/${GOOS}-${GOARCH} && GOOS=${GOOS} GOARCH=${GOARCH} \
+	@mkdir -p bin/${GOOS}-${GOARCH}
+	$(info Building to directory: bin/${GOOS}-${GOARCH})
+	cd bin/${GOOS}-${GOARCH} && GOOS=${GOOS} GOARCH=${GOARCH} \
 		CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build -o . $(GO_FLAGS) ../.${main_command_dir}
 
 help: commandlist
