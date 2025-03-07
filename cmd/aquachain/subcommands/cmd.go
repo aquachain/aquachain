@@ -43,6 +43,10 @@ const (
 
 var start_time = time.Now().UTC()
 
+func GetStartTime() time.Time {
+	return start_time
+}
+
 func StartNode(ctx context.Context, stack *node.Node) {
 
 	if err := stack.Start(ctx); err != nil {
