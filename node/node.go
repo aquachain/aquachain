@@ -142,12 +142,12 @@ func New(conf *Config) (*Node, error) {
 		return nil, err
 	}
 	if conf.KeyStoreDir != "" {
-		log.Warn("USING KEYSTORE", "custom_dir", conf.KeyStoreDir, "active", fmt.Sprintf("%T", am), "ephemeral", fmt.Sprintf("%T", ephemeralKeystore))
+		log.Warn("USING KEYSTORE", "custom_dir", conf.KeyStoreDir, "active", fmt.Sprintf("%T", am), "ephemeral", ephemeralKeystore)
 	}
 	if conf.Logger == nil {
 		conf.Logger = log.New()
 	}
-	log.Info("created a node:", "withKeystore", am != nil, "ephemeralKeystore", ephemeralKeystore != "")
+	log.Info("created a node:", "withKeystore", am != nil, "ephemeralKeystore", ephemeralKeystore)
 	// Note: any interaction with Config that would create/touch files
 	// in the data directory or instance directory is delayed until Start.
 	return &Node{
