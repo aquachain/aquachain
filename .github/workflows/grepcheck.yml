@@ -1,0 +1,20 @@
+name: Grep check
+
+on: [push, pull_request]
+
+jobs:
+  badcodegrep:
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: grepping for bad funcs
+        run: |
+          .github/grepcheck "os.LookupEnv" "sense.LookupEnv" 1;
+          .github/grepcheck "os.Getenv" "sense.Getenv" 1;
+          .github/grepcheck "os.Exit" "log.GracefulShutdown" 1;
+          .github/grepcheck "log.Fatal" "log.GracefulShutdown" 0;
+          .github/grepcheck "log.Fataln" "log.GracefulShutdown" 2;
+          .github/grepcheck "log.Fatalf" "log.GracefulShutdown" 0;
+
