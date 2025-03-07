@@ -45,6 +45,9 @@ var Version = func() string {
 
 func VersionWithCommit(gitCommit string) string {
 	vsn := Version
+	if len(gitCommit) == 0 {
+		gitCommit = "???????"
+	}
 	if len(gitCommit) >= 6 {
 		vsn += "-" + gitCommit[:6]
 	}

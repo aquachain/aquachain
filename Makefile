@@ -36,6 +36,7 @@ endef
 # apt install file 
 
 # targets
+$(info $(shorttarget))
 $(shorttarget):
 # if on windows, this would become .exe.exe but whatever
 $(shorttarget).exe: $(GOFILES)
@@ -47,7 +48,9 @@ $(shorttarget).exe: $(GOFILES)
 .PHONY += install
 install:
 	install -v $(build_dir)/aquachain $(INSTALL_DIR)/
+.PHONY += install commandlist default print-version
 default: $(shorttarget)
+version: print-version
 print-version:
 	@echo $(version)
 echoflags:
@@ -110,6 +113,7 @@ main_command_dir := ${aquachain_cmd}
 cross:
 	@test -n "$(GOOS)"
 	@test -n "$(GOARCH)" 
+	test "GOOS=$(GOOS)" != "GOOS=aquachain"
 	@echo cross-compiling for $(GOOS)/$(GOARCH)
 ifneq (1,$(release))
 	$(info warn: to build a real release, use "make clean release release=1")

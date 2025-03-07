@@ -37,15 +37,15 @@ $(release_dir)/$(maincmd_name)-osx-%.zip: $(build_dir)/osx-%/
 
 # create release binaries
 # eg: bin/windows-amd64/aquachain.exe
-$(build_dir)/%: $(GOFILES)
+$(build_dir)/release/%/: $(GOFILES)
 	$(info starting cross-compile $* -> $@)
 	env GOOS=$(shell echo $* | cut -d- -f1) GOARCH=$(shell echo $* | cut -d- -f2) \
 		${MAKE} cross
 	echo "built $* -> $@"
 	file $@/*
-$(build_dir)/%/aquachain.exe: $(build_dir)/%/aquachain
+$(build_dir)/release/%/aquachain.exe: $(build_dir)/release/%/aquachain
 
-$(release_dir)/$(maincmd_name)-%.tar.gz: $(build_dir)/%
+$(release_dir)/$(maincmd_name)-%.tar.gz: $(build_dir)/release/%
 	mkdir -p $(release_dir)
 	rm -rf tmprelease/${maincmd_name}-$*
 	mkdir -p tmprelease/${maincmd_name}-$*
