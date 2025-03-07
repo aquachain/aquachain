@@ -418,6 +418,7 @@ func (c *Config) AccountConfig() (int, int, string, error) {
 		scryptP = keystore.LightScryptP
 	}
 	if c.NoKeys {
+		log.Info("node/config: keystore is disabled")
 		return scryptN, scryptP, "", nil
 	}
 
@@ -431,18 +432,21 @@ func (c *Config) AccountConfig() (int, int, string, error) {
 	case c.DataDir != "":
 		if c.KeyStoreDir == "" {
 			keydir = filepath.Join(c.DataDir, datadirDefaultKeyStore)
+			log.Info("node/config: keystore directory not specified, defaulting to datadir/keystore", "pleasebackup", keydir)
 		} else {
 			keydir, err = filepath.Abs(c.KeyStoreDir)
 		}
 	case c.KeyStoreDir != "":
 		keydir, err = filepath.Abs(c.KeyStoreDir)
 	}
+	log.Warn("node/config: keystore is enabled", "keydir", keydir)
 	return scryptN, scryptP, keydir, err
 }
 
 func makeAccountManager(conf *Config) (*accounts.Manager, string, error) {
 	scryptN, scryptP, keydir, err := conf.AccountConfig()
 	if keydir == "" {
+		log.Info("node/config: no keystore directory")
 		return nil, "", nil
 	}
 	var ephemeral string
@@ -458,6 +462,15 @@ func makeAccountManager(conf *Config) (*accounts.Manager, string, error) {
 	if err := os.MkdirAll(keydir, 0700); err != nil {
 		return nil, "", err
 	}
+	stat, err := os.Stat(keydir)
+	if err != nil {
+		return nil, "", err
+	}
+
+	if stat.Mode()&0077 != 0 {
+		return nil, "", fmt.Errorf("keystore directory has insecure permissions: %s", keydir)
+	}
+
 	// Assemble the account manager and supported backends
 	backends := []accounts.Backend{
 		keystore.NewKeyStore(keydir, scryptN, scryptP),

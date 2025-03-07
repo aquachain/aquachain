@@ -19,12 +19,12 @@ package node
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/common/metrics"
+	"gitlab.com/aquachain/aquachain/common/sense"
 	"gitlab.com/aquachain/aquachain/p2p"
 	"gitlab.com/aquachain/aquachain/p2p/discover"
 	"gitlab.com/aquachain/aquachain/p2p/netutil"
@@ -139,7 +139,7 @@ func (api *PrivateAdminAPI) PeerEvents(ctx context.Context) (*rpc.Subscription, 
 
 // StartRPC starts the HTTP RPC API server.
 func (api *PrivateAdminAPI) StartRPC(host *string, port *int, cors *string, apis *string, vhosts *string) (bool, error) {
-	ok := os.Getenv("AQUA_ALLOW_RPC")
+	ok := sense.Getenv("AQUA_ALLOW_RPC")
 	if ok != "true" {
 		return false, fmt.Errorf("StartRPC not allowed, set AQUA_ALLOW_RPC=true to enable this method")
 	}

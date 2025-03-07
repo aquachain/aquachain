@@ -9,8 +9,8 @@ import (
 
 	"github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/aqua"
-	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/metrics"
+	"gitlab.com/aquachain/aquachain/common/sense"
 	"gitlab.com/aquachain/aquachain/core"
 	"gitlab.com/aquachain/aquachain/core/state"
 	"gitlab.com/aquachain/aquachain/node"
@@ -385,7 +385,7 @@ var (
 	}
 	RPCUnlockFlag = &cli.BoolFlag{
 		Name:  "UNSAFE_RPC_UNLOCK",
-		Usage: "",
+		Usage: "for allowing keystore and signing via RPC endpoints. do not use. use a separate signer instance.",
 	}
 	IPCDisabledFlag = &cli.BoolFlag{
 		Name:  "ipcdisable",
@@ -492,12 +492,12 @@ var (
 	NoKeysFlag = &cli.BoolFlag{
 		Name:  "nokeys",
 		Usage: "Disables keystore entirely (env: NO_KEYS)",
-		Value: common.EnvBool(os.Getenv("NO_KEYS")) || common.EnvBool(os.Getenv("NOKEYS")), // both just in case
+		Value: sense.EnvBool(sense.Getenv("NO_KEYS")) || sense.EnvBool(sense.Getenv("NOKEYS")), // both just in case
 	}
 	NoSignFlag = &cli.BoolFlag{
 		Name:  "nosign",
 		Usage: "Disables all signing via RPC endpoints (env:NO_SIGN) (useful when wallet is unlocked for signing blocks on a public testnet3 server)",
-		Value: common.EnvBool(os.Getenv("NO_SIGN")) || common.EnvBool(os.Getenv("NOSIGN")), // both just in case
+		Value: sense.EnvBool(sense.Getenv("NO_SIGN")) || sense.EnvBool(sense.Getenv("NOSIGN")), // both just in case
 	}
 	NetrestrictFlag = &cli.StringFlag{
 		Name:  "netrestrict",

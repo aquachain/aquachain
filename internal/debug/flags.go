@@ -21,26 +21,25 @@ import (
 	"fmt"
 	"net/http"
 	_ "net/http/pprof"
-	"os"
 	"runtime"
 
 	cli "github.com/urfave/cli/v3"
-	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/common/metrics"
 	"gitlab.com/aquachain/aquachain/common/metrics/exp"
+	"gitlab.com/aquachain/aquachain/common/sense"
 )
 
 var (
 	logcolorflag = &cli.BoolFlag{
 		Name:  "color",
 		Usage: "Force colored log output (COLOR env)",
-		Value: common.EnvBool("COLOR") || (os.Getenv("TERM") == "xterm" || os.Getenv("TERM") == "xterm-256color"),
+		Value: sense.EnvBool("COLOR") || (sense.Getenv("TERM") == "xterm" || sense.Getenv("TERM") == "xterm-256color"),
 	}
 	logjsonflag = &cli.BoolFlag{
 		Name:  "jsonlog",
 		Usage: "Log in JSON format, env:JSONLOG=1 (compatible with prettylog, jq, etc.)",
-		Value: common.EnvBool("JSONLOG"),
+		Value: sense.EnvBool("JSONLOG"),
 	}
 	verbosityFlag = &cli.IntFlag{
 		Name:  "verbosity",
@@ -60,7 +59,7 @@ var (
 	debugFlag = &cli.BoolFlag{
 		Name:  "debug",
 		Usage: "Prepends log messages with call-site location (file and line number)",
-		Value: common.EnvBool("DEBUG"),
+		Value: sense.EnvBool("DEBUG"),
 	}
 	pprofFlag = &cli.BoolFlag{
 		Name:  "pprof",

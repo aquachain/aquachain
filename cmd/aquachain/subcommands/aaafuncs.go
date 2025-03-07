@@ -26,6 +26,7 @@ import (
 	"gitlab.com/aquachain/aquachain/common/config"
 	"gitlab.com/aquachain/aquachain/common/fdlimit"
 	"gitlab.com/aquachain/aquachain/common/log"
+	"gitlab.com/aquachain/aquachain/common/sense"
 	"gitlab.com/aquachain/aquachain/common/toml"
 	"gitlab.com/aquachain/aquachain/consensus"
 	"gitlab.com/aquachain/aquachain/consensus/aquahash"
@@ -321,14 +322,19 @@ func splitAndTrim(input string) []string {
 // setHTTP creates the HTTP RPC listener interface string from the set
 // command line flags, returning empty if the HTTP endpoint is disabled.
 func setHTTP(cmd *cli.Command, cfg *node.Config) {
+	var nokeys = cmd.Bool(aquaflags.NoKeysFlag.Name) || cmd.Bool(aquaflags.NoSignFlag.Name)
+	if nokeys {
+		cfg.NoKeys = true
+	}
+	if cmd.IsSet(aquaflags.RPCListenAddrFlag.Name) && cmd.IsSet(aquaflags.UnlockedAccountFlag.Name) && !cmd.IsSet(aquaflags.RPCUnlockFlag.Name) {
+		Fatalf("Woah there! By default, using -rpc and -unlock is \"safe\", (localhost).\n" +
+			"But you shouldn't use --rpcaddr with --unlock flag.\n" +
+			"If you really know what you are doing and would like to unlock a wallet while" +
+			"hosting a public HTTP RPC node, use the -UNSAFE_RPC_UNLOCK flag. See -allowip flag to restrict access")
+		os.Exit(1)
+	}
 	if cmd.Bool(aquaflags.RPCEnabledFlag.Name) && cfg.HTTPHost == "" {
 		cfg.HTTPHost = "127.0.0.1"
-		if cmd.IsSet(aquaflags.RPCListenAddrFlag.Name) && cmd.IsSet(aquaflags.UnlockedAccountFlag.Name) && !cmd.IsSet(aquaflags.RPCUnlockFlag.Name) {
-			Fatalf("Woah there! By default, using -rpc and -unlock is \"safe\", (localhost).\n" +
-				"But you shouldn't use --rpcaddr with --unlock flag.\n" +
-				"If you really know what you are doing and would like to unlock a wallet while" +
-				"hosting a public HTTP RPC node, use the -UNSAFE_RPC_UNLOCK flag. See -allowip flag to restrict access")
-		}
 		if cmd.IsSet(aquaflags.RPCListenAddrFlag.Name) && cmd.IsSet(aquaflags.UnlockedAccountFlag.Name) {
 			// allow public rpc with unlocked account, exposed only via 'private' api namespace (aqua.sendTransaction and aqua.sign are disabled)
 			keystore.SetNoSignMode()
@@ -580,7 +586,7 @@ type DirectoryConfig struct {
 func switchDatadir(cmd *cli.Command, chaincfg *params.ChainConfig) DirectoryConfig {
 	var cfg DirectoryConfig
 	// var newdatadir string
-	if !cmd.Bool(aquaflags.NoKeysFlag.Name) && cmd.IsSet(aquaflags.KeyStoreDirFlag.Name) {
+	if cmd.IsSet(aquaflags.KeyStoreDirFlag.Name) {
 		cfg.KeyStoreDir = cmd.String(aquaflags.KeyStoreDirFlag.Name)
 	}
 	chainName := "(none)"
@@ -601,6 +607,7 @@ func switchDatadir(cmd *cli.Command, chaincfg *params.ChainConfig) DirectoryConf
 	// only return custom testnet dir if custom dir is NOT mainnet default dir
 	// prevents genesis mismatch in dir when switching -chain flag without changing --datadir
 	if cfg.DataDir != "" && chaincfg != params.MainnetChainConfig && cfg.DataDir != node.DefaultConfig.DataDir {
+		cfg.DataDir = filepath.Join(cfg.DataDir, chaincfg.Name())
 		return cfg
 	}
 	return cfg
@@ -686,7 +693,7 @@ func SetNodeConfig(cmd *cli.Command, cfg *node.Config) error {
 	if cmd.IsSet(aquaflags.UseUSBFlag.Name) {
 		cfg.UseUSB = cmd.Bool(aquaflags.UseUSBFlag.Name)
 	}
-	if cmd.IsSet(aquaflags.RPCBehindProxyFlag.Name) || common.EnvBool("RPC_BEHIND_PROXY") {
+	if cmd.IsSet(aquaflags.RPCBehindProxyFlag.Name) || sense.EnvBool("RPC_BEHIND_PROXY") {
 		cfg.RPCBehindProxy = cmd.Bool(aquaflags.RPCBehindProxyFlag.Name)
 	}
 	return nil
@@ -1107,7 +1114,7 @@ func MakeConfigNode(ctx context.Context, cmd *cli.Command, gitCommit string, cli
 		Fatalf("Fatal: could not set node config %+v", err)
 	}
 	cfgptr.Node.Context = ctx
-	cfgptr.Node.NoInProc = cmd.Name != "" && cmd.Name != "console" && os.Getenv("NO_INPROC") == "1"
+	cfgptr.Node.NoInProc = cmd.Name != "" && cmd.Name != "console" && sense.Getenv("NO_INPROC") == "1"
 	cfgptr.Node.CloseMain = closemain
 	stack, err := node.New(cfgptr.Node)
 	if err != nil {

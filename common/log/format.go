@@ -104,6 +104,7 @@ type TerminalStringer interface {
 //	[May 16 20:58:45] [DBUG] remove route ns=haproxy addr=127.0.0.1:50002
 func TerminalFormat(usecolor bool) Format {
 	return FormatFunc(func(r *Record) []byte {
+		println("using terminal format")
 		var color = 0
 		if usecolor {
 			switch r.Lvl {

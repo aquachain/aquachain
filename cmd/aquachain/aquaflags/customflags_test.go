@@ -20,10 +20,12 @@ import (
 	"os"
 	"os/user"
 	"testing"
+
+	"gitlab.com/aquachain/aquachain/common/sense"
 )
 
 func TestPathExpansion(t *testing.T) {
-	homedir := os.Getenv("HOME")
+	homedir := sense.Getenv("HOME")
 	user, err := user.Current()
 	if err != nil {
 		t.Logf("could not get 'user', assuming $HOME=%q, error=%q", homedir, err.Error())

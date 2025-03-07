@@ -139,6 +139,11 @@ func DotEnv(extras ...string) error {
 	return err
 }
 
+func Getenv(name string) string {
+	DotEnv()
+	return os.Getenv(name) // should be the only os.Getenv call.
+}
+
 var LookupEnv = osLookupEnv
 
 func osLookupEnv(name string) (string, bool) {
@@ -177,4 +182,16 @@ func EnvOr(name, def string) string {
 		return def
 	}
 	return x
+}
+
+// example usages of FeatureEnabled
+
+// IsNoKeys the one true way
+func IsNoKeys() bool {
+	return FeatureEnabled("NO_KEYS", "nokeys")
+}
+
+// IsNoSign the one true way
+func IsNoSign() bool {
+	return FeatureEnabled("NO_SIGN", "nosign")
 }

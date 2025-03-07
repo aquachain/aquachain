@@ -18,7 +18,7 @@ import (
 // 			link = fmt.Sprintf(", see https://pkg.go.dev/%s#%s for available fields", rt.PkgPath(), rt.Name())
 // 		}
 // 		err := fmt.Errorf("field '%s' is not defined in %s%s", field, rt.String(), link)
-// 		if os.Getenv("TOML_MISSING_FIELD") == "OK" {
+// 		if sense.Getenv("TOML_MISSING_FIELD") == "OK" {
 // 			log.Warn(err.Error())
 // 			return nil
 // 		}

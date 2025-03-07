@@ -6,6 +6,8 @@ import (
 	"os"
 	"runtime"
 	"time"
+
+	"gitlab.com/aquachain/aquachain/common/sense"
 )
 
 var start_time = time.Now()
@@ -30,7 +32,7 @@ func Fatalf(format string, args ...interface{}) {
 	fmt.Fprintf(w, "Fatal: "+format+"\n", args...)
 
 	// small traceback
-	if debug := os.Getenv("DEBUG"); debug != "" || time.Since(start_time) > 10*time.Second {
+	if debug := sense.Getenv("DEBUG"); debug != "" || time.Since(start_time) > 10*time.Second {
 		pc := make([]uintptr, 8)
 		n := runtime.Callers(1, pc)
 		if n != 0 {

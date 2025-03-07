@@ -29,6 +29,7 @@ import (
 	"sync"
 
 	"gitlab.com/aquachain/aquachain/common/log"
+	"gitlab.com/aquachain/aquachain/common/sense"
 )
 
 const (
@@ -125,9 +126,9 @@ func NewCodec(rwc CodecConn, encode, decode func(v interface{}) error) *JsonCode
 	}
 }
 
-var _DEBUG_RPC_REQUESTS = os.Getenv("DEBUG_RPC_REQUESTS") == "1"
-var _DEBUG_RPC_RESPONSES = os.Getenv("DEBUG_RPC_RESPONSES") == "1"
-var _DEBUG_RPC = os.Getenv("DEBUG_RPC") == "1"
+var _DEBUG_RPC_REQUESTS = sense.Getenv("DEBUG_RPC_REQUESTS") == "1"
+var _DEBUG_RPC_RESPONSES = sense.Getenv("DEBUG_RPC_RESPONSES") == "1"
+var _DEBUG_RPC = sense.Getenv("DEBUG_RPC") == "1"
 
 // NewJSONCodec creates a new RPC server codec with support for JSON-RPC 2.0
 func NewJSONCodec(rwc CodecConn) *JsonCodec {

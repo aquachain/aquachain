@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"gitlab.com/aquachain/aquachain/common/log"
+	"gitlab.com/aquachain/aquachain/common/sense"
 )
 
 type AlertConfig struct {
@@ -29,7 +30,7 @@ var mainCfg AlertConfig
 
 // Infof logs a warning message and sends an alert via ALERT_PLATFORM if configured (see ParseAlertConfig)
 func Infof(f string, i ...any) {
-	if os.Getenv("ALERTS_INFO") == "0" {
+	if sense.Getenv("ALERTS_INFO") == "0" {
 		return
 	}
 	if !mainCfg.Enabled() {
@@ -43,7 +44,7 @@ func Infof(f string, i ...any) {
 
 // Warnf logs a warning message and sends an alert via ALERT_PLATFORM if configured (see ParseAlertConfig)
 func Warnf(f string, i ...any) {
-	if os.Getenv("ALERTS_WARN") == "0" {
+	if sense.Getenv("ALERTS_WARN") == "0" {
 		return
 	}
 	if !mainCfg.Enabled() {
@@ -84,9 +85,9 @@ func ParseAlertConfig() (AlertConfig, error) {
 		panic("already configured")
 	}
 	var ac AlertConfig
-	ac.Platform = os.Getenv("ALERT_PLATFORM")
-	ac.Token = os.Getenv("ALERT_TOKEN")
-	ac.Channel = os.Getenv("ALERT_CHANNEL")
+	ac.Platform = sense.Getenv("ALERT_PLATFORM")
+	ac.Token = sense.Getenv("ALERT_TOKEN")
+	ac.Channel = sense.Getenv("ALERT_CHANNEL")
 	if ac.Platform == "" {
 		return ac, fmt.Errorf("missing ALERT_PLATFORM")
 	}

@@ -17,13 +17,13 @@
 package node
 
 import (
-	"os"
+	"fmt"
 	"os/user"
 	"path/filepath"
 	"runtime"
 
-	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/log"
+	"gitlab.com/aquachain/aquachain/common/sense"
 	"gitlab.com/aquachain/aquachain/p2p"
 	"gitlab.com/aquachain/aquachain/params"
 )
@@ -39,9 +39,10 @@ const (
 var DefaultConfig = NewDefaultConfig()
 
 func NewDefaultConfig() *Config {
-	return &Config{
+	datadir := defaultDataDir()
+	x := &Config{
 		Name:        "", // must be set before GetNodeName
-		DataDir:     defaultDataDir(),
+		DataDir:     datadir,
 		HTTPPort:    DefaultHTTPPort,
 		HTTPModules: []string{"aqua", "eth", "net", "web3"},
 		WSPort:      DefaultWSPort,
@@ -51,14 +52,17 @@ func NewDefaultConfig() *Config {
 			MaxPeers:   20,
 			NAT:        "none", // none
 		},
-		RPCBehindProxy: common.EnvBool("RPC_BEHIND_PROXY"),
-		UserIdent:      os.Getenv("AQUA_USERIDENT"),
+		RPCBehindProxy: sense.EnvBool("RPC_BEHIND_PROXY"),
+		UserIdent:      sense.Getenv("AQUA_USERIDENT"),
 		HTTPHost:       "",
 		WSHost:         "",
-		RPCNoSign:      common.EnvBool("NO_SIGN"), // doesnt do anything here. something needs to read it
-		NoKeys:         common.EnvBool("NO_KEYS"), // doesnt do anything here. something needs to read it
-		NoCountdown:    common.EnvBool("NO_COUNTDOWN"),
+		RPCNoSign:      sense.EnvBool("NO_SIGN"), // doesnt do anything here. something needs to read it
+		NoKeys:         sense.EnvBool("NO_KEYS"), // doesnt do anything here. something needs to read it
+		NoCountdown:    sense.EnvBool("NO_COUNTDOWN"),
+		KeyStoreDir:    sense.Getenv("AQUA_KEYSTORE_DIR"),
 	}
+	log.Info("default config", "datadir", x.DataDir, "keystore", x.KeyStoreDir)
+	return x
 }
 
 // DefaultDataDir is the default data directory to use for the databases and other
@@ -67,6 +71,9 @@ func NewDefaultConfig() *Config {
 // Use this once in DefaultConfig!
 func defaultDataDir() string {
 	// Try to place the data folder in the user's home dir
+	if e := sense.Getenv("AQUA_DATADIR"); e != "" {
+		return e
+	}
 	home := homeDir()
 	if home != "" {
 		if runtime.GOOS == "darwin" {
@@ -78,6 +85,8 @@ func defaultDataDir() string {
 		}
 	}
 	// As we cannot guess a stable location, return empty and handle later
+	log.Error("can't determine home directory to place aquachain data dir")
+	log.GracefulShutdown(fmt.Errorf("can't determine home directory to place aquachain data dir"))
 	return ""
 }
 
@@ -98,7 +107,7 @@ func DefaultDatadirByChain(cfg *params.ChainConfig) string {
 
 func homeDir() string {
 	// use HOME first in case user wants to override
-	if home := os.Getenv("HOME"); home != "" {
+	if home := sense.Getenv("HOME"); home != "" {
 		return home
 	}
 	if usr, err := user.Current(); err == nil {

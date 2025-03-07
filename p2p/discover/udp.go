@@ -22,11 +22,11 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"os"
 	"time"
 
 	"github.com/btcsuite/btcd/btcec/v2"
 	"gitlab.com/aquachain/aquachain/common/log"
+	"gitlab.com/aquachain/aquachain/common/sense"
 	"gitlab.com/aquachain/aquachain/crypto"
 	"gitlab.com/aquachain/aquachain/internal/debug"
 	"gitlab.com/aquachain/aquachain/p2p/netutil"
@@ -611,7 +611,7 @@ func shorten[T any](a []T, n int) []T {
 	return a[:n]
 }
 
-var debugpacket = os.Getenv("DEBUG_DISCO") == "1"
+var debugpacket = sense.Getenv("DEBUG_DISCO") == "1"
 
 func (t *udp) handlePacket(from *net.UDPAddr, buf []byte) error {
 	packet, fromID, hash, err := decodePacket(t.netcompat(), buf)

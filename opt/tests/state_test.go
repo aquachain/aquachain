@@ -19,10 +19,10 @@ package tests
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"testing"
 
 	"gitlab.com/aquachain/aquachain/common/log"
+	"gitlab.com/aquachain/aquachain/common/sense"
 	"gitlab.com/aquachain/aquachain/core/vm"
 )
 
@@ -30,7 +30,7 @@ func init() {
 	log.ResetForTesting()
 }
 func TestState(t *testing.T) {
-	// if os.Getenv("DEBUG") == "1" {
+	// if sense.Getenv("DEBUG") == "1" {
 	// 	log.SetRootHandler(log.LvlFilterHandler(log.LvlTrace, log.StreamHandler(os.Stderr, log.TerminalFormat(true))))
 	// 	log.PrintOrigins(true)
 	// }
@@ -79,7 +79,7 @@ func withTrace(t *testing.T, gasLimit uint64, test func(vm.Config) error) {
 	if err == nil {
 		return
 	}
-	skiplog := os.Getenv("NOTRACE") == "1"
+	skiplog := sense.Getenv("NOTRACE") == "1"
 
 	if gasLimit > traceErrorLimit {
 		t.Log("gas limit too high for EVM trace")

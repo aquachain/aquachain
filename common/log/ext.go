@@ -47,9 +47,9 @@ func ResetForTesting() {
 		return
 	}
 	lvl := LvlWarn
-	envlvl := os.Getenv("TESTLOGLVL")
+	envlvl := sense.Getenv("TESTLOGLVL")
 	if envlvl == "" {
-		envlvl = os.Getenv("LOGLEVEL")
+		envlvl = sense.Getenv("LOGLEVEL")
 	}
 	if x := envlvl; x != "" && x != "0" { // so TESTLOGLVL=0 is the same as not setting it (0=crit, which is silent)
 		Info("setting custom TESTLOGLVL log level", "loglevel", x)
@@ -92,12 +92,12 @@ func newRoot(handler Handler) *logger {
 var is_testing bool
 
 func GetLevelFromEnv() Lvl {
-	lvl := os.Getenv("LOGLEVEL")
+	lvl := sense.Getenv("LOGLEVEL")
 	if lvl == "" {
-		lvl = os.Getenv("TESTLOGLVL")
+		lvl = sense.Getenv("TESTLOGLVL")
 	}
 	if lvl == "" {
-		lvl = os.Getenv("LOGLVL")
+		lvl = sense.Getenv("LOGLVL")
 	}
 	if lvl == "" {
 		if is_testing {

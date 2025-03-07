@@ -24,7 +24,6 @@ import (
 	"fmt"
 	"math/big"
 	"net"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -34,6 +33,7 @@ import (
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/common/mclock"
+	"gitlab.com/aquachain/aquachain/common/sense"
 	"gitlab.com/aquachain/aquachain/p2p/discover"
 	"gitlab.com/aquachain/aquachain/p2p/nat"
 	"gitlab.com/aquachain/aquachain/p2p/netutil"
@@ -435,7 +435,7 @@ func (srv *Server) Start(ctx context.Context) (err error) {
 		if !doitnow && !(chaincfg == params.MainnetChainConfig || chaincfg == params.TestnetChainConfig || chaincfg == params.Testnet2ChainConfig || chaincfg == params.Testnet3ChainConfig) { // for testing
 			doitnow = true
 		}
-		if !doitnow && os.Getenv("TESTING_TEST") != "1" {
+		if !doitnow && sense.Getenv("TESTING_TEST") != "1" {
 			for i := 5; i > 0 && ctx.Err() == nil; i-- {
 				log.Info("Starting P2P networking", "in", i, "on", srv.ListenAddr, "chain", chaincfg.Name())
 				for i := 0; i < 10 && ctx.Err() == nil; i++ {

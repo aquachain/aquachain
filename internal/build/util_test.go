@@ -30,6 +30,8 @@ import (
 	"runtime"
 	"strings"
 	"text/template"
+
+	"gitlab.com/aquachain/aquachain/common/sense"
 )
 
 var DryRunFlag = flag.Bool("n", false, "dry run, don't execute commands")
@@ -67,10 +69,10 @@ func MustRunCommand(cmd string, args ...string) {
 // GOPATH returns the value that the GOPATH environment
 // variable should be set to.
 func GOPATH() string {
-	if os.Getenv("GOPATH") == "" {
+	if sense.Getenv("GOPATH") == "" {
 		return "unset"
 	}
-	return os.Getenv("GOPATH")
+	return sense.Getenv("GOPATH")
 }
 
 // VERSION returns the content of the VERSION file.

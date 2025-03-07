@@ -36,6 +36,7 @@ import (
 	"github.com/mattn/go-colorable"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/common/log/term"
+	"gitlab.com/aquachain/aquachain/common/sense"
 )
 
 // Handler is the global debugging handler.
@@ -73,7 +74,7 @@ func Initglogger(callerinfo bool, verbosityLvl64 int64, alwayscolor, isjson bool
 	if glogger != nil {
 		return glogger
 	}
-	isjson = isjson && os.Getenv("JSONLOG") != "0" && os.Getenv("JSONLOG") != "off" // allow override false from init, even if -jsonlog is set
+	isjson = isjson && sense.Getenv("JSONLOG") != "0" && sense.Getenv("JSONLOG") != "off" // allow override false from init, even if -jsonlog is set
 	verbosityLvl := log.Lvl(verbosityLvl64)
 	if verbosityLvl == 0 {
 		verbosityLvl = log.LvlInfo
@@ -82,7 +83,7 @@ func Initglogger(callerinfo bool, verbosityLvl64 int64, alwayscolor, isjson bool
 		verbosityLvl = 0
 
 	}
-	usecolor := alwayscolor || os.Getenv("COLOR") == "1" || (term.IsTty(os.Stderr.Fd()) && os.Getenv("TERM") != "dumb")
+	usecolor := alwayscolor || sense.Getenv("COLOR") == "1" || (term.IsTty(os.Stderr.Fd()) && sense.Getenv("TERM") != "dumb")
 	output := io.Writer(os.Stderr)
 	if usecolor {
 		output = colorable.NewColorableStderr()
@@ -266,7 +267,7 @@ func writeProfile(name, file string) error {
 // ~someuser/tmp will not be expanded.
 func expandHome(p string) string {
 	if strings.HasPrefix(p, "~/") || strings.HasPrefix(p, "~\\") {
-		home := os.Getenv("HOME")
+		home := sense.Getenv("HOME")
 		if home == "" {
 			if usr, err := user.Current(); err == nil {
 				home = usr.HomeDir

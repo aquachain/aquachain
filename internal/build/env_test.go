@@ -21,6 +21,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"gitlab.com/aquachain/aquachain/common/sense"
 )
 
 var (
@@ -57,16 +59,16 @@ func (env Environment) String() string {
 // if not running on CI.
 func Env() Environment {
 	switch {
-	case os.Getenv("CI") == "true" && os.Getenv("TRAVIS") == "true":
+	case sense.Getenv("CI") == "true" && sense.Getenv("TRAVIS") == "true":
 		return Environment{
 			Name:          "travis",
-			Repo:          os.Getenv("TRAVIS_REPO_SLUG"),
-			Commit:        os.Getenv("TRAVIS_COMMIT"),
-			Branch:        os.Getenv("TRAVIS_BRANCH"),
-			Tag:           os.Getenv("TRAVIS_TAG"),
-			Buildnum:      os.Getenv("TRAVIS_BUILD_NUMBER"),
-			IsPullRequest: os.Getenv("TRAVIS_PULL_REQUEST") != "false",
-			IsCronJob:     os.Getenv("TRAVIS_EVENT_TYPE") == "cron",
+			Repo:          sense.Getenv("TRAVIS_REPO_SLUG"),
+			Commit:        sense.Getenv("TRAVIS_COMMIT"),
+			Branch:        sense.Getenv("TRAVIS_BRANCH"),
+			Tag:           sense.Getenv("TRAVIS_TAG"),
+			Buildnum:      sense.Getenv("TRAVIS_BUILD_NUMBER"),
+			IsPullRequest: sense.Getenv("TRAVIS_PULL_REQUEST") != "false",
+			IsCronJob:     sense.Getenv("TRAVIS_EVENT_TYPE") == "cron",
 			Config:        map[string]bool{},
 		}
 	default:

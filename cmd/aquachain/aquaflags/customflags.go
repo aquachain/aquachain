@@ -30,6 +30,7 @@ import (
 	"github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/common/math"
+	"gitlab.com/aquachain/aquachain/common/sense"
 )
 
 // Custom type which is registered in the flags library which cli uses for
@@ -289,7 +290,7 @@ func expandPath(p string) string {
 }
 
 func homeDir() string {
-	if home := os.Getenv("HOME"); home != "" {
+	if home := sense.Getenv("HOME"); home != "" {
 		return home
 	}
 	if usr, err := user.Current(); err == nil {

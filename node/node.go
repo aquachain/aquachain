@@ -27,6 +27,7 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"time"
 
 	"gitlab.com/aquachain/aquachain/aqua/accounts"
 	"gitlab.com/aquachain/aquachain/aqua/event"
@@ -34,6 +35,7 @@ import (
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/alerts"
 	"gitlab.com/aquachain/aquachain/common/log"
+	"gitlab.com/aquachain/aquachain/common/sense"
 	"gitlab.com/aquachain/aquachain/internal/debug"
 	"gitlab.com/aquachain/aquachain/internal/flock"
 	"gitlab.com/aquachain/aquachain/p2p"
@@ -130,15 +132,26 @@ func New(conf *Config) (*Node, error) {
 	if strings.HasSuffix(conf.Name, ".ipc") {
 		return nil, errors.New(`Config.Name cannot end in ".ipc"`)
 	}
+
 	// Ensure that the AccountManager method works before the node has started.
 	// We rely on this in cmd/aquachain.
+	if conf.KeyStoreDir == "" {
+		conf.KeyStoreDir = sense.Getenv("AQUA_KEYSTORE_DIR") // in case of dotenv
+	}
 	am, ephemeralKeystore, err := makeAccountManager(conf)
+	log.Warn("USING KEYSTORE", "custom_dir", conf.KeyStoreDir, "active", fmt.Sprintf("%T", am), "ephemeral", fmt.Sprintf("%T", ephemeralKeystore))
+	select {
+	case <-conf.Context.Done():
+		return nil, context.Cause(conf.Context)
+	case <-time.After(time.Second * 4):
+	}
 	if err != nil {
 		return nil, err
 	}
 	if conf.Logger == nil {
 		conf.Logger = log.New()
 	}
+	log.Info("created a node:", "withKeystore", am != nil, "ephemeralKeystore", ephemeralKeystore != "")
 	// Note: any interaction with Config that would create/touch files
 	// in the data directory or instance directory is delayed until Start.
 	return &Node{
@@ -392,7 +405,7 @@ func (n *Node) startInProc(apis []rpc.API) error {
 	if n.config.NoInProc {
 		return nil
 	}
-	debugRpc := common.EnvBool("DEBUG_RPC")
+	debugRpc := sense.EnvBool("DEBUG_RPC")
 	handler := rpc.NewServer()
 	for _, api := range apis {
 		if _, err := handler.RegisterName(api.Namespace, api.Service); err != nil {
@@ -420,7 +433,7 @@ func (n *Node) startIPC(apis []rpc.API) error {
 	if n.ipcEndpoint == "" {
 		return nil
 	}
-	debugRpc := common.EnvBool("DEBUG_RPC")
+	debugRpc := sense.EnvBool("DEBUG_RPC")
 	// Register all the APIs exposed by the services
 	handler := rpc.NewServer()
 	for _, api := range apis {
@@ -482,7 +495,7 @@ func (n *Node) stopIPC() {
 
 // startHTTP initializes and starts the HTTP RPC endpoint.
 func (n *Node) startHTTP(endpoint string, apis []rpc.API, whitelistModules []string, cors []string, vhosts []string, allownet netutil.Netlist, behindreverseproxy bool) error {
-	if len(allownet) == 0 && os.Getenv("TESTING_TEST") != "1" {
+	if len(allownet) == 0 && sense.Getenv("TESTING_TEST") != "1" {
 		return fmt.Errorf("http rpc cant start with empty '-allowip' flag")
 	}
 	// Short circuit if the HTTP endpoint isn't being exposed

@@ -17,7 +17,6 @@
 package aqua
 
 import (
-	"os"
 	"os/user"
 	"path/filepath"
 	"runtime"
@@ -26,6 +25,7 @@ import (
 	"gitlab.com/aquachain/aquachain/aqua/downloader"
 	"gitlab.com/aquachain/aquachain/aqua/gasprice"
 	"gitlab.com/aquachain/aquachain/common/config"
+	"gitlab.com/aquachain/aquachain/common/sense"
 	"gitlab.com/aquachain/aquachain/consensus/aquahash"
 	"gitlab.com/aquachain/aquachain/core"
 )
@@ -63,7 +63,7 @@ func NewDefaultConfig() *Config {
 }
 
 func DefaultDatasetDirByOS() string {
-	home := os.Getenv("HOME")
+	home := sense.Getenv("HOME")
 	if home == "" {
 		if user, err := user.Current(); err == nil {
 			home = user.HomeDir

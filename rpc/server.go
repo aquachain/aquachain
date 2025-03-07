@@ -30,6 +30,7 @@ import (
 	"github.com/go-stack/stack"
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/log"
+	"gitlab.com/aquachain/aquachain/common/sense"
 )
 
 const MetadataApi = "rpc"
@@ -80,11 +81,11 @@ func (s *RPCService) Modules() map[string]string {
 }
 
 // these can not not be in .env file
-var allow_all_rpc_signing = common.EnvBool("UNSAFE_RPC_SIGNING")   // needed even with localhost http
-var allow_sign_ipc = common.EnvBool("UNSAFE_ALLOW_SIGN_IPC")       // safer than localhost http
-var allow_sign_http = common.EnvBool("UNSAFE_RPC_SIGNING_HTTP")    //
-var allow_sign_ws = common.EnvBool("UNSAFE_RPC_SIGNING_WS")        //
-var allow_sign_inProc = common.EnvBool("UNSAFE_ALLOW_SIGN_INPROC") // testing
+var allow_all_rpc_signing = sense.EnvBool("UNSAFE_RPC_SIGNING")   // needed even with localhost http
+var allow_sign_ipc = sense.EnvBool("UNSAFE_ALLOW_SIGN_IPC")       // safer than localhost http
+var allow_sign_http = sense.EnvBool("UNSAFE_RPC_SIGNING_HTTP")    //
+var allow_sign_ws = sense.EnvBool("UNSAFE_RPC_SIGNING_WS")        //
+var allow_sign_inProc = sense.EnvBool("UNSAFE_ALLOW_SIGN_INPROC") // testing
 
 // RegisterName will create a service for the given rcvr type under the given name. When no methods on the given rcvr
 // match the criteria to be either a RPC method or a subscription an error is returned. Otherwise a new service is

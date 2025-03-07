@@ -28,8 +28,8 @@ import (
 
 	"github.com/btcsuite/btcd/btcec/v2"
 	"gitlab.com/aquachain/aquachain/cmd/utils"
-	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/log"
+	"gitlab.com/aquachain/aquachain/common/sense"
 	"gitlab.com/aquachain/aquachain/crypto"
 	"gitlab.com/aquachain/aquachain/p2p/discover"
 	"gitlab.com/aquachain/aquachain/p2p/nat"
@@ -127,7 +127,7 @@ func main() {
 		writeAddr bool
 		verbosity int
 		vmodule   string
-		debug     bool = common.EnvBool("DEBUG")
+		debug     bool = sense.EnvBool("DEBUG")
 	)
 	flag.StringVar(&genKey, "genkey", "", "generate a new private key and write to file (file must not exist)")
 	flag.BoolVar(&writeAddr, "writeaddress", false, "write out the node's pubkey hash and quit")

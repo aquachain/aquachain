@@ -200,6 +200,7 @@ func (l *logger) Error(msg string, ctx ...interface{}) {
 
 func (l *logger) Crit(msg string, ctx ...interface{}) {
 	l.write(msg, LvlCrit, ctx)
+	time.Sleep(100 * time.Millisecond) // no so fast there
 	os.Exit(1)
 }
 

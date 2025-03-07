@@ -3,13 +3,13 @@ package mainctxs
 import (
 	"context"
 	"fmt"
-	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 	"time"
 
 	"gitlab.com/aquachain/aquachain/common/log"
+	"gitlab.com/aquachain/aquachain/common/sense"
 )
 
 func Main() context.Context {
@@ -39,13 +39,13 @@ func parseTypicalDuration(s string) time.Duration {
 
 func mkmainctx() (context.Context, context.CancelCauseFunc) {
 	c := context.Background()
-	tm := parseTypicalDuration(os.Getenv("SCHEDULE_TIMEOUT"))
+	tm := parseTypicalDuration(sense.Getenv("SCHEDULE_TIMEOUT"))
 	var maybenoop, stopSignals context.CancelFunc
 	var cancelCause context.CancelCauseFunc
 
 	// first, timeout
 	if tm != 0 {
-		log.Warn("main timeout set", "timeout", tm)
+		log.Warn("scheduling timeout", "timeout", tm, "at", time.Now().Add(tm).Format(time.RFC3339))
 		c, maybenoop = context.WithTimeoutCause(c, tm, fmt.Errorf("on schedule"))
 	}
 

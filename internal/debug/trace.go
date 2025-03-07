@@ -29,8 +29,8 @@ import (
 	"time"
 
 	"github.com/go-stack/stack"
-	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/log"
+	"gitlab.com/aquachain/aquachain/common/sense"
 )
 
 // StartGoTrace turns on tracing, writing to the given file.
@@ -131,7 +131,7 @@ func WaitLoops(d time.Duration) error {
 	}
 }
 func init() {
-	if common.EnvBool("LOGLOOPS") {
+	if sense.EnvBool("LOGLOOPS") {
 		go func() {
 			for {
 				time.Sleep(5 * time.Second)

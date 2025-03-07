@@ -18,10 +18,10 @@ package aquahash
 
 import (
 	"math/big"
-	"os"
 
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/common/math"
+	"gitlab.com/aquachain/aquachain/common/sense"
 	"gitlab.com/aquachain/aquachain/core/types"
 	"gitlab.com/aquachain/aquachain/params"
 )
@@ -107,7 +107,7 @@ func calcDifficultyHF1(time uint64, parent *types.Header, chainID uint64) *big.I
 	return x
 }
 
-var _, fakedifficultymode = os.LookupEnv("FAKEPOWTEST") // will generate wrong blocks
+var _, fakedifficultymode = sense.LookupEnv("FAKEPOWTEST") // will generate wrong blocks
 
 // calcDifficultyHFX combines all difficulty algorithms
 func calcDifficultyHFX(config *params.ChainConfig, time uint64, parent, grandparent *types.Header) *big.Int {

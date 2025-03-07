@@ -27,12 +27,13 @@ import (
 	"time"
 
 	"github.com/go-stack/stack"
+	"gitlab.com/aquachain/aquachain/common/sense"
 )
 
-var debuglog = os.Getenv("DEBUG_LOG") == "1"
+var debuglog = sense.Getenv("DEBUG_LOG") == "1"
 
 func println(a ...any) {
-	if debuglog || os.Getenv("DEBUG_LOG") == "1" {
+	if debuglog || sense.Getenv("DEBUG_LOG") == "1" {
 		caller := Caller(2)
 		json.NewEncoder(os.Stderr).Encode(map[string]any{
 			"time":    time.Now().Unix(),
@@ -137,7 +138,7 @@ func (h *closingHandler) Close() error {
 // the calling function to the context with key "caller".
 func CallerFileHandler(h Handler) Handler {
 	verb := "%+v" // relative path
-	if os.Getenv("DEBUG_CALLER") == "1" {
+	if sense.Getenv("DEBUG_CALLER") == "1" {
 		verb = "%#v" // full path, TODO: do once
 	}
 	return FuncHandler(func(r *Record) error {
