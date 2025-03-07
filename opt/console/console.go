@@ -678,7 +678,9 @@ func handleSend(c *Console) error {
 		return fmt.Errorf("transaction canceled")
 	}
 
-	fmt.Fprintln(c.printer, "Running:\n"+`aqua.sendTransaction({from: aqua.coinbase, to: '`+destination+`', value: web3.toWei(`+amount+`,'aqua')});`)
+	runstring := `aqua.sendTransaction({from: aqua.coinbase, to: '` + destination + `', value: ` + toweistr + `});`
+	fmt.Fprintln(c.printer, runstring)
+	fmt.Fprintln(c.printer, "    -->:\n"+`aqua.sendTransaction({from: aqua.coinbase, to: '`+destination+`', value: web3.toWei(`+amount+`,'aqua')});`)
 	cont, err = c.prompter.PromptConfirm(fmt.Sprintf("REALLY Send %s to %s?", amount, destination))
 	if err != nil {
 		return fmt.Errorf("input error: %v", err)
@@ -689,7 +691,7 @@ func handleSend(c *Console) error {
 	if !strings.HasPrefix(destination, "0x") && !strings.HasPrefix(destination, "aqua.accounts[") {
 		return fmt.Errorf("does not have 0x prefix")
 	}
-	_, err = c.jsre.Run(`aqua.sendTransaction({from: aqua.coinbase, to: '` + destination + `', ` + toweistr + `});`)
+	_, err = c.jsre.Run(runstring)
 	if err != nil {
 		return fmt.Errorf("error: %v", err)
 	}
