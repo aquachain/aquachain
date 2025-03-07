@@ -1,0 +1,32 @@
+name: Environment Variable Check
+
+on: [push, pull_request]
+
+jobs:
+  check-env-usage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: grepping for os.LookupEnv
+        run: |
+          count=$(grep -rn os.LookupEnv *.go */*.go */*/*.go */*/*/*.go */*/*/*/*.go */*/*/*/*/*.go | grep .go | wc -l)
+          if [ "$count" -ne 1 ]; then
+            echo "os.LookupEnv occurrences: $count"
+            echo "Please use sense.LookupEnv instead of os.LookupEnv"
+            exit 1
+          else
+            echo "os.LookupEnv occurrences: $count"
+          fi
+
+      - name: grepping for os.Getenv
+        run: |
+          count=$(grep -rn os.Getenv *.go */*.go */*/*.go */*/*/*.go */*/*/*/*.go */*/*/*/*/*.go | grep .go | wc -l)
+          if [ "$count" -ne 1 ]; then
+            echo "os.Getenv occurrences: $count"
+            echo "Please use sense.Getenv instead of os.Getenv"
+            exit 1
+          else
+            echo "os.Getenv occurrences: $count"
+          fi
