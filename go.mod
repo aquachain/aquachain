@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/BurntSushi/toml v1.4.0
 	github.com/aerth/tgun v0.1.7
-	github.com/btcsuite/btcd/btcec/v2 v2.3.5-0.20250213152832-bb52d7d78d9c
+	github.com/btcsuite/btcd/btcec/v2 v2.3.5-0.20250307104530-c7191d2913c7
 	github.com/cespare/cp v1.1.1
 	github.com/davecgh/go-spew v1.1.1
 	github.com/deckarep/golang-set v1.8.0
@@ -23,6 +23,7 @@ require (
 	github.com/peterh/liner v1.2.2
 	github.com/robertkrimen/otto v0.5.1
 	github.com/rs/cors v1.11.1
+	github.com/shopspring/decimal v1.4.0
 	github.com/stretchr/testify v1.10.0
 	github.com/syndtr/goleveldb v1.0.0
 	golang.org/x/crypto v0.35.0
@@ -37,7 +38,6 @@ require (
 require (
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/rogpeppe/go-internal v1.13.1 // indirect
-	github.com/shopspring/decimal v1.4.0 // indirect
 )
 
 require (
