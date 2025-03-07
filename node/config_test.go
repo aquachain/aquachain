@@ -22,6 +22,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
 	"gitlab.com/aquachain/aquachain/crypto"
@@ -66,7 +67,7 @@ func TestDatadirCreation(t *testing.T) {
 }
 
 // Tests that IPC paths are correctly resolved to valid endpoints of different
-// platforms.
+// platforms. Test 2 os for the randomized temporary path in the rare case of empty ("") datadir.
 func TestIPCPathResolution(t *testing.T) {
 	var tests = []struct {
 		DataDir  string
@@ -76,7 +77,7 @@ func TestIPCPathResolution(t *testing.T) {
 	}{
 		{"", "", false, ""},
 		{"data", "", false, ""},
-		{"", "aquachain.ipc", false, filepath.Join(os.TempDir(), "aquachain.ipc")},
+		{"", "aquachain.ipc", false, filepath.Join(os.TempDir(), "aquachain-xxxxxxxxxx", "aquachain.ipc")},
 		{"data", "aquachain.ipc", false, "data/aquachain.ipc"},
 		{"data", "./aquachain.ipc", false, "./aquachain.ipc"},
 		{"data", "/aquachain.ipc", false, "/aquachain.ipc"},
@@ -89,8 +90,28 @@ func TestIPCPathResolution(t *testing.T) {
 	for i, test := range tests {
 		// Only run when platform/test match
 		if (runtime.GOOS == "windows") == test.Windows {
-			if endpoint := (&Config{DataDir: test.DataDir, IPCPath: test.IPCPath, P2P: testp2p}).IPCEndpoint(); endpoint != test.Endpoint {
-				t.Errorf("test %d: IPC endpoint mismatch: have %s, want %s", i, endpoint, test.Endpoint)
+			endpoint := (&Config{DataDir: test.DataDir, IPCPath: test.IPCPath, P2P: testp2p}).IPCEndpoint()
+			ephwant := "aquachain-xxxxxxxxxx"
+			istmp := strings.Contains(test.Endpoint, ephwant)
+			if (endpoint != test.Endpoint) && (!istmp) {
+				t.Errorf("test %d: IPC endpoint mismatchA: have %s, want %s", i, endpoint, test.Endpoint)
+			}
+			if istmp {
+				l := len(ephwant)
+				at := strings.Index(test.Endpoint, ephwant)
+				if at == -1 {
+					panic("bad test")
+				}
+				if len(endpoint) != len(test.Endpoint) {
+					t.Errorf("test %d: IPC endpoint mismatchC: have %s, want something like %s", i, endpoint, test.Endpoint)
+					return
+				}
+				if !strings.HasPrefix(endpoint[:at], test.Endpoint[:at]) {
+					t.Errorf("test %d: IPC endpoint mismatchA: have %s, want something like %s", i, endpoint, test.Endpoint)
+				}
+				if !strings.HasSuffix(endpoint[at+l:], test.Endpoint[at+l:]) {
+					t.Errorf("test %d: IPC endpoint mismatchB: have %s, want something like %s", i, endpoint, test.Endpoint)
+				}
 			}
 		}
 	}
