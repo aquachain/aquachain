@@ -61,7 +61,6 @@ func NewDefaultConfig() *Config {
 		NoCountdown:    sense.EnvBool("NO_COUNTDOWN"),
 		KeyStoreDir:    sense.Getenv("AQUA_KEYSTORE_DIR"),
 	}
-	log.Info("default config", "datadir", x.DataDir, "keystore", x.KeyStoreDir)
 	return x
 }
 
