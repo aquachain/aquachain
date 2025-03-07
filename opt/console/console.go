@@ -288,7 +288,6 @@ func (c *Console) init(preload []string) error {
 	flatten := "var aqua = web3.aqua; var personal = web3.personal; "
 	for api := range apis {
 		if api == "web3" {
-
 			continue // manually mapped or ignore
 		}
 		if file, ok := web3ext.Modules[api]; ok {
@@ -307,7 +306,6 @@ func (c *Console) init(preload []string) error {
 				return fmt.Errorf("api module %s: %v", api, err)
 			}
 		}
-		log.Info("loaded web3 api module", "module", api, "f", flatten)
 	}
 	if _, err = c.jsre.Run(flatten); err != nil {
 		return fmt.Errorf("namespace flattening: %v", err)
