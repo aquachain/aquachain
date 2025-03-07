@@ -115,7 +115,7 @@ func TestNotifications(t *testing.T) {
 
 	clientConn, serverConn := net.Pipe()
 
-	go server.ServeCodec(NewJSONCodec(serverConn), OptionMethodInvocation|OptionSubscriptions)
+	go server.ServeCodec("test", NewJSONCodec(serverConn), OptionMethodInvocation|OptionSubscriptions)
 
 	out := json.NewEncoder(clientConn)
 	in := json.NewDecoder(clientConn)
@@ -248,7 +248,7 @@ func TestSubscriptionMultipleNamespaces(t *testing.T) {
 		}
 	}
 
-	go server.ServeCodec(NewJSONCodec(serverConn), OptionMethodInvocation|OptionSubscriptions)
+	go server.ServeCodec("test", NewJSONCodec(serverConn), OptionMethodInvocation|OptionSubscriptions)
 	defer server.Stop()
 
 	// wait for message and write them to the given channels
