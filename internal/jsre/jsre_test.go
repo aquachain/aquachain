@@ -23,7 +23,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/robertkrimen/otto"
+	"gitlab.com/aquachain/aquachain/opt/console/jsruntime"
 )
 
 type testNativeObjectBinding struct{}
@@ -32,10 +32,10 @@ type msg struct {
 	Msg string
 }
 
-func (no *testNativeObjectBinding) TestMethod(call otto.FunctionCall) otto.Value {
+func (no *testNativeObjectBinding) TestMethod(call jsruntime.FunctionCall) jsruntime.Value {
 	m, err := call.Argument(0).ToString()
 	if err != nil {
-		return otto.UndefinedValue()
+		return jsruntime.UndefinedValue()
 	}
 	v, _ := call.Otto.ToValue(&msg{m})
 	return v

@@ -27,9 +27,9 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/robertkrimen/otto"
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/internal/jsre/deps"
+	"gitlab.com/aquachain/aquachain/opt/console/jsruntime"
 )
 
 var (
@@ -38,7 +38,7 @@ var (
 )
 
 /*
-JSRE is a generic JS runtime environment embedding the otto JS interpreter.
+JSRE is a generic JS runtime environment embedding the jsruntime JS interpreter.
 It provides some helper functions to
 - load code from files
 - run code snippets
@@ -58,12 +58,12 @@ type jsTimer struct {
 	timer    *time.Timer
 	duration time.Duration
 	interval bool
-	call     otto.FunctionCall
+	call     jsruntime.FunctionCall
 }
 
 // evalReq is a serialized vm execution request processed by runEventLoop.
 type evalReq struct {
-	fn   func(vm *otto.Otto)
+	fn   func(vm *jsruntime.Otto)
 	done chan bool
 }
 
@@ -100,20 +100,20 @@ func randomSource() *rand.Rand {
 // serialized way and calls timer callback functions at the appropriate time.
 
 // Exported functions always access the vm through the event queue. You can
-// call the functions of the otto vm directly to circumvent the queue. These
+// call the functions of the jsruntime vm directly to circumvent the queue. These
 // functions should be used if and only if running a routine that was already
 // called from JS through an RPC call.
 func (self *JSRE) runEventLoop() {
 	defer close(self.closed)
 
-	vm := otto.New()
+	vm := jsruntime.New()
 	r := randomSource()
 	vm.SetRandomSource(r.Float64)
 
 	registry := map[*jsTimer]*jsTimer{}
 	ready := make(chan *jsTimer)
 
-	newTimer := func(call otto.FunctionCall, interval bool) (*jsTimer, otto.Value) {
+	newTimer := func(call jsruntime.FunctionCall, interval bool) (*jsTimer, jsruntime.Value) {
 		delay, _ := call.Argument(1).ToInteger()
 		if 0 >= delay {
 			delay = 1
@@ -136,23 +136,23 @@ func (self *JSRE) runEventLoop() {
 		return timer, value
 	}
 
-	setTimeout := func(call otto.FunctionCall) otto.Value {
+	setTimeout := func(call jsruntime.FunctionCall) jsruntime.Value {
 		_, value := newTimer(call, false)
 		return value
 	}
 
-	setInterval := func(call otto.FunctionCall) otto.Value {
+	setInterval := func(call jsruntime.FunctionCall) jsruntime.Value {
 		_, value := newTimer(call, true)
 		return value
 	}
 
-	clearTimeout := func(call otto.FunctionCall) otto.Value {
+	clearTimeout := func(call jsruntime.FunctionCall) jsruntime.Value {
 		timer, _ := call.Argument(0).Export()
 		if timer, ok := timer.(*jsTimer); ok {
 			timer.timer.Stop()
 			delete(registry, timer)
 		}
-		return otto.UndefinedValue()
+		return jsruntime.UndefinedValue()
 	}
 	vm.Set("_setTimeout", setTimeout)
 	vm.Set("_setInterval", setInterval)
@@ -224,7 +224,7 @@ loop:
 }
 
 // Do executes the given function on the JS event loop.
-func (self *JSRE) Do(fn func(*otto.Otto)) {
+func (self *JSRE) Do(fn func(*jsruntime.Otto)) {
 	done := make(chan bool)
 	req := &evalReq{fn, done}
 	self.evalQueue <- req
@@ -247,8 +247,8 @@ func (self *JSRE) ExecFile(file string) error {
 	if err != nil {
 		return err
 	}
-	var script *otto.Script
-	self.Do(func(vm *otto.Otto) {
+	var script *jsruntime.Script
+	self.Do(func(vm *jsruntime.Otto) {
 		script, err = vm.Compile(file, code)
 		if err != nil {
 			log.Printf("failed to compile: %+v", err)
@@ -266,43 +266,43 @@ func (self *JSRE) Bind(name string, v interface{}) error {
 }
 
 // Run runs a piece of JS code.
-func (self *JSRE) Run(code string) (v otto.Value, err error) {
-	self.Do(func(vm *otto.Otto) { v, err = vm.Run(code) })
+func (self *JSRE) Run(code string) (v jsruntime.Value, err error) {
+	self.Do(func(vm *jsruntime.Otto) { v, err = vm.Run(code) })
 	return v, err
 }
 
 // Get returns the value of a variable in the JS environment.
-func (self *JSRE) Get(ns string) (v otto.Value, err error) {
-	self.Do(func(vm *otto.Otto) { v, err = vm.Get(ns) })
+func (self *JSRE) Get(ns string) (v jsruntime.Value, err error) {
+	self.Do(func(vm *jsruntime.Otto) { v, err = vm.Get(ns) })
 	return v, err
 }
 
 // Set assigns value v to a variable in the JS environment.
 func (self *JSRE) Set(ns string, v interface{}) (err error) {
-	self.Do(func(vm *otto.Otto) { err = vm.Set(ns, v) })
+	self.Do(func(vm *jsruntime.Otto) { err = vm.Set(ns, v) })
 	return err
 }
 
 // loadScript executes a JS script from inside the currently executing JS code.
-func (self *JSRE) loadScript(call otto.FunctionCall) otto.Value {
+func (self *JSRE) loadScript(call jsruntime.FunctionCall) jsruntime.Value {
 	file, err := call.Argument(0).ToString()
 	if err != nil {
 		// TODO: throw exception
-		return otto.FalseValue()
+		return jsruntime.FalseValue()
 	}
 	file = common.AbsolutePath(self.assetPath, file)
 	source, err := ioutil.ReadFile(file)
 	if err != nil {
 		// TODO: throw exception
-		return otto.FalseValue()
+		return jsruntime.FalseValue()
 	}
 	if _, err := compileAndRun(call.Otto, file, source); err != nil {
 		// TODO: throw exception
 		fmt.Println("err:", err)
-		return otto.FalseValue()
+		return jsruntime.FalseValue()
 	}
 	// TODO: return evaluation result
-	return otto.TrueValue()
+	return jsruntime.TrueValue()
 }
 
 // Evaluate executes code and pretty prints the result to the specified output
@@ -313,7 +313,7 @@ func (self *JSRE) Evaluate(code string, w io.Writer) error {
 	}
 	var fail error
 
-	self.Do(func(vm *otto.Otto) {
+	self.Do(func(vm *jsruntime.Otto) {
 		defer func() {
 			if err := recover(); err != nil {
 				fmt.Printf("recovered JS panic: %+v", err)
@@ -335,14 +335,14 @@ func (self *JSRE) Evaluate(code string, w io.Writer) error {
 
 // Compile compiles and then runs a piece of JS code.
 func (self *JSRE) Compile(filename string, src interface{}) (err error) {
-	self.Do(func(vm *otto.Otto) { _, err = compileAndRun(vm, filename, src) })
+	self.Do(func(vm *jsruntime.Otto) { _, err = compileAndRun(vm, filename, src) })
 	return err
 }
 
-func compileAndRun(vm *otto.Otto, filename string, src interface{}) (otto.Value, error) {
+func compileAndRun(vm *jsruntime.Otto, filename string, src interface{}) (jsruntime.Value, error) {
 	script, err := vm.Compile(filename, src)
 	if err != nil {
-		return otto.Value{}, err
+		return jsruntime.Value{}, err
 	}
 	return vm.Run(script)
 }

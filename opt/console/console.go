@@ -30,10 +30,10 @@ import (
 
 	colorable "github.com/mattn/go-colorable"
 	"github.com/peterh/liner"
-	"github.com/robertkrimen/otto"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/internal/jsre"
 	"gitlab.com/aquachain/aquachain/internal/web3ext"
+	"gitlab.com/aquachain/aquachain/opt/console/jsruntime"
 	rpc "gitlab.com/aquachain/aquachain/rpc/rpcclient"
 )
 
@@ -216,6 +216,7 @@ func (c *Console) init(preload []string) error {
 	flatten := "var aqua = web3.aqua; var personal = web3.personal; "
 	for api := range apis {
 		if api == "web3" {
+
 			continue // manually mapped or ignore
 		}
 		if file, ok := web3ext.Modules[api]; ok {
@@ -224,10 +225,17 @@ func (c *Console) init(preload []string) error {
 				return fmt.Errorf("%s.js: %v", api, err)
 			}
 			flatten += fmt.Sprintf("var %s = web3.%s; ", api, api)
-		} else if obj, err := c.jsre.Run("web3." + api); err == nil && obj.IsObject() {
-			// Enable web3.js built-in extension if available.
-			flatten += fmt.Sprintf("var %s = web3.%s; ", api, api)
+		} else {
+			obj, err := c.jsre.Run("web3." + api)
+			if err == nil && obj.IsObject() {
+				// Enable web3.js built-in extension if available.
+				flatten += fmt.Sprintf("var %s = web3.%s; ", api, api)
+			}
+			if err != nil {
+				return fmt.Errorf("api module %s: %v", api, err)
+			}
 		}
+		log.Info("loaded web3 api module", "module", api, "f", flatten)
 	}
 	if _, err = c.jsre.Run(flatten); err != nil {
 		return fmt.Errorf("namespace flattening: %v", err)
@@ -283,7 +291,7 @@ func (c *Console) init(preload []string) error {
 	for _, path := range preload {
 		if err := c.jsre.ExecFile(path); err != nil {
 			failure := err.Error()
-			if ottoErr, ok := err.(*otto.Error); ok {
+			if ottoErr, ok := err.(*jsruntime.Error); ok {
 				failure = ottoErr.String()
 			}
 			return fmt.Errorf("%s: %v", path, failure)
@@ -314,24 +322,24 @@ func (c *Console) clearHistory() {
 
 // consoleOutput is an override for the console.log and console.error methods to
 // stream the output into the configured output stream instead of stdout.
-func (c *Console) consoleOutput(call otto.FunctionCall) otto.Value {
+func (c *Console) consoleOutput(call jsruntime.FunctionCall) jsruntime.Value {
 	output := []string{}
 	for _, argument := range call.ArgumentList {
 		output = append(output, fmt.Sprint(argument))
 	}
 	fmt.Fprintln(c.printer, strings.Join(output, " "))
-	return otto.Value{}
+	return jsruntime.Value{}
 }
 
 // consoleOutput is an override for the console.log and console.error methods to
 // stream the output into the configured output stream instead of stdout.
-func (c *Console) consoleOutputErr(call otto.FunctionCall) otto.Value {
+func (c *Console) consoleOutputErr(call jsruntime.FunctionCall) jsruntime.Value {
 	output := []string{}
 	for _, argument := range call.ArgumentList {
 		output = append(output, fmt.Sprintf("%v", argument))
 	}
 	fmt.Fprintln(c.printer, strings.Join(output, " "))
-	return otto.Value{}
+	return jsruntime.Value{}
 }
 
 // AutoCompleteInput is a pre-assembled word completer to be used by the user

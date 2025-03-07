@@ -23,8 +23,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/robertkrimen/otto"
 	"gitlab.com/aquachain/aquachain/common/log"
+	"gitlab.com/aquachain/aquachain/opt/console/jsruntime"
 	"gitlab.com/aquachain/aquachain/rpc"
 	rpcclient "gitlab.com/aquachain/aquachain/rpc/rpcclient"
 )
@@ -49,7 +49,7 @@ func newBridge(client *rpcclient.Client, prompter UserPrompter, printer io.Write
 // NewAccount is a wrapper around the personal.newAccount RPC method that uses a
 // non-echoing password prompt to acquire the passphrase and executes the original
 // RPC method (saved in jeth.newAccount) with it to actually execute the RPC call.
-func (b *bridge) NewAccount(call otto.FunctionCall) (response otto.Value) {
+func (b *bridge) NewAccount(call jsruntime.FunctionCall) (response jsruntime.Value) {
 	var (
 		password string
 		confirm  string
@@ -88,7 +88,7 @@ func (b *bridge) NewAccount(call otto.FunctionCall) (response otto.Value) {
 // uses a non-echoing password prompt to acquire the passphrase and executes the
 // original RPC method (saved in jeth.unlockAccount) with it to actually execute
 // the RPC call.
-func (b *bridge) UnlockAccount(call otto.FunctionCall) (response otto.Value) {
+func (b *bridge) UnlockAccount(call jsruntime.FunctionCall) (response jsruntime.Value) {
 	// Make sure we have an account specified to unlock
 	if !call.Argument(0).IsString() {
 		throwJSException("first argument must be the account to unlock")
@@ -96,14 +96,14 @@ func (b *bridge) UnlockAccount(call otto.FunctionCall) (response otto.Value) {
 	account := call.Argument(0)
 
 	// If password is not given or is the null value, prompt the user for it
-	var passwd otto.Value
+	var passwd jsruntime.Value
 
 	if call.Argument(1).IsUndefined() || call.Argument(1).IsNull() {
 		fmt.Fprintf(b.printer, "Unlock account %s\n", account)
 		if input, err := b.prompter.PromptPassword("Passphrase: "); err != nil {
 			throwJSException(err.Error())
 		} else {
-			passwd, _ = otto.ToValue(input)
+			passwd, _ = jsruntime.ToValue(input)
 		}
 	} else {
 		if !call.Argument(1).IsString() {
@@ -112,7 +112,7 @@ func (b *bridge) UnlockAccount(call otto.FunctionCall) (response otto.Value) {
 		passwd = call.Argument(1)
 	}
 	// Third argument is the duration how long the account must be unlocked.
-	duration := otto.NullValue()
+	duration := jsruntime.NullValue()
 	if call.Argument(2).IsDefined() && !call.Argument(2).IsNull() {
 		if !call.Argument(2).IsNumber() {
 			throwJSException("unlock duration must be a number")
@@ -130,7 +130,7 @@ func (b *bridge) UnlockAccount(call otto.FunctionCall) (response otto.Value) {
 // Sign is a wrapper around the personal.sign RPC method that uses a non-echoing password
 // prompt to acquire the passphrase and executes the original RPC method (saved in
 // jeth.sign) with it to actually execute the RPC call.
-func (b *bridge) Sign(call otto.FunctionCall) (response otto.Value) {
+func (b *bridge) Sign(call jsruntime.FunctionCall) (response jsruntime.Value) {
 	var (
 		message = call.Argument(0)
 		account = call.Argument(1)
@@ -150,7 +150,7 @@ func (b *bridge) Sign(call otto.FunctionCall) (response otto.Value) {
 		if input, err := b.prompter.PromptPassword("Passphrase: "); err != nil {
 			throwJSException(err.Error())
 		} else {
-			passwd, _ = otto.ToValue(input)
+			passwd, _ = jsruntime.ToValue(input)
 		}
 	}
 	if !passwd.IsString() {
@@ -166,18 +166,18 @@ func (b *bridge) Sign(call otto.FunctionCall) (response otto.Value) {
 }
 
 // Sleep will block the console for the specified number of seconds.
-func (b *bridge) Sleep(call otto.FunctionCall) (response otto.Value) {
+func (b *bridge) Sleep(call jsruntime.FunctionCall) (response jsruntime.Value) {
 	if call.Argument(0).IsNumber() {
 		sleep, _ := call.Argument(0).ToInteger()
 		time.Sleep(time.Duration(sleep) * time.Second)
-		return otto.TrueValue()
+		return jsruntime.TrueValue()
 	}
 	return throwJSException("usage: sleep(<number of seconds>)")
 }
 
 // SleepBlocks will block the console for a specified number of new blocks optionally
 // until the given timeout is reached.
-func (b *bridge) SleepBlocks(call otto.FunctionCall) (response otto.Value) {
+func (b *bridge) SleepBlocks(call jsruntime.FunctionCall) (response jsruntime.Value) {
 	var (
 		blocks = int64(0)
 		sleep  = int64(9999999999999999) // indefinitely
@@ -220,11 +220,11 @@ func (b *bridge) SleepBlocks(call otto.FunctionCall) (response otto.Value) {
 
 	for time.Now().Before(deadline) {
 		if blockNumber() >= targetBlockNr {
-			return otto.TrueValue()
+			return jsruntime.TrueValue()
 		}
 		time.Sleep(time.Second)
 	}
-	return otto.FalseValue()
+	return jsruntime.FalseValue()
 }
 
 type jsonrpcCall struct {
@@ -234,7 +234,7 @@ type jsonrpcCall struct {
 }
 
 // Send implements the web3 provider "send" method.
-func (b *bridge) Send(call otto.FunctionCall) (response otto.Value) {
+func (b *bridge) Send(call jsruntime.FunctionCall) (response jsruntime.Value) {
 	// Remarshal the request into a Go value.
 	JSON, _ := call.Otto.Object("JSON")
 	reqVal, err := JSON.Call("stringify", call.Argument(0))
@@ -269,7 +269,7 @@ func (b *bridge) Send(call otto.FunctionCall) (response otto.Value) {
 			if result == nil {
 				// Special case null because it is decoded as an empty
 				// raw message for some reason.
-				resp.Set("result", otto.NullValue())
+				resp.Set("result", jsruntime.NullValue())
 			} else {
 				resultVal, err := JSON.Call("parse", string(result))
 				if err != nil {
@@ -294,20 +294,20 @@ func (b *bridge) Send(call otto.FunctionCall) (response otto.Value) {
 		response, _ = resps.Get("0")
 	}
 	if fn := call.Argument(1); fn.Class() == "Function" {
-		fn.Call(otto.NullValue(), otto.NullValue(), response)
-		return otto.UndefinedValue()
+		fn.Call(jsruntime.NullValue(), jsruntime.NullValue(), response)
+		return jsruntime.UndefinedValue()
 	}
 	return response
 }
 
-func setError(resp *otto.Object, code int, msg string) {
+func setError(resp *jsruntime.Object, code int, msg string) {
 	resp.Set("error", map[string]interface{}{"code": code, "message": msg})
 }
 
-// throwJSException panics on an otto.Value. The Otto VM will recover from the
+// throwJSException panics on an jsruntime.Value. The Otto VM will recover from the
 // Go panic and throw msg as a JavaScript error.
-func throwJSException(msg interface{}) otto.Value {
-	val, err := otto.ToValue(msg)
+func throwJSException(msg interface{}) jsruntime.Value {
+	val, err := jsruntime.ToValue(msg)
 	if err != nil {
 		log.Error("Failed to serialize JavaScript exception", "exception", msg, "err", err)
 	}
