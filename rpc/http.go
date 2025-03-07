@@ -216,20 +216,27 @@ func getIP(r *http.Request, reverseproxy bool) net.IP {
 	if reverseproxy {
 		for _, h := range []string{"X-Forwarded-For", "X-Real-Ip"} {
 			addresses := strings.Split(r.Header.Get(h), ",")
+			if len(addresses) == 0 {
+				continue
+			}
+
+		Smaller:
 			// march from right to left until we get a public address
 			// that will be the address right before our proxy.
 			for i := len(addresses) - 1; i >= 0; i-- {
+				if addresses[i] == "" {
+					continue Smaller
+				}
 				// header can contain spaces too, strip those out.
 				ip := strings.TrimSpace(addresses[i])
 				realIP := net.ParseIP(ip)
 				if realIP == nil {
-					continue
+					continue Smaller
 				}
 				if !realIP.IsGlobalUnicast() || netutil.IsLAN(realIP) || netutil.IsSpecialNetwork(realIP) {
 					// bad address, go to next
-					continue
+					continue Smaller
 				}
-
 				return net.ParseIP(ip)
 			}
 		}
