@@ -143,7 +143,7 @@ func New(conf *Config) (*Node, error) {
 	select {
 	case <-conf.Context.Done():
 		return nil, context.Cause(conf.Context)
-	case <-time.After(time.Second * 4):
+	case <-time.After(time.Second * 1):
 	}
 	if err != nil {
 		return nil, err
