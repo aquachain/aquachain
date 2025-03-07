@@ -83,3 +83,14 @@ if (true) {
         console.log("error in welcome: " + e);
     }
 }
+
+function myPeers() {
+    try {
+        var x = admin.peers;
+        for (i = 0; i < 5; i++) {
+            console.log("enode://" + x[i].id + "@" + x[i].network.remoteAddress)
+        }
+    } catch (e) {
+        console.log("error fetching peer data, maybe not permitted? " + e);
+    }
+}
