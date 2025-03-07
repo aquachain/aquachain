@@ -119,7 +119,7 @@ type Aquaconfig struct {
 	GasPrice     uint64         // TODO use uint64 since it wont go above 1e18 anyways
 
 	// Aquahash options
-	Aquahash AquahashConfig
+	Aquahash *AquahashConfig
 
 	// Transaction pool options
 	TxPool TxPoolConfig

@@ -177,10 +177,8 @@ func main() {
 	}()
 	app := doinit()
 	if err := app.Run(mainctxs.Main(), os.Args); err != nil {
-		fmt.Fprintf(os.Stderr, "fatal: run failed with error %+v\n", err)
-		os.Exit(1)
+		fmt.Fprintf(os.Stderr, "fatal: running %s failed with error %+v\n", app.Name, err)
 	}
-
 	if err := debug.WaitLoops(time.Second * 2); err != nil {
 		log.Warn("waiting for loops", "err", err)
 	} else if time.Since(subcommands.GetStartTime()) > time.Second*4 {

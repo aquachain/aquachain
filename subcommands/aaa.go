@@ -16,6 +16,7 @@ import (
 	"gitlab.com/aquachain/aquachain/common/toml"
 	"gitlab.com/aquachain/aquachain/node"
 	"gitlab.com/aquachain/aquachain/opt/aquaclient"
+	"gitlab.com/aquachain/aquachain/p2p"
 	"gitlab.com/aquachain/aquachain/subcommands/aquaflags"
 	"gitlab.com/aquachain/aquachain/subcommands/buildinfo"
 	"gitlab.com/aquachain/aquachain/subcommands/mainctxs"
@@ -114,18 +115,6 @@ func dumpConfig(ctx context.Context, cmd *cli.Command) error {
 
 var StartNodeCommand = startNode
 
-func foo() {
-	if !node.DefaultConfig.NoCountdown && !cmd.Bool("now") && !cmd.Root().Bool("now") {
-		for i := 3; i > 0 && ctx.Err() == nil; i-- {
-			log.Info("starting in ...", "seconds", i, "bootnodes", len(nodeserver.Config().P2P.BootstrapNodes),
-				"static", len(nodeserver.Config().P2P.StaticNodes), "discovery", !nodeserver.Config().P2P.NoDiscovery)
-			for i := 0; i < 10 && ctx.Err() == nil; i++ {
-				time.Sleep(time.Second / 10)
-			}
-		}
-	}
-}
-
 func MakeFullNode(ctx context.Context, cmd *cli.Command) *node.Node {
 	stack, cfg := MakeConfigNode(ctx, cmd, gitCommit, clientIdentifier, maincancel)
 	RegisterAquaService(mainctx, stack, cfg.Aqua, cfg.Node.NodeName())
@@ -140,7 +129,7 @@ func MakeFullNode(ctx context.Context, cmd *cli.Command) *node.Node {
 // startNode boots up the system node and all registered protocols, after which
 // it unlocks any requested accounts, and starts the RPC/IPC interfaces and the
 // miner.
-func startNode(ctx context.Context, cmd *cli.Command, stack *node.Node) {
+func startNode(ctx context.Context, cmd *cli.Command, stack *node.Node) chan struct{} {
 	unlocks := strings.Split(strings.TrimSpace(cmd.String(aquaflags.UnlockedAccountFlag.Name)), ",")
 	if len(unlocks) == 1 && unlocks[0] == "" {
 		unlocks = []string{} // TODO?
@@ -170,16 +159,22 @@ func startNode(ctx context.Context, cmd *cli.Command, stack *node.Node) {
 	}
 	// NoCountdown -now flag
 	cfg := stack.Config()
-	cfg.NoCountdown = cfg.NoCountdown || cmd.Bool(aquaflags.DoitNowFlag.Name)
-	// Start up the node itself
-	StartNode(ctx, stack)
-
+	cfg.NoCountdown = cfg.NoCountdown || sense.IsNoCountdown()
+	if cfg.NoCountdown {
+		node.NoCountdown = true
+		p2p.NoCountdown = true
+	}
 	if cmd.Bool(aquaflags.NoKeysFlag.Name) && !stack.Config().NoKeys {
 		log.Crit("NO_KEYS mode is not enabled, but --no-keys flag was set")
-		return
+		return nil
 	}
+
+	// Start up the node itself
+	nodeStarted := StartNode(ctx, stack)
+
 	// Register wallet event handlers to open and auto-derive wallets
 	if !stack.Config().NoKeys && !stack.Config().NoInProc {
+		log.Info("Listening for wallet events in keystore")
 		events := make(chan accounts.WalletEvent, 16)
 		am := stack.AccountManager()
 		for i := 0; i < 10; i++ {
@@ -190,9 +185,9 @@ func startNode(ctx context.Context, cmd *cli.Command, stack *node.Node) {
 			log.Warn("Account manager not running, waiting", "i", i)
 			select {
 			case <-ctx.Done():
-				return
+				return nil
 			case <-mainctx.Done():
-				return
+				return nil
 			case <-time.After(time.Second):
 			}
 		}
@@ -200,8 +195,18 @@ func startNode(ctx context.Context, cmd *cli.Command, stack *node.Node) {
 			Fatalf("Account manager not running, NO_KEYS=%v  NoKeys=%v", stack.Config().NoKeys, cmd.Bool(aquaflags.NoKeysFlag.Name))
 		}
 		am.Subscribe(events)
-		log.Info("Starting Account Manager")
 		go func() {
+			select {
+			case <-nodeStarted:
+			case <-ctx.Done():
+			default:
+				log.Info("Starting Account Manager once node is running")
+			}
+			select {
+			case <-ctx.Done():
+				return
+			case <-nodeStarted:
+			}
 			// Create an chain state reader for self-derivation
 			rpcClient, err := stack.Attach(ctx, "accountManager")
 			if err != nil {
@@ -266,4 +271,5 @@ func startNode(ctx context.Context, cmd *cli.Command, stack *node.Node) {
 			Fatalf("Failed to start mining: %v", err)
 		}
 	}
+	return nodeStarted
 }

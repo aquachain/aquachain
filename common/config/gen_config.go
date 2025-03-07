@@ -32,7 +32,7 @@ func (a Aquaconfig) MarshalTOML() (interface{}, error) {
 		MinerThreads            int            `toml:",omitempty"`
 		ExtraData               hexutil.Bytes  `toml:",omitempty"`
 		GasPrice                uint64
-		Aquahash                ethashdag.Config
+		Aquahash                *ethashdag.Config
 		TxPool                  core.TxPoolConfig
 		GPO                     gasprice.Config
 		EnablePreimageRecording bool
@@ -129,7 +129,7 @@ func (a *Aquaconfig) UnmarshalTOML(unmarshal func(interface{}) error) error {
 		a.GasPrice = *dec.GasPrice
 	}
 	if dec.Aquahash != nil {
-		a.Aquahash = *dec.Aquahash
+		a.Aquahash = dec.Aquahash
 	}
 	if dec.TxPool != nil {
 		a.TxPool = *dec.TxPool

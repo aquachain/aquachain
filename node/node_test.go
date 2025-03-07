@@ -35,7 +35,7 @@ var (
 )
 
 func init() {
-	DefaultConfig.NoCountdown = true
+	NoCountdown = true
 }
 
 func testNodeConfig() *Config {

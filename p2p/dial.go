@@ -27,6 +27,7 @@ import (
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/p2p/discover"
 	"gitlab.com/aquachain/aquachain/p2p/netutil"
+	"gitlab.com/aquachain/aquachain/subcommands/mainctxs"
 )
 
 const (
@@ -367,9 +368,9 @@ func (t *discoverTask) Do(srv *Server) {
 	// event loop spins too fast.
 	next := srv.lastLookup.Add(lookupInterval)
 	if now := time.Now(); now.Before(next) {
-select {
+		select {
 		case <-mainctxs.Main().Done():
-		case <-		time.After(next.Sub(now)):
+		case <-time.After(next.Sub(now)):
 		}
 	}
 	srv.lastLookup = time.Now()

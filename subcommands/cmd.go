@@ -47,11 +47,16 @@ func GetStartTime() time.Time {
 	return start_time
 }
 
-func StartNode(ctx context.Context, stack *node.Node) {
-
-	if err := stack.Start(ctx); err != nil {
-		Fatalf("Error starting protocol stack: %v", err)
-	}
+func StartNode(ctx context.Context, stack *node.Node) chan struct{} {
+	ch := make(chan struct{})
+	go func() {
+		defer close(ch)
+		if err := stack.Start(ctx); err != nil {
+			log.GracefulShutdownf("Error starting protocol stack: %+v", log.TranslateFatalError(err))
+			time.Sleep(time.Second * 3) // so caller can wait for close(ch)
+		}
+	}()
+	return ch
 	// go func() {
 	// 	log.Info("node.Node waiting for interrupt")
 	// 	sigc := make(chan os.Signal, 1)

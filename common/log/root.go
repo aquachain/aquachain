@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/go-stack/stack"
+	"gitlab.com/aquachain/aquachain/common/sense"
 )
 
 var (
@@ -101,11 +102,30 @@ func Crit(msg string, ctx ...interface{}) {
 	} else {
 		println("fatal: ", msg)
 	}
+	if sense.EnvBool("DEBUG") {
+		println("stack trace requsted (DEBUG=1)...")
+		debug.PrintStack()
+		time.Sleep(time.Second)
+	}
 	os.Exit(1)
 }
 
 func GracefulShutdownf(causef string, args ...any) {
+	for i, a := range args {
+		if err, ok := a.(error); ok {
+			args[i] = TranslateFatalError(err)
+		}
+	}
 	GracefulShutdown(Errorf(causef, args...))
+}
+
+var mainctx context.Context
+
+func TranslateFatalError(err error) error {
+	if mainctx != nil && context.Cause(mainctx) == context.Canceled && err == context.Canceled {
+		err = fmt.Errorf("received interrupt signal")
+	}
+	return err
 }
 
 // GracefulShutdown (when configured) initiates a graceful shutdown of the
@@ -117,6 +137,10 @@ func GracefulShutdown(cause error) {
 		root.write("graceful shutdown initiated", LvlCrit, []any{"cause", cause})
 	} else {
 		println("fatal: ", cause.Error())
+		if sense.EnvBool("DEBUG") {
+			println("stack trace requsted (DEBUG=1)...")
+			debug.PrintStack()
+		}
 	}
 	cancelcausefunc(cause) // this should shutdown the stack
 	go func() {
@@ -135,7 +159,8 @@ var cancelcausefunc context.CancelCauseFunc = func(cause error) {
 	Root().Crit("main shutdown function not registered, exiting", "cause", cause)
 }
 
-func RegisterCancelCause(f context.CancelCauseFunc) {
+func RegisterCancelCause(ctx context.Context, f context.CancelCauseFunc) {
+	mainctx = ctx
 	cancelcausefunc = f
 }
 

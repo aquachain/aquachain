@@ -37,6 +37,7 @@ func parseTypicalDuration(s string) time.Duration {
 
 }
 
+// called during initialization
 func mkmainctx() (context.Context, context.CancelCauseFunc) {
 	c := context.Background()
 	tm := parseTypicalDuration(sense.Getenv("SCHEDULE_TIMEOUT"))
@@ -58,7 +59,9 @@ func mkmainctx() (context.Context, context.CancelCauseFunc) {
 		cancel1: cancelCause,
 		cancels: []context.CancelFunc{maybenoop, stopSignals},
 	}
-	log.RegisterCancelCause(multi.CancelCause) // when common/log.Fatal is called, this will be called
+
+	// initialize log package's mainctx and maincancel for log.GracefulShutdown
+	log.RegisterCancelCause(c, multi.CancelCause) // when common/log.Fatal is called, this will be called
 	return c, cancelCause
 }
 

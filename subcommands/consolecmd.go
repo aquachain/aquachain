@@ -100,6 +100,21 @@ JavaScript API. See https://gitlab.com/aquachain/aquachain/wiki/JavaScript-Conso
 	}
 )
 
+// func foo() {
+// 	if !sense.IsNoCountdown() {
+// 		ctx := mainctxs.Main()
+// 		for i := 3; i > 0 && ctx.Err() == nil; i-- {
+// 			log.Info("starting in ...", "seconds", i, "bootnodes", len(nodeserver.Config().P2P.BootstrapNodes),
+// 				"static", len(nodeserver.Config().P2P.StaticNodes), "discovery", !nodeserver.Config().P2P.NoDiscovery)
+// 			select {
+// 			case <-time.After(time.Second):
+// 			case <-ctx.Done():
+// 				return
+// 			}
+// 		}
+// 	}
+// }
+
 // localConsole starts a new aquachain node, attaching a JavaScript console to it at the
 // same time.
 func localConsole(ctx context.Context, cmd *cli.Command) error {
@@ -114,16 +129,22 @@ func localConsole(ctx context.Context, cmd *cli.Command) error {
 	if ctx.Err() != nil {
 		return context.Cause(ctx)
 	}
-	startNode(ctx, cmd, nodeserver)
+	started := startNode(ctx, cmd, nodeserver)
 	defer nodeserver.Stop()
+
+	select {
+	case <-ctx.Done():
+		return context.Cause(ctx)
+	case <-started: // wait for node to start
+	}
 
 	// Attach to the newly started node and start the JavaScript console
 	client, err := nodeserver.Attach(ctx, "localConsole")
 	if err != nil {
-		return fmt.Errorf("failed to attach to the inproc aquachain: %v", err)
+		return fmt.Errorf("failed to attach to the local inproc aquachain: %v", err)
 	}
 	config := console.Config{
-		DataDir:          MakeDataDir(cmd),
+		DataDir:          GetDatadirByChainName(cmd),
 		WorkingDirectory: cmd.String(aquaflags.JavascriptDirectoryFlag.Name),
 		Client:           client,
 		Preload:          MakeConsolePreloads(cmd),
@@ -203,7 +224,7 @@ func remoteConsole(ctx context.Context, cmd *cli.Command) error {
 	}
 	client.Name = "remoteConsole"
 	config := console.Config{
-		DataDir:          MakeDataDir(cmd),
+		DataDir:          GetDatadirByChainName(cmd),
 		WorkingDirectory: cmd.String(aquaflags.JavascriptDirectoryFlag.Name),
 		Client:           client,
 		Preload:          MakeConsolePreloads(cmd),
@@ -258,10 +279,10 @@ func ephemeralConsole(ctx context.Context, cmd *cli.Command) error {
 	// Attach to the newly started node and start the JavaScript console
 	client, err := node.Attach(ctx, "ephemeralConsole")
 	if err != nil {
-		return fmt.Errorf("failed to attach to the inproc aquachain: %v", err)
+		return fmt.Errorf("failed to attach to the ephemeral inproc aquachain: %v", err)
 	}
 	config := console.Config{
-		DataDir:          MakeDataDir(cmd),
+		DataDir:          GetDatadirByChainName(cmd),
 		WorkingDirectory: cmd.String(aquaflags.JavascriptDirectoryFlag.Name),
 		Client:           client,
 		Preload:          MakeConsolePreloads(cmd),

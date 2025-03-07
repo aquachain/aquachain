@@ -94,10 +94,10 @@ func NewApp(name, gitCommit, usage string) *cli.Command {
 	return app
 }
 
-// MakeDataDir retrieves the currently requested data directory, terminating
+// GetDatadirByChainName retrieves the currently requested data directory, terminating
 // if none (or the empty string) is specified. If the node is starting a testnet,
 // the a subdirectory of the specified datadir will be used.
-func MakeDataDir(cmd *cli.Command) string {
+func GetDatadirByChainName(cmd *cli.Command) string {
 	if datadir := cmd.String(aquaflags.DataDirFlag.Name); datadir != "" {
 		return datadir
 	}
@@ -375,7 +375,7 @@ func setHTTP(cmd *cli.Command, cfg *node.Config) {
 // eg: --rpcapi +testing  (adds 'testing' to the default modules)
 func parseRpcFlags(defaultModules, maybe []string) []string {
 	if len(defaultModules) == 0 {
-		defaultModules = node.DefaultConfig.HTTPModules
+		defaultModules = node.NewDefaultConfig().HTTPModules
 	}
 	if len(defaultModules) == 0 {
 		Fatalf("No default modules set")
@@ -1034,6 +1034,7 @@ func MakeConsensusEngine(cmd *cli.Command, stack *node.Node) consensus.Engine {
 		DatasetDir:     stack.ResolvePath(aqua.DefaultConfig.Aquahash.DatasetDir),
 		DatasetsInMem:  aqua.DefaultConfig.Aquahash.DatasetsInMem,
 		DatasetsOnDisk: aqua.DefaultConfig.Aquahash.DatasetsOnDisk,
+		StartVersion:   2,
 	})
 }
 
@@ -1177,7 +1178,7 @@ func DefaultNodeConfig(gitCommit, clientIdentifier string) *node.Config {
 	if clientIdentifier == "" {
 		panic("clientIdentifier must be set")
 	}
-	cfg := node.DefaultConfig
+	cfg := node.NewDefaultConfig()
 	cfg.Name = clientIdentifier
 	cfg.Version = params.VersionWithCommit(gitCommit)
 	cfg.HTTPModules = append(cfg.HTTPModules, "aqua")
@@ -1232,9 +1233,6 @@ func Mkconfig(chainName string, configFileOptional string, checkDefaultConfigFil
 			}
 		}
 	}
-
-	// set defaults asap
-	node.DefaultConfig = cfgptr.Node
 	return cfgptr
 }
 
@@ -1264,7 +1262,13 @@ func LoadConfigFromFile(file string, cfg *AquachainConfig) error {
 // and runs it in blocking mode, waiting for it to be shut down.
 func daemonStart(ctx context.Context, cmd *cli.Command) error {
 	node := MakeFullNode(ctx, cmd)
-	startNode(ctx, cmd, node)
+	started := startNode(ctx, cmd, node)
+	select {
+	case <-ctx.Done():
+		// shutting down before node started
+		return context.Cause(ctx)
+	case <-started:
+	}
 	node.Wait()
 	return nil
 }

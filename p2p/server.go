@@ -425,26 +425,6 @@ func (srv *Server) Start(ctx context.Context) (err error) {
 	if srv.Config.Offline {
 		return nil
 	}
-	doitnow := NoCountdown
-	{
-		chaincfg := srv.Config.ChainConfig()
-		if chaincfg == nil {
-			log.Warn("Chain config not set, using test chainconfig")
-			chaincfg = params.TestChainConfig
-		}
-		if !doitnow && !(chaincfg == params.MainnetChainConfig || chaincfg == params.TestnetChainConfig || chaincfg == params.Testnet2ChainConfig || chaincfg == params.Testnet3ChainConfig) { // for testing
-			doitnow = true
-		}
-		if !doitnow && sense.Getenv("TESTING_TEST") != "1" {
-			for i := 5; i > 0 && ctx.Err() == nil; i-- {
-				log.Info("Starting P2P networking", "in", i, "on", srv.ListenAddr, "chain", chaincfg.Name())
-				for i := 0; i < 10 && ctx.Err() == nil; i++ {
-					time.Sleep(time.Second / 10)
-				}
-			}
-		}
-	}
-
 	srv.lock.Lock()
 	defer srv.lock.Unlock()
 	if srv.running {
@@ -455,11 +435,32 @@ func (srv *Server) Start(ctx context.Context) (err error) {
 	if srv.log == nil {
 		srv.log = log.New()
 	}
-	srv.log.Info("Starting P2P networking")
+	doitnow := NoCountdown || sense.IsNoCountdown()
+	if !doitnow {
+		chaincfg := srv.Config.ChainConfig()
+		if chaincfg == nil {
+			log.Warn("Chain config not set, using test chainconfig")
+			chaincfg = params.TestChainConfig
+		}
+		if !doitnow && !(chaincfg == params.MainnetChainConfig || chaincfg == params.TestnetChainConfig || chaincfg == params.Testnet2ChainConfig || chaincfg == params.Testnet3ChainConfig) { // for testing
+			doitnow = true
+		}
+		if !doitnow && sense.Getenv("TESTING_TEST") != "1" {
+			for i := 10; i > 0 && ctx.Err() == nil; i-- {
+				log.Info("Starting P2P networking", "in", i, "on", srv.ListenAddr, "chain", chaincfg.Name())
+				for i := 0; i < 10 && ctx.Err() == nil; i++ {
+					time.Sleep(time.Second / 10)
+				}
+			}
+		}
+	}
+	if ctx.Err() != nil {
+		return context.Cause(ctx)
+	}
 
 	// static fields
 	if srv.PrivateKey == nil {
-		return fmt.Errorf("Server.PrivateKey must be set to a non-nil key")
+		return fmt.Errorf("p2p.Server.PrivateKey must be set to a non-nil key")
 	}
 	if srv.newTransport == nil {
 		srv.newTransport = newRLPX
@@ -476,46 +477,10 @@ func (srv *Server) Start(ctx context.Context) (err error) {
 	srv.peerOp = make(chan peerOpFunc)
 	srv.peerOpDone = make(chan struct{})
 
-	var (
-		conn     *net.UDPConn
-		realaddr *net.UDPAddr
-	)
-
 	if !srv.NoDiscovery {
-		addr, err := net.ResolveUDPAddr("udp", srv.ListenAddr)
-		if err != nil {
+		if err := srv.startDiscovery(); err != nil {
 			return err
 		}
-		conn, err = net.ListenUDP("udp4", addr)
-		if err != nil {
-			return err
-		}
-		realaddr = conn.LocalAddr().(*net.UDPAddr)
-		if nats := srv.NAT.Get(); nats != nil {
-			if !realaddr.IP.IsLoopback() {
-				go nat.Map(nats, srv.quit, "udp", realaddr.Port, realaddr.Port, "aquachain discovery")
-			}
-			// TODO: react to external IP changes over time.
-			if ext, err := nats.ExternalIP(); err == nil {
-				realaddr = &net.UDPAddr{IP: ext, Port: realaddr.Port}
-			}
-		}
-		var unhandled chan discover.ReadPacket
-		// node table
-		cfg := discover.Config{
-			PrivateKey:   srv.PrivateKey,
-			AnnounceAddr: realaddr,
-			NodeDBPath:   srv.NodeDatabase,
-			NetRestrict:  srv.NetRestrict,
-			Bootnodes:    srv.BootstrapNodes,
-			Unhandled:    unhandled,
-			ChainId:      srv.ChainId,
-		}
-		ntab, err := discover.ListenUDP(conn, cfg)
-		if err != nil {
-			return err
-		}
-		srv.ntab = ntab
 	}
 
 	if srv.ChainId == 0 {
@@ -543,6 +508,48 @@ func (srv *Server) Start(ctx context.Context) (err error) {
 	srv.loopWG.Add(1)
 	go srv.run(dialer)
 	srv.running = true
+	return nil
+}
+
+func (srv *Server) startDiscovery() error {
+	var (
+		conn     *net.UDPConn
+		realaddr *net.UDPAddr
+	)
+	addr, err := net.ResolveUDPAddr("udp", srv.ListenAddr)
+	if err != nil {
+		return err
+	}
+	conn, err = net.ListenUDP("udp4", addr)
+	if err != nil {
+		return err
+	}
+	realaddr = conn.LocalAddr().(*net.UDPAddr)
+	if nats := srv.NAT.Get(); nats != nil {
+		if !realaddr.IP.IsLoopback() {
+			go nat.Map(nats, srv.quit, "udp", realaddr.Port, realaddr.Port, "aquachain discovery")
+		}
+		// TODO: react to external IP changes over time.
+		if ext, err := nats.ExternalIP(); err == nil {
+			realaddr = &net.UDPAddr{IP: ext, Port: realaddr.Port}
+		}
+	}
+	var unhandled chan discover.ReadPacket
+	// node table
+	cfg := discover.Config{
+		PrivateKey:   srv.PrivateKey,
+		AnnounceAddr: realaddr,
+		NodeDBPath:   srv.NodeDatabase,
+		NetRestrict:  srv.NetRestrict,
+		Bootnodes:    srv.BootstrapNodes,
+		Unhandled:    unhandled,
+		ChainId:      srv.ChainId,
+	}
+	ntab, err := discover.ListenUDP(conn, cfg)
+	if err != nil {
+		return err
+	}
+	srv.ntab = ntab
 	return nil
 }
 

@@ -125,7 +125,7 @@ func newTester(t *testing.T, confOverride func(*aqua.Config)) *tester {
 	ethConf := &aqua.Config{
 		Genesis:  genesis,
 		Aquabase: common.HexToAddress(testAddress),
-		Aquahash: aquahash.Config{
+		Aquahash: &aquahash.Config{
 			PowMode: aquahash.ModeTest,
 		},
 		ChainId: chainId,

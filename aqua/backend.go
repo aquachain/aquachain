@@ -123,7 +123,7 @@ func New(ctx context.Context, nodectx *node.ServiceContext, config *config.Aquac
 		chainConfig:    chainConfig,
 		eventMux:       nodectx.EventMux,
 		accountManager: nodectx.AccountManager,
-		engine:         CreateConsensusEngine(nodectx, &config.Aquahash, chainConfig, chainDb, nodename),
+		engine:         CreateConsensusEngine(nodectx, config.Aquahash, chainConfig, chainDb, nodename),
 		shutdownChan:   make(chan bool),
 		stopDbUpgrade:  stopDbUpgrade,
 		gasPrice:       new(big.Int).SetUint64(config.GasPrice),

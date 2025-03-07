@@ -38,7 +38,7 @@ var DefaultConfig = NewDefaultConfig()
 func NewDefaultConfig() *Config {
 	return &config.Aquaconfig{
 		SyncMode: downloader.FullSync,
-		Aquahash: aquahash.Config{
+		Aquahash: &aquahash.Config{
 			CacheDir:       "aquahash",
 			CachesInMem:    1,
 			CachesOnDisk:   0,
@@ -63,6 +63,9 @@ func NewDefaultConfig() *Config {
 }
 
 func DefaultDatasetDirByOS() string {
+	if custom := sense.Getenv("AQUAHASH_DATASET_DIR"); custom != "" {
+		return custom
+	}
 	home := sense.Getenv("HOME")
 	if home == "" {
 		if user, err := user.Current(); err == nil {
