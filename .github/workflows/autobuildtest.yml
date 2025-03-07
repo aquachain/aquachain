@@ -22,15 +22,17 @@ jobs:
     steps:
       - name: Checkout this branch
         uses: actions/checkout@v3
+      - name: show system info
+        run: env || true; uname -a || true; test ! -e /etc/os-release || cat /etc/os-release; echo ${{ github.ref_name }} - ${{ github.ref }}
       - name: Build aquachain
         run: make
-      - name: show system info
-        run: env || true; uname -a || true; test ! -e /etc/os-release || cat /etc/os-release;
-      - name: Test (short)
-        run: bash testing/test-short-only.bash -v
+      - name: Run tests
+        run: make test
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
-          name: aquachain-${{ github.sha }}-${{ github.run_id }}-${{ matrix.operating-system}}
+          name: aquachain-${{ github.ref_name || 'v0.0.0-auto' }}-${{ github.sha }}-${{ github.run_id }}-${{ matrix.operating-system}}
           path: bin/*
           retention-days: 90
+      - name: Tests (short only)
+        run: bash testing/test-short-only.bash -v      
