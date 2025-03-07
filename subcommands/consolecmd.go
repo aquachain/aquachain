@@ -29,6 +29,7 @@ import (
 	"github.com/aerth/tgun"
 	cli "github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/common/log"
+	"gitlab.com/aquachain/aquachain/common/sense"
 	"gitlab.com/aquachain/aquachain/node"
 	"gitlab.com/aquachain/aquachain/opt/console"
 	"gitlab.com/aquachain/aquachain/params"
@@ -158,22 +159,12 @@ func localConsole(ctx context.Context, cmd *cli.Command) error {
 // assumeEndpoint returns the default IPC endpoint for the given chain.
 // for 'attach' with no arg
 func assumeEndpoint(_ context.Context, cmd *cli.Command) string {
-
 	chaincfg := params.GetChainConfig(cmd.String(aquaflags.ChainFlag.Name))
 	defaultpath := node.DefaultDatadirByChain(chaincfg)
 	path := defaultpath
-	if cmd.Bool(aquaflags.TestnetFlag.Name) {
-		path = filepath.Join(path, "testnet")
-	} else if cmd.Bool(aquaflags.Testnet2Flag.Name) {
-		path = filepath.Join(path, "testnet2")
-	} else if cmd.Bool(aquaflags.Testnet3Flag.Name) {
-		path = filepath.Join(path, "testnet3")
-	} else if cmd.Bool(aquaflags.NetworkEthFlag.Name) {
-		path = filepath.Join(path, "ethereum")
-	} else if cmd.Bool(aquaflags.DeveloperFlag.Name) {
-		path = filepath.Join(path, "develop")
+	if chaincfg != params.MainnetChainConfig {
+		path = filepath.Join(defaultpath, chaincfg.Name())
 	}
-
 	if cmd.IsSet(aquaflags.DataDirFlag.Name) {
 		got := cmd.String(aquaflags.DataDirFlag.Name)
 		// handle case where /var/lib/aquachain is passed with testnet and incompatible genesis block
@@ -192,7 +183,8 @@ func assumeEndpoint(_ context.Context, cmd *cli.Command) string {
 func remoteConsole(ctx context.Context, cmd *cli.Command) error {
 	// Attach to a remotely running aquachain instance and start the JavaScript console
 	endpoint := cmd.Args().First()
-	if endpoint == "" {
+	endpoint_assumed := endpoint == ""
+	if endpoint_assumed {
 		endpoint = assumeEndpoint(ctx, cmd)
 	}
 	if endpoint == "" {
@@ -201,6 +193,21 @@ func remoteConsole(ctx context.Context, cmd *cli.Command) error {
 	socks := cmd.String(aquaflags.SocksClientFlag.Name) // ignored if IPC endpoint is the endpoint, maybe ignored if 127
 	clientIdentifier := cmd.String("clientIdentifier")
 	client, err := dialRPC(endpoint, socks, clientIdentifier)
+	if err != nil && endpoint_assumed && strings.Contains(err.Error(), "no such file or directory") {
+		// we are a client. server might have used startup script that uses custom datadir
+		if e := sense.DotEnv("/etc/default/aquachain", "/etc/aquachain/aquachain.conf"); e != nil {
+			if !strings.Contains(e.Error(), "no such file") {
+				log.Warn("failed to load env file, you should fix it", "err", e.Error())
+			}
+		}
+		got := sense.Getenv("AQUACHAIN_DATADIR")
+		if got == "" {
+			return err // the first one
+		}
+		// try again
+		endpoint = fmt.Sprintf("%s/aquachain.ipc", got)
+		client, err = dialRPC(endpoint, socks, clientIdentifier)
+	}
 	if err != nil {
 		Fatalf("Unable to attach to remote aquachain: %v", err)
 	}
