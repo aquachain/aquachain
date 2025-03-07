@@ -15,6 +15,28 @@ k01file=contrib/K01aquachain
 default_aqua_homedir=/var/lib/aquachain
 manfile=contrib/aquachain.1
 
+mainbindir=bin
+
+# parse -d flag for directory
+while getopts "d:" opt; do
+    case $opt in
+        d)
+            mainbindir=$OPTARG
+            test -f $mainbindir/linux-amd64/aquachain || { echo "makedeb.bash: ERR missing $mainbindir/linux-amd64/aquachain"; exit 1; }
+            ;;
+        \?)
+            echo "usage: $0 [-d bindir] goos-goarch"
+            echo 
+            echo bindir should have ./linux-amd64/aquachain in it already
+            echo "example: $0 -d some-dir/"
+            exit 1
+            ;;
+    esac
+done
+
+shift $((OPTIND-1))
+
+
 # use -s to avoid 'make' output
 version=$(make -s print-version)
 echo $version
@@ -55,7 +77,7 @@ build_deb() {
         exit 1
     fi
 
-    bindir=bin/$goos-$goarch
+    bindir=$mainbindir/$goos-$goarch
     if [ ! -d $bindir ]; then
         echo "fatal: missing $bindir"
         echo "run 'make cross GOOS=$goos GOARCH=$goarch' first"

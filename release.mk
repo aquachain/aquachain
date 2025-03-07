@@ -21,8 +21,9 @@ package: release/$(maincmd_name)-windows-amd64.zip \
 	release/$(maincmd_name)-netbsd-amd64.tar.gz \
 	debs
 
-debs:
-	bash contrib/makedeb.bash linux-amd64 linux-arm linux-riscv64
+# create debian packages (3 arch)
+debs: tmprelease/bin/linux-amd64/aquachain tmprelease/bin/linux-arm/aquachain tmprelease/bin/linux-riscv64/aquachain
+	bash contrib/makedeb.bash -d tmprelease/bin linux-amd64 linux-arm linux-riscv64
 	mv *.deb release/
 
 # for not cross-compile
