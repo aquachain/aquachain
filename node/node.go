@@ -139,14 +139,16 @@ func New(conf *Config) (*Node, error) {
 		conf.KeyStoreDir = sense.Getenv("AQUA_KEYSTORE_DIR") // in case of dotenv
 	}
 	am, ephemeralKeystore, err := makeAccountManager(conf)
-	log.Warn("USING KEYSTORE", "custom_dir", conf.KeyStoreDir, "active", fmt.Sprintf("%T", am), "ephemeral", fmt.Sprintf("%T", ephemeralKeystore))
-	select {
-	case <-conf.Context.Done():
-		return nil, context.Cause(conf.Context)
-	case <-time.After(time.Second * 1):
-	}
 	if err != nil {
 		return nil, err
+	}
+	if conf.KeyStoreDir != "" {
+		log.Warn("USING KEYSTORE", "custom_dir", conf.KeyStoreDir, "active", fmt.Sprintf("%T", am), "ephemeral", fmt.Sprintf("%T", ephemeralKeystore))
+		select {
+		case <-conf.Context.Done():
+			return nil, context.Cause(conf.Context)
+		case <-time.After(time.Second * 1):
+		}
 	}
 	if conf.Logger == nil {
 		conf.Logger = log.New()
