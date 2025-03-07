@@ -110,7 +110,7 @@ web3._extend({
 		new web3._extend.Method({
 			name: 'supply',
 			call: 'admin_supply',
-			outputFormatter: web3._extend.utils.fromWei
+			outputFormatter: fromWei
 		}),
 		new web3._extend.Method({
 			name: 'richlist',
