@@ -70,7 +70,7 @@ func TestDatadirCreation(t *testing.T) {
 // Tests that IPC paths are correctly resolved to valid endpoints of different
 // platforms. Test 2 os for the randomized temporary path in the rare case of empty ("") datadir.
 func TestIPCPathResolution(t *testing.T) {
-	ephwant := "aquachain-xxxxxxxx"
+	ephwant := "aquachain-*"
 	var tests = []struct {
 		DataDir  string
 		IPCPath  string
@@ -99,13 +99,14 @@ func TestIPCPathResolution(t *testing.T) {
 			}
 			if istmp {
 				var gotrand int
-				if _, err := fmt.Sscanf(endpoint, strings.Replace(test.Endpoint, "xxxxxxxx", "%d", 1), &gotrand); err != nil {
+				if _, err := fmt.Sscanf(endpoint, strings.Replace(test.Endpoint, "*", "%d", 1), &gotrand); err != nil {
 					t.Errorf("test %d: IPC endpoint mismatchB: have %q, want %q", i, endpoint, test.Endpoint)
 				}
-				// fmt.Fprintf(os.Stderr, "test %d: IPC endpoint: %q gotrand=%d\n", i, endpoint, gotrand)
-				if endpoint != strings.Replace(test.Endpoint, "xxxxxxxx", fmt.Sprintf("%d", gotrand), 1) {
+				fmt.Fprintf(os.Stderr, "test %d: IPC endpoint: %q gotrand=%d\n", i, endpoint, gotrand)
+				if endpoint != strings.Replace(test.Endpoint, "*", fmt.Sprintf("%d", gotrand), 1) {
 					t.Errorf("test %d: IPC endpoint mismatchC: have %q, want %q", i, endpoint, test.Endpoint)
 				}
+
 			}
 		}
 	}
