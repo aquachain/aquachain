@@ -455,6 +455,7 @@ func (s *Aquachain) AquaVersion() int {
 	if s.protocolManager != nil {
 		return int(s.protocolManager.SubProtocols[0].Version)
 	}
+	log.Warn("Aquachain protocol manager not available, no aqua protocol version")
 	return 0
 }
 func (s *Aquachain) NetVersion() uint64 { return s.config.ChainId }
