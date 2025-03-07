@@ -132,7 +132,7 @@ func DotEnv(extras ...string) error {
 	}
 	var err error
 	if !noenv {
-		err = godotenv.Load(".env")
+		err = godotenv.Load(append([]string{".env"}, extras...)...)
 	} else {
 		println("Skipping .env file")
 	}
