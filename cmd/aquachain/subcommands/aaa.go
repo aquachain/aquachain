@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/aqua"
@@ -158,10 +159,32 @@ func startNode(ctx context.Context, cmd *cli.Command, stack *node.Node) {
 	// Start up the node itself
 	StartNode(ctx, stack)
 
+	if cmd.Bool(aquaflags.NoKeysFlag.Name) && !stack.Config().NoKeys {
+		log.Crit("NO_KEYS mode is not enabled, but --no-keys flag was set")
+		return
+	}
 	// Register wallet event handlers to open and auto-derive wallets
 	if !stack.Config().NoKeys && !stack.Config().NoInProc {
 		events := make(chan accounts.WalletEvent, 16)
-		stack.AccountManager().Subscribe(events)
+		am := stack.AccountManager()
+		for i := 0; i < 10; i++ {
+			am = stack.AccountManager()
+			if am != nil {
+				break
+			}
+			log.Warn("Account manager not running, waiting", "i", i)
+			select {
+			case <-ctx.Done():
+				return
+			case <-mainctx.Done():
+				return
+			case <-time.After(time.Second):
+			}
+		}
+		if am == nil {
+			Fatalf("Account manager not running, NO_KEYS=%v  NoKeys=%v", stack.Config().NoKeys, cmd.Bool(aquaflags.NoKeysFlag.Name))
+		}
+		am.Subscribe(events)
 		log.Info("Starting Account Manager")
 		go func() {
 			// Create an chain state reader for self-derivation
