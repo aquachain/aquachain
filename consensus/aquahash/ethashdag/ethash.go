@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"hash"
 	"math"
-	"math/big"
 	mrand "math/rand"
 	"os"
 	"path/filepath"
@@ -50,7 +49,7 @@ var ErrInvalidDumpMagic = errors.New("invalid dump magic")
 
 var (
 	// maxUint256 is a big integer representing 2^256-1
-	maxUint256 = new(big.Int).Exp(big.NewInt(2), big.NewInt(256), big.NewInt(0))
+	// maxUint256 = new(big.Int).Exp(big.NewInt(2), big.NewInt(256), big.NewInt(0))
 
 	// algorithmRevision is the data structure version used for file naming.
 	algorithmRevision = 2
@@ -576,7 +575,7 @@ func generateCache(dest []uint32, epoch uint64, seed []byte) {
 		}
 	}()
 	// Create a hasher to reuse between invocations
-	keccak512 := makeHasher(sha3.NewKeccak512())
+	keccak512 := makeHasher(sha3.NewKeccak512Hasher())
 
 	// Sequentially produce the initial dataset
 	keccak512(cache, seed)
@@ -695,7 +694,7 @@ func generateDataset(dest []uint32, epoch uint64, cache []uint32, logging bool) 
 			defer pend.Done()
 
 			// Create a hasher to reuse between invocations
-			keccak512 := makeHasher(sha3.NewKeccak512())
+			keccak512 := makeHasher(sha3.NewKeccak512Hasher())
 
 			// Calculate the data segment this thread should generate
 			batch := uint32((size + hashBytes*uint64(threads) - 1) / (hashBytes * uint64(threads)))
@@ -738,7 +737,7 @@ func hashimoto(hash []byte, nonce uint64, size uint64, lookup func(index uint32)
 	copy(seed, hash)
 	binary.LittleEndian.PutUint64(seed[32:], nonce)
 
-	seed = crypto.Keccak512(seed)
+	seed = sha3.Keccak512(seed)
 	seedHead := binary.LittleEndian.Uint32(seed)
 
 	// Start the mix with replicated seed
@@ -773,7 +772,7 @@ func hashimoto(hash []byte, nonce uint64, size uint64, lookup func(index uint32)
 // in-memory cache) in order to produce our final value for a particular header
 // hash and nonce.
 func hashimotoLight(size uint64, cache []uint32, hash []byte, nonce uint64) ([]byte, []byte) {
-	keccak512 := makeHasher(sha3.NewKeccak512())
+	keccak512 := makeHasher(sha3.NewKeccak512Hasher())
 
 	lookup := func(index uint32) []uint32 {
 		rawData := generateDatasetItem(cache, index, keccak512)

@@ -947,6 +947,9 @@ func TestReorgSideEvent(t *testing.T) {
 		t.Fatalf("failed to insert chain: %v", err)
 	}
 
+	for _, v := range chain {
+		t.Logf("chain: %v (algo: %s)", v.Hash(), v.Version())
+	}
 	// first two block of the secondary chain are for a brief moment considered
 	// side chains because up to that point the first one is considered the
 	// heavier chain.
@@ -957,6 +960,12 @@ func TestReorgSideEvent(t *testing.T) {
 		chain[1].Hash():             true,
 		chain[2].Hash():             true,
 	}
+
+	t.Logf("replacement 0: %v", replacementBlocks[0].Hash())
+	t.Logf("replacement 1: %v", replacementBlocks[1].Hash())
+	t.Logf("chain 0: %v", chain[0].Hash())
+	t.Logf("chain 1: %v", chain[1].Hash())
+	t.Logf("chain 2: %v", chain[2].Hash())
 
 	i := 0
 
@@ -979,7 +988,6 @@ done:
 
 			if i == len(expectedSideHashes) {
 				timeout.Stop()
-
 				break done
 			}
 			timeout.Reset(timeoutDura)

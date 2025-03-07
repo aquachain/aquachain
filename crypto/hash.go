@@ -20,7 +20,8 @@ import (
 	"bytes"
 
 	"gitlab.com/aquachain/aquachain/common"
-	"gitlab.com/aquachain/aquachain/crypto/sha3"
+	oursha3 "gitlab.com/aquachain/aquachain/crypto/sha3"
+
 	"golang.org/x/crypto/argon2"
 )
 
@@ -105,21 +106,10 @@ func Argon2idCHash(data ...[]byte) (h common.Hash) {
 	return common.BytesToHash(Argon2idC(data...))
 }
 
-// Keccak256 calculates and returns the Keccak256 hash of the input data.
-func Keccak256(data ...[]byte) []byte {
-	//fmt.Printf("o")
-	d := sha3.NewKeccak256()
-	for _, b := range data {
-		d.Write(b)
-	}
-	return d.Sum(nil)
-}
-
 // Keccak256Hash calculates and returns the Keccak256 hash of the input data,
 // converting it to an internal Hash data structure.
 func Keccak256Hash(data ...[]byte) (h common.Hash) {
-	//fmt.Printf("x")
-	d := sha3.NewKeccak256()
+	d := oursha3.NewKeccak256()
 	for _, b := range data {
 		d.Write(b)
 	}
@@ -127,11 +117,4 @@ func Keccak256Hash(data ...[]byte) (h common.Hash) {
 	return h
 }
 
-// Keccak512 calculates and returns the Keccak512 hash of the input data.
-func Keccak512(data ...[]byte) []byte {
-	d := sha3.NewKeccak512()
-	for _, b := range data {
-		d.Write(b)
-	}
-	return d.Sum(nil)
-}
+var Keccak256 = oursha3.Keccak256
