@@ -43,7 +43,7 @@ const issueUrl = "https://github.com/aquachain/aquachain/issues/new"
 
 // reportBug reports a bug by opening a new URL to the aquachain GH issue
 // tracker and setting default values as the issue body.
-func reportBug(_ context.Context, cmd *cli.Command) error {
+func reportBug(ctx context.Context, cmd *cli.Command) error {
 	// execute template and write contents to buff
 	var buff bytes.Buffer
 
@@ -54,7 +54,9 @@ func reportBug(_ context.Context, cmd *cli.Command) error {
 	printOSDetails(&buff)
 
 	// open a new GH issue
-	fmt.Printf("Bug template: %s\n\nPlease file a new issue at %s using the above template.\n", buff.String(), issueUrl)
+	fmt.Printf("Bug template: %s\n\n", buff.String())
+	printVersion(ctx, cmd)
+	fmt.Printf("\n\nPlease file a new issue at %s using the above template.\n", issueUrl)
 	return nil
 }
 
