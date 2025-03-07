@@ -170,10 +170,11 @@ func main() {
 		println("dot env:", err.Error())
 		os.Exit(1)
 	}
-	// go func() {
-	// 	<-ctx.Done()
-	// 	log.Warn("context done", "err", ctx.Err())
-	// }()
+	go func() {
+		<-mainctxs.Main().Done()
+		time.Sleep(time.Second * 10) // should never happen
+		log.Warn("context has been done for 10 seconds and we are still running... consider sending SIGINT")
+	}()
 	app := doinit()
 	if err := app.Run(mainctxs.Main(), os.Args); err != nil {
 		fmt.Fprintf(os.Stderr, "fatal: run failed with error %+v\n", err)
