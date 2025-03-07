@@ -22,15 +22,14 @@ jobs:
     steps:
       - name: Checkout this branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-tags: true
       - name: show system info
         run: env || true; uname -a || true; test ! -e /etc/os-release || cat /etc/os-release; echo ${{ github.ref_name }} - ${{ github.ref }}
       - name: Build aquachain
-        run: make clean release release=1 codename=nightly
-      - name: Upload binary
-        uses: actions/upload-artifact@v4
+        run: time make clean release release=1 codename=nightly
+      - name: Upload artifacts
+        uses: aerth/upload-artifacts@v4.6.4-aerth
         with:
-          name: aquachain-${{ github.ref_name || 'v0.0.0-auto' }}-${{ github.sha }}-${{ github.run_id }}-${{ matrix.operating-system}}
-          path: release/*
-          retention-days: 90
-      # - name: Run tests (short only)
-      #   run: make test
+          path: release/
