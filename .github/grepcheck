@@ -1,0 +1,33 @@
+#!/bin/bash
+# from https://github.com/aquachain/aquachain
+
+
+# Check for usage of deprecated functions
+# by default it will exit if it finds any usage
+check() {
+    local function_name=$1
+    local replacement=$2
+    local acceptable=0
+    if [ -n "$3" ]; then
+        acceptable=$(($3))
+    fi
+    found=$(grep -rn "${function_name}"'(' *.go */*.go */*/*.go */*/*/*.go */*/*/*/*.go */*/*/*/*/*.go)
+    count=$(($(echo $found | wc -l)))
+    if [[ $count -gt $acceptable ]]; then
+        echo "$function_name occurrences: $count"
+        echo "grepcheck: Use $replacement instead of $function_name"
+        echo "$found"
+        echo "currently ${count} found, expected ${acceptable}"
+        echo found $count occurrences of $function_name
+        exit 1
+    else
+        echo found $count occurrences of $function_name
+        echo "$function_name occurrences: $count"
+    fi
+}
+check "os.LookupEnv" "sense.LookupEnv" 1
+check "os.Getenv" "sense.Getenv" 1
+check "os.Exit" "log.GracefulShutdown" 1
+check "log.Fatal" "log.GracefulShutdown"
+check "log.Fataln" "log.GracefulShutdown"
+check "log.Fatalf" "log.GracefulShutdown"
