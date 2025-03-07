@@ -95,7 +95,9 @@ ifeq (1,$(release))
 codename=release
 endif
 endif
+ifneq (,$(codename))
 LINKER_FLAGS += -X gitlab.com/aquachain/aquachain/params.VersionMeta=${codename}
+endif
 
 # go ldflags escaping aaaaaahhhhh
 GO_FLAGS += -ldflags '$(LINKER_FLAGS)'
