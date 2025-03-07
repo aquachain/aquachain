@@ -15,6 +15,7 @@ func SetBuildInfo(info BuildInfo) {
 
 func GetBuildInfo() BuildInfo {
 	if binfo == (BuildInfo{}) {
+
 		return BuildInfo{
 			GitTag:    "v0.0.0-unknown",
 			GitCommit: "unknown",

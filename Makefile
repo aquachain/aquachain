@@ -53,7 +53,7 @@ version: print-version
 print-version:
 	@echo $(version)
 echoflags:
-	@echo "CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build $(GO_FLAGS) -o $@ $(aquachain_cmd)"
+	@echo "CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build -tags '$(tags)' $(GO_FLAGS) -o $@ $(aquachain_cmd)"
 echo:
 	$(info  )
 	$(info Variables:)
@@ -104,7 +104,7 @@ regen:
 all:
 	mkdir -p bin
 	cd bin && \
-		CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build -o . $(GO_FLAGS) ../cmd/...
+		CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build -o . -tags '$(tags)' $(GO_FLAGS) ../cmd/...
 
 main_command_dir := ${aquachain_cmd}
 
@@ -122,14 +122,14 @@ endif
 	@mkdir -p bin/${GOOS}-${GOARCH}
 	$(info Building to directory: bin/${GOOS}-${GOARCH})
 	cd bin/${GOOS}-${GOARCH} && GOOS=${GOOS} GOARCH=${GOARCH} \
-		CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build -o . $(GO_FLAGS) ../.${main_command_dir}
+		CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build -o . -tags '$(tags)' $(GO_FLAGS) ../.${main_command_dir}
 
 help: commandlist
 	@echo Variables:
 	@echo PREFIX="$(PREFIX)/"
 	@echo INSTALL_DIR="$(INSTALL_DIR)/"
 	@echo without args, target is: "$(shorttarget)"
-	@echo using go flags: "$(GO_FLAGS)"
+	@echo using go flags: "-tags '$(tags)' $(GO_FLAGS)"
 	@echo
 	@echo "Help:"
 	@echo To compile quickly, run \'make\' and then: $(shorttarget) version
