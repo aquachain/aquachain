@@ -27,6 +27,7 @@ import (
 	"strings"
 	"time"
 
+	"gitlab.com/aquachain/aquachain/cmd/aquachain/mainctxs"
 	"gitlab.com/aquachain/aquachain/common/log"
 )
 
@@ -47,7 +48,6 @@ const DashboardEnabledFlag = "dashboard"
 func init() {
 	for _, arg := range os.Args {
 		if flag := strings.TrimLeft(arg, "-"); flag == MetricsEnabledFlag || flag == DashboardEnabledFlag {
-			log.Info("Enabling metrics collection")
 			Enabled = true
 		}
 	}
@@ -57,6 +57,7 @@ func init() {
 // process.
 func CollectProcessMetrics(refresh time.Duration) {
 	// Short circuit if the metrics system is disabled
+	log.Info("Enabling metrics collection")
 	if !Enabled {
 		return
 	}
@@ -83,7 +84,8 @@ func CollectProcessMetrics(refresh time.Duration) {
 		log.Debug("Failed to read disk metrics", "err", err)
 	}
 	// Iterate loading the different stats and updating the meters
-	for i := 1; ; i++ {
+	ctx := mainctxs.Main()
+	for i := 1; ctx.Err() == nil; i++ {
 		runtime.ReadMemStats(memstats[i%2])
 		memAllocs.Mark(int64(memstats[i%2].Mallocs - memstats[(i-1)%2].Mallocs))
 		memFrees.Mark(int64(memstats[i%2].Frees - memstats[(i-1)%2].Frees))
@@ -96,6 +98,10 @@ func CollectProcessMetrics(refresh time.Duration) {
 			diskWrites.Mark(diskstats[i%2].WriteCount - diskstats[(i-1)%2].WriteCount)
 			diskWriteBytes.Mark(diskstats[i%2].WriteBytes - diskstats[(i-1)%2].WriteBytes)
 		}
-		time.Sleep(refresh)
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(refresh):
+		}
 	}
 }
