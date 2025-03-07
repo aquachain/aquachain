@@ -8,9 +8,9 @@ on:
       - '**.md'
 
 concurrency:
-  group: ci/${{ github.ref }}
+  group: ci/${{ github.ref }}/test
   cancel-in-progress: true
-
+  
 jobs:
   run:
     name: Test (Ubuntu/Windows)
