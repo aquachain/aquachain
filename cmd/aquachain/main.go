@@ -28,15 +28,15 @@ import (
 	logpkg "log"
 
 	cli "github.com/urfave/cli/v3"
-	"gitlab.com/aquachain/aquachain/cmd/aquachain/aquaflags"
-	"gitlab.com/aquachain/aquachain/cmd/aquachain/mainctxs"
-	"gitlab.com/aquachain/aquachain/cmd/aquachain/subcommands"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/common/metrics"
 	"gitlab.com/aquachain/aquachain/common/sense"
 	"gitlab.com/aquachain/aquachain/internal/debug"
 	"gitlab.com/aquachain/aquachain/opt/console"
 	"gitlab.com/aquachain/aquachain/params"
+	"gitlab.com/aquachain/aquachain/subcommands"
+	"gitlab.com/aquachain/aquachain/subcommands/aquaflags"
+	"gitlab.com/aquachain/aquachain/subcommands/mainctxs"
 )
 
 const (

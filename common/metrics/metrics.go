@@ -27,8 +27,8 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.com/aquachain/aquachain/cmd/aquachain/mainctxs"
 	"gitlab.com/aquachain/aquachain/common/log"
+	"gitlab.com/aquachain/aquachain/subcommands/mainctxs"
 )
 
 // Enabled is checked by the constructor functions for all of the

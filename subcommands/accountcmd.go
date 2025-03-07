@@ -23,11 +23,11 @@ import (
 	cli "github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/aqua/accounts"
 	"gitlab.com/aquachain/aquachain/aqua/accounts/keystore"
-	"gitlab.com/aquachain/aquachain/cmd/aquachain/aquaflags"
-	"gitlab.com/aquachain/aquachain/cmd/aquachain/mainctxs"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/crypto"
 	"gitlab.com/aquachain/aquachain/opt/console"
+	"gitlab.com/aquachain/aquachain/subcommands/aquaflags"
+	"gitlab.com/aquachain/aquachain/subcommands/mainctxs"
 )
 
 var (

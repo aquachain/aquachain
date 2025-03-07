@@ -26,11 +26,11 @@ import (
 
 	"github.com/urfave/cli/v3"
 	"gitlab.com/aquachain/aquachain/aqua"
-	"gitlab.com/aquachain/aquachain/cmd/aquachain/aquaflags"
-	"gitlab.com/aquachain/aquachain/cmd/aquachain/buildinfo"
 	"gitlab.com/aquachain/aquachain/cmd/utils"
 	"gitlab.com/aquachain/aquachain/consensus/aquahash/ethashdag"
 	"gitlab.com/aquachain/aquachain/params"
+	"gitlab.com/aquachain/aquachain/subcommands/aquaflags"
+	"gitlab.com/aquachain/aquachain/subcommands/buildinfo"
 )
 
 var (

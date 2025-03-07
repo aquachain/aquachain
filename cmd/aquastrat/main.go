@@ -28,7 +28,6 @@ import (
 	"time"
 
 	cli "github.com/urfave/cli/v3"
-	"gitlab.com/aquachain/aquachain/cmd/aquachain/subcommands"
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/consensus/aquahash"
 	"gitlab.com/aquachain/aquachain/consensus/lightvalid"
@@ -39,6 +38,7 @@ import (
 	"gitlab.com/aquachain/aquachain/params"
 	"gitlab.com/aquachain/aquachain/rlp"
 	rpc "gitlab.com/aquachain/aquachain/rpc/rpcclient"
+	"gitlab.com/aquachain/aquachain/subcommands"
 )
 
 var gitCommit = ""

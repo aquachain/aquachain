@@ -23,9 +23,9 @@ import (
 	"sort"
 
 	"github.com/urfave/cli/v3"
-	"gitlab.com/aquachain/aquachain/cmd/aquachain/aquaflags"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/internal/debug"
+	"gitlab.com/aquachain/aquachain/subcommands/aquaflags"
 )
 
 const logo = `                              _           _

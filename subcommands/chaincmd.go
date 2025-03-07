@@ -32,14 +32,14 @@ import (
 	"gitlab.com/aquachain/aquachain/aqua/downloader"
 	"gitlab.com/aquachain/aquachain/aqua/event"
 	"gitlab.com/aquachain/aquachain/aquadb"
-	"gitlab.com/aquachain/aquachain/cmd/aquachain/aquaflags"
-	"gitlab.com/aquachain/aquachain/cmd/aquachain/mainctxs"
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/core"
 	"gitlab.com/aquachain/aquachain/core/state"
 	"gitlab.com/aquachain/aquachain/core/types"
 	"gitlab.com/aquachain/aquachain/opt/console"
+	"gitlab.com/aquachain/aquachain/subcommands/aquaflags"
+	"gitlab.com/aquachain/aquachain/subcommands/mainctxs"
 	"gitlab.com/aquachain/aquachain/trie"
 )
 

@@ -11,13 +11,13 @@ import (
 	"gitlab.com/aquachain/aquachain/aqua"
 	"gitlab.com/aquachain/aquachain/aqua/accounts"
 	"gitlab.com/aquachain/aquachain/aqua/accounts/keystore"
-	"gitlab.com/aquachain/aquachain/cmd/aquachain/aquaflags"
-	"gitlab.com/aquachain/aquachain/cmd/aquachain/buildinfo"
-	"gitlab.com/aquachain/aquachain/cmd/aquachain/mainctxs"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/common/toml"
 	"gitlab.com/aquachain/aquachain/node"
 	"gitlab.com/aquachain/aquachain/opt/aquaclient"
+	"gitlab.com/aquachain/aquachain/subcommands/aquaflags"
+	"gitlab.com/aquachain/aquachain/subcommands/buildinfo"
+	"gitlab.com/aquachain/aquachain/subcommands/mainctxs"
 )
 
 var mainctx, maincancel = mainctxs.Main(), mainctxs.MainCancelCause()

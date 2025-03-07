@@ -29,8 +29,8 @@ import (
 	"sync/atomic"
 
 	cli "github.com/urfave/cli/v3"
-	"gitlab.com/aquachain/aquachain/cmd/aquachain/aquaflags"
 	"gitlab.com/aquachain/aquachain/crypto"
+	"gitlab.com/aquachain/aquachain/subcommands/aquaflags"
 )
 
 var (

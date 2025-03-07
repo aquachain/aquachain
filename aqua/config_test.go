@@ -9,12 +9,12 @@ import (
 	"testing"
 
 	"gitlab.com/aquachain/aquachain/aqua"
-	"gitlab.com/aquachain/aquachain/cmd/aquachain/subcommands"
 	"gitlab.com/aquachain/aquachain/cmd/utils"
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/config"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/common/toml"
+	"gitlab.com/aquachain/aquachain/subcommands"
 )
 
 func init() {

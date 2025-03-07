@@ -28,12 +28,12 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2"
 	"gitlab.com/aquachain/aquachain/aqua/accounts"
 	"gitlab.com/aquachain/aquachain/aqua/accounts/keystore"
-	"gitlab.com/aquachain/aquachain/cmd/aquachain/buildinfo"
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/crypto"
 	"gitlab.com/aquachain/aquachain/p2p"
 	"gitlab.com/aquachain/aquachain/p2p/discover"
+	"gitlab.com/aquachain/aquachain/subcommands/buildinfo"
 )
 
 const (

@@ -28,12 +28,12 @@ import (
 
 	"github.com/aerth/tgun"
 	cli "github.com/urfave/cli/v3"
-	"gitlab.com/aquachain/aquachain/cmd/aquachain/aquaflags"
 	"gitlab.com/aquachain/aquachain/common/log"
 	"gitlab.com/aquachain/aquachain/node"
 	"gitlab.com/aquachain/aquachain/opt/console"
 	"gitlab.com/aquachain/aquachain/params"
 	rpc "gitlab.com/aquachain/aquachain/rpc/rpcclient"
+	"gitlab.com/aquachain/aquachain/subcommands/aquaflags"
 )
 
 // // ATM the url is left to the user and deployment to

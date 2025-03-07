@@ -20,7 +20,6 @@ import (
 	"gitlab.com/aquachain/aquachain/aqua/downloader"
 	"gitlab.com/aquachain/aquachain/aqua/gasprice"
 	"gitlab.com/aquachain/aquachain/aquadb"
-	"gitlab.com/aquachain/aquachain/cmd/aquachain/aquaflags"
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/alerts"
 	"gitlab.com/aquachain/aquachain/common/config"
@@ -41,6 +40,7 @@ import (
 	"gitlab.com/aquachain/aquachain/p2p/nat"
 	"gitlab.com/aquachain/aquachain/p2p/netutil"
 	"gitlab.com/aquachain/aquachain/params"
+	"gitlab.com/aquachain/aquachain/subcommands/aquaflags"
 )
 
 const CommandHelpTemplate = `{{.cmd.Name}}{{if .cmd.Subcommands}} command{{end}}{{if .cmd.Flags}} [command options]{{end}} [arguments...]
