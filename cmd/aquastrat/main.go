@@ -70,10 +70,8 @@ func main() {
 	ctx := context.Background()
 
 	var (
-		app = subcommands.NewApp(gitCommit, "usage")
+		app = subcommands.NewApp("aquastrat", gitCommit, "usage")
 	)
-
-	app.Name = "aquastrat"
 	app.Action = loopit
 	_ = filepath.Join
 	app.Flags = append(debug.Flags, []cli.Flag{
