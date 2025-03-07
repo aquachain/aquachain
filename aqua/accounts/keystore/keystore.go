@@ -36,6 +36,7 @@ import (
 	"gitlab.com/aquachain/aquachain/aqua/accounts"
 	"gitlab.com/aquachain/aquachain/aqua/event"
 	"gitlab.com/aquachain/aquachain/common"
+	"gitlab.com/aquachain/aquachain/common/sense"
 	"gitlab.com/aquachain/aquachain/core/types"
 	"gitlab.com/aquachain/aquachain/crypto"
 )
@@ -302,11 +303,11 @@ func (ks *KeyStore) SignHashOK(a accounts.Account, rlpenc, hash []byte) ([]byte,
 }
 
 var noSignMode = func() bool {
-	if _, ok := os.LookupEnv("NO_SIGN"); ok {
+	if _, ok := sense.LookupEnv("NO_SIGN"); ok {
 		return true
 	}
 	// without underscore, just in case :)
-	if _, ok := os.LookupEnv("NOSIGN"); ok {
+	if _, ok := sense.LookupEnv("NOSIGN"); ok {
 		return true
 	}
 	return false
@@ -316,6 +317,7 @@ func NoSignMode() bool {
 	return noSignMode
 }
 
+// one-way
 func SetNoSignMode() {
 	noSignMode = true
 }
