@@ -206,7 +206,7 @@ func (c *Config) NodeDB() string {
 	return c.resolvePath(datadirNodeDatabase)
 }
 
-// DefaultIPCEndpoint returns the IPC path used by default.
+// DefaultIPCEndpoint returns the IPC path used by default (for client to assume endpoint)
 func DefaultIPCEndpoint(clientIdentifier string) string {
 	if clientIdentifier == "" {
 		clientIdentifier = strings.TrimSuffix(filepath.Base(os.Args[0]), ".exe")
@@ -214,7 +214,7 @@ func DefaultIPCEndpoint(clientIdentifier string) string {
 			panic("empty executable name")
 		}
 	}
-	config := &Config{DataDir: DefaultConfig.DataDir, IPCPath: clientIdentifier + ".ipc"}
+	config := &Config{DataDir: defaultDataDir(), IPCPath: clientIdentifier + ".ipc"}
 	return config.IPCEndpoint()
 }
 

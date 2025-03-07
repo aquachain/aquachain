@@ -12,6 +12,7 @@ import (
 	"gitlab.com/aquachain/aquachain/aqua/accounts"
 	"gitlab.com/aquachain/aquachain/aqua/accounts/keystore"
 	"gitlab.com/aquachain/aquachain/common/log"
+	"gitlab.com/aquachain/aquachain/common/sense"
 	"gitlab.com/aquachain/aquachain/common/toml"
 	"gitlab.com/aquachain/aquachain/node"
 	"gitlab.com/aquachain/aquachain/opt/aquaclient"
@@ -113,6 +114,18 @@ func dumpConfig(ctx context.Context, cmd *cli.Command) error {
 
 var StartNodeCommand = startNode
 
+func foo() {
+	if !node.DefaultConfig.NoCountdown && !cmd.Bool("now") && !cmd.Root().Bool("now") {
+		for i := 3; i > 0 && ctx.Err() == nil; i-- {
+			log.Info("starting in ...", "seconds", i, "bootnodes", len(nodeserver.Config().P2P.BootstrapNodes),
+				"static", len(nodeserver.Config().P2P.StaticNodes), "discovery", !nodeserver.Config().P2P.NoDiscovery)
+			for i := 0; i < 10 && ctx.Err() == nil; i++ {
+				time.Sleep(time.Second / 10)
+			}
+		}
+	}
+}
+
 func MakeFullNode(ctx context.Context, cmd *cli.Command) *node.Node {
 	stack, cfg := MakeConfigNode(ctx, cmd, gitCommit, clientIdentifier, maincancel)
 	RegisterAquaService(mainctx, stack, cfg.Aqua, cfg.Node.NodeName())
@@ -135,7 +148,7 @@ func startNode(ctx context.Context, cmd *cli.Command, stack *node.Node) {
 	if len(unlocks) > 0 && stack.Config().NoKeys {
 		Fatalf("Unlocking accounts is not supported with NO_KEYS mode")
 	}
-	if !stack.Config().NoKeys {
+	if !sense.IsNoKeys() {
 		for _, v := range unlocks {
 			log.Info("Unlocking account", "account", v)
 		}
@@ -155,7 +168,9 @@ func startNode(ctx context.Context, cmd *cli.Command, stack *node.Node) {
 			}
 		}
 	}
-	node.DefaultConfig.NoCountdown = node.DefaultConfig.NoCountdown || cmd.Bool(aquaflags.DoitNowFlag.Name)
+	// NoCountdown -now flag
+	cfg := stack.Config()
+	cfg.NoCountdown = cfg.NoCountdown || cmd.Bool(aquaflags.DoitNowFlag.Name)
 	// Start up the node itself
 	StartNode(ctx, stack)
 

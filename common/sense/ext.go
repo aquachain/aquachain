@@ -195,3 +195,7 @@ func IsNoKeys() bool {
 func IsNoSign() bool {
 	return FeatureEnabled("NO_SIGN", "nosign")
 }
+
+func IsNoCountdown() bool {
+	return FeatureEnabled("NO_COUNTDOWN", "now")
+}

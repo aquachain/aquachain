@@ -104,6 +104,10 @@ func Crit(msg string, ctx ...interface{}) {
 	os.Exit(1)
 }
 
+func GracefulShutdownf(causef string, args ...any) {
+	GracefulShutdown(Errorf(causef, args...))
+}
+
 // GracefulShutdown (when configured) initiates a graceful shutdown of the
 // entire stack (chain, rpc, p2p, etc) and logs the cause of the shutdown.
 //

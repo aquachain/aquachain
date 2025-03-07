@@ -24,7 +24,6 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/aerth/tgun"
 	cli "github.com/urfave/cli/v3"
@@ -112,15 +111,6 @@ func localConsole(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("invalid command: %q", args.First())
 	}
 	nodeserver := MakeFullNode(ctx, cmd)
-	if !node.DefaultConfig.NoCountdown && !cmd.Bool("now") && !cmd.Root().Bool("now") {
-		for i := 3; i > 0 && ctx.Err() == nil; i-- {
-			log.Info("starting in ...", "seconds", i, "bootnodes", len(nodeserver.Config().P2P.BootstrapNodes),
-				"static", len(nodeserver.Config().P2P.StaticNodes), "discovery", !nodeserver.Config().P2P.NoDiscovery)
-			for i := 0; i < 10 && ctx.Err() == nil; i++ {
-				time.Sleep(time.Second / 10)
-			}
-		}
-	}
 	if ctx.Err() != nil {
 		return context.Cause(ctx)
 	}
@@ -241,10 +231,6 @@ func remoteConsole(ctx context.Context, cmd *cli.Command) error {
 // The check for empty endpoint implements the defaulting logic
 // for "aquachain attach" and "aquachain monitor" with no argument.
 func dialRPC(endpoint string, socks string, clientIdentifier string) (*rpc.Client, error) {
-	/* log.Info("Dialing RPC server", "endpoint", endpoint)
-	if socks != "" {
-		log.Info("+SOCKS5")
-	} */
 	if endpoint == "" {
 		endpoint = node.DefaultIPCEndpoint(clientIdentifier)
 	}

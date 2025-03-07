@@ -43,10 +43,28 @@ var (
 		Usage: "Suffix for generating a vanity address (start small)",
 	}
 	// General settings
-	DataDirFlag = &DirectoryFlag{
+	// DataDirFlag = &DirectoryFlag{
+	// 	Name:  "datadir",
+	// 	Usage: "Data directory for the databases, IPC socket, and keystore (also see -keystore flag)",
+	// 	Value: NewDirectoryString(node.DefaultDatadir()),
+	// }
+	DataDirFlag = &cli.StringFlag{
 		Name:  "datadir",
 		Usage: "Data directory for the databases, IPC socket, and keystore (also see -keystore flag)",
-		Value: NewDirectoryString(node.DefaultConfig.DataDir),
+		Value: node.DefaultDatadir(),
+		Action: func(ctx context.Context, cmd *cli.Command, v string) error {
+			if v == "" {
+				return fmt.Errorf("invalid directory: %q", v)
+			}
+			stat, err := os.Stat(v)
+			if err != nil {
+				return err
+			}
+			if !stat.IsDir() {
+				return fmt.Errorf("invalid directory: %q", v)
+			}
+			return nil
+		},
 	}
 	KeyStoreDirFlag = &DirectoryFlag{
 		Name:  "keystore",
@@ -63,7 +81,7 @@ var (
 			if v {
 				cmd.Set("now", "true")
 				p2p.NoCountdown = true
-				node.DefaultConfig.NoCountdown = true
+				node.NoCountdown = true
 			}
 			return nil
 		},

@@ -28,6 +28,10 @@ func (a AlertConfig) Enabled() bool {
 
 var mainCfg AlertConfig
 
+func Enabled() bool {
+	return mainCfg.Enabled()
+}
+
 // Infof logs a warning message and sends an alert via ALERT_PLATFORM if configured (see ParseAlertConfig)
 func Infof(f string, i ...any) {
 	if sense.Getenv("ALERTS_INFO") == "0" {
@@ -136,7 +140,7 @@ func (ac AlertConfig) Send(msg string, donefns ...func()) error {
 	wait := len(donefns) == 0
 	println("test", msg, wait, ac.Platform, ac.Token, ac.Channel)
 	switch ac.Platform {
-	case "none", "":
+	case "none", "", "test":
 		println("alert notification", msg)
 		return nil
 	case "tg":

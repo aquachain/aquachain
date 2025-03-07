@@ -36,7 +36,7 @@ const (
 )
 
 // DefaultConfig contains reasonable default settings.
-var DefaultConfig = NewDefaultConfig()
+// var DefaultConfig = NewDefaultConfig()
 
 func NewDefaultConfig() *Config {
 	datadir := defaultDataDir()
@@ -64,44 +64,49 @@ func NewDefaultConfig() *Config {
 	return x
 }
 
+var _cacheddefaultdatadir string = defaultDataDir()
+
+func DefaultDatadir() string {
+	return _cacheddefaultdatadir
+}
+
 // DefaultDataDir is the default data directory to use for the databases and other
 // persistence requirements.
-//
-// Use this once in DefaultConfig!
 func defaultDataDir() string {
-	// Try to place the data folder in the user's home dir
+	// first, try AQUA_DATADIR env
 	if e := sense.Getenv("AQUA_DATADIR"); e != "" {
 		return e
 	}
+	// Try to place the data folder in the user's home dir
 	home := homeDir()
-	if home != "" {
-		if runtime.GOOS == "darwin" {
-			return filepath.Join(home, "Library", "Aquachain")
-		} else if runtime.GOOS == "windows" {
-			return filepath.Join(home, "AppData", "Roaming", "Aquachain")
-		} else {
-			return filepath.Join(home, ".aquachain")
-		}
+	switch {
+	case home == "":
+		// As we cannot guess a stable location, return empty and handle later
+		log.Error("can't determine home directory to place aquachain data dir")
+		log.GracefulShutdown(fmt.Errorf("can't determine home directory to place aquachain data dir"))
+		return ""
+	case runtime.GOOS == "windows":
+		return filepath.Join(home, "AppData", "Roaming", "Aquachain")
+	case runtime.GOOS == "darwin":
+		return filepath.Join(home, "Library", "Aquachain")
+	default:
+		return filepath.Join(home, ".aquachain")
 	}
-	// As we cannot guess a stable location, return empty and handle later
-	log.Error("can't determine home directory to place aquachain data dir")
-	log.GracefulShutdown(fmt.Errorf("can't determine home directory to place aquachain data dir"))
-	return ""
 }
 
 func DefaultDatadirByChain(cfg *params.ChainConfig) string {
 	if cfg == nil {
-		log.Warn("selecting default mainnet dir for nil chain config")
-		cfg = params.MainnetChainConfig
+		log.GracefulShutdownf("selecting default mainnet dir for nil chain config")
 	}
+	def := defaultDataDir() // eg: ~/.aquachain
 	if cfg == params.MainnetChainConfig {
-		return DefaultConfig.DataDir
+		return def
 	}
 	name := cfg.Name()
 	if name == "" {
 		panic("chain config has no name")
 	}
-	return filepath.Join(DefaultConfig.DataDir, name)
+	return filepath.Join(def, name) // eg: ~/.aquachain/testnet3
 }
 
 func homeDir() string {

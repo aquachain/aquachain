@@ -993,7 +993,7 @@ done:
 	select {
 	case e := <-chainSideCh:
 		t.Errorf("unexpected event fired: %v", e)
-	case <-time.After(350 * time.Millisecond):
+	case <-time.After(2000 * time.Millisecond):
 	}
 
 }

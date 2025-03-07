@@ -106,9 +106,9 @@ func MakeDataDir(cmd *cli.Command) string {
 		Fatalf("No chain selected, no data directory specified")
 	}
 	if chainName == params.MainnetChainConfig.Name() {
-		return node.DefaultConfig.DataDir // skip subdirectory for mainnet
+		return node.DefaultDatadir() // skip subdirectory for mainnet
 	}
-	return filepath.Join(node.DefaultConfig.DataDir, chainName)
+	return filepath.Join(node.DefaultDatadir(), chainName)
 }
 
 // 	Fatalf("Cannot determine default data directory, please set manually (--datadir)")
@@ -159,7 +159,7 @@ func getStuff(cmd *cli.Command) (string, *params.ChainConfig, []*discover.Node, 
 	chaincfg := params.GetChainConfig(chainName)
 	if chaincfg == nil {
 		// check directory
-		expected := filepath.Join(node.DefaultConfig.DataDir, chainName)
+		expected := filepath.Join(node.DefaultDatadir(), chainName)
 		stat, err := os.Stat(expected)
 		if err == nil && stat.IsDir() {
 			chaincfg, err = params.LoadChainConfigFile(expected)
@@ -597,32 +597,43 @@ type DirectoryConfig struct {
 // switchDatadir switches the data directory based on the chain name.
 // override with --datadir
 func switchDatadir(cmd *cli.Command, chaincfg *params.ChainConfig) DirectoryConfig {
-	var cfg DirectoryConfig
-	// var newdatadir string
-	if cmd.IsSet(aquaflags.KeyStoreDirFlag.Name) {
-		cfg.KeyStoreDir = cmd.String(aquaflags.KeyStoreDirFlag.Name)
+	if chaincfg == nil {
+		panic("switchDatadir: no chain config")
 	}
-	chainName := "(none)"
+	if chaincfg == nil && !cmd.IsSet(aquaflags.DataDirFlag.Name) {
+		Fatalf("No chain and no data directory specified. Please specify a chain with --chain or a data directory with --datadir")
+		return DirectoryConfig{}
+	}
+	chainName := "(unknown)"
 	if chaincfg != nil {
 		chainName = chaincfg.Name()
+		if chainName == "" {
+			panic("chain config has no name, use params.AddChainConfig or add a chain to params package")
+		}
 	}
+	var cfg DirectoryConfig
+
+	// custom datadir
 	if cmd.IsSet(aquaflags.DataDirFlag.Name) {
 		cfg.DataDir = cmd.String(aquaflags.DataDirFlag.Name)
-		log.Info("set custom datadir", "path", cfg.DataDir, "chain", chainName)
+	} else {
+		cfg.DataDir = node.DefaultDatadirByChain(chaincfg)
 	}
-	if cfg.DataDir == "" && chaincfg == nil {
-		Fatalf("No chain and no data directory specified. Please specify a chain with --chain or a data directory with --datadir")
-	}
-	if chaincfg == nil {
-		// custom dir
+	if cfg.DataDir == "" {
+		Fatalf("Cannot determine default data directory, please set manually (--datadir)")
 		return cfg
 	}
-	// only return custom testnet dir if custom dir is NOT mainnet default dir
-	// prevents genesis mismatch in dir when switching -chain flag without changing --datadir
-	if cfg.DataDir != "" && chaincfg != params.MainnetChainConfig && cfg.DataDir != node.DefaultConfig.DataDir {
-		cfg.DataDir = filepath.Join(cfg.DataDir, chaincfg.Name())
-		return cfg
+	// custom keystore
+	switch {
+	case sense.IsNoKeys():
+		cfg.KeyStoreDir = ""
+	case cmd.IsSet(aquaflags.KeyStoreDirFlag.Name):
+		cfg.KeyStoreDir = cmd.String(aquaflags.KeyStoreDirFlag.Name)
+		log.Info("set custom keystore", "path", cfg.KeyStoreDir)
+	default:
+		cfg.KeyStoreDir = filepath.Join(cfg.DataDir, "keystore")
 	}
+	log.Info("assumed datadir", "path", cfg.DataDir, "chain", chainName)
 	return cfg
 
 	// switch {
@@ -633,30 +644,30 @@ func switchDatadir(cmd *cli.Command, chaincfg *params.ChainConfig) DirectoryConf
 	// 		return errors.New("invalid config name")
 	// 	}
 	// 	if chaincfg == params.MainnetChainConfig {
-	// 		newdatadir = node.DefaultConfig.DataDir
+	// 		newdatadir = node.DefaultDatadir()
 	// 	} else {
-	// 		newdatadir = filepath.Join(node.DefaultConfig.DataDir, "chains", chainName)
+	// 		newdatadir = filepath.Join(node.DefaultDatadir(), "chains", chainName)
 	// 	}
 	// 	cfg.P2P.ChainId = chaincfg.ChainId.Uint64()
 	// case cmd.IsSet(aquaflags.NetworkIdFlag.Name):
 	// 	cfg.P2P.ChainId = cmd.Uint(aquaflags.NetworkIdFlag.Name)
-	// 	newdatadir = filepath.Join(node.DefaultConfig.DataDir, fmt.Sprintf("chainid-%v", cfg.P2P.ChainId))
+	// 	newdatadir = filepath.Join(node.DefaultDatadir(), fmt.Sprintf("chainid-%v", cfg.P2P.ChainId))
 	// case cmd.Bool(aquaflags.DeveloperFlag.Name):
-	// 	newdatadir = filepath.Join(node.DefaultConfig.DataDir, "develop")
+	// 	newdatadir = filepath.Join(node.DefaultDatadir(), "develop")
 	// 	cfg.P2P.ChainId = 1337
 	// case cmd.Bool(aquaflags.TestnetFlag.Name):
-	// 	newdatadir = filepath.Join(node.DefaultConfig.DataDir, "testnet")
+	// 	newdatadir = filepath.Join(node.DefaultDatadir(), "testnet")
 	// 	cfg.P2P.ChainId = params.TestnetChainConfig.ChainId.Uint64()
 	// case cmd.Bool(Testnet2Flag.Name):
-	// 	newdatadir = filepath.Join(node.DefaultConfig.DataDir, "testnet2")
+	// 	newdatadir = filepath.Join(node.DefaultDatadir(), "testnet2")
 	// 	cfg.P2P.ChainId = params.Testnet2ChainConfig.ChainId.Uint64()
 	// case cmd.Bool(aquaflags.NetworkEthFlag.Name):
-	// 	newdatadir = filepath.Join(node.DefaultConfig.DataDir, "ethereum")
+	// 	newdatadir = filepath.Join(node.DefaultDatadir(), "ethereum")
 	// 	cfg.P2P.ChainId = params.EthnetChainConfig.ChainId.Uint64()
 	// default:
 	// 	// mainnet
 	// 	cfg.P2P.ChainId = params.MainnetChainConfig.ChainId.Uint64()
-	// 	newdatadir = node.DefaultConfig.DataDir
+	// 	newdatadir = node.DefaultDatadir()
 	// }
 
 	// if cmd.IsSet(aquaflags.KeyStoreDirFlag.Name) {
@@ -684,12 +695,24 @@ func SetNodeConfig(cmd *cli.Command, cfg *node.Config) error {
 	)
 
 	chainName, chaincfg, bootstrapNodes, directoryCfg = getStuff(cmd)
-	log.Info("Loading...", "Chain Select", chainName, "ChainID", chaincfg.ChainId, "Datadir", directoryCfg.DataDir)
+	log.Info("Loading...",
+		"chain", chainName,
+		"chainID", chaincfg.ChainId,
+		"datadir", directoryCfg.DataDir,
+		"keystore", directoryCfg.KeyStoreDir,
+		"bootnodes", len(bootstrapNodes),
+		"rpc", cfg.HTTPHost,
+		"ws", cfg.WSHost,
+		"p2p", cfg.P2P.ListenAddr,
+		"ipc", cfg.IPCPath,
+		"nokeys", cfg.NoKeys,
+	)
 	cfg.DataDir = directoryCfg.DataDir
 	cfg.KeyStoreDir = directoryCfg.KeyStoreDir
 	if cfg.KeyStoreDir == "" {
 		cfg.NoKeys = true
 		os.Setenv("NO_KEYS", "true") // might be too late
+		log.Warn("keystore set to empty string, disabling keys")
 	}
 	cfg.P2P.ChainId = chaincfg.ChainId.Uint64()
 	cfg.P2P.BootstrapNodes = bootstrapNodes
@@ -703,7 +726,6 @@ func SetNodeConfig(cmd *cli.Command, cfg *node.Config) error {
 		cfg.NoKeys = cmd.Bool(aquaflags.NoKeysFlag.Name)
 		log.Info("no keys mode", "enabled", cfg.NoKeys)
 	}
-
 	if cfg.NoKeys {
 		log.Info("No-Keys mode")
 	}
@@ -1191,7 +1213,7 @@ func Mkconfig(chainName string, configFileOptional string, checkDefaultConfigFil
 		}
 		var slug string // eg: "_testnet" for testnet, "" for mainnet
 		if params.MainnetChainConfig == chainCfg {
-			userdatadir = node.DefaultConfig.DataDir
+			userdatadir = node.DefaultDatadir()
 		} else {
 			userdatadir = node.DefaultDatadirByChain(chainCfg)
 		}

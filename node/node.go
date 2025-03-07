@@ -184,7 +184,9 @@ func (n *Node) Register(constructor ServiceConstructor) error {
 	return nil
 }
 
-// Start create a live P2P node and starts running it.
+var NoCountdown = false
+
+// Start create a live P2P node and starts running it, immediately returning
 func (n *Node) Start(ctx context.Context) error {
 	n.lock.Lock()
 	defer n.lock.Unlock()
@@ -198,6 +200,11 @@ func (n *Node) Start(ctx context.Context) error {
 	}
 	if err := n.openDataDir(); err != nil {
 		return err
+	}
+
+	if sense.IsNoKeys() && !n.config.NoKeys {
+		n.config.NoKeys = true
+		n.log.Warn("NO_KEYS mode enabled (again?)")
 	}
 
 	// Initialize the p2p server. This creates the node key and
@@ -247,7 +254,9 @@ func (n *Node) Start(ctx context.Context) error {
 		log.Warn("no virtual hosts, using default (any)")
 		n.config.HTTPVirtualHosts = []string{"*"}
 	}
-	{
+
+	// do startup alert if enabled
+	if alerts.Enabled() {
 		hostname, _ := os.Hostname()
 		if hostname == "" {
 			hostname = "???"
@@ -350,8 +359,7 @@ func parseAllowNet(allowIPmasks []string) netutil.Netlist {
 		}
 		if cidr == "0.0.0.0/0" {
 			log.Warn("Allowing public RPC access. Automatically enabling NO_KEYS=1 and NO_SIGN=1")
-			DefaultConfig.NoKeys = true
-			DefaultConfig.RPCNoSign = true
+
 		}
 		if !strings.Contains(cidr, "/") {
 			cidr += "/32" // helper for single IPs

@@ -197,9 +197,9 @@ func NewBlockChain(ctx context.Context, db aquadb.Database, cacheConfig *CacheCo
 			headerByNumber := bc.GetHeaderByNumber(header.Number.Uint64())
 			// make sure the headerByNumber (if present) is in our current canonical chain
 			if headerByNumber != nil && headerByNumber.Hash() == header.Hash() {
-				log.Error("Found bad hash, rewinding chain", "number", header.Number, "hash", header.ParentHash)
+				log.Error("TestGenerate: Found bad hash, rewinding chain", "number", header.Number, "hash", header.ParentHash)
 				bc.SetHead(header.Number.Uint64() - 1)
-				log.Error("Chain rewind was successful, resuming normal operation")
+				log.Error("TestGenerate: Chain rewind was successful, resuming normal operation")
 			}
 		}
 	}

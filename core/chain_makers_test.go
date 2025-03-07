@@ -61,7 +61,7 @@ func newCanonical(engine consensus.Engine, n int, full bool) (aquadb.Database, *
 		ctx = ctxer.GetContext()
 	default:
 		ctx = context.TODO()
-		log.Warn("no context in test chain maker consensus engine", "engine", fmt.Sprintf("%T", engine)) // TODO: add context or getcontext to all engines
+		log.Warn("no context in test chain maker consensus engine, should be fine...", "engine", fmt.Sprintf("%T", engine)) // TODO: add context or getcontext to all engines
 	}
 
 	blockchain, _ := NewBlockChain(ctx, db, nil, params.TestChainConfig, engine, vm.Config{

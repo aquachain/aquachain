@@ -417,7 +417,7 @@ func (s *sharedUDPConn) Close() error {
 	return nil
 }
 
-var NoCountdown = false
+var NoCountdown = sense.IsNoCountdown()
 
 // Start starts running the server.
 // Servers can not be re-used after stopping.
