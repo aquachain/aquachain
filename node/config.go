@@ -467,13 +467,14 @@ func makeAccountManager(conf *Config) (*accounts.Manager, string, error) {
 	if err := os.MkdirAll(keydir, 0700); err != nil {
 		return nil, "", err
 	}
-	stat, err := os.Stat(keydir)
-	if err != nil {
-		return nil, "", err
-	}
-
-	if stat.Mode()&0077 != 0 {
-		return nil, "", fmt.Errorf("keystore directory has insecure permissions: %s", keydir)
+	if runtime.GOOS != "windows" {
+		stat, err := os.Stat(keydir)
+		if err != nil {
+			return nil, "", err
+		}
+		if stat.Mode()&0077 != 0 {
+			return nil, "", fmt.Errorf("keystore directory has insecure permissions: %s", keydir)
+		}
 	}
 
 	// Assemble the account manager and supported backends
