@@ -188,6 +188,8 @@ func web3toWei(call jsruntime.FunctionCall) jsruntime.Value {
 	var unit = "aqua"
 	if input2 != jsruntime.UndefinedValue() && input2.IsString() {
 		unit, _ = input2.ToString()
+	} else if input2 != jsruntime.UndefinedValue() {
+		return jsruntime.New().MakeCustomError("Error", "expected 1 or 2 args (amount, unit)")
 	}
 	input, err := decimal.NewFromString(input1.String())
 	if err != nil {
