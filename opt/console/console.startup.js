@@ -30,8 +30,12 @@ function getinfo() {
     try {
         info["coinbase"] = aqua.coinbase;
     } catch (e) {
-        console.log("getting coinbase:", e);
+        if (e.message.indexOf("no-keybase mode") !== -1) {
+            info["coinbase"] = "NO_KEYS";
+        } else {
+            console.log("getting coinbase:", e);
         info["coinbase"] = undefined;
+        }
      }
      var head = aqua.getBlock('latest');
      var headinfo = {
