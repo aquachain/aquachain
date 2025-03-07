@@ -192,10 +192,10 @@ func (c *jsonCodec) ReadRequestHeaders() ([]rpcRequest, bool, Error) {
 		}
 	} else {
 		req, ok, err = parseRequest(incomingMsg)
-		if true {
+		if _DEBUG_RPC {
 			if err == nil {
 				log.Info("rpc request", "payloadSize", len(incomingMsg),
-					"from", ip,
+					"from", ip, // or 'pipe' or '@'
 					"method", req[0].service+"_"+req[0].method,
 					"caller2", fmt.Sprintf("%v", log.Caller(1)), // eg:
 				)
