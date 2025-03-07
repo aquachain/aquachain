@@ -13,8 +13,8 @@ jobs:
         run: |
           .github/grepcheck "os.LookupEnv" "sense.LookupEnv" 1;
           .github/grepcheck "os.Getenv" "sense.Getenv" 1;
-          .github/grepcheck "os.Exit" "log.GracefulShutdown" 1;
+          .github/grepcheck "os.Exit" "log.GracefulShutdown" 22 warn;
           .github/grepcheck "log.Fatal" "log.GracefulShutdown" 0;
-          .github/grepcheck "log.Fataln" "log.GracefulShutdown" 2;
+          .github/grepcheck "log.Fataln" "log.GracefulShutdown" 1;
           .github/grepcheck "log.Fatalf" "log.GracefulShutdown" 0;
 

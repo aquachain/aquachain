@@ -28,19 +28,20 @@ grepcheck() {
     fi
     found=$(grep -rn "${function_name}"'(' *.go */*.go */*/*.go */*/*/*.go */*/*/*/*.go */*/*/*/*/*.go | grep -v test)
     if [ -z "$found" ] && [ "$acceptable" -eq 0 ]; then
-        log -e "No occurrences of $function_name found"
         return
     fi
     count=$(echo "$found" | wc -l)
     if [[ $count -gt $acceptable ]]; then
+        log "##################################################"
         log -t "$found" | head -n 20
         log "$function_name occurrences: $count"
         log "currently ${count} found, expected ${acceptable}"
         log found $count occurrences of $function_name
-        log "ERR Use $replacement instead of $function_name ❌"
         if [ "$warn_only" == "true" ]; then
+            log "WARN Use $replacement instead of $function_name 👀"
             return
         fi
+        log "ERR Use $replacement instead of $function_name ❌"
         exit 1
     elif [[ $count -lt $acceptable ]]; then
         log grepcheck config can be updated: currently ${count} found, expected ${acceptable}
