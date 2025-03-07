@@ -56,13 +56,19 @@ function getinfo() {
 function welcome() {
     var info = getinfo();
     var headinfo = info.headinfo;
+
     console.log("instance:   " + info.instance);
     console.log("at block:   " + headinfo.block + " (" + new Date(1000 * headinfo.timestamp) + ")");
     console.log("    head:   " + headinfo.hash);
     console.log("coinbase:   " + info.coinbase);
     console.log("  gasPrice: " + info.gasPrice + " gigawei");
     console.log("  gasLimit: " + headinfo.gasLimit + " units");
+    var diffstr = "";
+    if (headinfo.difficulty < 1000) {
+    console.log("nextsigner: " + headinfo.difficulty);
+    } else {
     console.log("difficulty: " + (headinfo.difficulty / 1000000.0).toFixed(2) + " MH");
+    }
     console.log("   chainId: " + info.chainId);
     console.log("      algo: " + headinfo.algo + " (" + headinfo.algoname + ")");
     if (info.datadir !== undefined) {
