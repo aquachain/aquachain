@@ -92,8 +92,8 @@ func FastParseArgsBool(flagname string) bool {
 	if next == "" {
 		return x
 	}
-	// next is "disabled"
-	if isFalsy(next) {
+	// skip if next is flag, check if next is "disabled"
+	if !strings.HasPrefix(next, "-") && isFalsy(next) {
 		fmt.Fprintf(os.Stderr, "warn: bool is falsy, right?!: %q\n", next)
 		return false
 	}
@@ -109,7 +109,9 @@ func boolString(s string, unset bool, unparsable bool) bool {
 	case "false", "no", "0", "off", "disabled", "disable":
 		return false
 	default:
-		fmt.Fprintf(os.Stderr, "warn: unknown bool string: %q\n", s)
+		if !strings.HasPrefix(s, "-") {
+			fmt.Fprintf(os.Stderr, "warn: unknown bool string: %q\n", s)
+		}
 		return unparsable
 	}
 
