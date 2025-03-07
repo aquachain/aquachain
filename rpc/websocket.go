@@ -54,20 +54,32 @@ var websocketJSONCodec = websocket.Codec{
 func (srv *Server) WebsocketHandler(allowedOrigins []string, allowedIP netutil.Netlist, reverseproxy bool) http.Handler {
 	return websocket.Server{
 		Handshake: wsHandshakeValidator(allowedOrigins, allowedIP, reverseproxy),
-		Handler: func(conn *websocket.Conn) {
-
-			// Create a custom encode/decode pair to enforce payload size and number encoding
-			conn.MaxPayloadBytes = maxHTTPRequestContentLength
-
-			encoder := func(v interface{}) error {
-				return websocketJSONCodec.Send(conn, v)
-			}
-			decoder := func(v interface{}) error {
-				return websocketJSONCodec.Receive(conn, v)
-			}
-			srv.ServeCodec(NewCodec(conn, encoder, decoder), OptionMethodInvocation|OptionSubscriptions)
-		},
+		Handler:   srv.websocketHandler,
 	}
+}
+
+func (srv *Server) websocketHandler(conn *websocket.Conn) {
+	if conn == nil {
+		log.Error("websocket: conn is nil")
+		return
+	}
+	if remote := conn.RemoteAddr(); remote == nil {
+		log.Error("websocket: remote address is nil")
+		return
+	}
+	// Create a custom encode/decode pair to enforce payload size and number encoding
+	conn.MaxPayloadBytes = maxHTTPRequestContentLength
+
+	encoder := func(v interface{}) error {
+		return websocketJSONCodec.Send(conn, v)
+	}
+	decoder := func(v interface{}) error {
+		return websocketJSONCodec.Receive(conn, v)
+	}
+	name := "websocket"
+	log.Warn("websocket: connection", "remote", fmt.Sprintf("%#v", conn))
+	// name := fmt.Sprintf("ws:%s", conn.RemoteAddr().String())
+	srv.ServeCodec(name, NewCodec(conn, encoder, decoder), OptionMethodInvocation|OptionSubscriptions)
 }
 
 // NewWSServer creates a new websocket RPC server around an API provider.

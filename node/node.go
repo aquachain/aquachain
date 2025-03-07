@@ -508,7 +508,7 @@ func (n *Node) startHTTP(endpoint string, apis []rpc.API, whitelistModules []str
 	}
 	// Generate the whitelist based on the allowed modules
 	whitelist := make(map[string]bool)
-	log.Info("HTTP whitelist", "endpoint", endpoint, "modules", whitelistModules, "signing-enabled", !n.config.RPCNoSign, "keystore-available", !n.config.NoKeys)
+	log.Info("HTTP whitelist", "endpoint", endpoint, "modules", whitelistModules, "signing-enabled", !sense.IsNoSign(), "keystore-available", !sense.IsNoKeys())
 	for _, module := range whitelistModules {
 		whitelist[module] = true
 	}

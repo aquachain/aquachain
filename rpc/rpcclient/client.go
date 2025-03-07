@@ -477,6 +477,8 @@ func (c *Client) reconnect(ctx context.Context) error {
 	}
 }
 
+var debuglog = sense.EnvBool("DEBUG_RPC")
+
 // dispatch is the main loop of the client.
 // It sends read messages to waiting calls to Call and BatchCall
 // and subscription notifications to registered subscriptions.
@@ -522,7 +524,9 @@ func (c *Client) dispatch(conn net.Conn) {
 					}})
 					c.handleNotification(msg)
 				case msg.isResponse():
-					log.Trace("", "id", msg.ID, "method", msg.Method, "result", msg.Result)
+					if debuglog {
+						log.Trace("", "id", msg.ID, "method", msg.Method, "result", msg.Result)
+					}
 					c.handleResponse(msg)
 				default:
 					log.Warn("", "me", log.Lazy{Fn: func() string {

@@ -56,9 +56,6 @@ func NewDefaultConfig() *Config {
 		UserIdent:      sense.Getenv("AQUA_USERIDENT"),
 		HTTPHost:       "",
 		WSHost:         "",
-		RPCNoSign:      sense.EnvBool("NO_SIGN"), // doesnt do anything here. something needs to read it
-		NoKeys:         sense.EnvBool("NO_KEYS"), // doesnt do anything here. something needs to read it
-		NoCountdown:    sense.EnvBool("NO_COUNTDOWN"),
 		KeyStoreDir:    sense.Getenv("AQUA_KEYSTORE_DIR"),
 	}
 	return x

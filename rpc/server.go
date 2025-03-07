@@ -184,15 +184,19 @@ func isProtectedMethodName(name string) bool {
 	return name == "SignTransaction" || name == "Sign" || name == "SendTransaction"
 }
 
-// serveRequest will reads requests from the codec, calls the RPC callback and
+var debugrpc = sense.EnvBool("DEBUG_RPC")
+
+// serveRequest reads requests from the codec, calls the RPC callback and
 // writes the response to the given codec.
 //
 // If singleShot is true it will process a single request, otherwise it will handle
 // requests until the codec returns an error when reading a request (in most cases
 // an EOF). It executes requests in parallel when singleShot is false.
-func (s *Server) serveRequest(codec ServerCodec, singleShot bool, options CodecOption) error {
-	log.Info("serving request", "codec", fmt.Sprintf("%T", codec), "singleShot", singleShot, "options", common.ToJson(options), "run", atomic.LoadInt32(&s.run))
-	defer log.Info("serving request done", "codec", fmt.Sprintf("%T", codec), "singleShot", singleShot, "options", common.ToJson(options), "run", atomic.LoadInt32(&s.run))
+func (s *Server) serveRequest(name string, codec ServerCodec, singleShot bool, options CodecOption) error {
+	if debugrpc {
+		log.Info("serving request", "name", name, "codec", fmt.Sprintf("%T", codec), "singleShot", singleShot, "options", common.ToJson(options), "run", atomic.LoadInt32(&s.run))
+		defer log.Info("serving request done", "codec", fmt.Sprintf("%T", codec), "singleShot", singleShot, "options", common.ToJson(options), "run", atomic.LoadInt32(&s.run))
+	}
 	var pend sync.WaitGroup
 
 	defer func() {
@@ -240,12 +244,14 @@ func (s *Server) serveRequest(codec ServerCodec, singleShot bool, options CodecO
 			return nil
 		}
 
-		for _, req := range reqs {
-			name := "???"
-			if req.callb != nil {
-				name = req.callb.method.Name
+		if debugrpc {
+			for _, req := range reqs {
+				name := "???"
+				if req.callb != nil {
+					name = req.callb.method.Name
+				}
+				log.Trace("got serving request", "id", req.id, "method", name, "batch", batch)
 			}
-			log.Trace("got serving request", "id", req.id, "method", name, "batch", batch)
 		}
 		// check if server is ordered to shutdown and return an error
 		// telling the client that his request failed.
@@ -291,16 +297,16 @@ func (s *Server) serveRequest(codec ServerCodec, singleShot bool, options CodecO
 // stopped. In either case the codec is closed.
 //
 // was ServerCodec
-func (s *Server) ServeCodec(codec *JsonCodec, options CodecOption) {
+func (s *Server) ServeCodec(name string, codec *JsonCodec, options CodecOption) {
 	defer codec.Close()
-	s.serveRequest(codec, false, options)
+	s.serveRequest(name, codec, false, options)
 }
 
 // ServeSingleRequest reads and processes a single RPC request from the given codec. It will not
 // close the codec unless a non-recoverable error has occurred. Note, this method will return after
 // a single request has been processed!
 func (s *Server) ServeSingleRequest(codec ServerCodec, options CodecOption) {
-	s.serveRequest(codec, true, options)
+	s.serveRequest("HTTP?", codec, true, options)
 }
 
 // Stop will stop reading new requests, wait for stopPendingRequestTimeout to allow pending requests to finish,

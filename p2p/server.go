@@ -437,7 +437,7 @@ func (srv *Server) Start(ctx context.Context) (err error) {
 		srv.log = log.New()
 	}
 	doitnow := NoCountdown || sense.IsNoCountdown()
-	if !doitnow {
+	if !doitnow && !srv.Offline {
 		chaincfg := srv.Config.ChainConfig()
 		if chaincfg == nil {
 			log.Warn("Chain config not set, using test chainconfig")
@@ -446,7 +446,7 @@ func (srv *Server) Start(ctx context.Context) (err error) {
 		if !doitnow && !(chaincfg == params.MainnetChainConfig || chaincfg == params.TestnetChainConfig || chaincfg == params.Testnet2ChainConfig || chaincfg == params.Testnet3ChainConfig) { // for testing
 			doitnow = true
 		}
-		if !doitnow && sense.Getenv("TESTING_TEST") != "1" {
+		if !doitnow {
 			for i := 10; i > 0 && ctx.Err() == nil; i-- {
 				log.Info("Starting P2P networking", "in", i, "on", srv.ListenAddr, "chain", chaincfg.Name())
 				for i := 0; i < 10 && ctx.Err() == nil; i++ {
@@ -970,16 +970,16 @@ func (srv *Server) runPeer(p *Peer) {
 
 // NodeInfo represents a short summary of the information known about the host.
 type NodeInfo struct {
-	ID    string `json:"id"`    // Unique node identifier (also the encryption key)
-	Name  string `json:"name"`  // Name of the node, including client type, version, OS, custom data
-	Enode string `json:"enode"` // Enode URL for adding this peer from remote peers
-	IP    string `json:"ip"`    // IP address of the node
+	ID    string `json:"id"`           // Unique node identifier (also the encryption key)
+	Name  string `json:"name"`         // Name of the node, including client type, version, OS, custom data
+	Enode string `json:"enode"`        // Enode URL for adding this peer from remote peers
+	IP    string `json:"ip,omitempty"` // IP address of the node
 	Ports struct {
-		Discovery int `json:"discovery"` // UDP listening port for discovery protocol
-		Listener  int `json:"listener"`  // TCP listening port for RLPx
+		Discovery int `json:"discovery,omitempty"` // UDP listening port for discovery protocol
+		Listener  int `json:"listener,omitempty"`  // TCP listening port for RLPx
 	} `json:"ports"`
 	ListenAddr string                 `json:"listenAddr"`
-	Protocols  map[string]interface{} `json:"protocols"`
+	Protocols  map[string]interface{} `json:"protocols,omitempty"`
 }
 
 // NodeInfo gathers and returns a collection of metadata known about the host.
@@ -1001,7 +1001,7 @@ func (srv *Server) NodeInfo() *NodeInfo {
 	// Gather all the running protocol infos (only once per protocol type)
 	for _, proto := range srv.Protocols {
 		if _, ok := info.Protocols[proto.Name]; !ok {
-			nodeInfo := interface{}("unknown")
+			nodeInfo := (any)("unknown")
 			if query := proto.NodeInfo; query != nil {
 				nodeInfo = proto.NodeInfo()
 			}

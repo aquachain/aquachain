@@ -30,7 +30,7 @@ func DialInProc(ctx context.Context, handler *rpc.Server) *Client {
 	}
 	c, err := newClient(ctx, func(context.Context) (net.Conn, error) {
 		p1, p2 := net.Pipe()
-		go handler.ServeCodec(rpc.NewJSONCodec(p1), rpc.OptionMethodInvocation|rpc.OptionSubscriptions)
+		go handler.ServeCodec(p2.RemoteAddr().String(), rpc.NewJSONCodec(p1), rpc.OptionMethodInvocation|rpc.OptionSubscriptions)
 		return p2, nil
 	})
 	if err != nil {
