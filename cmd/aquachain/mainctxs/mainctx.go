@@ -79,6 +79,6 @@ func (x multicancelcause) CancelCause(err error) {
 }
 
 func maincancel(err error) {
-	log.Warn("calling main cancel: interrupted", "err", err)
+	log.Trace("calling main cancel: interrupted", "err", err)
 	maincancelreal(err)
 }
