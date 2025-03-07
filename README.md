@@ -9,7 +9,7 @@ View or Improve the Documentation online: https://aquachain.github.io/docs/
 [![Website](https://img.shields.io/badge/Website-aqua.github.io-blue.svg)](https://aquachain.github.io)
 [![Explorer](https://img.shields.io/badge/Block_Explorer-aquachain.github.io/explorer-blue.svg)](https://aquachain.github.io/explorer/)
 
-[![Build and Test](https://github.com/aquachain/aquachain/actions/workflows/test.yml/badge.svg)](https://github.com/aquachain/aquachain/actions/workflows/test.yml)
+[![Build and Test](https://github.com/aquachain/aquachain/actions/workflows/autobuildtest.yml/badge.svg?branch=master)](https://github.com/aquachain/aquachain/actions/workflows/autobuildtest.yml)
 [![Release](https://github.com/aquachain/aquachain/actions/workflows/release.yml/badge.svg)](https://github.com/aquachain/aquachain/releases/)
 
 [![Chat on Matrix](https://matrix.to/img/matrix-badge.svg)](https://matrix.to/#/!ZIGUfKJVCVhrCjBRfz:matrix.org/lobby?via=matrix.org)
