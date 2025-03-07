@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   run:
-    name: Build/Run Test (Ubuntu/Windows)
+    name: Test (Ubuntu/Windows)
     continue-on-error: true
     runs-on: ${{ matrix.operating-system }}
     strategy:
