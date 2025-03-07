@@ -13,7 +13,8 @@ concurrency:
 
 jobs:
   run:
-    name: Build Pre-release
+    name: Build/Run Test (Ubuntu/Windows)
+    continue-on-error: true
     runs-on: ${{ matrix.operating-system }}
     strategy:
       matrix:
@@ -21,16 +22,10 @@ jobs:
         # operating-system: [ubuntu-24.04, ubuntu-22.04, windows-2025, windows-2022]
     steps:
       - name: Checkout this branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
       - name: show system info
         run: env || true; uname -a || true; test ! -e /etc/os-release || cat /etc/os-release; echo ${{ github.ref_name }} - ${{ github.ref }}
       - name: Build aquachain
-        run: make clean release release=1
-      - name: Upload binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: aquachain-${{ github.ref_name || 'v0.0.0-auto' }}-${{ github.sha }}-${{ github.run_id }}-${{ matrix.operating-system}}
-          path: release/*
-          retention-days: 90
-      # - name: Run tests (short only)
-      #   run: make test
+        run: make
+      - name: Run tests
+        run: make test
