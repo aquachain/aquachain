@@ -254,10 +254,10 @@ func (c *Console) init(preload []string) error {
 	}
 
 	{ // bugfix for web3.toWei otto truncate float
-		c.jsre.Set("_toWei", web3toWei)
-		c.jsre.Set("_fromWei", web3fromWei)
-		c.jsre.Run(`web3.toWei = _toWei;`)
-		c.jsre.Run(`web3.fromWei = _fromWei;`)
+		c.jsre.Set("toWei", web3toWei)
+		c.jsre.Set("fromWei", web3fromWei)
+		c.jsre.Run(`web3.toWei = toWei;`)
+		c.jsre.Run(`web3.fromWei = fromWei;`)
 
 	}
 	// NEW: add 'print' function alias for console.log("...")
