@@ -38,6 +38,7 @@ import (
 	"gitlab.com/aquachain/aquachain/p2p/nat"
 	"gitlab.com/aquachain/aquachain/p2p/netutil"
 	"gitlab.com/aquachain/aquachain/params"
+	"gitlab.com/aquachain/aquachain/subcommands/mainctxs"
 )
 
 const (
@@ -349,7 +350,7 @@ func (srv *Server) Self() *discover.Node {
 
 	if !srv.running {
 		log.Warn("Server not running, returning zero address")
-		return &discover.Node{IP: net.IPv4zero, UDP: 999, TCP: 999}
+		return &discover.Node{}
 	}
 	return srv.makeSelf(srv.listener, srv.ntab)
 }
@@ -852,9 +853,8 @@ func (srv *Server) listenLoop() {
 // as a peer. It returns when the connection has been added as a peer
 // or the handshakes have failed.
 func (srv *Server) SetupConn(fd net.Conn, flags connFlag, dialDest *discover.Node) error {
-	self := srv.Self()
-	if self == nil {
-		return errors.New("shutdown")
+	if mainctxs.Main().Err() != nil {
+		return fmt.Errorf("shutting down")
 	}
 	c := &conn{fd: fd, transport: srv.newTransport(fd), flags: flags, cont: make(chan error)}
 	err := srv.setupConn(c, flags, dialDest)
