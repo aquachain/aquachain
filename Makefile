@@ -123,6 +123,10 @@ endif
 	$(info Building to directory: bin/${GOOS}-${GOARCH})
 	cd bin/${GOOS}-${GOARCH} && GOOS=${GOOS} GOARCH=${GOARCH} \
 		CGO_ENABLED=$(CGO_ENABLED) ${GOCMD} build -o . -tags '$(tags)' $(GO_FLAGS) ../.${main_command_dir}
+	@echo "compiled: bin/${GOOS}-${GOARCH}/*"
+	@sha256sum bin/${GOOS}-${GOARCH}/aquachain$(winextension) 2>/dev/null || true
+	@file bin/${GOOS}-${GOARCH}/aquachain$(winextension) 2>/dev/null || true
+	@ls -lh bin/${GOOS}-${GOARCH}/aquachain$(winextension) 2>/dev/null || true
 
 help: commandlist
 	@echo Variables:
