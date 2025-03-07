@@ -1072,7 +1072,7 @@ type MigratedCommand struct {
 
 func (m *MigratedCommand) Run(ctx context.Context, cmd *cli.Command) error {
 	cmdmap := map[string]string{}
-	log.Info("migrating command", "name", cmd.Name,
+	log.Debug("migrating command", "name", cmd.Name,
 		"flags", cmd.FlagNames(), "rootname", cmd.Root().Name, "rootflags", cmd.Root().FlagNames(),
 		"local", cmd.LocalFlagNames(), "args", cmd.Arguments)
 	for _, c := range cmd.Commands {
