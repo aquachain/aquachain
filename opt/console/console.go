@@ -32,6 +32,7 @@ import (
 	"github.com/peterh/liner"
 	"github.com/shopspring/decimal"
 	"gitlab.com/aquachain/aquachain/common/log"
+	"gitlab.com/aquachain/aquachain/common/sense"
 	"gitlab.com/aquachain/aquachain/internal/jsre"
 	"gitlab.com/aquachain/aquachain/internal/web3ext"
 	"gitlab.com/aquachain/aquachain/opt/console/jsruntime"
@@ -179,6 +180,9 @@ func New(config Config) (*Console, error) {
 }
 
 func web3toWei(call jsruntime.FunctionCall) jsruntime.Value {
+	if debugWeb3Wei {
+		log.Info("js.toWei", "args", fmt.Sprintf("%q", call.ArgumentList))
+	}
 	var input1 = call.Argument(0)
 	if input1 == jsruntime.UndefinedValue() {
 		return jsruntime.New().MakeCustomError("Error", "expected 1 or 2 args (amount, unit)")
@@ -209,8 +213,12 @@ func web3toWei(call jsruntime.FunctionCall) jsruntime.Value {
 	return out
 }
 
+var debugWeb3Wei = sense.EnvBool("DEBUG_WEB3WEI")
+
 func web3fromWei(call jsruntime.FunctionCall) jsruntime.Value {
-	log.Info("js.fromWei", "args", call.ArgumentList)
+	if debugWeb3Wei {
+		log.Info("js.fromWei", "args", fmt.Sprintf("%q", call.ArgumentList))
+	}
 	weiString, err := call.Argument(0).ToString() // eg: "1230000000000000000"
 	if err != nil {
 		return jsruntime.New().MakeCustomError("Error", err.Error())
