@@ -136,6 +136,14 @@ func NewEIP155Signer(chainId *big.Int) EIP155Signer {
 	}
 }
 
+func (s EIP155Signer) String() string {
+	return fmt.Sprintf("EIP155Signer{chainId: %d}", s.chainId.Uint64())
+}
+
+func (s EIP155Signer) ChainId() uint64 {
+	return s.chainId.Uint64()
+}
+
 func (s EIP155Signer) Equal(s2 Signer) bool {
 	eip155, ok := s2.(EIP155Signer)
 	if !ok {
