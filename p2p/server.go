@@ -436,22 +436,27 @@ func (srv *Server) Start(ctx context.Context) (err error) {
 	if srv.log == nil {
 		srv.log = log.New()
 	}
+
+	// p2p countdown
+	chaincfg := srv.Config.ChainConfig()
 	doitnow := NoCountdown || sense.IsNoCountdown()
-	if !doitnow && !srv.Offline {
-		chaincfg := srv.Config.ChainConfig()
+	if !doitnow && !srv.Offline { // maybe turn off countdown
 		if chaincfg == nil {
 			log.Warn("Chain config not set, using test chainconfig")
 			chaincfg = params.TestChainConfig
 		}
-		if !doitnow && !(chaincfg == params.MainnetChainConfig || chaincfg == params.TestnetChainConfig || chaincfg == params.Testnet2ChainConfig || chaincfg == params.Testnet3ChainConfig) { // for testing
-			doitnow = true
+		is_normal := (chaincfg == params.MainnetChainConfig || chaincfg == params.TestnetChainConfig || chaincfg == params.Testnet2ChainConfig || chaincfg == params.Testnet3ChainConfig)
+		if !doitnow && !is_normal {
+			doitnow = true // skip for custom testnets, testing etc
 		}
-		if !doitnow {
-			for i := 10; i > 0 && ctx.Err() == nil; i-- {
-				log.Info("Starting P2P networking", "in", i, "on", srv.ListenAddr, "chain", chaincfg.Name())
-				for i := 0; i < 10 && ctx.Err() == nil; i++ {
-					time.Sleep(time.Second / 10)
-				}
+	}
+	if !doitnow { // do p2p countdown
+		for i := 10; i > 0 && ctx.Err() == nil; i-- {
+			log.Info("Starting P2P networking (use -now flag to skip waiting)", "in", i, "on", srv.ListenAddr, "chain", chaincfg.Name(), "chainid", srv.ChainId, "name", srv.Name)
+			select {
+			case <-ctx.Done():
+				return context.Cause(ctx)
+			case <-time.After(time.Second):
 			}
 		}
 	}
@@ -460,6 +465,9 @@ func (srv *Server) Start(ctx context.Context) (err error) {
 	}
 
 	// static fields
+	if srv.ChainId == 0 {
+		return fmt.Errorf("chain id not set")
+	}
 	if srv.PrivateKey == nil {
 		return fmt.Errorf("p2p.Server.PrivateKey must be set to a non-nil key")
 	}
@@ -482,10 +490,6 @@ func (srv *Server) Start(ctx context.Context) (err error) {
 		if err := srv.startDiscovery(); err != nil {
 			return err
 		}
-	}
-
-	if srv.ChainId == 0 {
-		return fmt.Errorf("chain id not set")
 	}
 
 	dynPeers := srv.maxDialedConns()
