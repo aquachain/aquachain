@@ -479,7 +479,6 @@ var small = web3.fromWei(inwei, 'aqua');
 var big = web3.toWei(incoin, 'aqua');
 if (small.toString() != incoin) throw 'small ' + small.toString() + ' ' + incoin;
 if (big.toString() != inwei) throw 'big ' + big.toString() + ' ' + inwei;
-
 `
 	_, err = jsre.Run(jstest)
 	if err != nil {
