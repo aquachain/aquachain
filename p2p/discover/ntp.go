@@ -49,8 +49,8 @@ func checkClockDrift() {
 		return
 	}
 	if drift < -driftThreshold || drift > driftThreshold {
-		log.Warn(fmt.Sprintf("System clock seems off by %v, which can prevent network connectivity", drift))
-		log.Warn("Please enable network time synchronisation in system settings.")
+		log.Warn(fmt.Sprintf("System clock seems off by %v, which will prevent network connectivity", drift))
+		log.Warn("Please enable network time synchronisation in system settings. (try running 'ntpdate-debian' as root)")
 	} else {
 		log.Debug("NTP sanity check done", "drift", drift)
 	}
