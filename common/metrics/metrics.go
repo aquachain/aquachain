@@ -57,10 +57,10 @@ func init() {
 // process.
 func CollectProcessMetrics(refresh time.Duration) {
 	// Short circuit if the metrics system is disabled
-	log.Info("Enabling metrics collection")
 	if !Enabled {
 		return
 	}
+	log.Info("Enabling metrics collection")
 	// Create the various data collectors
 	memstats := make([]*runtime.MemStats, 2)
 	diskstats := make([]*DiskStats, 2)
