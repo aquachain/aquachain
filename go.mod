@@ -3,7 +3,7 @@ module gitlab.com/aquachain/aquachain
 go 1.24.0
 
 require (
-	github.com/BurntSushi/toml v1.4.0
+	github.com/BurntSushi/toml v1.5.0
 	github.com/aerth/tgun v0.1.7
 	github.com/btcsuite/btcd/btcec/v2 v2.3.5-0.20250307104530-c7191d2913c7
 	github.com/cespare/cp v1.1.1
