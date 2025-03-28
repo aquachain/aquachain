@@ -1,7 +1,6 @@
 module gitlab.com/aquachain/aquachain
 
 go 1.24.0
-
 require (
 	github.com/BurntSushi/toml v1.4.0
 	github.com/aerth/tgun v0.1.7
@@ -27,7 +26,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/syndtr/goleveldb v1.0.0
 	golang.org/x/crypto v0.36.0
-	golang.org/x/net v0.37.0
+	golang.org/x/net v0.38.0
 	golang.org/x/sys v0.31.0
 	golang.org/x/tools v0.31.0
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c
