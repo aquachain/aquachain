@@ -1,7 +1,6 @@
 module gitlab.com/aquachain/aquachain
 
 go 1.24.0
-
 require (
 	github.com/BurntSushi/toml v1.4.0
 	github.com/aerth/tgun v0.1.7
@@ -47,7 +46,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	github.com/urfave/cli/v3 v3.0.0-beta1
+	github.com/urfave/cli/v3 v3.1.1
 	golang.org/x/mod v0.24.0 // indirect
 	golang.org/x/sync v0.12.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
