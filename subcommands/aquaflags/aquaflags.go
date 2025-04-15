@@ -43,7 +43,7 @@ var (
 		Usage: "Suffix for generating a vanity address (start small)",
 	}
 	// General settings
-	// DataDirFlag = &DirectoryFlag{
+	// DataDirFlag = &cli.StringFlag{
 	// 	Name:  "datadir",
 	// 	Usage: "Data directory for the databases, IPC socket, and keystore (also see -keystore flag)",
 	// 	Value: NewDirectoryString(node.DefaultDatadir()),
@@ -66,7 +66,7 @@ var (
 			return nil
 		},
 	}
-	KeyStoreDirFlag = &DirectoryFlag{
+	KeyStoreDirFlag = &cli.StringFlag{
 		Name:  "keystore",
 		Usage: "Directory for the keystore (default = inside the datadir)",
 	}
@@ -207,7 +207,7 @@ var (
 )
 var (
 	// Aquahash settings
-	AquahashCacheDirFlag = &DirectoryFlag{
+	AquahashCacheDirFlag = &cli.StringFlag{
 		Name:  "aquahash.cachedir",
 		Usage: "Directory to store the aquahash verification caches (default = inside the datadir)",
 	}
@@ -221,10 +221,10 @@ var (
 		Usage: "Number of recent aquahash caches to keep on disk (16MB each)",
 		Value: int64(aqua.DefaultConfig.Aquahash.CachesOnDisk),
 	}
-	AquahashDatasetDirFlag = &DirectoryFlag{
+	AquahashDatasetDirFlag = &cli.StringFlag{
 		Name:  "aquahash.dagdir",
 		Usage: "Directory to store the aquahash mining DAGs (default = inside home folder)",
-		Value: NewDirectoryString(aqua.DefaultConfig.Aquahash.DatasetDir),
+		Value: aqua.DefaultConfig.Aquahash.DatasetDir,
 	}
 	AquahashDatasetsInMemoryFlag = &cli.IntFlag{
 		Name:  "aquahash.dagsinmem",
@@ -409,7 +409,7 @@ var (
 		Name:  "ipcdisable",
 		Usage: "Disable the IPC-RPC server",
 	}
-	IPCPathFlag = &DirectoryFlag{
+	IPCPathFlag = &cli.StringFlag{
 		Name:  "ipcpath",
 		Usage: "Filename for IPC socket/pipe within the datadir (explicit paths escape it)",
 	}
