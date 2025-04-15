@@ -22,7 +22,10 @@ jobs:
         # operating-system: [ubuntu-24.04, ubuntu-22.04, windows-2025, windows-2022]
     steps:
       - name: Checkout this branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-tags: true
       - name: show system info
         run: env || true; uname -a || true; test ! -e /etc/os-release || cat /etc/os-release; echo ${{ github.ref_name }} - ${{ github.ref }}
       - name: Build aquachain
