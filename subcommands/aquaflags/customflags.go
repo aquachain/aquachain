@@ -33,70 +33,6 @@ import (
 	"gitlab.com/aquachain/aquachain/common/sense"
 )
 
-// Custom type which is registered in the flags library which cli uses for
-// argument parsing. This allows us to expand Value to an absolute path when
-// the argument is parsed
-type DirectoryString struct {
-	Value string
-	isSet bool
-}
-
-func NewDirectoryString(value string) DirectoryString {
-	return DirectoryString{Value: expandPath(value)}
-}
-
-var _ flag.Getter = (*DirectoryString)(nil)
-
-func (self *DirectoryString) String() string {
-	return self.Value
-}
-
-func (ds *DirectoryString) Set(value string) error {
-	ds.Value = expandPath(value)
-	return nil
-}
-
-func (self *DirectoryString) Get() any {
-	return self.Value
-}
-
-func (df *DirectoryFlag) Set(value string) {
-	df.Value.Set(value)
-	df.Value.isSet = true
-}
-
-// Custom cli.Flag type which expand the received string to an absolute path.
-// e.g. ~/.aquachain -> /home/username/.aquachain
-type DirectoryFlag struct {
-	Name  string
-	Value DirectoryString
-	Usage string
-}
-
-func (df DirectoryFlag) Names() []string {
-	return strings.Split(df.Name, ",")
-}
-
-func (df DirectoryFlag) GetName() string {
-	return df.Name
-}
-
-func (df DirectoryFlag) String() string {
-	fmtString := "%s %v\t%v"
-	if len(df.Value.Value) > 0 {
-		fmtString = "%s \"%v\"\t%v"
-	}
-	return fmt.Sprintf(fmtString, prefixedNames(df.Name), df.Value.Value, df.Usage)
-}
-
-func (df DirectoryFlag) IsSet() bool {
-	return df.Value.isSet
-}
-
-func (self DirectoryFlag) Get() string {
-	return self.Value.Value
-}
-
 // in case a flag has multiple names, we need to split them and add them to the flag set
 func eachName(parts []string, fn func(string)) {
 	for _, name := range parts {
@@ -104,15 +40,6 @@ func eachName(parts []string, fn func(string)) {
 		fn(name)
 	}
 
-}
-
-// called by cli library, grabs variable from environment (if in env)
-// and adds variable to flag set for parsing.
-func (df *DirectoryFlag) Apply(set *flag.FlagSet) error {
-	eachName(df.Names(), func(name string) {
-		set.Var(&df.Value, name, df.Usage)
-	})
-	return nil
 }
 
 type TextMarshaler interface {
