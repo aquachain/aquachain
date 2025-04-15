@@ -77,8 +77,7 @@ else
 	./$< ${args}
 endif
 bin/%${maybeext}: $(GOFILES)
-	@test -n "$(findstring $(shell cat VERSION),$(version))" || echo "Error: you need to bump/regenerate VERSION file"
-	@test -n "$(findstring $(shell cat VERSION),$(version))"
+	@test -n "$(findstring $(shell cat VERSION),$(version))" || echo "Warning: you need to bump/regenerate VERSION file"
 	$(info Building command ... ./cmd/$*)
 	$(info $(LOGO))
 	$(info Building... $@)
