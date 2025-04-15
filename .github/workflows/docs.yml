@@ -12,8 +12,11 @@ jobs:
     # comment this 'if' to test on your own repo after setting up some ed25519 DKEY action secret
     if: github.repository_owner == 'aquachain' 
     steps:
-      - name: Checkout main
-        uses: actions/checkout@v2
+      - name: Checkout this branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-tags: true
       - name: Build docs
         run: sudo apt update && sudo apt install -y mkdocs && make docs # to ./docs dir
       - name: Deploy docs
