@@ -43,11 +43,11 @@ const (
 	clientIdentifier = "aquachain" // Client identifier to advertise over the network
 )
 
+// Git SHA1 commit hash and timestamp of the release (set via linker flags)
 var (
-	// Git SHA1 commit hash and timestamp of the release (set via linker flags)
 	gitCommit, buildDate, gitTag string
+	this_app                     *cli.Command
 )
-var this_app *cli.Command
 
 func init() {
 	subcommands.SetBuildInfo(gitCommit, buildDate, gitTag, clientIdentifier)
@@ -69,7 +69,6 @@ func doinit() *cli.Command {
 }
 
 func Doinit() *cli.Command {
-
 	if !sense.EnvBool("HELP2") {
 		subcommands.InitHelp()
 	}
@@ -120,7 +119,7 @@ func Doinit() *cli.Command {
 		app.Flags = append(app.Flags, aquaflags.RPCFlags...)
 		app.Flags = append(app.Flags, aquaflags.ConsoleFlags...)
 	}
-	sort.Sort((cli.FlagsByName)(this_app.Flags))
+	sort.Sort(cli.FlagsByName(this_app.Flags))
 	return this_app
 }
 
@@ -154,7 +153,7 @@ func beforeFunc(ctx context.Context, cmd *cli.Command) (context.Context, error) 
 
 	// Start system runtime metrics collection
 	go metrics.CollectProcessMetrics(3 * time.Second)
-	if targetGasLimit := cmd.Uint(aquaflags.TargetGasLimitFlag.Name); targetGasLimit > 0 {
+	if targetGasLimit := cmd.Uint64(aquaflags.TargetGasLimitFlag.Name); targetGasLimit > 0 {
 		params.TargetGasLimit = targetGasLimit
 	}
 	_, autoalertmode := sense.LookupEnv("ALERT_PLATFORM")

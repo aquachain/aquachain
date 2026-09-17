@@ -210,7 +210,6 @@ func getBootstrapNodes(cmd *cli.Command) []*discover.Node {
 		return []*discover.Node{} // non-nil but empty
 	}
 	return StringToBootstraps(urls)
-
 }
 
 func StringToBootstraps(ss []string) []*discover.Node {
@@ -335,7 +334,7 @@ func splitAndTrim(input string) []string {
 // setHTTP creates the HTTP RPC listener interface string from the set
 // command line flags, returning empty if the HTTP endpoint is disabled.
 func setHTTP(cmd *cli.Command, cfg *node.Config) {
-	var nokeys = cmd.Bool(aquaflags.NoKeysFlag.Name) || cmd.Bool(aquaflags.NoSignFlag.Name)
+	nokeys := cmd.Bool(aquaflags.NoKeysFlag.Name) || cmd.Bool(aquaflags.NoSignFlag.Name)
 	if nokeys {
 		cfg.NoKeys = true
 	}
@@ -586,7 +585,6 @@ func SetP2PConfig(cmd *cli.Command, cfg *p2p.Config) {
 		// 	cfg.ListenAddr = ":30303"
 		// }
 	*/
-
 }
 
 type DirectoryConfig struct {
@@ -680,12 +678,10 @@ func switchDatadir(cmd *cli.Command, chaincfg *params.ChainConfig) DirectoryConf
 	// 	newdatadir = cmd.String(aquaflags.DataDirFlag.Name)
 	// }
 	// return newdatadir
-
 }
 
 // SetNodeConfig applies node-related command line flags to the config.
 func SetNodeConfig(cmd *cli.Command, cfg *node.Config) error {
-
 	// setBootstrapNodes(ctx, cfg)
 	var (
 		chaincfg       *params.ChainConfig
@@ -758,22 +754,22 @@ func setTxPool(cmd *cli.Command, cfg *core.TxPoolConfig) {
 		cfg.Rejournal = cmd.Duration(aquaflags.TxPoolRejournalFlag.Name)
 	}
 	if cmd.IsSet(aquaflags.TxPoolPriceLimitFlag.Name) {
-		cfg.PriceLimit = cmd.Uint(aquaflags.TxPoolPriceLimitFlag.Name)
+		cfg.PriceLimit = cmd.Uint64(aquaflags.TxPoolPriceLimitFlag.Name)
 	}
 	if cmd.IsSet(aquaflags.TxPoolPriceBumpFlag.Name) {
-		cfg.PriceBump = cmd.Uint(aquaflags.TxPoolPriceBumpFlag.Name)
+		cfg.PriceBump = cmd.Uint64(aquaflags.TxPoolPriceBumpFlag.Name)
 	}
 	if cmd.IsSet(aquaflags.TxPoolAccountSlotsFlag.Name) {
-		cfg.AccountSlots = cmd.Uint(aquaflags.TxPoolAccountSlotsFlag.Name)
+		cfg.AccountSlots = cmd.Uint64(aquaflags.TxPoolAccountSlotsFlag.Name)
 	}
 	if cmd.IsSet(aquaflags.TxPoolGlobalSlotsFlag.Name) {
-		cfg.GlobalSlots = cmd.Uint(aquaflags.TxPoolGlobalSlotsFlag.Name)
+		cfg.GlobalSlots = cmd.Uint64(aquaflags.TxPoolGlobalSlotsFlag.Name)
 	}
 	if cmd.IsSet(aquaflags.TxPoolAccountQueueFlag.Name) {
-		cfg.AccountQueue = cmd.Uint(aquaflags.TxPoolAccountQueueFlag.Name)
+		cfg.AccountQueue = cmd.Uint64(aquaflags.TxPoolAccountQueueFlag.Name)
 	}
 	if cmd.IsSet(aquaflags.TxPoolGlobalQueueFlag.Name) {
-		cfg.GlobalQueue = cmd.Uint(aquaflags.TxPoolGlobalQueueFlag.Name)
+		cfg.GlobalQueue = cmd.Uint64(aquaflags.TxPoolGlobalQueueFlag.Name)
 	}
 	if cmd.IsSet(aquaflags.TxPoolLifetimeFlag.Name) {
 		cfg.Lifetime = cmd.Duration(aquaflags.TxPoolLifetimeFlag.Name)
@@ -912,7 +908,7 @@ func SetAquaConfig(cmd *cli.Command, stack *node.Node, cfg *aqua.Config) {
 		cfg.ExtraData = []byte(cmd.String(aquaflags.ExtraDataFlag.Name))
 	}
 	if cmd.IsSet(aquaflags.GasPriceFlag.Name) {
-		cfg.GasPrice = cmd.Uint(aquaflags.GasPriceFlag.Name)
+		cfg.GasPrice = cmd.Uint64(aquaflags.GasPriceFlag.Name)
 	}
 	if cmd.IsSet(aquaflags.VMEnableDebugFlag.Name) {
 		// TODO(fjl): force-enable this in --dev mode
@@ -948,7 +944,6 @@ func SetAquaConfig(cmd *cli.Command, stack *node.Node, cfg *aqua.Config) {
 		}
 
 	}
-
 }
 
 // SetChainId sets the chain ID based on the command line flags (eg --testnet or --chain testnet).
@@ -1019,6 +1014,7 @@ func MakeGenesis(cmd *cli.Command) *core.Genesis {
 	}
 	return core.DefaultGenesisBlock()
 }
+
 func GenesisByChain(chain string) *core.Genesis {
 	return core.DefaultGenesisByName(chain)
 }
@@ -1125,7 +1121,6 @@ func (m *MigratedCommand) Run(ctx context.Context, cmd *cli.Command) error {
 			}
 			cmd.Set(name, cmd.Root().String(name))
 		}
-
 	}
 	// log.Warn("running migrated action", "name", cmd.Name, "args", cmd.Args().Slice(), "flagsEnabled", cmd.LocalFlagNames())
 	return m.Action(ctx, cmd)

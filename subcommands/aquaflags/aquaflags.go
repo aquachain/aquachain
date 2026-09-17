@@ -205,6 +205,7 @@ var (
 		Value: "archive",
 	}
 )
+
 var (
 	// Aquahash settings
 	AquahashCacheDirFlag = &cli.StringFlag{
@@ -214,12 +215,12 @@ var (
 	AquahashCachesInMemoryFlag = &cli.IntFlag{
 		Name:  "aquahash.cachesinmem",
 		Usage: "Number of recent aquahash caches to keep in memory (16MB each)",
-		Value: int64(aqua.DefaultConfig.Aquahash.CachesInMem),
+		Value: aqua.DefaultConfig.Aquahash.CachesInMem,
 	}
 	AquahashCachesOnDiskFlag = &cli.IntFlag{
 		Name:  "aquahash.cachesondisk",
 		Usage: "Number of recent aquahash caches to keep on disk (16MB each)",
-		Value: int64(aqua.DefaultConfig.Aquahash.CachesOnDisk),
+		Value: aqua.DefaultConfig.Aquahash.CachesOnDisk,
 	}
 	AquahashDatasetDirFlag = &cli.StringFlag{
 		Name:  "aquahash.dagdir",
@@ -229,12 +230,12 @@ var (
 	AquahashDatasetsInMemoryFlag = &cli.IntFlag{
 		Name:  "aquahash.dagsinmem",
 		Usage: "Number of recent aquahash mining DAGs to keep in memory (1+GB each)",
-		Value: int64(aqua.DefaultConfig.Aquahash.DatasetsInMem),
+		Value: aqua.DefaultConfig.Aquahash.DatasetsInMem,
 	}
 	AquahashDatasetsOnDiskFlag = &cli.IntFlag{
 		Name:  "aquahash.dagsondisk",
 		Usage: "Number of recent aquahash mining DAGs to keep on disk (1+GB each)",
-		Value: int64(aqua.DefaultConfig.Aquahash.DatasetsOnDisk),
+		Value: aqua.DefaultConfig.Aquahash.DatasetsOnDisk,
 	}
 	// Transaction pool settings
 	TxPoolNoLocalsFlag = &cli.BoolFlag{
@@ -251,32 +252,32 @@ var (
 		Usage: "Time interval to regenerate the local transaction journal",
 		Value: core.DefaultTxPoolConfig.Rejournal,
 	}
-	TxPoolPriceLimitFlag = &cli.UintFlag{
+	TxPoolPriceLimitFlag = &cli.Uint64Flag{
 		Name:  "txpool.pricelimit",
 		Usage: "Minimum gas price limit to enforce for acceptance into the pool",
 		Value: aqua.DefaultConfig.TxPool.PriceLimit,
 	}
-	TxPoolPriceBumpFlag = &cli.UintFlag{
+	TxPoolPriceBumpFlag = &cli.Uint64Flag{
 		Name:  "txpool.pricebump",
 		Usage: "Price bump percentage to replace an already existing transaction",
 		Value: aqua.DefaultConfig.TxPool.PriceBump,
 	}
-	TxPoolAccountSlotsFlag = &cli.UintFlag{
+	TxPoolAccountSlotsFlag = &cli.Uint64Flag{
 		Name:  "txpool.accountslots",
 		Usage: "Minimum number of executable transaction slots guaranteed per account",
 		Value: aqua.DefaultConfig.TxPool.AccountSlots,
 	}
-	TxPoolGlobalSlotsFlag = &cli.UintFlag{
+	TxPoolGlobalSlotsFlag = &cli.Uint64Flag{
 		Name:  "txpool.globalslots",
 		Usage: "Maximum number of executable transaction slots for all accounts",
 		Value: aqua.DefaultConfig.TxPool.GlobalSlots,
 	}
-	TxPoolAccountQueueFlag = &cli.UintFlag{
+	TxPoolAccountQueueFlag = &cli.Uint64Flag{
 		Name:  "txpool.accountqueue",
 		Usage: "Maximum number of non-executable transaction slots permitted per account",
 		Value: aqua.DefaultConfig.TxPool.AccountQueue,
 	}
-	TxPoolGlobalQueueFlag = &cli.UintFlag{
+	TxPoolGlobalQueueFlag = &cli.Uint64Flag{
 		Name:  "txpool.globalqueue",
 		Usage: "Maximum number of non-executable transaction slots for all accounts",
 		Value: aqua.DefaultConfig.TxPool.GlobalQueue,
@@ -305,7 +306,7 @@ var (
 	TrieCacheGenFlag = &cli.IntFlag{
 		Name:  "trie-cache-gens",
 		Usage: "Number of trie node generations to keep in memory",
-		Value: int64(state.MaxTrieCacheGen),
+		Value: int(state.MaxTrieCacheGen),
 	}
 	// Miner settings
 	MiningEnabledFlag = &cli.BoolFlag{
@@ -315,9 +316,9 @@ var (
 	MinerThreadsFlag = &cli.IntFlag{
 		Name:  "minerthreads",
 		Usage: "Number of CPU threads to use for mining",
-		Value: int64(runtime.NumCPU()),
+		Value: int(runtime.NumCPU()),
 	}
-	TargetGasLimitFlag = &cli.UintFlag{
+	TargetGasLimitFlag = &cli.Uint64Flag{
 		Name:        "targetgaslimit",
 		Usage:       "Target gas limit sets the artificial target gas floor for the blocks to mine",
 		Value:       params.GenesisGasLimit,
@@ -328,7 +329,7 @@ var (
 		Usage: "Public address for block mining rewards (default = first account created)",
 		Value: "0",
 	}
-	GasPriceFlag = &cli.UintFlag{
+	GasPriceFlag = &cli.Uint64Flag{
 		Name:  "gasprice",
 		Usage: "Minimal gas price to accept for mining a transactions",
 		Value: aqua.DefaultConfig.GasPrice,
@@ -525,12 +526,12 @@ var (
 	GpoBlocksFlag = &cli.IntFlag{
 		Name:  "gpoblocks",
 		Usage: "Number of recent blocks to check for gas prices",
-		Value: int64(aqua.DefaultConfig.GPO.Blocks),
+		Value: int(aqua.DefaultConfig.GPO.Blocks),
 	}
 	GpoPercentileFlag = &cli.IntFlag{
 		Name:  "gpopercentile",
 		Usage: "Suggested gas price is the given percentile of a set of recent transaction gas prices",
-		Value: int64(aqua.DefaultConfig.GPO.Percentile),
+		Value: int(aqua.DefaultConfig.GPO.Percentile),
 	}
 	HF8MainnetFlag = &cli.IntFlag{
 		Name:  "hf8",

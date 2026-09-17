@@ -44,7 +44,7 @@ var (
 	verbosityFlag = &cli.IntFlag{
 		Name:  "verbosity",
 		Usage: "Logging verbosity: 0=silent, 1=error, 2=warn, 3=info, 4=debug, 5=detail",
-		Value: int64(log.GetLevelFromEnv()),
+		Value: int(log.GetLevelFromEnv()),
 	}
 	vmoduleFlag = &cli.StringFlag{
 		Name:  "vmodule",
@@ -78,7 +78,7 @@ var (
 	memprofilerateFlag = &cli.IntFlag{
 		Name:  "memprofilerate",
 		Usage: "Turn on memory profiling with the given rate",
-		Value: int64(runtime.MemProfileRate),
+		Value: runtime.MemProfileRate,
 	}
 	blockprofilerateFlag = &cli.IntFlag{
 		Name:  "blockprofilerate",
@@ -103,7 +103,7 @@ var Flags = []cli.Flag{
 }
 
 func SetupLog(ctx context.Context, cmd *cli.Command) error {
-	SetGlogger(Initglogger(cmd.Bool(debugFlag.Name), cmd.Int(verbosityFlag.Name), cmd.Bool(logcolorflag.Name), cmd.Bool(logjsonflag.Name)))
+	SetGlogger(Initglogger(cmd.Bool(debugFlag.Name), cmd.Int64(verbosityFlag.Name), cmd.Bool(logcolorflag.Name), cmd.Bool(logjsonflag.Name)))
 	return nil
 }
 
