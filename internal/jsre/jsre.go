@@ -23,20 +23,26 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-
 	"math/rand"
 	"time"
 
 	"gitlab.com/aquachain/aquachain/common"
 	"gitlab.com/aquachain/aquachain/common/log"
-	"gitlab.com/aquachain/aquachain/internal/jsre/deps"
 	"gitlab.com/aquachain/aquachain/opt/console/jsruntime"
 )
 
 var (
-	BigNumber_JS = deps.MustAsset("bignumber.js")
-	Web3_JS      = deps.MustAsset("web3.js")
+	BigNumber_JS = depsMustAsset("deps/bignumber.js")
+	Web3_JS      = depsMustAsset("deps/web3.js")
 )
+
+func depsMustAsset(name string) []byte {
+	b, err := embedded.ReadFile(name)
+	if err != nil {
+		panic(err.Error())
+	}
+	return b
+}
 
 /*
 JSRE is a generic JS runtime environment embedding the jsruntime JS interpreter.
