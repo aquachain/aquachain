@@ -13,7 +13,7 @@ jobs:
     # if: github.repository_owner == 'aquachain'
     steps:
       - name: Checkout this branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.ref }}
           fetch-tags: true
@@ -23,7 +23,7 @@ jobs:
           builder: .github/release # this is a shell script in *this* repo that builds ./release/* archives
       - name: Publish release
         id: release
-        uses: ncipollo/release-action@v1.15.0 # https://github.com/ncipollo/release-action?tab=readme-ov-file#action-inputs
+        uses: ncipollo/release-action@v1.21.0 # https://github.com/ncipollo/release-action?tab=readme-ov-file#action-inputs
         with:
           allowUpdates: true
           artifactErrorsFailBuild: false
