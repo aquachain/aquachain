@@ -22,7 +22,7 @@ jobs:
       - name: Deploy docs
         uses: peaceiris/actions-gh-pages@v4
         with:
-          deploy_key: "${{ secrets.DKEY }}"
+          deploy_key: "${{ secrets.DEPLOY_DOCS_KEY }}"
           publish_dir: ./docs
           external_repository: ${{ github.repository_owner }}/docs # for https://aquachain.github.io/docs
           user_name: 'github-actions[bot]'
