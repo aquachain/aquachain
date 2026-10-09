@@ -23,7 +23,7 @@ require (
 	github.com/peterh/liner v1.2.2
 	github.com/robertkrimen/otto v0.5.1
 	github.com/rs/cors v1.11.1
-	github.com/shopspring/decimal v1.4.0
+	github.com/shopspring/decimal v1.5.0
 	github.com/stretchr/testify v1.12.1
 	github.com/syndtr/goleveldb v1.0.0
 	golang.org/x/crypto v0.57.0
